@@ -1,0 +1,116 @@
+version: '3.8'
+
+services:
+  # Backend API
+  backend:
+    build:
+      context: .
+      dockerfile: Dockerfile.backend
+    container_name: sovereignmap-backend
+    ports:
+      - "5000:5000"
+    environment:
+      - FLASK_ENV=production
+      - NUM_NODES=10
+      - CXL_VERSION=3.2
+      - CXL_TOTAL_RAM=64.0
+    networks:
+      - sovereignmap
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:5000/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+    restart: unless-stopped
+
+  # Frontend (React)
+  frontend:
+    build:
+      context: ./react-frontend
+      dockerfile: Dockerfile
+    container_name: sovereignmap-frontend
+    ports:
+      - "3000:80"
+    depends_on:
+      - backend
+    networks:
+      - sovereignmap
+    environment:
+      - REACT_APP_BACKEND_URL=http://backend:5000
+    restart: unless-stopped
+
+  # Prometheus for metrics
+  prometheus:
+    image: prom/prometheus:latest
+    container_name: sovereignmap-prometheus
+    ports:
+      - "9090:9090"
+    volumes:
+      - ./prometheus.yml:/etc/prometheus/prometheus.yml
+      - prometheus-data:/prometheus
+    command:
+      - '--config.file=/etc/prometheus/prometheus.yml'
+      - '--storage.tsdb.path=/prometheus'
+    networks:
+      - sovereignmap
+    restart: unless-stopped
+
+  # Grafana for visualization
+  grafana:
+    image: grafana/grafana:latest
+    container_name: sovereignmap-grafana
+    ports:
+      - "3001:3000"
+    environment:
+      - GF_SECURITY_ADMIN_PASSWORD=admin
+      - GF_USERS_ALLOW_SIGN_UP=false
+    volumes:
+      - grafana-data:/var/lib/grafana
+    depends_on:
+      - prometheus
+    networks:
+      - sovereignmap
+    restart: unless-stopped
+
+  # Loki for log aggregation
+  loki:
+    image: grafana/loki:latest
+    container_name: sovereignmap-loki
+    ports:
+      - "3100:3100"
+    volumes:
+      - loki-data:/loki
+    networks:
+      - sovereignmap
+    restart: unless-stopped
+
+  # Fluent Bit for log shipping
+  fluent-bit:
+    image: fluent/fluent-bit:latest
+    container_name: sovereignmap-fluent-bit
+    volumes:
+      - ./fluent-bit.conf:/fluent-bit/etc/fluent-bit.conf
+    depends_on:
+      - loki
+    networks:
+      - sovereignmap
+    restart: unless-stopped
+
+networks:
+  sovereignmap:
+    driver: bridge
+
+volumes:
+  prometheus-data:
+  grafana-data:
+  loki-data:
+
+# Usage:
+# docker-compose up -d
+# 
+# Access points:
+# - Backend API: http://localhost:5000
+# - Frontend: http://localhost:3000
+# - Prometheus: http://localhost:9090
+# - Grafana: http://localhost:3001 (admin/admin)
+# - Loki: http://localhost:3100

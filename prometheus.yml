@@ -1,0 +1,60 @@
+# Prometheus configuration for Sovereign Maps
+global:
+  scrape_interval: 15s
+  evaluation_interval: 15s
+  external_labels:
+    cluster: 'sovereignmap'
+    environment: 'production'
+
+# Alerting configuration (optional)
+alerting:
+  alertmanagers:
+    - static_configs:
+        - targets: []
+
+# Scrape configurations
+scrape_configs:
+  # Sovereign Maps Backend
+  - job_name: 'sovereignmap-backend'
+    static_configs:
+      - targets: ['backend:5000']
+    metrics_path: '/metrics'
+    scrape_interval: 10s
+
+  # Prometheus self-monitoring
+  - job_name: 'prometheus'
+    static_configs:
+      - targets: ['localhost:9090']
+
+# Recording rules for derived metrics
+rule_files:
+  # - 'alerts.yml'
+
+# Example recording rules (create alerts.yml for these)
+# groups:
+#   - name: sovereignmap_rules
+#     interval: 30s
+#     rules:
+#       - record: sovereignmap:fl_success_rate
+#         expr: rate(sovereignmap_fl_rounds_total[5m])
+#       
+#       - record: sovereignmap:avg_cxl_latency
+#         expr: histogram_quantile(0.95, rate(sovereignmap_cxl_access_latency_ns_bucket[5m]))
+#       
+#       - alert: MeshDisconnected
+#         expr: sovereignmap_mesh_connected == 0
+#         for: 5m
+#         labels:
+#           severity: critical
+#         annotations:
+#           summary: "Mesh network disconnected"
+#           description: "Sovereign Maps mesh has been disconnected for >5 minutes"
+#       
+#       - alert: HighCXLUtilization
+#         expr: sovereignmap_cxl_pool_utilization_percent > 90
+#         for: 10m
+#         labels:
+#           severity: warning
+#         annotations:
+#           summary: "CXL memory pool nearly full"
+#           description: "CXL utilization at {{ $value }}%"
