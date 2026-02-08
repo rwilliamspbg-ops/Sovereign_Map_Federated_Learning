@@ -26,7 +26,7 @@ services:
   # Frontend (React)
   frontend:
     build:
-      context: ./react-frontend
+      context: .
       dockerfile: Dockerfile
     container_name: sovereignmap-frontend
     ports:
@@ -89,7 +89,7 @@ services:
     image: fluent/fluent-bit:latest
     container_name: sovereignmap-fluent-bit
     volumes:
-      - ./fluent-bit.conf:/fluent-bit/etc/fluent-bit.conf
+      - ./fluent-bit.conf:/fluent-bit/etc
     depends_on:
       - loki
     networks:
