@@ -17,27 +17,27 @@ services:
     networks:
       - sovereignmap
     healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:5000/health"]
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:5000/health').read()"]
       interval: 30s
       timeout: 10s
       retries: 3
     restart: unless-stopped
 
-  # Frontend (React)
-  frontend:
-    build:
-      context: .
-      dockerfile: Dockerfile
-    container_name: sovereignmap-frontend
-    ports:
-      - "3000:80"
-    depends_on:
-      - backend
-    networks:
-      - sovereignmap
-    environment:
-      - REACT_APP_BACKEND_URL=http://backend:5000
-    restart: unless-stopped
+  # Frontend (React) - DISABLED: Frontend source code not available
+  # frontend:
+  #   build:
+  #     context: .
+  #     dockerfile: Dockerfile
+  #   container_name: sovereignmap-frontend
+  #   ports:
+  #     - "3000:80"
+  #   depends_on:
+  #     - backend
+  #   networks:
+  #     - sovereignmap
+  #   environment:
+  #     - REACT_APP_BACKEND_URL=http://backend:5000
+  #   restart: unless-stopped
 
   # Prometheus for metrics
   prometheus:
@@ -84,17 +84,17 @@ services:
       - sovereignmap
     restart: unless-stopped
 
-  # Fluent Bit for log shipping
-  fluent-bit:
-    image: fluent/fluent-bit:latest
-    container_name: sovereignmap-fluent-bit
-    volumes:
-      - ./fluent-bit.conf:/fluent-bit/etc
-    depends_on:
-      - loki
-    networks:
-      - sovereignmap
-    restart: unless-stopped
+  # Fluent Bit for log shipping - DISABLED: fluent-bit.conf not available
+  # fluent-bit:
+  #   image: fluent/fluent-bit:latest
+  #   container_name: sovereignmap-fluent-bit
+  #   volumes:
+  #     - ./fluent-bit.conf:/fluent-bit/etc
+  #   depends_on:
+  #     - loki
+  #   networks:
+  #     - sovereignmap
+  #   restart: unless-stopped
 
 networks:
   sovereignmap:
@@ -110,7 +110,9 @@ volumes:
 # 
 # Access points:
 # - Backend API: http://localhost:5000
-# - Frontend: http://localhost:3000
+# - Frontend: http://localhost:3000 (DISABLED - no source code)
 # - Prometheus: http://localhost:9090
 # - Grafana: http://localhost:3001 (admin/admin)
 # - Loki: http://localhost:3100
+#
+# Note: Frontend and Fluent Bit services are disabled due to missing dependencies
