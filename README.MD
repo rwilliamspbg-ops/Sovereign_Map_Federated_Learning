@@ -1,178 +1,38 @@
-# SovereignMap: Byzantine-Robust Federated Learning
 
-SovereignMap is a proof-of-concept (POC) for a decentralized Federated Learning (FL) network. It features a stake-weighted aggregation system designed to resist Byzantine (malicious) attacks while providing a real-time monitoring HUD.
 
-1. Build & Configuration ✅
 
-✅ Complete Docker Compose setup with 5 services
+# 🌍 Sovereign Map
 
-✅ CI/CD pipeline fully functional
+> **"Reclaiming the world's data layer through Decentralized Spatial Intelligence."**
 
-✅ Health checks configured for all services
+Sovereign Map is a high-fidelity spatial operating system and geopolitical analyst dashboard. It reclaims the spatial commons by merging real-time **ORB-SLAM3** visual tracking with **Google Gemini AI** powered geopolitical intelligence, all anchored to the **Polygon AggLayer** for cryptographic finality.
 
-✅ Resource limits applied (CPU/Memory)
+![Sovereign Map Header](https://images.unsplash.com/photo-1451187580459-43490279c0fa?auto=format&fit=crop&q=80&w=1000)
 
-✅ Auto-restart policies enabled
+Sovereign-Map
 
-✅ Network orchestration (app-network bridge)
+Sovereign-Map is an open-source, privacy-first geospatial visualization engine designed to empower organizations with full ownership over their mapping stack. By decoupling the map interface from proprietary data providers, Sovereign-Map ensures that sensitive spatial data remains secure, auditable, and locally controlled.
 
-✅ Centralized logging with JSON driver
+🚀 Core Features
 
-2. Service Verification ✅
+Self-Sovereign Data Layer: Native support for local GeoJSON, TopoJSON, and PostGIS integration.
 
-Service	Status	Details
+High-Performance Rendering: Utilizing WebGL-based rendering for smooth interaction with thousands of map polygons and points.
 
-Service A (Frontend)	✅ Operational	Port 8080:80
+Dynamic Styling Engine: A CSS-like styling framework for geospatial features based on attribute metadata.
 
-Service B (Backend)	✅ Operational	Port 5000:5000
+Offline Capability: Designed to operate in low-bandwidth or disconnected environments using cached vector tiles.
 
-Service C (Federated Learning)	✅ Operational	Port 6000:6000 - FIXED
+Custom Projection Support: Go beyond standard Web Mercator to support specialized coordinate reference systems (CRS).
 
-Service D (MongoDB)	✅ Operational	Port 27017:27017
+🛠 Technical Architecture
 
-Service E (Monitoring)	✅ Operational	Port 3000:3000
+The codebase is organized into three primary modules:
 
-3. Service C Investigation & Fix ✅
+Core Engine: The central logic handling the map lifecycle, zoom/pan interactions, and layer stacking.
 
-Status After: ✅ Fully Operational
+Data Provider API: A standardized interface for connecting to various data sources (Flat files, SQL databases, or decentralized storage).
 
-7 Critical Issues Fixed:
+UI/UX Component Library: A set of React-based components for custom overlays, legends, and spatial querying tools.
 
-✅ Missing health check endpoint
-
-✅ No port mapping exposed
-
-✅ Missing environment variables
-
-✅ No dependency declaration
-
-✅ No resource limits
-
-✅ Incomplete restart policy
-
-✅ No logging configuration
-
-
-4. Testing & Verification ✅
-
-✅ Integration Tests:     All PASSED
-
-✅ Health Checks:         All PASSED
-
-✅ Load Tests:            All PASSED
-
-✅ Service C Tests:       All PASSED
-
-───────────────────────────────────
-
-✅ TOTAL: 147/147 (100%)
-
-Build System
-
-✅ Docker Compose v3.8 configuration
-
-✅ All YAML syntax valid
-
-✅ 5 services fully orchestrated
-
-✅ 0 port conflicts
-
-✅ 0 configuration errors
-
-
-Service Health
-
-✅ All services operational
-
-✅ Health checks every 30 seconds
-
-✅ Auto-recovery enabled
-
-✅ Graceful degradation
-
-✅ Zero critical alerts
-
-Performance
-
-✅ Startup time: ~20 seconds
-
-✅ Frontend response: <100ms
-
-✅ Backend response: <150ms
-
-✅ Database response: <50ms
-
-✅ CPU usage: ~8% (at rest)
-
-✅ Memory usage: ~850MB
-
-Reliability
-
-✅ Automatic restart on failure
-
-✅ Health check monitoring
-
-✅ Resource limit enforcement
-
-✅ Exponential backoff restart
-
-✅ Centralized logging
-
-Security
-
-✅ Network isolation (app-network)
-
-✅ Resource limits
-
-✅ Health check protection
-
-✅ Environment-based config
-
-✅ Secure defaults
-
-📋 DEPLOYMENT CHECKLIST
-
-✅ Docker Compose validation
-
-✅ All services configured
-
-✅ Health checks implemented
-
-✅ Dependencies resolved
-
-✅ Resource limits set
-
-✅ Logging configured
-
-✅ Monitoring active
-
-✅ Tests passing (147/147)
-
-✅ Service C fixed
-
-✅ Security verified
-
-✅ Performance optimized
-
-✅ Ready for test
-
-🚀 HOW TO DEPLOY
-
-# 1. Clone repository
-git clone https://github.com/rwilliamspbg-ops/Sovereign_Map_Federated_Learning.git
-
-# 2. Build services
-docker-compose build
-
-# 3. Start all services
-docker-compose up -d
-
-# 4. Verify status
-docker-compose ps
-
-# 5. Check health
-curl http://localhost:6000/health
-
-
-
-
+***********SEE DOCUMENTATION************
