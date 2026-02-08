@@ -23,21 +23,19 @@ services:
       retries: 3
     restart: unless-stopped
 
-  # Frontend (React) - DISABLED: Frontend source code not available
-  # frontend:
-  #   build:
-  #     context: .
-  #     dockerfile: Dockerfile
-  #   container_name: sovereignmap-frontend
-  #   ports:
-  #     - "3000:80"
-  #   depends_on:
-  #     - backend
-  #   networks:
-  #     - sovereignmap
-  #   environment:
-  #     - REACT_APP_BACKEND_URL=http://backend:5000
-  #   restart: unless-stopped
+  # Frontend (React + Vite)
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: ../Dockerfile.frontend
+    container_name: sovereignmap-frontend
+    ports:
+      - "3000:80"
+    depends_on:
+      - backend
+    networks:
+      - sovereignmap
+    restart: unless-stopped
 
   # Prometheus for metrics
   prometheus:
@@ -110,9 +108,9 @@ volumes:
 # 
 # Access points:
 # - Backend API: http://localhost:5000
-# - Frontend: http://localhost:3000 (DISABLED - no source code)
+# - Frontend: http://localhost:3000
 # - Prometheus: http://localhost:9090
 # - Grafana: http://localhost:3001 (admin/admin)
 # - Loki: http://localhost:3100
 #
-# Note: Frontend and Fluent Bit services are disabled due to missing dependencies
+# Note: Fluent Bit service is disabled due to missing config file
