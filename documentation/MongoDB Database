@@ -1,0 +1,12 @@
+Technology: MongoDB 5.0+
+Port: 27017:27017
+Purpose: Data Persistence
+Health Check: Every 30 seconds
+
+Collections:
+  - models (ML models)
+  - jobs (Training jobs)
+  - workers (Worker info)
+  - metrics (Performance metrics)
+  - users (User accounts)
+  - logs (Audit logs)
