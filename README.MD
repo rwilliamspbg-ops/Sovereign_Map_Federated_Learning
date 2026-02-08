@@ -3,12 +3,19 @@
 SovereignMap is a proof-of-concept (POC) for a decentralized Federated Learning (FL) network. It features a stake-weighted aggregation system designed to resist Byzantine (malicious) attacks while providing a real-time monitoring HUD.
 
 1. Build & Configuration ✅
+
 ✅ Complete Docker Compose setup with 5 services
+
 ✅ CI/CD pipeline fully functional
+
 ✅ Health checks configured for all services
+
 ✅ Resource limits applied (CPU/Memory)
+
 ✅ Auto-restart policies enabled
+
 ✅ Network orchestration (app-network bridge)
+
 ✅ Centralized logging with JSON driver
 
 2. Service Verification ✅
