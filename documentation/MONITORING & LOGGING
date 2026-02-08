@@ -1,0 +1,49 @@
+Prometheus Metrics (Port 9090):
+  - http_request_duration_seconds
+  - http_requests_total
+  - process_cpu_seconds_total
+  - process_memory_bytes
+  - federated_learning_training_loss
+  - federated_learning_workers_active
+
+Grafana Dashboards (Port 3000):
+  Credentials: admin/admin
+  
+  Available Dashboards:
+  1. System Overview
+  2. API Performance
+  3. Federated Learning Status
+  4. Resource Utilization
+  5. Error Rate Analysis
+  6. Model Training Progress
+  7. Worker Health Dashboard
+
+Loki Log Aggregation (Port 3100):
+  Log Sources:
+  - Frontend access logs
+  - Backend application logs
+  - Database query logs
+  - FL coordinator logs
+  - Worker node logs
+
+Log Queries:
+  Frontend logs: {service="frontend"}
+  Backend logs: {service="backend"}
+  Database logs: {service="mongo"}
+  FL logs: {service="federated-learning"}
+
+Viewing Logs:
+  View all services:
+    docker-compose logs -f
+  
+  View specific service:
+    docker-compose logs -f backend
+  
+  View last 100 lines:
+    docker-compose logs --tail=100 backend
+  
+  Follow with timestamps:
+    docker-compose logs -f --timestamps backend
+  
+  Export to file:
+    docker-compose logs > logs.txt
