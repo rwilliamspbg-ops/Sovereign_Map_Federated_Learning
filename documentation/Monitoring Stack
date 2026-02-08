@@ -1,0 +1,35 @@
+Technology: Prometheus + Grafana + Loki
+Port: 3000:3000
+Purpose: Observability & Metrics
+
+Subcomponents:
+  1. Prometheus (Port 9090)
+     - Metrics collection
+     - Time series database
+     - Query engine
+     
+  2. Grafana (Port 3000)
+     - Dashboard visualization
+     - Alert management
+     - User management
+     
+  3. Loki (Port 3100)
+     - Log aggregation
+     - Log querying
+     - Label-based search
+
+Monitored Metrics:
+  - HTTP request duration
+  - API request count
+  - CPU/Memory usage
+  - Database performance
+  - FL training progress
+  - Worker node status
+
+Dashboards:
+  - System Overview
+  - API Performance
+  - FL Status
+  - Resource Utilization
+  - Error Rate Analysis
+  - Model Training Progress
