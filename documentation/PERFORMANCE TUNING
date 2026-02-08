@@ -1,0 +1,41 @@
+Optimize Resources:
+  federated-learning:
+    deploy:
+      resources:
+        limits:
+          cpus: '1'        # Increase from 0.5
+          memory: 1G       # Increase from 512M
+        reservations:
+          cpus: '0.75'
+          memory: 750M
+
+Enable Caching:
+  docker run -d --name redis -p 6379:6379 redis:latest
+  Update backend configuration:
+    export REDIS_URL=redis://redis:6379
+
+Database Optimization:
+  Create indexes:
+    docker-compose exec mongo mongosh << EOF
+    db.model_versions.createIndex({ "created_at": -1 })
+    db.training_jobs.createIndex({ "status": 1, "worker_id": 1 })
+    EOF
+
+Connection Pooling:
+  Backend: 10-20 connections
+  Database: 20-50 connections
+  API rate limiting: Enabled
+
+Performance Monitoring:
+  Prometheus scrape interval: 15s
+  Grafana refresh rate: 10s
+  Log retention: 7 days
+  Metric retention: 15 days
+
+Performance Metrics:
+  Startup time: ~20 seconds
+  Frontend response: <100ms
+  Backend response: <150ms
+  Database response: <50ms
+  CPU usage (at rest): ~8%
+  Memory usage (at rest): ~850MB
