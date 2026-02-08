@@ -1,0 +1,36 @@
+Issue #1: Service Won't Start
+  Solution:
+    1. Check logs: docker-compose logs service-name
+    2. Restart service: docker-compose restart service-name
+    3. Full rebuild: docker-compose down && docker-compose up -d
+
+Issue #2: Health Check Failures
+  Solution:
+    1. Test health endpoint: curl http://localhost:PORT/health
+    2. Check service logs: docker-compose logs service-name
+    3. Verify dependencies: docker-compose exec service-name ping dependency-service
+
+Issue #3: Port Conflicts
+  Solution:
+    1. Find process: lsof -i :PORT
+    2. Update docker-compose.yml port mappings
+    3. Restart services: docker-compose restart
+
+Issue #4: Memory/CPU Issues
+  Solution:
+    1. Check resource usage: docker stats
+    2. Adjust limits in docker-compose.yml
+    3. Restart services: docker-compose up -d
+
+Issue #5: Database Connection Errors
+  Solution:
+    1. Test MongoDB: docker-compose exec backend curl http://mongo:27017
+    2. Check connection string: docker-compose exec backend env | grep DATABASE
+    3. Reset database: docker-compose down -v && docker-compose up -d
+
+Debug Commands:
+  Enter container: docker-compose exec backend bash
+  Check env vars: docker-compose exec backend env | grep FL_
+  Test connectivity: docker-compose exec backend ping mongo
+  Check mounted volumes: docker-compose exec backend ls -la /models
+  View resource limits: docker inspect sovereignmap-fl | grep -A 20 Resources
