@@ -3,7 +3,7 @@
 # Start all components using docker-compose
 
 # Navigate to the directory containing docker-compose.yml
-cd /path/to/your/docker-compose-directory
+
 
 # Start all services
 docker-compose up -d
