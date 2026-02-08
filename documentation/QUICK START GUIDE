@@ -1,0 +1,36 @@
+Prerequisites:
+  ✅ Docker 20.10+
+  ✅ Docker Compose 1.29+
+  ✅ Git 2.25+
+  ✅ 8GB RAM
+  ✅ 20GB disk space
+
+Installation Steps:
+
+1. Clone Repository
+   git clone https://github.com/rwilliamspbg-ops/Sovereign_Map_Federated_Learning.git
+   cd Sovereign_Map_Federated_Learning
+
+2. Build Services
+   docker-compose build
+
+3. Start All Services
+   docker-compose up -d
+
+4. Verify Services
+   docker-compose ps
+
+5. Access Services
+   - Frontend: http://localhost:8080
+   - Backend: http://localhost:5000
+   - Coordinator: http://localhost:6000
+   - Monitoring: http://localhost:3000
+   - Database: http://localhost:27017
+
+Verification Checklist:
+  ✅ All services show "Up" status
+  ✅ Health checks show "healthy"
+  ✅ Can access frontend UI
+  ✅ Backend API responding
+  ✅ Database connection working
+  ✅ Monitoring dashboards accessible
