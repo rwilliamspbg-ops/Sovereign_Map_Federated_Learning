@@ -1,1 +1,65 @@
-version: '3.8'\n\nservices:\n  backend:\n    image: backend-image:latest\n    restart: always\n    environment:\n      - DATABASE_URL=mysql://user:password@db:3306/dbname\n    depends_on:\n      - db\n\n  frontend:\n    image: frontend-image:latest\n    restart: always\n    ports:\n      - '80:80'\n    depends_on:\n      - backend\n\n  monitoring:\n    image: monitoring-image:latest\n    restart: always\n    ports:\n      - '9090:9090'\n    depends_on:\n      - backend\n\n  db:\n    image: mysql:5.7\n    restart: always\n    environment:\n      MYSQL_ROOT_PASSWORD: root\n      MYSQL_DATABASE: dbname\n      MYSQL_USER: user\n      MYSQL_PASSWORD: password\n\n  coordinator:\n    image: coordinator-image:latest\n    restart: always\n    environment:\n      - COORDINATOR_CONFIG=/path/to/config\n    depends_on:\n      - backend\n\n  worker:\n    image: worker-image:latest\n    restart: always\n    environment:\n      - WORKER_CONFIG=/path/to/config\n    depends_on:\n      - coordinator\n
+version: '3.7'
+services:
+  frontend:
+    image: frontend-image
+    ports:
+      - '80:80'
+    networks:
+      - app-network
+    healthcheck:
+      test: ['CMD', 'curl', '-f', 'http://localhost']
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+  backend:
+    image: backend-image
+    ports:
+      - '5000:5000'
+    networks:
+      - app-network
+    environment:
+      - DATABASE_URL=mongodb://mongo:27017/db
+    depends_on:
+      mongo:
+        condition: service_healthy
+    healthcheck:
+      test: ['CMD', 'curl', '-f', 'http://localhost:5000']
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+  mongo:
+    image: mongo
+    networks:
+      - app-network
+    healthcheck:
+      test: ['CMD', 'mongo', '--eval', 'db.runCommand({ ping: 1 })']
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+  monitoring:
+    image: monitoring-image
+    ports:
+      - '9090:9090'
+    networks:
+      - app-network
+    healthcheck:
+      test: ['CMD', 'curl', '-f', 'http://localhost:9090']
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+  federated-learning:
+    image: federated-learning-image
+    networks:
+      - app-network
+    deploy:
+      replicas: 3
+      restart_policy:
+        condition: on-failure
+
+networks:
+  app-network:
+    driver: bridge
