@@ -1,0 +1,10 @@
+Technology: React 18 + Vite + Nginx
+Port: 8080:80
+Purpose: Web UI, SPA, Dashboard
+Health Check: Every 30 seconds
+Features:
+  - Real-time dashboard
+  - Model visualization
+  - Job management UI
+  - Performance metrics display
+  - User authentication interface
