@@ -3,3 +3,4 @@ requests
 gunicorn
 ecdsa
 numpy
+prometheus-flask-exporter
