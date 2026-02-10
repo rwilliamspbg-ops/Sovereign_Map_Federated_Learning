@@ -35,12 +35,7 @@ Licensed under the MIT License. Contributions are welcome via pull requests.
 Keys to a well written README - Medium
 Jun 11, 2019 — Features — What are some key things your project can do? Running the project — How could someone else get your code working for th...
 
-Medium
 
-Best Practices for Writing README Files for GitHub Projects - Medium
-May 18, 2025 — * 2. Table of Contents (Optional but Helpful) If your README is long, a table of contents improves navigation. * 3. Features. List...
-
-Medium
 
 Key Pitch Proof Points
 A Complete Guide to DePIN Token Development for 2026
