@@ -57,9 +57,7 @@ Technical Proof: Our architecture utilizes homomorphic encryption and decentrali
 
 Ask anything
 
+https://share.google/aimode/vZPaWZnZZYxf7AD5N
 
 
-
-***********SEE DOCUMENTATION************https://github.com/rwilliamspbg-ops/Sovereign_Map_Federated_Learning/tree/main/documentation
-
-https://share.google/aimode/pUomUFzSBWVrAoVGJ 
+***********SEE DOCUMENTATION**** https://github.com/rwilliamspbg-ops/Sovereign_Map_Federated_Learning/tree/main/documentation
