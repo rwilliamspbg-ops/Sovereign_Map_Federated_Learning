@@ -24,7 +24,7 @@ jobs:
         node-version: '18'
     
     - name: Build Docker images
-      run: docker-compose -f docker-compose.yml build
+      run: docker compose -f docker-compose.yml build
     
     - name: Run tests
       run: |
