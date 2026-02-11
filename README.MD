@@ -1,5 +1,11 @@
-[![Lint Code Base](https://github.com/rwilliamspbg-ops/Sovereign_Map_Federated_Learning/actions/workflows/lint.yml/badge.svg)](https://github.com/rwilliamspbg-ops/Sovereign_Map_Federated_Learning/actions/workflows/lint.yml)
-🌐 Sovereign Map: Federated Learning Framework
+# 🌐 Sovereign Map: Federated Learning Framework
+
+[![Lint Code Base](https://github.com/rwilliamspbg-ops/Sovereign_Map_Federated_Learning/actions/workflows/lint.yml/badge.svg)](https://github.com/rwilliamspbg-ops/Sovereign_Map_Federated_Learning/actions)
+![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)
+![Go](https://img.shields.io/badge/Go-1.22+-00ADD8?logo=go)
+![Python](https://img.shields.io/badge/Python-3.9+-3776AB?logo=python)
+![Docker](https://img.shields.io/badge/Docker-Ready-2496ED?logo=docker)
+![Last Commit](https://img.shields.io/github/last-commit/rwilliamspbg-ops/Sovereign_Map_Federated_Learning)
 
 Executive Overview
 
