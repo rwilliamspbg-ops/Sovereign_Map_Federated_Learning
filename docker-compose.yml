@@ -44,16 +44,21 @@ services:
     ports:
       - '6000:6000'
     volumes:
-      # Mount SGP-001 audit config for programmatic enforcement
+      # Mount the privacy policy for programmatic audit
       - ./documentation/FL_CONFIG.md:/app/config/privacy_policy.md:ro
+      # Mount the scripts folder so the validator is accessible
+      - ./scripts:/app/scripts:ro
     environment:
       - FL_SERVER_MODE=true
       - FL_MODEL_PATH=/models
-      # SGP-001 Audit Parameters
+      # SGP-001 Audit Parameters enforced by validate_audit.py
       - PRIVACY_BUDGET_EPSILON=1.0
       - PRIVACY_DELTA=1e-5
       - MIN_PARTICIPANTS=10
       - TARGET_THROUGHPUT_TOPS=85
+    # Gatekeeper: Runs validation before starting the main application
+    entrypoint: >
+      sh -c "python3 /app/scripts/validate_audit.py && python3 /app/main.py"
     depends_on:
       - backend
       - mongo
@@ -62,11 +67,6 @@ services:
       interval: 30s
       timeout: 10s
       retries: 3
-    deploy:
-      resources:
-        limits:
-          cpus: '0.5'
-          memory: 512M
 
 volumes:
   mongo_data:
