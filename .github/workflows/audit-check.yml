@@ -1,0 +1,28 @@
+name: SGP-001 Audit Sync
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+
+jobs:
+  audit-validation:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-code: '3.10'
+
+      - name: Validate Compose Environment
+        run: |
+          # Extract variables from docker-compose.yml to verify they match audit standards
+          EPSILON=$(grep "PRIVACY_BUDGET_EPSILON" docker-compose.yml | cut -d'=' -f2)
+          if [ "$EPSILON" != "1.0" ]; then
+            echo "❌ Audit Failure: PRIVACY_BUDGET_EPSILON must be 1.0"
+            exit 1
+          fi
+          echo "✅ SGP-001 Audit Passed"
