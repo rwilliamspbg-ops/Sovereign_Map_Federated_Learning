@@ -1,3 +1,4 @@
+[![Lint Code Base](https://github.com/rwilliamspbg-ops/Sovereign_Map_Federated_Learning/actions/workflows/lint.yml/badge.svg)](https://github.com/rwilliamspbg-ops/Sovereign_Map_Federated_Learning/actions/workflows/lint.yml)
 🌐 Sovereign Map: Federated Learning Framework
 
 Executive Overview
