@@ -1,1 +1,72 @@
-version: '3.8'\n\nservices:\n  frontend:\n    image: frontend:latest\n    ports:\n      - '8080:80'\n    environment:\n      - NODE_ENV=production\n    depends_on:\n      - backend\n    restart: always\n\n  backend:\n    image: backend:latest\n    ports:\n      - '5000:5000'\n    environment:\n      - DATABASE_URI=mongodb://mongo:27017/mydb\n    depends_on:\n      - mongo\n    restart: always\n\n  mongo:\n    image: mongo:latest\n    ports:\n      - '27017:27017'\n    volumes:\n      - mongo_data:/data/db\n    restart: always\n\n  monitoring:\n    image: monitoring:latest\n    ports:\n      - '3000:3000'\n    environment:\n      - MONITORING_ENV=production\n    depends_on:\n      - backend \n    restart: always\n\n  federated-learning:\n    image: federated-learning:latest\n    ports:\n      - '6000:6000'\n    environment:\n      - FL_SERVER_MODE=true\n      - FL_MODEL_PATH=/models\n    depends_on:\n      - backend\n      - mongo\n    healthcheck:\n      test: [ 'CMD', 'curl', '-f', 'http://localhost:6000/health' ]\n      interval: 30s\n      timeout: 10s\n      retries: 3\n    deploy:\n      resources:\n        limits:\n          cpus: '0.5'\n          memory: 512M\n\nvolumes:\n  mongo_data:
+version: '3.8'
+
+services:
+  frontend:
+    image: frontend:latest
+    ports:
+      - '8080:80'
+    environment:
+      - NODE_ENV=production
+    depends_on:
+      - backend
+    restart: always
+
+  backend:
+    image: backend:latest
+    ports:
+      - '5000:5000'
+    environment:
+      - DATABASE_URI=mongodb://mongo:27017/mydb
+    depends_on:
+      - mongo
+    restart: always
+
+  mongo:
+    image: mongo:latest
+    ports:
+      - '27017:27017'
+    volumes:
+      - mongo_data:/data/db
+    restart: always
+
+  monitoring:
+    image: monitoring:latest
+    ports:
+      - '3000:3000'
+    environment:
+      - MONITORING_ENV=production
+    depends_on:
+      - backend 
+    restart: always
+
+  federated-learning:
+    image: federated-learning:latest
+    ports:
+      - '6000:6000'
+    volumes:
+      # Mount SGP-001 audit config for programmatic enforcement
+      - ./documentation/FL_CONFIG.md:/app/config/privacy_policy.md:ro
+    environment:
+      - FL_SERVER_MODE=true
+      - FL_MODEL_PATH=/models
+      # SGP-001 Audit Parameters
+      - PRIVACY_BUDGET_EPSILON=1.0
+      - PRIVACY_DELTA=1e-5
+      - MIN_PARTICIPANTS=10
+      - TARGET_THROUGHPUT_TOPS=85
+    depends_on:
+      - backend
+      - mongo
+    healthcheck:
+      test: [ 'CMD', 'curl', '-f', 'http://localhost:6000/health' ]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+    deploy:
+      resources:
+        limits:
+          cpus: '0.5'
+          memory: 512M
+
+volumes:
+  mongo_data:
