@@ -11,6 +11,11 @@
 ## Executive Overview
 The **Sovereign Map** is a decentralized Physical Infrastructure Network (DePIN) designed for Privacy-Preserving Machine Learning. By reversing the traditional AI paradigm and bringing the model to the data, this framework ensures absolute **Data Sovereignty**. Multiple entities can collaborate on a global AI model without ever sharing or exposing their underlying sensitive datasets.
 
+## 🤖 Interactive Protocol Intelligence
+To assist investors and node operators with deep-dive technical queries, we have deployed the **Sovereign Map Architect Agent**. This LLM is trained specifically on our [v0.2.0-alpha Tech Spec](https://github.com/rwilliamspbg-ops/Sovereign_Map_Federated_Learning/discussions/3) and the [MOHAWK](https://github.com/rwilliamspbg-ops/Sovereign-Mohawk-Proto) orchestration layer.
+
+> **[Ask our Architect Agent about the 85 TOPS standard](https://github.com/rwilliamspbg-ops/Sovereign_Map_Federated_Learning/discussions/3)**
+
 ---
 
 ## 🚀 Core Architecture
