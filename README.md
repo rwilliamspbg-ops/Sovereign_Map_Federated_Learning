@@ -16,13 +16,7 @@ To assist investors and node operators with deep-dive technical queries, we have
 
 > **[Ask our Architect Agent about the 85 TOPS standard](https://github.com/rwilliamspbg-ops/Sovereign_Map_Federated_Learning/discussions/3)**
 
-## 💬 Talk to the Sovereign Map Architect (Investor Q&A)
 
-Have questions about Sovereign Map’s DePIN architecture, privacy guarantees, or ROI?
-
-👉 Start a live technical Q&A with our AI Architect:
-
-https://chat.openai.com/?model=gpt-4o&q=You+are+the+Sovereign+Map+Architect+Agent.+Explain+the+Sovereign+Map+DePIN+protocol+to+me+as+a+new+investor.+Cover+data+sovereignty,+SGP-001+(epsilon+1.0),+85+TOPS+Genesis+Nodes,+MOHAWK+mesh+orchestration,+Independent+Island+Mode,+and+node+economics.+Begin+now.
 ---
 
 ## 🚀 Core Architecture
