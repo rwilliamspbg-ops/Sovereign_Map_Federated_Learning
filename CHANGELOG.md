@@ -5,7 +5,7 @@ All notable changes to the Sovereign Map project will be documented in this file
 ## [0.1.0-beta] - 2026-02-11
 
 ### Added
-- **SGP-001 Audit Framework**: Integrated automated GitHub Action to verify privacy parameters ($ε=1.0$, $δ=1e-5$) on every pull request.
+- **SGP-001 Audit Framework**: Integrated automated GitHub Action to verify privacy parameters ($ε = 1.0$, $δ = 1e-5$) on every pull request.
 - **MOHAWK Orchestrator**: Initial logic for dynamic community selection based on hardware telemetry.
 - **dAuth Protocol**: Coordinator-less node verification for secure Genesis Node onboarding.
 - **Independent Island Mode**: Operational safety feature for offline edge compute.
@@ -16,4 +16,4 @@ All notable changes to the Sovereign Map project will be documented in this file
 
 ### Fixed
 - **CI/CD Pipeline**: Resolved `docker-compose` command deprecation by migrating to `docker compose` V2 syntax.
-- **Python Environment**: Standardized GitHub Action runners to Python 3.10 to ensure deterministic audit results.
+- **Python Environment**: Standardized GitHub Action runners to **Python 3.10** to ensure deterministic audit results.
