@@ -15,14 +15,27 @@ jobs:
       - name: Set up Python
         uses: actions/setup-python@v4
         with:
-          python-code: '3.10'
+          python-version: '3.10'
 
-      - name: Validate Compose Environment
+      - name: Comprehensive Audit Validation
         run: |
-          # Extract variables from docker-compose.yml to verify they match audit standards
-          EPSILON=$(grep "PRIVACY_BUDGET_EPSILON" docker-compose.yml | cut -d'=' -f2)
-          if [ "$EPSILON" != "1.0" ]; then
-            echo "❌ Audit Failure: PRIVACY_BUDGET_EPSILON must be 1.0"
-            exit 1
-          fi
-          echo "✅ SGP-001 Audit Passed"
+          # Define required standards
+          declare -A standards=(
+            ["PRIVACY_BUDGET_EPSILON"]="1.0"
+            ["PRIVACY_DELTA"]="1e-5"
+            ["MIN_PARTICIPANTS"]="10"
+            ["TARGET_THROUGHPUT_TOPS"]="85"
+          )
+
+          for var in "${!standards[@]}"; do
+            # Extract value and trim whitespace/quotes
+            ACTUAL=$(grep "$var" docker-compose.yml | cut -d'=' -f2 | tr -d ' "')
+            EXPECTED=${standards[$var]}
+            
+            if [ "$ACTUAL" != "$EXPECTED" ]; then
+              echo "❌ SGP-001 Violation: $var is '$ACTUAL' (Expected '$EXPECTED')"
+              exit 1
+            fi
+            echo "✅ $var verified: $ACTUAL"
+          done
+          echo "🚀 All SGP-001 standards satisfied."
