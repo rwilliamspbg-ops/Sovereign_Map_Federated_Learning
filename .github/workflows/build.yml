@@ -2,39 +2,29 @@ name: Build and Test
 
 on:
   push:
-    branches: [ main, develop ]
+    branches: [ main ]
   pull_request:
     branches: [ main ]
 
 jobs:
   build:
     runs-on: ubuntu-latest
-    
     steps:
-    - uses: actions/checkout@v3
-    
-    - name: Set up Python
-      uses: actions/setup-python@v4
-      with:
-        python-version: '3.10'
-    
-    - name: Set up Node.js
-      uses: actions/setup-node@v3
-      with:
-        node-version: '18'
-    
-    - name: Build Docker images
-      run: docker compose -f docker-compose.yml build
-    
-    - name: Run tests
-      run: |
-        # Add your test commands here
-        docker-compose run --rm backend pytest
-        docker-compose run --rm frontend npm test
-    
-    - name: Verify services start
-      run: |
-        docker-compose up -d
-        sleep 10
-        docker-compose ps
-        docker-compose down
+      - uses: actions/checkout@v3
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.10'
+      - name: Set up Node.js
+        uses: actions/setup-node@v3
+        with:
+          node-version: '18'
+          
+      - name: Build Docker images
+        run: docker compose -f docker-compose.yml build
+
+      - name: Run tests
+        run: docker compose -f docker-compose.yml run federated-learning python3 /app/scripts/validate_audit.py
+
+      - name: Verify services start
+        run: docker compose -f docker-compose.yml up -d
