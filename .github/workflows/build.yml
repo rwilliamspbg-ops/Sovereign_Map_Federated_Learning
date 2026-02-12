@@ -23,8 +23,19 @@ jobs:
       - name: Build Docker images
         run: docker compose -f docker-compose.yml build --parallel
 
-      - name: Run tests
-        run: docker compose -f docker-compose.yml run federated-learning python3 /app/scripts/validate_audit.py
+      - name: Start all services
+        run: docker compose up -d
 
-      - name: Verify services start
-        run: docker compose -f docker-compose.yml up -d
+      - name: Wait for Backend Health
+        run: |
+          echo "Waiting for backend to be healthy..."
+          timeout 120s sh -c 'until [ "$(docker inspect -f {{.State.Health.Status}} sovereign_map_federated_learning-backend-1)"=="healthy" ]; do sleep 5; done'
+
+      - name: Run Federated Learning Audit
+        run: docker compose exec federated-learning python3 /app/scripts/validate_audit.py
+
+      - name: Debug on Failure
+        if: failure()
+        run: |
+          docker compose logs backend
+          docker ps -a
