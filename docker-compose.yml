@@ -22,14 +22,15 @@ services:
     environment:
       - DATABASE_URI=mongodb://mongo:27017/mydb
     depends_on:
-      - mongo
+      mongo:
+        condition: service_started
     restart: always
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:5000/health"]
-      interval: 15s      # Slightly longer interval
-      timeout: 10s
+      interval: 20s      # Increase interval
+      timeout: 10s       # Increase timeout
       retries: 5
-      start_period: 45s  # CRITICAL: Gives the DAO/CXL setup 45s to finish
+      start_period: 90s  # CRITICAL: Extend this to 90 seconds
 
   mongo:
     image: mongo:latest
