@@ -1,5 +1,3 @@
-version: '3.8'
-
 services:
   frontend:
     build: ./frontend
@@ -22,6 +20,11 @@ services:
     depends_on:
       - mongo
     restart: always
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:5000/health"]
+      interval: 10s
+      timeout: 5s
+      retries: 3
 
   mongo:
     image: mongo:latest
@@ -45,6 +48,11 @@ services:
   federated-learning:
     build: .
     image: federated-learning:latest
+    depends_on:
+      backend:
+        condition: service_healthy
+      mongo:
+        condition: service_started
     ports:
       - '6000:6000'
     volumes:
@@ -59,11 +67,8 @@ services:
       - TARGET_THROUGHPUT_TOPS=85
     entrypoint: >
       sh -c "python3 /app/scripts/validate_audit.py && python3 /app/main.py"
-    depends_on:
-      - backend
-      - mongo
     healthcheck:
-      test: [ 'CMD', 'curl', '-f', 'http://localhost:6000/health' ]
+      test: ["CMD", "curl", "-f", "http://localhost:6000/health"]
       interval: 30s
       timeout: 10s
       retries: 3
