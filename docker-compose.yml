@@ -26,11 +26,11 @@ services:
         condition: service_started
     restart: always
     healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:5000/health"]
-      interval: 20s      # Increase interval
-      timeout: 10s       # Increase timeout
+      test: ["CMD", "python3", "-c", "import urllib.request; urllib.request.urlopen('http://127.0.0.1:5000/health').read()"]
+      interval: 20s
+      timeout: 10s
       retries: 5
-      start_period: 90s  # CRITICAL: Extend this to 90 seconds
+      start_period: 60s
 
   mongo:
     image: mongo:latest
