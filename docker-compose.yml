@@ -2,6 +2,7 @@ version: '3.8'
 
 services:
   frontend:
+    build: ./frontend
     image: frontend:latest
     ports:
       - '8080:80'
@@ -12,6 +13,7 @@ services:
     restart: always
 
   backend:
+    build: ./backend
     image: backend:latest
     ports:
       - '5000:5000'
@@ -30,6 +32,7 @@ services:
     restart: always
 
   monitoring:
+    build: ./monitoring
     image: monitoring:latest
     ports:
       - '3000:3000'
@@ -40,23 +43,20 @@ services:
     restart: always
 
   federated-learning:
+    build: .
     image: federated-learning:latest
     ports:
       - '6000:6000'
     volumes:
-      # Mount the privacy policy for programmatic audit
       - ./documentation/FL_CONFIG.md:/app/config/privacy_policy.md:ro
-      # Mount the scripts folder so the validator is accessible
       - ./scripts:/app/scripts:ro
     environment:
       - FL_SERVER_MODE=true
       - FL_MODEL_PATH=/models
-      # SGP-001 Audit Parameters enforced by validate_audit.py
       - PRIVACY_BUDGET_EPSILON=1.0
       - PRIVACY_DELTA=1e-5
       - MIN_PARTICIPANTS=10
       - TARGET_THROUGHPUT_TOPS=85
-    # Gatekeeper: Runs validation before starting the main application
     entrypoint: >
       sh -c "python3 /app/scripts/validate_audit.py && python3 /app/main.py"
     depends_on:
