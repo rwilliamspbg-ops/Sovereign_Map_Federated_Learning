@@ -26,9 +26,10 @@ services:
     restart: always
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:5000/health"]
-      interval: 10s
-      timeout: 5s
-      retries: 3
+      interval: 15s      # Slightly longer interval
+      timeout: 10s
+      retries: 5
+      start_period: 45s  # CRITICAL: Gives the DAO/CXL setup 45s to finish
 
   mongo:
     image: mongo:latest
