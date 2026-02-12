@@ -1,6 +1,8 @@
 services:
   frontend:
-    build: ./frontend
+    build:
+      context: .
+      dockerfile: Dockerfile.frontend
     image: frontend:latest
     ports:
       - '8080:80'
@@ -11,7 +13,9 @@ services:
     restart: always
 
   backend:
-    build: ./backend
+    build:
+      context: .
+      dockerfile: Dockerfile.backend
     image: backend:latest
     ports:
       - '5000:5000'
@@ -35,7 +39,6 @@ services:
     restart: always
 
   monitoring:
-    build: ./monitoring
     image: monitoring:latest
     ports:
       - '3000:3000'
@@ -65,8 +68,9 @@ services:
       - PRIVACY_DELTA=1e-5
       - MIN_PARTICIPANTS=10
       - TARGET_THROUGHPUT_TOPS=85
+    # Updated to point to the correct file in your root directory
     entrypoint: >
-      sh -c "python3 /app/scripts/validate_audit.py && python3 /app/main.py"
+      sh -c "python3 /app/scripts/validate_audit.py && python3 /app/sovereignmap_production_backend.py"
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:6000/health"]
       interval: 30s
