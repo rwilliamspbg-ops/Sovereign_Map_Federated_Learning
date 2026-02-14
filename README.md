@@ -413,6 +413,72 @@ make logs
 make clean
 ```
 
+### Monitoring & Observability
+
+The project includes a comprehensive monitoring stack using Prometheus, Grafana, and AlertManager for real-time metrics collection, visualization, and alerting.
+
+#### Components
+
+- **Prometheus**: Metrics collection and time-series database
+  - Scrapes metrics from node-agent, backend, and frontend services
+  - Configured with alert rules for federated learning metrics
+  - Data retention: 15 days
+
+- **Grafana**: Metrics visualization and dashboards
+  - Pre-configured dashboards for federated learning metrics
+  - Real-time visualization of model convergence, node health, and privacy audit status
+  - Access: http://localhost:3001 (default credentials: admin/admin)
+
+- **AlertManager**: Alert routing and notification management
+  - Configured to handle alerts from Prometheus
+  - Supports email, Slack, and webhook integrations
+  - Grouping and deduplication of alerts
+
+- **cAdvisor**: Container resource monitoring
+  - Tracks CPU, memory, disk, and network usage for all containers
+  - Provides real-time performance insights
+
+#### Deployment
+
+The monitoring stack is deployed using Docker Compose:
+
+```bash
+# Deploy monitoring stack
+docker-compose -f docker-compose.monitoring.yml up -d
+
+# View monitoring logs
+docker-compose -f docker-compose.monitoring.yml logs -f
+
+# Stop monitoring stack
+docker-compose -f docker-compose.monitoring.yml down
+```
+
+#### Accessing Dashboards
+
+- **Grafana**: http://localhost:3001
+- **Prometheus**: http://localhost:9090
+- **AlertManager**: http://localhost:9093
+
+#### Key Metrics
+
+The monitoring stack tracks:
+
+- **Federated Learning Metrics**:
+  - Model convergence rate
+  - Training accuracy and loss
+  - Privacy budget (ε) consumption
+  - Node participation and synchronization
+
+- **System Metrics**:
+  - Container CPU and memory usage
+  - Network I/O and latency
+  - Disk utilization
+
+- **Security Metrics**:
+  - SGP-001 compliance verification
+  - TPM attestation status
+  - zk-SNARK proof verification latency
+
 ### Key Features Implemented
 
 - ✅ **MOHAWK Protocol Integration**: Full compatibility with Sovereign-Mohawk-Proto
