@@ -8,7 +8,6 @@ on:
 
     permissions:
   contents: read
-
 jobs:
   audit-validation:
     runs-on: ubuntu-latest
