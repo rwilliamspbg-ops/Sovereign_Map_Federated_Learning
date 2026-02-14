@@ -83,3 +83,14 @@ services:
 
 volumes:
   mongo_data:
+  node-agent:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    command: /app/bin/node-agent
+    environment:
+      - NODE_ID=edge-node-001
+    networks:
+      - sovereign_map
+
+  
