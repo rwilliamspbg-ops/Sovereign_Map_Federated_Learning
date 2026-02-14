@@ -1,0 +1,83 @@
+# Prometheus configuration for Sovereign Map Federated Learning
+global:
+  scrape_interval: 15s
+  evaluation_interval: 15s
+  external_labels:
+    cluster: 'sovereign-map-fl'
+    environment: 'production'
+
+# Alertmanager configuration
+alerting:
+  alertmanagers:
+    - static_configs:
+        - targets:
+            - alertmanager:9093
+
+# Load rules once and periodically evaluate them
+rule_files:
+  - 'alerts/*.yml'
+
+# Scrape configurations
+scrape_configs:
+  # Prometheus self-monitoring
+  - job_name: 'prometheus'
+    static_configs:
+      - targets: ['localhost:9090']
+
+  # Node agent metrics
+  - job_name: 'node-agent'
+    static_configs:
+      - targets: ['node-agent:8080']
+    metrics_path: '/metrics'
+    scrape_interval: 10s
+    scrape_timeout: 5s
+
+  # Backend API metrics
+  - job_name: 'backend'
+    static_configs:
+      - targets: ['backend:3001']
+    metrics_path: '/metrics'
+    scrape_interval: 10s
+
+  # MongoDB exporter
+  - job_name: 'mongodb'
+    static_configs:
+      - targets: ['mongodb-exporter:9216']
+    scrape_interval: 30s
+
+  # Node exporter for system metrics
+  - job_name: 'node-exporter'
+    static_configs:
+      - targets: ['node-exporter:9100']
+    scrape_interval: 15s
+
+  # Docker container metrics
+  - job_name: 'cadvisor'
+    static_configs:
+      - targets: ['cadvisor:8080']
+    scrape_interval: 15s
+
+  # Federated learning specific metrics
+  - job_name: 'fl-aggregator'
+    static_configs:
+      - targets: ['node-agent:8080']
+    metrics_path: '/metrics/fl'
+    scrape_interval: 5s
+    metric_relabel_configs:
+      - source_labels: [__name__]
+        regex: 'fl_.*'
+        action: keep
+
+  # Convergence monitoring
+  - job_name: 'convergence'
+    static_configs:
+      - targets: ['node-agent:8080']
+    metrics_path: '/metrics/convergence'
+    scrape_interval: 10s
+
+  # Island Mode monitoring
+  - job_name: 'island-mode'
+    static_configs:
+      - targets: ['node-agent:8080']
+    metrics_path: '/metrics/island'
+    scrape_interval: 30s
