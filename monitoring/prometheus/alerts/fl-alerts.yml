@@ -1,0 +1,87 @@
+groups:
+  - name: federated_learning
+    interval: 30s
+    rules:
+      # Convergence Alerts
+      - alert: ConvergenceStalled
+        expr: fl_convergence_rate < 0.01
+        for: 10m
+        labels:
+          severity: warning
+          component: convergence
+        annotations:
+          summary: "FL convergence has stalled"
+          description: "Convergence rate is below 0.01 for more than 10 minutes"
+
+      - alert: HighGradientNorm
+        expr: fl_gradient_norm > 10
+        for: 5m
+        labels:
+          severity: warning
+          component: training
+        annotations:
+          summary: "High gradient norm detected"
+          description: "Gradient norm {{ $value }} exceeds threshold"
+
+      # Aggregation Alerts
+      - alert: PendingUpdatesHigh
+        expr: fl_pending_updates > 100
+        for: 5m
+        labels:
+          severity: warning
+          component: aggregator
+        annotations:
+          summary: "High number of pending updates"
+          description: "{{ $value }} updates pending aggregation"
+
+      - alert: AggregationFailures
+        expr: rate(fl_aggregation_errors_total[5m]) > 0.1
+        for: 2m
+        labels:
+          severity: critical
+          component: aggregator
+        annotations:
+          summary: "Aggregation failures detected"
+          description: "Error rate: {{ $value }} errors/second"
+
+      # Island Mode Alerts
+      - alert: IslandModeActivated
+        expr: fl_island_mode == 1
+        for: 1m
+        labels:
+          severity: info
+          component: island_mode
+        annotations:
+          summary: "Node entered Island Mode"
+          description: "Node is operating in offline mode"
+
+      - alert: CachedUpdatesLimit
+        expr: fl_cached_updates > 90
+        for: 5m
+        labels:
+          severity: warning
+          component: island_mode
+        annotations:
+          summary: "Cached updates approaching limit"
+          description: "{{ $value }} updates cached (max 100)"
+
+      # Performance Alerts
+      - alert: HighLatency
+        expr: fl_aggregation_duration_seconds > 5
+        for: 3m
+        labels:
+          severity: warning
+          component: performance
+        annotations:
+          summary: "High aggregation latency"
+          description: "Aggregation taking {{ $value }}s"
+
+      - alert: LowThroughput
+        expr: rate(fl_updates_processed_total[5m]) < 1
+        for: 5m
+        labels:
+          severity: warning
+          component: performance
+        annotations:
+          summary: "Low update processing throughput"
+          description: "Processing {{ $value }} updates/second"
