@@ -1,0 +1,76 @@
+{
+  "dashboard": {
+    "title": "Federated Learning Overview",
+    "tags": ["federated-learning", "sovereign-map"],
+    "timezone": "browser",
+    "panels": [
+      {
+        "id": 1,
+        "title": "Convergence Rate",
+        "type": "graph",
+        "targets": [{
+          "expr": "fl_convergence_rate",
+          "legendFormat": "Convergence Rate"
+        }],
+        "gridPos": {"x": 0, "y": 0, "w": 12, "h": 8}
+      },
+      {
+        "id": 2,
+        "title": "Gradient Norm",
+        "type": "graph",
+        "targets": [{
+          "expr": "fl_gradient_norm",
+          "legendFormat": "Gradient Norm"
+        }],
+        "gridPos": {"x": 12, "y": 0, "w": 12, "h": 8}
+      },
+      {
+        "id": 3,
+        "title": "Pending Updates",
+        "type": "stat",
+        "targets": [{
+          "expr": "fl_pending_updates"
+        }],
+        "gridPos": {"x": 0, "y": 8, "w": 6, "h": 4}
+      },
+      {
+        "id": 4,
+        "title": "Active Nodes",
+        "type": "stat",
+        "targets": [{
+          "expr": "fl_active_nodes"
+        }],
+        "gridPos": {"x": 6, "y": 8, "w": 6, "h": 4}
+      },
+      {
+        "id": 5,
+        "title": "Island Mode Status",
+        "type": "stat",
+        "targets": [{
+          "expr": "fl_island_mode"
+        }],
+        "gridPos": {"x": 12, "y": 8, "w": 6, "h": 4}
+      },
+      {
+        "id": 6,
+        "title": "Aggregation Duration",
+        "type": "graph",
+        "targets": [{
+          "expr": "fl_aggregation_duration_seconds",
+          "legendFormat": "Duration (s)"
+        }],
+        "gridPos": {"x": 0, "y": 12, "w": 12, "h": 8}
+      },
+      {
+        "id": 7,
+        "title": "Update Processing Rate",
+        "type": "graph",
+        "targets": [{
+          "expr": "rate(fl_updates_processed_total[5m])",
+          "legendFormat": "Updates/s"
+        }],
+        "gridPos": {"x": 12, "y": 12, "w": 12, "h": 8}
+      }
+    ]
+  }
+}
