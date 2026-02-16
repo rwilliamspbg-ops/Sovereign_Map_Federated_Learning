@@ -49,7 +49,6 @@ Explore the complete Sovereign Map repository ecosystem:
 ## 💬 Interactive Agent
 ---
 
-## 🚀 Investor Start Here
 
 Sovereign Map provides a guided technical briefing via our Architect Agent.
 
