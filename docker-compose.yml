@@ -4,8 +4,6 @@ services:
       context: .
       dockerfile: Dockerfile.frontend
     image: frontend:latest
-    ports:
-      - '8080:80'
     environment:
       - NODE_ENV=production
     depends_on:
@@ -17,8 +15,6 @@ services:
       context: .
       dockerfile: Dockerfile.backend
     image: backend:latest
-    ports:
-      - '5000:5000'
     environment:
       - DATABASE_URI=mongodb://mongo:27017/mydb
     depends_on:
@@ -34,8 +30,6 @@ services:
 
   mongo:
     image: mongo:latest
-    ports:
-      - '27017:27017'
     volumes:
       - mongo_data:/data/db
     restart: always
@@ -45,8 +39,6 @@ services:
       context: .
       dockerfile: Dockerfile.monitoring # Ensure this file exists in your root
     image: monitoring:latest
-    ports:
-      - '3000:3000'
     environment:
       - MONITORING_ENV=production
     depends_on:
@@ -61,8 +53,6 @@ services:
         condition: service_healthy
       mongo:
         condition: service_started
-    ports:
-      - '6000:6000'
     volumes:
       - ./documentation/FL_CONFIG.md:/app/config/privacy_policy.md:ro
       - ./scripts:/app/scripts:ro
