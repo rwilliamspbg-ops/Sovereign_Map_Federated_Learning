@@ -19,7 +19,7 @@ def get_mega_test_data() -> Dict[str, Any]:
     compressed_size_mb = 28
     reduction_factor = (raw_size_gb * 1024) / compressed_size_mb
 
-    malicious_fraction = 0.556
+    malicious_fraction = 0.4
     bft_threshold = 0.555
     is_bft_safe = malicious_fraction > bft_threshold
 
