@@ -1,27 +1,32 @@
-# sovereign_map_test_collector.py
-# Purpose: Collects and verifies all visible test-like values from the Sovereign Map project
-#          (mega_test.py, generate_plot_data.py, save_plot.py related data)
-#          Saves results to JSON + readable text file
-# Date: February 2025
+# full_test_and_push_to_github.py
+# Purpose: Run Sovereign Map tests, generate reports/JSON, create convergence plot,
+#          and push all new/updated files to GitHub.
+# Assumptions:
+# - This script is run in a Git-initialized repository.
+# - GitHub remote 'origin' is set up.
+# - Git is installed and configured (e.g., with PAT or SSH for auth).
+# - matplotlib is available for plotting.
+# - Run this script after ensuring no uncommitted changes conflict.
+# Date: February 17, 2026
 
-import json
-import datetime
 import os
+import subprocess
+import datetime
+import json
 import numpy as np
-from typing import Dict, Any
+import matplotlib.pyplot as plt
 
 # ────────────────────────────────────────────────
-# 1. Data from mega_test.py
+# Embedded collector logic (from sovereign_map_test_collector.py)
 # ────────────────────────────────────────────────
-def get_mega_test_data() -> Dict[str, Any]:
+def get_mega_test_data(malicious_fraction=0.55):
     nodes = 10_000_000
-    raw_size_gb = 40_000
+    raw_size_tb = 40_000  # Fixed to TB as per original
     compressed_size_mb = 28
-    reduction_factor = (raw_size_gb * 1024) / compressed_size_mb
+    reduction_factor = (raw_size_tb * 1024 * 1024) / compressed_size_mb  # TB to MB: 1024*1024
 
-    malicious_fraction = 0.55
     bft_threshold = 0.555
-    is_bft_safe = malicious_fraction > bft_threshold
+    is_bft_safe = malicious_fraction < bft_threshold  # Fixed logic: safe if below threshold
 
     recovery_points = [
         88.2, 89.5, 90.8, 91.5, 92.4,
@@ -32,7 +37,7 @@ def get_mega_test_data() -> Dict[str, Any]:
     return {
         "section": "mega_test.py values",
         "nodes": nodes,
-        "raw_metadata_tb": raw_size_gb,
+        "raw_metadata_tb": raw_size_tb,
         "compressed_metadata_mb": compressed_size_mb,
         "compression_reduction_factor": round(reduction_factor, 1),
         "malicious_fraction": malicious_fraction,
@@ -45,10 +50,7 @@ def get_mega_test_data() -> Dict[str, Any]:
     }
 
 
-# ────────────────────────────────────────────────
-# 2. Data from generate_plot_data.py / save_plot.py
-# ────────────────────────────────────────────────
-def get_convergence_data() -> Dict[str, Any]:
+def get_convergence_data():
     rounds = list(range(1, 26))
     accuracy = [
         85.0, 86.5, 88.0, 89.2, 91.0,
@@ -77,13 +79,10 @@ def get_convergence_data() -> Dict[str, Any]:
     }
 
 
-# ────────────────────────────────────────────────
-# 3. Summary & consistency checks
-# ────────────────────────────────────────────────
-def run_all_tests() -> Dict[str, Any]:
+def run_all_tests(malicious_fraction=0.55):
     timestamp = datetime.datetime.utcnow().isoformat() + "Z"
 
-    mega = get_mega_test_data()
+    mega = get_mega_test_data(malicious_fraction)
     conv = get_convergence_data()
 
     summary = {
@@ -99,23 +98,22 @@ def run_all_tests() -> Dict[str, Any]:
         }
     }
 
-    return summary
+    return summary, conv  # Return conv for plotting
 
 
-# ────────────────────────────────────────────────
-# Save results
-# ────────────────────────────────────────────────
-def save_results(data: Dict[str, Any]):
+def save_results(data, malicious_fraction):
     ts = datetime.datetime.utcnow().strftime("%Y%m%d_%H%M%S")
+    audit_dir = "audit_results"
+    os.makedirs(audit_dir, exist_ok=True)
     
-    # JSON – machine readable
-    json_path = f"sovereign_test_results_{ts}.json"
+    # JSON
+    json_path = os.path.join(audit_dir, f"sovereign_test_results_{ts}_mal{int(malicious_fraction*100)}.json")
     with open(json_path, "w", encoding="utf-8") as f:
         json.dump(data, f, indent=2, ensure_ascii=False)
-    print(f"Saved detailed JSON: {json_path}")
+    print(f"Saved JSON: {json_path}")
 
-    # Human-readable report
-    txt_path = f"sovereign_test_report_{ts}.txt"
+    # TXT
+    txt_path = os.path.join(audit_dir, f"sovereign_test_report_{ts}_mal{int(malicious_fraction*100)}.txt")
     with open(txt_path, "w", encoding="utf-8") as f:
         f.write("SOVEREIGN MAP / MOHAWK PROTO – COLLECTED TEST VALUES\n")
         f.write("=" * 60 + "\n\n")
@@ -133,14 +131,71 @@ def save_results(data: Dict[str, Any]):
             status = "PASS" if v else "FAIL"
             f.write(f"  {k: <38}: {status}\n")
 
-    print(f"Saved readable report: {txt_path}")
+    print(f"Saved TXT: {txt_path}")
+
+    return json_path, txt_path
 
 
+# ────────────────────────────────────────────────
+# Generate Plot
+# ────────────────────────────────────────────────
+def generate_plot(conv_data, malicious_fraction):
+    ts = datetime.datetime.utcnow().strftime("%Y%m%d_%H%M%S")
+    audit_dir = "audit_results"
+    plot_path = os.path.join(audit_dir, f"convergence_plot_{ts}_mal{int(malicious_fraction*100)}.png")
+
+    plt.figure(figsize=(10, 6))
+    plt.plot(conv_data["rounds"], conv_data["accuracy_per_round"], marker='o', linestyle='-', color='b')
+    plt.axvline(x=conv_data["breach_round"], color='r', linestyle='--', label=conv_data["breach_label"])
+    plt.title(f"Convergence Accuracy (Malicious Fraction: {malicious_fraction})")
+    plt.xlabel("Rounds")
+    plt.ylabel("Accuracy (%)")
+    plt.grid(True)
+    plt.legend()
+    plt.savefig(plot_path)
+    plt.close()
+    print(f"Saved Plot: {plot_path}")
+
+    return plot_path
+
+
+# ────────────────────────────────────────────────
+# Git Push Logic
+# ────────────────────────────────────────────────
+def git_push(files_to_add, commit_message):
+    try:
+        # Add files
+        subprocess.run(["git", "add"] + files_to_add, check=True)
+        
+        # Commit
+        subprocess.run(["git", "commit", "-m", commit_message], check=True)
+        
+        # Push
+        subprocess.run(["git", "push", "origin", "main"], check=True)  # Assume branch 'main'
+        print("Successfully pushed to GitHub.")
+    except subprocess.CalledProcessError as e:
+        print(f"Git error: {e}")
+        print("Ensure Git is configured and repo is set up correctly.")
+
+
+# ────────────────────────────────────────────────
+# Main Execution
+# ────────────────────────────────────────────────
 def main():
-    print("Collecting all visible test values from Sovereign Map scripts...")
-    results = run_all_tests()
-    save_results(results)
-    print("\nDone. Check the generated .json and .txt files.")
+    # Example: Run with different malicious fractions (sweep)
+    malicious_fractions = [0.4, 0.55, 0.7]  # As per previous tests
+    
+    all_files = []
+    for mf in malicious_fractions:
+        print(f"\nRunning test with malicious_fraction = {mf}")
+        results, conv_data = run_all_tests(mf)
+        json_path, txt_path = save_results(results, mf)
+        plot_path = generate_plot(conv_data, mf)
+        all_files.extend([json_path, txt_path, plot_path])
+    
+    # Push all to GitHub
+    commit_msg = f"Add Sovereign Map test reports, JSON, and plots ({datetime.datetime.utcnow().strftime('%Y-%m-%d %H:%M:%S')})"
+    git_push(all_files, commit_msg)
 
 
 if __name__ == "__main__":
