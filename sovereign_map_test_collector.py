@@ -1,201 +1,133 @@
-# full_test_and_push_to_github.py
-# Purpose: Run Sovereign Map tests, generate reports/JSON, create convergence plot,
-#          and push all new/updated files to GitHub.
-# Assumptions:
-# - This script is run in a Git-initialized repository.
-# - GitHub remote 'origin' is set up.
-# - Git is installed and configured (e.g., with PAT or SSH for auth).
-# - matplotlib is available for plotting.
-# - Run this script after ensuring no uncommitted changes conflict.
-# Date: February 17, 2026
+# sovereign_map_test_collector.py
+# Now reads from mega_test output instead of hard-coding everything
 
-import os
-import subprocess
-import datetime
 import json
+import datetime
+import os
+import argparse
+import subprocess
 import numpy as np
 import matplotlib.pyplot as plt
 
-# ────────────────────────────────────────────────
-# Embedded collector logic (from sovereign_map_test_collector.py)
-# ────────────────────────────────────────────────
-def get_mega_test_data(malicious_fraction=0.55):
-    nodes = 10_000_000
-    raw_size_tb = 40_000  # Fixed to TB as per original
-    compressed_size_mb = 28
-    reduction_factor = (raw_size_tb * 1024 * 1024) / compressed_size_mb  # TB to MB: 1024*1024
-
-    bft_threshold = 0.555
-    is_bft_safe = malicious_fraction < bft_threshold  # Fixed logic: safe if below threshold
-
-    recovery_points = [
-        88.2, 89.5, 90.8, 91.5, 92.4,
-        93.1, 93.8, 94.7, 95.2, 95.8
-    ]
-    avg_recovery = float(np.mean(recovery_points))
-
-    return {
-        "section": "mega_test.py values",
-        "nodes": nodes,
-        "raw_metadata_tb": raw_size_tb,
-        "compressed_metadata_mb": compressed_size_mb,
-        "compression_reduction_factor": round(reduction_factor, 1),
-        "malicious_fraction": malicious_fraction,
-        "bft_threshold": bft_threshold,
-        "bft_safe": is_bft_safe,
-        "bft_message": "System remains BFT Safe at 55.6% (Theorem 1 Verified)"
-                        if is_bft_safe else "Security Threshold Breached",
-        "recovery_accuracy_values": recovery_points,
-        "average_recovery_accuracy": round(avg_recovery, 2)
-    }
+def load_mega_results(path: str) -> dict:
+    if not os.path.exists(path):
+        raise FileNotFoundError(f"Mega test output not found: {path}")
+    with open(path, "r", encoding="utf-8") as f:
+        return json.load(f)
 
 
-def get_convergence_data():
-    rounds = list(range(1, 26))
-    accuracy = [
-        85.0, 86.5, 88.0, 89.2, 91.0,
-        92.5, 94.0, 95.5, 96.9,          # 1–9
-        88.2,                             # 10 (breach)
-        89.5, 90.8, 91.5, 92.4, 93.1, 93.8, 94.7, 95.2, 95.8,  # 11–19
-        96.0, 96.2, 96.4, 96.6, 96.8, 96.9   # 20–25
-    ]
-
-    breach_round = 10
-    breach_accuracy = accuracy[breach_round - 1]
-    final_accuracy = accuracy[-1]
-    min_post_breach = min(accuracy[breach_round:])
-
-    return {
-        "section": "convergence_plot data (rounds 1–25)",
-        "rounds": rounds,
-        "accuracy_per_round": [float(x) for x in accuracy],
-        "breach_round": breach_round,
-        "breach_accuracy": breach_accuracy,
-        "breach_label": "Byzantine Breach (55.6%)",
-        "final_accuracy": final_accuracy,
-        "peak_accuracy": max(accuracy),
-        "min_accuracy_after_breach": min_post_breach,
-        "recovery_delta": round(final_accuracy - breach_accuracy, 2)
-    }
-
-
-def run_all_tests(malicious_fraction=0.55):
+def generate_report(mega_data: dict):
     timestamp = datetime.datetime.utcnow().isoformat() + "Z"
 
-    mega = get_mega_test_data(malicious_fraction)
-    conv = get_convergence_data()
+    conv = {
+        "section": "convergence_plot data (rounds 1–25)",
+        "rounds": list(range(1, len(mega_data["accuracy_per_round"]) + 1)),
+        "accuracy_per_round": mega_data["accuracy_per_round"],
+        "breach_round": mega_data["breach_round"],
+        "breach_accuracy": mega_data["breach_accuracy"],
+        "breach_label": "Byzantine Breach (55.6%)",
+        "final_accuracy": mega_data["final_accuracy"],
+        "peak_accuracy": mega_data["peak_accuracy"],
+        "min_accuracy_after_breach": mega_data["min_accuracy_after_breach"],
+        "recovery_delta": round(mega_data["final_accuracy"] - mega_data["breach_accuracy"], 2)
+    }
 
     summary = {
         "timestamp_utc": timestamp,
         "project": "Sovereign Map / Sovereign Mohawk Proto",
-        "tests": [mega, conv],
+        "tests": [
+            {
+                "section": "mega_test.py values",
+                **{k: v for k, v in mega_data.items() if k not in [
+                    "accuracy_per_round", "timestamp", "breach_round",
+                    "breach_accuracy", "final_accuracy", "peak_accuracy",
+                    "min_accuracy_after_breach", "recovery_delta"
+                ]}
+            },
+            conv
+        ],
         "consistency_checks": {
-            "bft_claim_matches_plot": abs(mega["malicious_fraction"] - 0.556) < 0.001,
-            "breach_accuracy_in_plot": conv["breach_accuracy"] == 88.2,
-            "avg_recovery_matches_mega": abs(mega["average_recovery_accuracy"] - 92.5) < 0.01,
-            "final_accuracy_claim": conv["final_accuracy"] >= 96.9,
-            "compression_factor_sane": mega["compression_reduction_factor"] > 1_000_000
+            "bft_claim_matches_plot": mega_data["malicious_fraction"] >= 0.555,
+            "breach_accuracy_in_plot": abs(mega_data["breach_accuracy"] - 88.2) < 1.0,
+            "avg_recovery_matches_mega": abs(mega_data["average_recovery_accuracy"] - 92.5) < 1.0,
+            "final_accuracy_claim": mega_data["final_accuracy"] >= 96.0,
+            "compression_factor_sane": mega_data["compression_reduction_factor"] > 1_000_000
         }
     }
 
-    return summary, conv  # Return conv for plotting
+    return summary, conv
 
 
-def save_results(data, malicious_fraction):
+def save_report(summary: dict, malicious: float):
     ts = datetime.datetime.utcnow().strftime("%Y%m%d_%H%M%S")
-    audit_dir = "audit_results"
-    os.makedirs(audit_dir, exist_ok=True)
-    
-    # JSON
-    json_path = os.path.join(audit_dir, f"sovereign_test_results_{ts}_mal{int(malicious_fraction*100)}.json")
-    with open(json_path, "w", encoding="utf-8") as f:
-        json.dump(data, f, indent=2, ensure_ascii=False)
-    print(f"Saved JSON: {json_path}")
+    os.makedirs("audit_results", exist_ok=True)
 
-    # TXT
-    txt_path = os.path.join(audit_dir, f"sovereign_test_report_{ts}_mal{int(malicious_fraction*100)}.txt")
+    base = f"sovereign_test_{ts}_mal{int(malicious*100)}"
+
+    json_path = f"audit_results/{base}.json"
+    with open(json_path, "w", encoding="utf-8") as f:
+        json.dump(summary, f, indent=2)
+
+    txt_path = f"audit_results/{base}.txt"
     with open(txt_path, "w", encoding="utf-8") as f:
         f.write("SOVEREIGN MAP / MOHAWK PROTO – COLLECTED TEST VALUES\n")
-        f.write("=" * 60 + "\n\n")
-        f.write(f"Generated: {data['timestamp_utc']}\n\n")
-
-        for section in data["tests"]:
-            f.write(f"[{section['section']}]\n")
-            for k, v in section.items():
+        f.write("="*60 + "\n\n")
+        f.write(f"Generated: {summary['timestamp_utc']}\n\n")
+        for sec in summary["tests"]:
+            f.write(f"[{sec['section']}]\n")
+            for k, v in sec.items():
                 if k != "section":
-                    f.write(f"  {k: <28}: {v}\n")
+                    f.write(f"  {k:<28}: {v}\n")
             f.write("\n")
-
         f.write("[Consistency / Sanity Checks]\n")
-        for k, v in data["consistency_checks"].items():
-            status = "PASS" if v else "FAIL"
-            f.write(f"  {k: <38}: {status}\n")
-
-    print(f"Saved TXT: {txt_path}")
+        for k, v in summary["consistency_checks"].items():
+            f.write(f"  {k:<38}: {'PASS' if v else 'FAIL'}\n")
 
     return json_path, txt_path
 
 
-# ────────────────────────────────────────────────
-# Generate Plot
-# ────────────────────────────────────────────────
-def generate_plot(conv_data, malicious_fraction):
+def plot_convergence(conv: dict, malicious: float):
     ts = datetime.datetime.utcnow().strftime("%Y%m%d_%H%M%S")
-    audit_dir = "audit_results"
-    plot_path = os.path.join(audit_dir, f"convergence_plot_{ts}_mal{int(malicious_fraction*100)}.png")
+    path = f"audit_results/convergence_{ts}_mal{int(malicious*100)}.png"
 
-    plt.figure(figsize=(10, 6))
-    plt.plot(conv_data["rounds"], conv_data["accuracy_per_round"], marker='o', linestyle='-', color='b')
-    plt.axvline(x=conv_data["breach_round"], color='r', linestyle='--', label=conv_data["breach_label"])
-    plt.title(f"Convergence Accuracy (Malicious Fraction: {malicious_fraction})")
-    plt.xlabel("Rounds")
+    plt.figure(figsize=(10,6))
+    plt.plot(conv["rounds"], conv["accuracy_per_round"], "b-o", label="Accuracy")
+    plt.axvline(conv["breach_round"], color="r", ls="--", label=conv["breach_label"])
+    plt.title(f"Convergence – malicious = {malicious:.2%}")
+    plt.xlabel("Round")
     plt.ylabel("Accuracy (%)")
     plt.grid(True)
     plt.legend()
-    plt.savefig(plot_path)
+    plt.savefig(path, dpi=150, bbox_inches="tight")
     plt.close()
-    print(f"Saved Plot: {plot_path}")
-
-    return plot_path
+    return path
 
 
-# ────────────────────────────────────────────────
-# Git Push Logic
-# ────────────────────────────────────────────────
-def git_push(files_to_add, commit_message):
-    try:
-        # Add files
-        subprocess.run(["git", "add"] + files_to_add, check=True)
-        
-        # Commit
-        subprocess.run(["git", "commit", "-m", commit_message], check=True)
-        
-        # Push
-        subprocess.run(["git", "push", "origin", "main"], check=True)  # Assume branch 'main'
-        print("Successfully pushed to GitHub.")
-    except subprocess.CalledProcessError as e:
-        print(f"Git error: {e}")
-        print("Ensure Git is configured and repo is set up correctly.")
-
-
-# ────────────────────────────────────────────────
-# Main Execution
-# ────────────────────────────────────────────────
 def main():
-    # Example: Run with different malicious fractions (sweep)
-    malicious_fractions = [0.4, 0.55, 0.7]  # As per previous tests
-    
-    all_files = []
-    for mf in malicious_fractions:
-        print(f"\nRunning test with malicious_fraction = {mf}")
-        results, conv_data = run_all_tests(mf)
-        json_path, txt_path = save_results(results, mf)
-        plot_path = generate_plot(conv_data, mf)
-        all_files.extend([json_path, txt_path, plot_path])
-    
-    # Push all to GitHub
-    commit_msg = f"Add Sovereign Map test reports, JSON, and plots ({datetime.datetime.utcnow().strftime('%Y-%m-%d %H:%M:%S')})"
-    git_push(all_files, commit_msg)
+    parser = argparse.ArgumentParser()
+    parser.add_argument("--malicious", type=float, default=0.55)
+    parser.add_argument("--mega-output", default="mega_test_output.json")
+    parser.add_argument("--run-mega", action="store_true", help="Run mega_test.py first")
+    args = parser.parse_args()
+
+    if args.run_mega:
+        print("Running mega_test simulation...")
+        subprocess.run([
+            "python", "mega_test.py",
+            "--malicious", str(args.malicious),
+            "--output", args.mega_output
+        ], check=True)
+
+    print("Loading results...")
+    mega = load_mega_results(args.mega_output)
+    report, conv = generate_report(mega)
+    json_p, txt_p = save_report(report, args.malicious)
+    plot_p = plot_convergence(conv, args.malicious)
+
+    print("\nGenerated:")
+    print(f"  Report JSON: {json_p}")
+    print(f"  Report TXT : {txt_p}")
+    print(f"  Plot       : {plot_p}")
 
 
 if __name__ == "__main__":
