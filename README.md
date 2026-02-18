@@ -1,3 +1,4 @@
+e deployment has not happened yet
 # 🌐 Sovereign Map: Federated Learning Framework
 
 [![Build and Test](https://github.com/rwilliamspbg-ops/Sovereign_Map_Federated_Learning/actions/workflows/build.yml/badge.svg)](https://github.com/rwilliamspbg-ops/Sovereign_Map_Federated_Learning/actions/workflows/build.yml)
@@ -160,28 +161,30 @@ python src/node/genesis_node.py --mode simulation
 
 ## 🚀 Roadmap
 
-### Q1 2025 - Alpha Launch
-- [x] SGP-001 specification finalized
-- [x] dAuth proof-of-concept
-- [ ] 100-node testnet deployment
-- [ ] MOHAWK framework v0.3
+### Q1 2026 - Infrastructure & Scaling
+- [ ] 100-node testnet deployment (delayed from Q1 2025)
+- [ ] MOHAWK framework v0.4 enhancements
+- [ ] Cross-chain bridge architecture finalized
+- [ ] TPM attestation hardening
 
-### Q2 2025 - Beta Network
-- [ ] 1,000-node mainnet candidate
+### Q2 2026 - Network Expansion
+- [ ] 500-node beta network launch
 - [ ] Hardware wallet integration
 - [ ] Mobile node support (iOS/Android)
-- [ ] Third-party SDK release
+- [ ] Third-party SDK v1.0 release
 
-### Q3 2025 - Mainnet
-- [ ] Economic incentives activation
-- [ ] Cross-chain bridge deployment
-- [ ] Enterprise API access
+### Q3 2026 - Mainnet Preparation
+- [ ] Economic incentives pilot program
+- [ ] Governance framework deployment
+- [ ] Enterprise API access (limited)
+- [ ] Community testnet stabilization
+
+### Q4 2026 - Mainnet Launch
+- [ ] Full mainnet launch with token economics
+- [ ] 1,000+ node network target
+- [ ] Enterprise partnerships activated
 - [ ] Governance token launch
 
-## 🤝 Contributing
-
-We welcome contributions from the community! See our [Contributing Guide](https://github.com/rwilliamspbg-ops/Sovereign_Map_Federated_Learning/blob/main/CONTRIBUTING.md) for:
-- Code style guidelines
 - Testing requirements
 - Privacy audit procedures
 - Governance participation
