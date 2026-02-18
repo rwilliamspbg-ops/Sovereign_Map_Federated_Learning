@@ -40,6 +40,9 @@ Explore the complete Sovereign Map repository ecosystem:
 - **[v0.2.0-alpha Tech Spec](https://github.com/rwilliamspbg-ops/Sovereign_Map_Federated_Learning/discussions/3)** - 1,000-node scaling simulation data
 
 ## 🏗️ Technical Pillars
+## 🏗️ Technical Pillars
+
+```mermaid
 graph TB
     subgraph Edge_Sovereignty ["Genesis Node (Edge Sovereignty)"]
         direction TB
