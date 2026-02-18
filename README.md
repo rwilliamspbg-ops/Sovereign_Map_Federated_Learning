@@ -4,6 +4,12 @@
 [![SGP-001 Audit Sync](https://github.com/rwilliamspbg-ops/Sovereign_Map_Federated_Learning/actions/workflows/audit-check.yml/badge.svg)](https://github.com/rwilliamspbg-ops/Sovereign_Map_Federated_Learning/actions/workflows/audit-check.yml)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 [![Docker Ready](https://img.shields.io/badge/Docker-Ready-2496ED?logo=docker)](https://www.docker.com/)
+[![CodeQL](https://github.com/rwilliamspbg-ops/Sovereign_Map_Federated_Learning/actions/workflows/codeql-analysis.yml/badge.svg)](https://github.com/rwilliamspbg-ops/Sovereign_Map_Federated_Learning/actions/workflows/codeql-analysis.yml)
+[![Lint](https://github.com/rwilliamspbg-ops/Sovereign_Map_Federated_Learning/actions/workflows/lint.yml/badge.svg)](https://github.com/rwilliamspbg-ops/Sovereign_Map_Federated_Learning/actions/workflows/lint.yml)
+![Python Version](https://img.shields.io/badge/python-3.10%2B-blue)
+![Node Version](https://img.shields.io/badge/node-18.x%2B-green)
+[![GitHub release](https://img.shields.io/github/v/release/rwilliamspbg-ops/Sovereign_Map_Federated_Learning)](https://github.com/rwilliamspbg-ops/Sovereign_Map_Federated_Learning/releases)
+[![Codecov](https://img.shields.io/codecov/c/github/rwilliamspbg-ops/Sovereign_Map_Federated_Learning)](https://codecov.io/gh/rwilliamspbg-ops/Sovereign_Map_Federated_Learning)
 
 ## 📋 Latest Updates (February 2026)
 
