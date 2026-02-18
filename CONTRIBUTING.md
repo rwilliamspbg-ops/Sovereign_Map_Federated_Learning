@@ -7,9 +7,11 @@ By participating in this project, you agree to abide by our [Code of Conduct](CO
 ---
 
 ## 💖 Support the Evolution
+
 Developing a coordinator-less, hardware-enforced mapping protocol requires significant R&D and infrastructure for large-scale simulations. If you aren't a developer but want to support the project, consider a donation to our community treasury.
 
-github: [rwilliamspbg-ops]
+[![GitHub Sponsor](https://img.shields.io/badge/Sponsor-GitHub-EA4AAA?style=flat&logo=github)](https://github.com/sponsors/rwilliamspbg-ops)
+
 *All donations go directly toward maintaining the Genesis Node testnets and SGP-001 third-party audits.*
 
 ---
