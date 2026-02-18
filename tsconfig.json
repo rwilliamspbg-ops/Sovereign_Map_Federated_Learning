@@ -3,7 +3,7 @@
     "target": "ES2022",
     "module": "NodeNext",
     "moduleResolution": "NodeNext",
-    "lib": ["ES2022"],
+    "lib": ["ES2022", "DOM"],
     "strict": true,
     "esModuleInterop": true,
     "skipLibCheck": true,
@@ -13,10 +13,35 @@
     "declarationMap": true,
     "sourceMap": true,
     "composite": true,
+    "incremental": true,
+    "tsBuildInfoFile": ".tsbuildinfo",
     "baseUrl": ".",
     "paths": {
-      "@sovereignmap/*": ["packages/*/src"]
-    }
+      "@sovereignmap/core": ["packages/core/src/index.ts"],
+      "@sovereignmap/core/*": ["packages/core/src/*"],
+      "@sovereignmap/privacy": ["packages/privacy/src/index.ts"],
+      "@sovereignmap/privacy/*": ["packages/privacy/src/*"],
+      "@sovereignmap/consensus": ["packages/consensus/src/index.ts"],
+      "@sovereignmap/consensus/*": ["packages/consensus/src/*"],
+      "@sovereignmap/island": ["packages/island/src/index.ts"],
+      "@sovereignmap/island/*": ["packages/island/src/*"],
+      "@sovereignmap/hardware": ["packages/hardware/src/index.ts"],
+      "@sovereignmap/hardware/*": ["packages/hardware/src/*"],
+      "@sovereignmap/testing": ["packages/testing/src/index.ts"],
+      "@sovereignmap/testing/*": ["packages/testing/src/*"]
+    },
+    "outDir": "dist",
+    "rootDir": ".",
+    "noUnusedLocals": true,
+    "noUnusedParameters": true,
+    "noImplicitReturns": true,
+    "noFallthroughCasesInSwitch": true,
+    "strictNullChecks": true,
+    "strictPropertyInitialization": true,
+    "noImplicitAny": true,
+    "noImplicitThis": true,
+    "alwaysStrict": true
   },
-  "exclude": ["node_modules", "dist", "build"]
+  "include": ["packages/*/src/**/*", "apps/*/src/**/*", "examples/*/src/**/*"],
+  "exclude": ["node_modules", "dist", "build", "**/*.spec.ts", "**/*.test.ts"]
 }
