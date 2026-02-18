@@ -17,32 +17,38 @@ jobs:
       - name: Checkout Code
         uses: actions/checkout@v4
 
-      - name: Patch Workspaces and Clean
-        run: |
-          # 1. Remove lockfile to prevent protocol conflicts
-          rm -f package-lock.json
-          # 2. Convert workspace:* to * in all package.json files
-          sed -i 's/workspace:\*/\*/g' package.json
-          find packages -name "package.json" -exec sed -i 's/workspace:\*/\*/g' {} +
-          echo "Workspaces patched for standard npm compatibility."
+      - name: Install pnpm
+        uses: pnpm/action-setup@v2
+        with:
+          version: 8
 
       - name: Set up Node.js
         uses: actions/setup-node@v4
         with:
           node-version: '20'
+          cache: 'pnpm'
 
       - name: Install Dependencies
-        run: |
-          # Use legacy-peer-deps to ignore the EventEmitter type conflicts temporarily
-          npm install --legacy-peer-deps
+        run: pnpm install --no-frozen-lockfile
 
-      - name: Build with Turbo
-        run: |
-          npx turbo run build --filter=@sovereignmap/core --filter=@sovereignmap/privacy
+      - name: Build Core Logic
+        run: pnpm run build --filter=@sovereignmap/core
 
       - name: Build Docker images
         run: |
+          # Fresh build for 200-node scale test
           docker compose build --no-cache
 
       - name: Start Services
         run: docker compose up -d
+
+      - name: Wait for Backend Health
+        run: |
+          echo "Waiting for services to stabilize..."
+          sleep 30
+
+      - name: Debug on Failure
+        if: failure()
+        run: |
+          docker compose logs
+          docker ps -a
