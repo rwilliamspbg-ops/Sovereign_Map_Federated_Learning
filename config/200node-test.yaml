@@ -1,0 +1,19 @@
+# 200-Node BFT Test Configuration
+test_id: "bft-200-node-test"
+node_count: 200
+byzantine_ratio: 0.555  # Test 55.5% malicious resilience
+topology: "mesh"
+consensus:
+  quorum_percentage: 66.7  # ⌈(2n/3)⌉ + 1
+  timeout_seconds: 300     # Extended for large network
+  max_rounds: 50
+network:
+  latency_ms: 50           # Simulate WAN latency
+  packet_loss_percent: 0.1
+  partition_scenarios: true
+security:
+  tpm_enabled: false       # Disable for simulation speed
+  zk_snark_verification: true
+monitoring:
+  prometheus_retention: "24h"
+  grafana_enabled: true
