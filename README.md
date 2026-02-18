@@ -46,9 +46,9 @@ graph TB
     subgraph Edge_Sovereignty ["Genesis Node (Edge Sovereignty)"]
         direction TB
         Hardware["NPU (85 TOPS) + TPM 2.0"]
-        SGP["SGP-001 Privacy Layer<br/>(DP & ZK-Proofs)"]
-        SLAM["Autonomous 3D Mapping<br/>(ORB-SLAM3)"]
-        LocalState["Tamper-Evident<br/>State Recovery"]
+        SGP["SGP-001 Privacy Layer (DP & ZK-Proofs)"]
+        SLAM["Autonomous 3D Mapping (ORB-SLAM3)"]
+        LocalState["Tamper-Evident State Recovery"]
         
         Hardware --> SGP
         SGP --> SLAM
@@ -81,7 +81,6 @@ graph TB
     style Edge_Sovereignty fill:#f9f,stroke:#333,stroke-width:2px
     style P2P_Mesh fill:#bbf,stroke:#333,stroke-width:2px
     style Island_Mode fill:#dfd,stroke:#333,stroke-style:dashed
-
 ### 🔒 Data Sovereignty
 
 Non-negotiable architectural pillar. All data processing happens at the edge with hardware-accelerated SGP-001 privacy guarantees. No central authority can access raw mapping data.
