@@ -82,15 +82,6 @@ graph TB
     style P2P_Mesh fill:#bbf,stroke:#333,stroke-width:2px
     style Island_Mode fill:#dfd,stroke:#333,stroke-style:dashed
 
-### 🔒 Data Sovereignty
-
-Non-negotiable architectural pillar. All data processing happens at the edge with hardware-accelerated SGP-001 privacy guarantees. No central authority can access raw mapping data.
-
-**Key Features:**
-- Hardware-accelerated differential privacy (NPU-based)
-- Zero-knowledge proof generation at the edge
-- Cryptographic attestation of privacy compliance
-
 ### 🏝️ Independent Island Mode
 
 Primary fail-safe for edge resiliency. Genesis Nodes operate autonomously when disconnected from the network, ensuring continuous mapping operations.
