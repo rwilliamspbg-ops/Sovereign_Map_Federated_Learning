@@ -1,36 +1,131 @@
+# Docker Compose Configuration for 200-Node BFT Test
+# Sovereign Map Federated Learning
+# Usage: docker-compose -f docker-compose.200nodes.yml up -d
+
 version: '3.8'
 
 services:
-  # Base services (from original docker-compose.yml)
+  # ==========================================
+  # Infrastructure Services
+  # ==========================================
+  
   mongo:
-    image: mongo:latest
+    image: mongo:7.0
+    container_name: mongo-200
     volumes:
-      - mongo_data:/data/db
+      - mongo_data_200:/data/db
+    ports:
+      - "27017:27017"
+    environment:
+      MONGO_INITDB_ROOT_USERNAME: admin
+      MONGO_INITDB_ROOT_PASSWORD: sovereign2026
     restart: always
+    networks:
+      - sovereign-net-200
+    healthcheck:
+      test: ["CMD", "mongosh", "--eval", "db.adminCommand('ping')"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
 
+  redis:
+    image: redis:7-alpine
+    container_name: redis-200
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data_200:/data
+    restart: always
+    networks:
+      - sovereign-net-200
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 3s
+      retries: 5
+
+  # ==========================================
+  # Core Services
+  # ==========================================
+  
   backend:
     build:
       context: .
       dockerfile: Dockerfile.backend
+    image: backend:latest
+    container_name: backend-200
+    ports:
+      - "8080:8080"
+      - "5000:5000"
     environment:
-      - DATABASE_URI=mongodb://mongo:27017/mydb
+      - NODE_ID=backend-200
+      - DATABASE_URI=mongodb://admin:sovereign2026@mongo:27017/sovereign_200?authSource=admin
+      - REDIS_URI=redis://redis:6379
       - NODE_COUNT=200
-    depends_on:
-      - mongo
-    restart: always
-
-  # Node Agent Template (scaled to 200 instances)
-  node-agent:
-    build: .
-    image: federated-learning:latest
-    environment:
-      - AGGREGATOR_URL=http://backend:8080
-      - DATABASE_URI=mongodb://mongo:27017/mydb
-      - BATCH_SIZE=32
+      - QUORUM_SIZE=134
+      - LOG_LEVEL=debug
       - TPM_ENABLED=false
+    depends_on:
+      mongo:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    restart: always
+    networks:
+      - sovereign-net-200
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:5000/health"]
+      interval: 20s
+      timeout: 10s
+      retries: 5
+      start_period: 60s
+
+  aggregator:
+    build:
+      context: .
+      dockerfile: Dockerfile.backend
+    image: aggregator:latest
+    container_name: aggregator-200
+    ports:
+      - "8081:8080"
+    environment:
+      - NODE_ID=aggregator-200
+      - AGGREGATOR_MODE=true
+      - DATABASE_URI=mongodb://admin:sovereign2026@mongo:27017/sovereign_200?authSource=admin
+      - REDIS_URI=redis://redis:6379
+      - QUORUM_SIZE=134
+      - BYZANTINE_RATIO=0.555
+      - LOG_LEVEL=debug
     depends_on:
       - backend
       - mongo
+      - redis
+    restart: always
+    networks:
+      - sovereign-net-200
+
+  # ==========================================
+  # Node Agent Template (Scaled to 200)
+  # ==========================================
+  
+  node-agent:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    image: federated-learning:latest
+    environment:
+      - AGGREGATOR_URL=http://aggregator:8080
+      - DATABASE_URI=mongodb://admin:sovereign2026@mongo:27017/sovereign_200?authSource=admin
+      - REDIS_URI=redis://redis:6379
+      - BATCH_SIZE=32
+      - TIMEOUT=30s
+      - TPM_ENABLED=false
+      - LOG_LEVEL=info
+      - WASM_BINARY_PATH=/app/wasm/verify.wasm
+    depends_on:
+      - aggregator
+      - mongo
+      - redis
     deploy:
       replicas: 200
       resources:
@@ -40,37 +135,182 @@ services:
         reservations:
           cpus: '0.25'
           memory: 256M
+      restart_policy:
+        condition: on-failure
+        delay: 5s
+        max_attempts: 3
     networks:
-      - sovereign-net
+      - sovereign-net-200
+    # Each container gets unique hostname: node-agent-1, node-agent-2, etc.
+    hostname: "node-agent-{{.Task.Slot}}"
+    volumes:
+      - ./test-data:/app/test-data:ro
+      - node-agent-logs:/app/logs
 
-  # Load balancer for node agents
+  # ==========================================
+  # Load Balancer & Proxy
+  # ==========================================
+  
   nginx:
     image: nginx:alpine
+    container_name: nginx-200
     ports:
-      - "8080:80"
+      - "80:80"
+      - "443:443"
     volumes:
       - ./nginx.conf:/etc/nginx/nginx.conf:ro
     depends_on:
-      - node-agent
+      - backend
+      - aggregator
+    restart: always
+    networks:
+      - sovereign-net-200
 
-  # Monitoring (from docker-compose.monitoring.yml)
+  # ==========================================
+  # Monitoring Stack
+  # ==========================================
+  
   prometheus:
-    image: prom/prometheus:latest
+    image: prom/prometheus:v2.47.0
+    container_name: prometheus-200
     ports:
       - "9090:9090"
     volumes:
       - ./monitoring/prometheus.yml:/etc/prometheus/prometheus.yml:ro
+      - prometheus_data_200:/prometheus
+    command:
+      - '--config.file=/etc/prometheus/prometheus.yml'
+      - '--storage.tsdb.path=/prometheus'
+      - '--storage.tsdb.retention.time=24h'
+      - '--web.enable-lifecycle'
+    restart: always
+    networks:
+      - sovereign-net-200
 
   grafana:
-    image: grafana/grafana:latest
+    image: grafana/grafana:10.1.0
+    container_name: grafana-200
     ports:
       - "3001:3000"
     environment:
-      - GF_SECURITY_ADMIN_PASSWORD=admin
+      - GF_SECURITY_ADMIN_USER=admin
+      - GF_SECURITY_ADMIN_PASSWORD=sovereign2026
+      - GF_USERS_ALLOW_SIGN_UP=false
+      - GF_SERVER_ROOT_URL=http://localhost:3001
+    volumes:
+      - grafana_data_200:/var/lib/grafana
+      - ./monitoring/grafana/dashboards:/etc/grafana/provisioning/dashboards:ro
+      - ./monitoring/grafana/datasources:/etc/grafana/provisioning/datasources:ro
+    depends_on:
+      - prometheus
+    restart: always
+    networks:
+      - sovereign-net-200
+
+  node-exporter:
+    image: prom/node-exporter:v1.6.1
+    container_name: node-exporter-200
+    volumes:
+      - /proc:/host/proc:ro
+      - /sys:/host/sys:ro
+      - /:/rootfs:ro
+    command:
+      - '--path.procfs=/host/proc'
+      - '--path.rootfs=/rootfs'
+      - '--path.sysfs=/host/sys'
+      - '--collector.filesystem.mount-points-exclude=^/(sys|proc|dev|host|etc)($$|/)'
+    restart: always
+    networks:
+      - sovereign-net-200
+
+  cadvisor:
+    image: gcr.io/cadvisor/cadvisor:v0.47.2
+    container_name: cadvisor-200
+    privileged: true
+    devices:
+      - /dev/kmsg:/dev/kmsg
+    volumes:
+      - /:/rootfs:ro
+      - /var/run:/var/run:ro
+      - /sys:/sys:ro
+      - /var/lib/docker:/var/lib/docker:ro
+      - /cgroup:/cgroup:ro
+    restart: always
+    networks:
+      - sovereign-net-200
+
+  # ==========================================
+  # Chaos Engineering (Byzantine Fault Injection)
+  # ==========================================
+  
+  chaos-controller:
+    build:
+      context: ./scripts
+      dockerfile: Dockerfile.chaos
+    image: chaos-controller:latest
+    container_name: chaos-200
+    environment:
+      - DOCKER_HOST=tcp://docker:2375
+      - BYZANTINE_COUNT=111
+      - ATTACK_TYPES=gradient_poisoning,label_flipping,sybil_attack
+      - NETWORK_PARTITIONS=true
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+      - ./test-results:/app/results
+    depends_on:
+      - node-agent
+    networks:
+      - sovereign-net-200
+    profiles:
+      - chaos
+
+  # ==========================================
+  # Test Orchestrator
+  # ==========================================
+  
+  test-orchestrator:
+    build:
+      context: .
+      dockerfile: Dockerfile.test
+    image: test-orchestrator:latest
+    container_name: orchestrator-200
+    environment:
+      - TEST_CONFIG=/app/config/200node-test.yaml
+      - OUTPUT_DIR=/app/test-results
+      - NODE_COUNT=200
+      - BYZANTINE_COUNT=111
+    volumes:
+      - ./config:/app/config:ro
+      - ./test-results:/app/test-results
+      - ./scripts:/app/scripts:ro
+    depends_on:
+      - backend
+      - aggregator
+      - node-agent
+    networks:
+      - sovereign-net-200
+    profiles:
+      - test
+
+# ==========================================
+# Networks
+# ==========================================
 
 networks:
-  sovereign-net:
+  sovereign-net-200:
     driver: bridge
+    ipam:
+      config:
+        - subnet: 172.20.0.0/16
+          gateway: 172.20.0.1
+
+# ==========================================
+# Volumes
+# ==========================================
 
 volumes:
-  mongo_data:
+  mongo_data_200:
+  redis_data_200:
+  prometheus_data_200:
+  grafana_data_200:
+  node-agent-logs:
