@@ -1,0 +1,12 @@
+{
+  "name": "@sovereignmap/island",
+  "version": "0.1.0-alpha",
+  "description": "Autonomous offline operation with tamper-evident state recovery",
+  "type": "module",
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "dependencies": {
+    "level": "^8.0.0",
+    "ulid": "^2.3.0"
+  }
+}
