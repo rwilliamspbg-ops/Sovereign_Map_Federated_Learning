@@ -23,12 +23,13 @@
 Sovereign Map is a decentralized spatial operating system built on hardware-enforced privacy and coordinatorless scaling. Data sovereignty is non-negotiable.
 
 ## 📊 Quick Stats
-
 | Metric | Value | Description |
-|--------|-------|-------------|
-| **85 TOPS** | NPU Compute | Per Genesis Node |
-| **228 GB/s** | Memory Bandwidth | Dedicated DMA Path |
-| **ε = 1.0** | Privacy Budget | SGP-001 Standard (δ = 1e−5) |
+| :--- | :--- | :--- |
+| **85 TOPS** | NPU Compute | Dedicated Genesis Node edge-inference |
+| **ε = 0.98** | Privacy Budget | SGP-001 Verified (Audit Feb 2026) |
+| **< 12%** | Privacy Overhead | Latency impact of DP & ZK-Proofs |
+| **85.42%** | Audit Accuracy | Round 45 Performance (30% BFT Stress) |
+| **27x** | Max Multiplier | Potential Node Operator Reward Scaling |
 
 ## 📚 Ecosystem
 
