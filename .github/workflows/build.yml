@@ -18,25 +18,17 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v4
 
-      # ⚠️ Use v2 and explicitly skip install so it does NOT look for pnpm-lock.yaml
-      - name: Install pnpm
-        uses: pnpm/action-setup@v2
-        with:
-          version: 9
-          run_install: false
-
       - name: Set up Node.js
         uses: actions/setup-node@v4
         with:
           node-version: '20'
-          cache: 'pnpm'
+          cache: 'npm'
 
-      # We control install ourselves, without frozen lockfile
       - name: Install dependencies
-        run: pnpm install --no-frozen-lockfile
+        run: npm ci
 
       - name: Build frontend packages
-        run: pnpm run build --filter "@sovereignmap/*"
+        run: npm run build --workspaces
 
       - name: Set up Python
         uses: actions/setup-python@v4
