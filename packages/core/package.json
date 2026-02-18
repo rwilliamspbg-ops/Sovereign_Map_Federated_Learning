@@ -1,0 +1,47 @@
+{
+  "name": "@sovereignmap/core",
+  "version": "0.1.0-alpha",
+  "description": "Core Sovereign Map node client with privacy-preserving protocol",
+  "type": "module",
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "import": "./dist/index.js",
+      "types": "./dist/index.d.ts"
+    },
+    "./node": {
+      "import": "./dist/node.js",
+      "types": "./dist/node.d.ts"
+    },
+    "./network": {
+      "import": "./dist/network.js",
+      "types": "./dist/network.d.ts"
+    }
+  },
+  "scripts": {
+    "build": "tsc",
+    "dev": "tsc --watch",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "lint": "eslint src/",
+    "typecheck": "tsc --noEmit"
+  },
+  "dependencies": {
+    "@grpc/grpc-js": "^1.9.14",
+    "@libp2p/core": "^1.0.0",
+    "@libp2p/tcp": "^9.0.0",
+    "@multiformats/multiaddr": "^12.1.0",
+    "eventemitter3": "^5.0.1",
+    "nanoid": "^5.0.4",
+    "zod": "^3.22.4"
+  },
+  "devDependencies": {
+    "@types/node": "^20.11.0",
+    "typescript": "^5.3.3",
+    "vitest": "^1.2.0"
+  },
+  "peerDependencies": {
+    "@sovereignmap/privacy": "workspace:*"
+  }
+}
