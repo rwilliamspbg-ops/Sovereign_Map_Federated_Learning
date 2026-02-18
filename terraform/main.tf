@@ -16,7 +16,7 @@ variable "aws_region" {
 }
 
 variable "node_count" {
-  default = 100
+  default = 50
 }
 
 variable "key_pair_name" {
