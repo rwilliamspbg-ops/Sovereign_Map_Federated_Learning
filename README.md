@@ -79,6 +79,12 @@ graph LR
     style Mesh fill:#bbf,stroke:#333,stroke-width:2px
     style Logic fill:#dfd,stroke:#333,stroke-style:dashed
 ```
+## 🛡️ Trust & Verification
+The Sovereign Map protocol uses a "Zero-Trust" hardware approach. Every model update is wrapped in a **Cryptographic Proof of Contribution**.
+
+* **Hardware Root of Trust:** Uses TPM 2.0 to sign state transitions.
+* **SGP-001 Enforcement:** Privacy budgets are calculated on-chip; nodes that exceed $\epsilon=1.0$ are automatically quarantined by the mesh.
+* **Byzantine Resistance:** The network maintains convergence even if 30% of peers report malicious gradients.
 
 ### 🏝️ Independent Island Mode
 
