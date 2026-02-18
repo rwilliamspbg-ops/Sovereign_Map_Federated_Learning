@@ -1,25 +1,45 @@
 {
   "$schema": "https://turbo.build/schema.json",
-  "globalDependencies": ["**/.env.*local"],
+  "globalDependencies": ["**/.env.*local", "tsconfig.json"],
+  "globalEnv": [
+    "NODE_ENV",
+    "SOVEREIGNMAP_NETWORK",
+    "SOVEREIGNMAP_PRIVACY_EPSILON",
+    "SOVEREIGNMAP_PRIVACY_DELTA"
+  ],
   "pipeline": {
     "build": {
-      "dependsOn": ["^build"],
-      "outputs": [".next/**", "!.next/cache/**", "dist/**", "build/**"]
+      "dependsOn": ["^build", "proto:generate"],
+      "outputs": [".next/**", "!.next/cache/**", "dist/**", "build/**", "*.tsbuildinfo"],
+      "outputMode": "hash"
     },
     "test": {
       "dependsOn": ["build"],
-      "outputs": ["coverage/**"]
+      "outputs": ["coverage/**"],
+      "inputs": ["src/**/*.ts", "tests/**/*.ts"]
     },
-    "lint": {},
+    "test:ci": {
+      "dependsOn": ["build"],
+      "outputs": ["coverage/**"],
+      "inputs": ["src/**/*.ts", "tests/**/*.ts"]
+    },
+    "lint": {
+      "outputs": []
+    },
     "typecheck": {
-      "dependsOn": ["^build"]
+      "dependsOn": ["^build"],
+      "outputs": ["*.tsbuildinfo"]
     },
     "dev": {
       "cache": false,
       "persistent": true
     },
-    "publish": {
-      "dependsOn": ["build", "test", "lint"]
+    "clean": {
+      "cache": false
+    },
+    "proto:generate": {
+      "cache": false,
+      "outputs": ["src/proto/**"]
     }
   }
 }
