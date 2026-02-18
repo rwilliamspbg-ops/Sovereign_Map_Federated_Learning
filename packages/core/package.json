@@ -41,12 +41,12 @@
     "clean": "rm -rf dist .tsbuildinfo",
     "wasm:copy": "cp -r wasm dist/ 2>/dev/null || true"
   },
- "dependencies": {
+"dependencies": {
     "@grpc/grpc-js": "^1.9.14",
     "libp2p": "^1.0.0",
     "@libp2p/tcp": "^9.0.0",
     "@chainsafe/libp2p-yamux": "^8.0.1",
-    "@chainsafe/libp2p-noise": "^15.0.0",
+    "@chainsafe/libp2p-noise": "^17.0.0",
     "@multiformats/multiaddr": "^12.1.0",
     "eventemitter3": "^5.0.1",
     "nanoid": "^5.0.4",
