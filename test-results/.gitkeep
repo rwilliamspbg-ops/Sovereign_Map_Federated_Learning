@@ -1,0 +1,2 @@
+# Create empty file
+touch test-results/.gitkeep
