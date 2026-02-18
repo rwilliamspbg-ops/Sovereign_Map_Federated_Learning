@@ -42,45 +42,41 @@ Explore the complete Sovereign Map repository ecosystem:
 ## 🏗️ Technical Pillars
 
 ```mermaid
-graph TB
-    subgraph Edge_Sovereignty ["Genesis Node (Edge Sovereignty)"]
+graph LR
+    subgraph Node ["Genesis Node"]
         direction TB
-        Hardware["NPU (85 TOPS) + TPM 2.0"]
-        SGP["SGP-001 Privacy Layer (DP & ZK-Proofs)"]
-        SLAM["Autonomous 3D Mapping (ORB-SLAM3)"]
-        LocalState["Tamper-Evident State Recovery"]
+        HW["Hardware: NPU + TPM"]
+        SGP["Privacy: SGP-001"]
+        SLAM["Mapping: ORB-SLAM3"]
+        State["State Recovery"]
         
-        Hardware --> SGP
-        SGP --> SLAM
-        SLAM --> LocalState
+        HW --> SGP --> SLAM --> State
     end
 
-    subgraph P2P_Mesh ["Coordinator-less Mesh (dAuth)"]
-        direction LR
-        NodeA((Node A))
-        NodeB((Node B))
-        NodeC((Node C))
+    subgraph Mesh ["Coordinator-less Mesh"]
+        direction TB
+        Consensus["BFT Consensus"]
+        Sync["P2P Model Sync"]
+        Auth["dAuth Protocol"]
         
-        NodeA <-->|BFT Consensus| NodeB
-        NodeB <-->|Model Aggregation| NodeC
-        NodeC <-->|Peer Verification| NodeA
+        Consensus --- Sync --- Auth
     end
 
-    subgraph Island_Mode ["Resiliency Layer"]
-        Disconnect{Network Status}
-        Offline[Island Mode: Autonomous Ops]
-        Sync[Automatic Sync & Re-attestation]
+    subgraph Logic ["Island Mode Logic"]
+        Status{Network?}
+        Offline[Autonomous Ops]
+        Online[Global Aggregation]
     end
 
-    LocalState --> Disconnect
-    Disconnect -->|Offline| Offline
-    Disconnect -->|Online| P2P_Mesh
-    Offline -->|Reconnected| Sync
-    Sync --> P2P_Mesh
+    State --> Status
+    Status -->|Offline| Offline
+    Status -->|Online| Online
+    Online <--> Mesh
+    Offline -->|Reconnected| Online
 
-    style Edge_Sovereignty fill:#f9f,stroke:#333,stroke-width:2px
-    style P2P_Mesh fill:#bbf,stroke:#333,stroke-width:2px
-    style Island_Mode fill:#dfd,stroke:#333,stroke-style:dashed
+    style Node fill:#f9f,stroke:#333,stroke-width:2px
+    style Mesh fill:#bbf,stroke:#333,stroke-width:2px
+    style Logic fill:#dfd,stroke:#333,stroke-style:dashed
 ```
 
 ### 🏝️ Independent Island Mode
