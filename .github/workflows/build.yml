@@ -21,12 +21,13 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version: '20'
-          # Removed the 'cache' line to prevent the "lock file not found" error
 
-      - name: Install Dependencies
+      - name: Fix Workspace Protocol & Install
         run: |
-          # Use install instead of ci since the lockfile is missing
-          npm install 
+          # Converts "workspace:*" to "*" to make it compatible with standard npm
+          sed -i 's/workspace:\*/\*/g' package.json
+          find packages -name "package.json" -exec sed -i 's/workspace:\*/\*/g' {} +
+          npm install --include=dev
           npm install --workspaces
 
       - name: Set up Python
@@ -34,9 +35,13 @@ jobs:
         with:
           python-version: '3.10'
 
+      - name: Build with Turbo
+        run: |
+          npx turbo run build --filter=@sovereignmap/core
+
       - name: Build Docker images
         run: |
-          # Force build without cache to ensure workspace links are fresh
+          # Building fresh images for the 200-node scale test
           docker compose build --no-cache
 
       - name: Start Services
@@ -44,5 +49,11 @@ jobs:
 
       - name: Wait for Backend Health
         run: |
-          echo "Waiting for backend..."
-          sleep 30 # Simple wait for the 200-node config
+          echo "Waiting for federated learning nodes to initialize..."
+          sleep 30
+
+      - name: Debug on Failure
+        if: failure()
+        run: |
+          docker compose logs
+          docker ps -a
