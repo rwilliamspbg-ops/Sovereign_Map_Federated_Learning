@@ -81,6 +81,7 @@ graph TB
     style Edge_Sovereignty fill:#f9f,stroke:#333,stroke-width:2px
     style P2P_Mesh fill:#bbf,stroke:#333,stroke-width:2px
     style Island_Mode fill:#dfd,stroke:#333,stroke-style:dashed
+```
 
 ### 🏝️ Independent Island Mode
 
