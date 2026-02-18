@@ -1,7 +1,8 @@
 {
   "name": "@sovereignmap/core",
-  "version": "0.1.0-alpha",
-  "description": "Core Sovereign Map node client with privacy-preserving protocol",
+  "version": "0.1.0-alpha.1",
+  "description": "Core Sovereign Map node client with privacy-preserving protocol, BFT consensus, and Island Mode",
+  "keywords": ["sovereignmap", "depin", "federated-learning", "privacy", "bft"],
   "type": "module",
   "main": "./dist/index.js",
   "types": "./dist/index.d.ts",
@@ -17,31 +18,54 @@
     "./network": {
       "import": "./dist/network.js",
       "types": "./dist/network.d.ts"
+    },
+    "./types": {
+      "import": "./dist/types.js",
+      "types": "./dist/types.d.ts"
     }
   },
+  "files": [
+    "dist",
+    "wasm",
+    "README.md",
+    "LICENSE"
+  ],
   "scripts": {
-    "build": "tsc",
+    "build": "tsc && npm run wasm:copy",
     "dev": "tsc --watch",
     "test": "vitest run",
     "test:watch": "vitest",
+    "test:ci": "vitest run --coverage",
     "lint": "eslint src/",
-    "typecheck": "tsc --noEmit"
+    "typecheck": "tsc --noEmit",
+    "clean": "rm -rf dist .tsbuildinfo",
+    "wasm:copy": "cp -r wasm dist/ 2>/dev/null || true"
   },
   "dependencies": {
     "@grpc/grpc-js": "^1.9.14",
     "@libp2p/core": "^1.0.0",
     "@libp2p/tcp": "^9.0.0",
+    "@libp2p/mplex": "^10.0.0",
+    "@libp2p/noise": "^14.0.0",
     "@multiformats/multiaddr": "^12.1.0",
     "eventemitter3": "^5.0.1",
     "nanoid": "^5.0.4",
-    "zod": "^3.22.4"
+    "zod": "^3.22.4",
+    "pino": "^8.17.0",
+    "pino-pretty": "^10.3.0"
   },
   "devDependencies": {
     "@types/node": "^20.11.0",
+    "@typescript-eslint/eslint-plugin": "^6.19.0",
+    "@typescript-eslint/parser": "^6.19.0",
+    "eslint": "^8.56.0",
     "typescript": "^5.3.3",
-    "vitest": "^1.2.0"
+    "vitest": "^1.2.0",
+    "@vitest/coverage-v8": "^1.2.0"
   },
   "peerDependencies": {
-    "@sovereignmap/privacy": "workspace:*"
+    "@sovereignmap/privacy": "workspace:*",
+    "@sovereignmap/consensus": "workspace:*",
+    "@sovereignmap/island": "workspace:*"
   }
 }
