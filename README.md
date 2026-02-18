@@ -6,7 +6,6 @@
 [![Docker Ready](https://img.shields.io/badge/Docker-Ready-2496ED?logo=docker)](https://www.docker.com/)
 [![Lint](https://github.com/rwilliamspbg-ops/Sovereign_Map_Federated_Learning/actions/workflows/lint.yml/badge.svg)](https://github.com/rwilliamspbg-ops/Sovereign_Map_Federated_Learning/actions/workflows/lint.yml)
 ![Python Version](https://img.shields.io/badge/python-3.10%2B-blue)
-[![Codecov](https://img.shields.io/codecov/c/github/rwilliamspbg-ops/Sovereign_Map_Federated_Learning)](https://codecov.io/gh/rwilliamspbg-ops/Sovereign_Map_Federated_Learning)
 ![Node Version](https://img.shields.io/badge/node-18.x%2B-green)
 
 ## 📋 Latest Updates (February 2026)
