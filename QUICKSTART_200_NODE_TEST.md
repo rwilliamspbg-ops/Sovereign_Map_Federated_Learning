@@ -1,49 +1,16 @@
-Sovereign FL 200-Node Test - Quick Start
-Run Complete Test (5 phases)
+🚀 Quick Start
 bash
 Copy
-# 1. Setup AWS (one-time)
-./run-test.sh setup
-
-# 2. Deploy infrastructure (200 EC2 instances)
-./run-test.sh deploy
-
-# 3. Deploy code
-./run-test.sh code
-
-# 4. Run test (3 hours)
-./run-test.sh test
-
-# 5. Capture results
-./run-test.sh results
-
-# 6. Cleanup (when done)
-./run-test.sh cleanup
-Or run everything at once
-bash
-Copy
+# Download all files, then:
+chmod +x *.sh
 ./run-test.sh all
-Check status anytime
+Or step by step:
 bash
 Copy
-./run-test.sh status
-./run-test.sh logs
-./run-test.sh dashboard
-Files Created
-Table
-Copy
-File	Purpose
-run-test.sh	Master orchestration script
-phase-1-aws-setup.sh	AWS account setup
-phase-2-deploy-infrastructure.sh	Terraform deployment
-phase-3-deploy-code.sh	Code upload & install
-phase-4-execute-test.sh	Run FL training
-phase-5-capture-results.sh	Generate reports
-phase-6-cleanup.sh	Destroy infrastructure
-terraform/	Infrastructure as Code
-src/	Python FL code
-Cost
-Per test: ~$20 (3 hours)
-Monthly (weekly): ~$80
-Full Documentation
-See individual phase scripts for detailed walkthroughs.
+./run-test.sh setup    # Phase 1: AWS setup
+./run-test.sh deploy   # Phase 2: Deploy 200 EC2 instances
+./run-test.sh code     # Phase 3: Deploy FL code
+./run-test.sh test     # Phase 4: Run 3-hour training
+./run-test.sh results  # Phase 5: Capture results
+./run-test.sh cleanup  # Phase 6: Destroy infrastructure
+All files are ready to use for a legitimate 200-node federated learning test on AWS with Byzantine fault tolerance and differential privacy.
