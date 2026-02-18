@@ -1,6 +1,7 @@
 {
   "name": "@sovereignmap/sdk",
-  "version": "0.1.0-alpha.1",
+  "version": "0.3.0-beta-rc1",
+  "type": "module",
   "private": true,
   "description": "Sovereign Map DePIN SDK - Privacy-preserving decentralized mapping protocol with 55.5% Byzantine fault tolerance",
   "keywords": [
