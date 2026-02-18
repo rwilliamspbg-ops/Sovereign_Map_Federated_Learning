@@ -1,35 +1,66 @@
 {
   "name": "@sovereignmap/sdk",
-  "version": "0.1.0-alpha",
+  "version": "0.1.0-alpha.1",
   "private": true,
-  "description": "Sovereign Map DePIN SDK - Privacy-preserving decentralized mapping",
-  "workspaces": [
-    "packages/*",
-    "apps/*"
+  "description": "Sovereign Map DePIN SDK - Privacy-preserving decentralized mapping protocol with 55.5% Byzantine fault tolerance",
+  "keywords": [
+    "depin",
+    "federated-learning",
+    "privacy",
+    "byzantine-fault-tolerance",
+    "sgp-001",
+    "mapping",
+    "web3"
   ],
-  "scripts": {
-    "build": "turbo run build",
-    "test": "turbo run test",
-    "lint": "turbo run lint",
-    "typecheck": "turbo run typecheck",
-    "dev": "turbo run dev",
-    "proto:generate": "buf generate proto/",
-    "wasm:build": "cd tooling/wasm && ./build.sh",
-    "sdk:publish": "changeset publish"
-  },
-  "devDependencies": {
-    "@changesets/cli": "^2.27.1",
-    "@turbo/gen": "^1.12.0",
-    "turbo": "^1.12.0",
-    "typescript": "^5.3.3",
-    "vitest": "^1.2.0"
-  },
-  "engines": {
-    "node": ">=18.0.0"
+  "homepage": "https://github.com/rwilliamspbg-ops/Sovereign_Map_Federated_Learning#readme",
+  "bugs": {
+    "url": "https://github.com/rwilliamspbg-ops/Sovereign_Map_Federated_Learning/issues"
   },
   "repository": {
     "type": "git",
-    "url": "https://github.com/rwilliamspbg-ops/sovereignmap-sdk.git"
+    "url": "https://github.com/rwilliamspbg-ops/Sovereign_Map_Federated_Learning.git"
   },
-  "license": "Apache-2.0"
+  "license": "Apache-2.0",
+  "author": "Sovereign Map Core Team <architects@sovereignmap.network>",
+  "workspaces": [
+    "packages/*",
+    "apps/*",
+    "examples/*"
+  ],
+  "scripts": {
+    "build": "turbo run build --filter=!@sovereignmap/example-*",
+    "build:libs": "turbo run build --filter=@sovereignmap/*",
+    "dev": "turbo run dev --parallel",
+    "test": "turbo run test --filter=!@sovereignmap/example-*",
+    "test:ci": "turbo run test:ci --filter=!@sovereignmap/example-*",
+    "lint": "turbo run lint --filter=!@sovereignmap/example-*",
+    "typecheck": "turbo run typecheck --filter=!@sovereignmap/example-*",
+    "clean": "turbo run clean && rm -rf node_modules",
+    "proto:generate": "buf generate proto/",
+    "wasm:build": "cd tooling/wasm && ./build.sh",
+    "wasm:copy": "cp tooling/wasm/pkg/*.wasm packages/core/wasm/ && cp tooling/wasm/pkg/*.js packages/core/src/wasm/",
+    "changeset": "changeset",
+    "version-packages": "changeset version",
+    "release": "turbo run build --filter=@sovereignmap/* && changeset publish",
+    "sdk:publish": "npm run build:libs && changeset publish",
+    "docs:build": "typedoc --out docs packages/*/src/index.ts",
+    "example:basic": "turbo run dev --filter=@sovereignmap/example-basic",
+    "example:aggregator": "turbo run dev --filter=@sovereignmap/example-aggregator"
+  },
+  "devDependencies": {
+    "@bufbuild/buf": "^1.28.1",
+    "@changesets/changelog-github": "^0.5.0",
+    "@changesets/cli": "^2.27.1",
+    "@turbo/gen": "^1.12.0",
+    "@types/node": "^20.11.0",
+    "prettier": "^3.2.4",
+    "turbo": "^1.12.0",
+    "typedoc": "^0.25.7",
+    "typescript": "^5.3.3"
+  },
+  "engines": {
+    "node": ">=18.0.0",
+    "npm": ">=9.0.0"
+  },
+  "packageManager": "npm@10.2.4"
 }
