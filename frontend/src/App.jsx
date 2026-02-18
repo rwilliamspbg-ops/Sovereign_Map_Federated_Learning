@@ -23,7 +23,7 @@ function App() {
   const fetchData = async () => {
     setLoading(true);
     try {
-      // 1. Correctly close the Promise.all array and await the responses
+      // 1. Fetch all required data points
       const [hudRes, healthRes, metricsRes, foundersRes] = await Promise.all([
         fetch(`${API_BASE}/hud_data`),
         fetch(`${API_BASE}/health`),
@@ -31,17 +31,17 @@ function App() {
         fetch(`${API_BASE}/founders`)
       ]);
 
-      // 2. Parse the JSON from each response
-      const [hud, health, metrics, foundersData] = await Promise.all([
+      // 2. Parse the JSON results
+      const [hud, healthData, metrics, foundersData] = await Promise.all([
         hudRes.json(),
         healthRes.json(),
         metricsRes.json(),
         foundersRes.json()
       ]);
 
-      // 3. Update the state variables
+      // 3. Update state
       setHudData(hud);
-      setHealth(health);
+      setHealth(healthData);
       setMetricsSummary(metrics);
       setFounders(foundersData);
       setError(null);
@@ -51,7 +51,33 @@ function App() {
     } finally {
       setLoading(false);
     }
-  }; // This closes fetchData
+  };
+
+  // Logic to trigger a Federated Learning round from the UI
+  const triggerFLRound = async () => {
+    try {
+      const response = await fetch(`${API_BASE}/trigger_fl`, { method: 'POST' });
+      if (response.ok) {
+        alert("Federated Learning Round Started!");
+        fetchData(); 
+      }
+    } catch (err) {
+      setError("Failed to trigger FL round");
+    }
+  };
+
+  // Logic to create a Secure Enclave
+  const createEnclave = async () => {
+    try {
+      const response = await fetch(`${API_BASE}/create_enclave`, { method: 'POST' });
+      if (response.ok) {
+        alert("Secure Enclave Initialized");
+        fetchData();
+      }
+    } catch (err) {
+      setError("Enclave creation failed");
+    }
+  };
 
   return (
     <div className="hud-container">
@@ -63,6 +89,7 @@ function App() {
           ) : (
             <span className="status-ok">✅ System Online</span>
           )}
+          {loading && <span className="status-loading"> 🔄 Syncing...</span>}
         </div>
       </header>
 
@@ -75,8 +102,8 @@ function App() {
         voiceResponse={voiceResponse} 
         loading={loading} 
         error={error} 
-        onTriggerFLRound={() => console.log("Triggering...")} 
-        onCreateEnclave={() => console.log("Creating...")} 
+        onTriggerFLRound={triggerFLRound} 
+        onCreateEnclave={createEnclave} 
       />
 
       {metricsSummary && (
@@ -97,6 +124,6 @@ function App() {
       )}
     </div>
   );
-} // This closes the App function
+}
 
 export default App;
