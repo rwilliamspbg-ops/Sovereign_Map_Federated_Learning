@@ -24,13 +24,17 @@ jobs:
           node-version: '20'
 
       - name: Enable Corepack
-        run: corepack enable
+        run: |
+          corepack enable
+          corepack prepare yarn@4.1.0 --activate
 
       - name: Install dependencies
         run: yarn install
+        env:
+          YARN_ENABLE_IMMUTABLE_INSTALLS: false
 
       - name: Build frontend packages
-        run: yarn workspaces build
+        run: yarn workspaces foreach -A run build
 
       - name: Set up Python
         uses: actions/setup-python@v4
