@@ -126,18 +126,14 @@ resource "aws_launch_template" "client" {
   image_id      = data.aws_ami.ubuntu.id
   instance_type = "t3.medium"
   key_name      = var.key_pair_name
-
   vpc_security_group_ids = [aws_security_group.client.id]
-
-    }
-  }
 }
 
 resource "aws_autoscaling_group" "clients" {
   name                = "sovereign-fl-clients"
   vpc_zone_identifier = module.vpc.private_subnets
   health_check_type   = "EC2"
-
+  
   min_size         = var.node_count
   max_size         = var.node_count
   desired_capacity = var.node_count
