@@ -22,12 +22,15 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version: '20'
-        
+
+      - name: Enable Corepack
+        run: corepack enable
+
       - name: Install dependencies
-        run: npm install --install-links
+        run: yarn install
 
       - name: Build frontend packages
-        run: npm run build --workspaces
+        run: yarn workspaces build
 
       - name: Set up Python
         uses: actions/setup-python@v4
