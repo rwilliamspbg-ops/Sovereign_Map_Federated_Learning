@@ -40,6 +40,45 @@ Explore the complete Sovereign Map repository ecosystem:
 - **[v0.2.0-alpha Tech Spec](https://github.com/rwilliamspbg-ops/Sovereign_Map_Federated_Learning/discussions/3)** - 1,000-node scaling simulation data
 
 ## 🏗️ Technical Pillars
+graph TB
+    subgraph Edge_Sovereignty ["Genesis Node (Edge Sovereignty)"]
+        direction TB
+        Hardware["NPU (85 TOPS) + TPM 2.0"]
+        SGP["SGP-001 Privacy Layer<br/>(DP & ZK-Proofs)"]
+        SLAM["Autonomous 3D Mapping<br/>(ORB-SLAM3)"]
+        LocalState["Tamper-Evident<br/>State Recovery"]
+        
+        Hardware --> SGP
+        SGP --> SLAM
+        SLAM --> LocalState
+    end
+
+    subgraph P2P_Mesh ["Coordinator-less Mesh (dAuth)"]
+        direction LR
+        NodeA((Node A))
+        NodeB((Node B))
+        NodeC((Node C))
+        
+        NodeA <-->|BFT Consensus| NodeB
+        NodeB <-->|Model Aggregation| NodeC
+        NodeC <-->|Peer Verification| NodeA
+    end
+
+    subgraph Island_Mode ["Resiliency Layer"]
+        Disconnect{Network Status}
+        Offline[Island Mode: Autonomous Ops]
+        Sync[Automatic Sync & Re-attestation]
+    end
+
+    LocalState --> Disconnect
+    Disconnect -->|Offline| Offline
+    Disconnect -->|Online| P2P_Mesh
+    Offline -->|Reconnected| Sync
+    Sync --> P2P_Mesh
+
+    style Edge_Sovereignty fill:#f9f,stroke:#333,stroke-width:2px
+    style P2P_Mesh fill:#bbf,stroke:#333,stroke-width:2px
+    style Island_Mode fill:#dfd,stroke:#333,stroke-style:dashed
 
 ### 🔒 Data Sovereignty
 
