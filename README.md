@@ -1,4 +1,3 @@
-e deployment has not happened yet
 # 🌐 Sovereign Map: Federated Learning Framework
 
 [![Build and Test](https://github.com/rwilliamspbg-ops/Sovereign_Map_Federated_Learning/actions/workflows/build.yml/badge.svg)](https://github.com/rwilliamspbg-ops/Sovereign_Map_Federated_Learning/actions/workflows/build.yml)
