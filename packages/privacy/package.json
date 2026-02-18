@@ -1,0 +1,31 @@
+{
+  "name": "@sovereignmap/privacy",
+  "version": "0.1.0-alpha",
+  "description": "SGP-001 differential privacy implementation with zk-SNARK proofs",
+  "type": "module",
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "import": "./dist/index.js",
+      "types": "./dist/index.d.ts"
+    },
+    "./zk": {
+      "import": "./dist/zk.js",
+      "types": "./dist/zk.d.ts"
+    }
+  },
+  "scripts": {
+    "build": "tsc && npm run wasm:copy",
+    "wasm:copy": "cp -r src/wasm dist/",
+    "test": "vitest run",
+    "bench": "vitest bench"
+  },
+  "dependencies": {
+    "libsodium-wrappers": "^0.7.11",
+    "ml-matrix": "^6.10.6"
+  },
+  "devDependencies": {
+    "@types/libsodium-wrappers": "^0.7.11"
+  }
+}
