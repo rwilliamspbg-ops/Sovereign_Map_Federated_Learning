@@ -1,11 +1,15 @@
 name: SDK Publish
 
+permissions:
+  contents: write
+  packages: write
+
 on:
   push:
-    branches: [main]
-    paths: ['packages/**', 'apps/cli/**']
+    branches: [ main ]
+    paths: [ 'packages/**', 'apps/cli/**' ]
   release:
-    types: [created]
+    types: [ created ]
 
 jobs:
   test:
@@ -25,7 +29,7 @@ jobs:
     if: github.event_name == 'release'
     runs-on: ubuntu-latest
     permissions:
-      contents: read
+      contents: write
       packages: write
     steps:
       - uses: actions/checkout@v4
