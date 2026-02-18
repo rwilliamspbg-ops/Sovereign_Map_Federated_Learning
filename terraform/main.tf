@@ -93,6 +93,7 @@ resource "aws_security_group" "client" {
 }
 
 resource "aws_instance" "aggregator" {
+associate_public_ip_address = true
   ami                    = data.aws_ami.ubuntu.id
   instance_type          = "t3.medium" # Changed from c5.2xlarge to stay under 32 vCPU limit
   key_name               = var.key_pair_name
