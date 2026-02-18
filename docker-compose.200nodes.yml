@@ -1,0 +1,76 @@
+version: '3.8'
+
+services:
+  # Base services (from original docker-compose.yml)
+  mongo:
+    image: mongo:latest
+    volumes:
+      - mongo_data:/data/db
+    restart: always
+
+  backend:
+    build:
+      context: .
+      dockerfile: Dockerfile.backend
+    environment:
+      - DATABASE_URI=mongodb://mongo:27017/mydb
+      - NODE_COUNT=200
+    depends_on:
+      - mongo
+    restart: always
+
+  # Node Agent Template (scaled to 200 instances)
+  node-agent:
+    build: .
+    image: federated-learning:latest
+    environment:
+      - AGGREGATOR_URL=http://backend:8080
+      - DATABASE_URI=mongodb://mongo:27017/mydb
+      - BATCH_SIZE=32
+      - TPM_ENABLED=false
+    depends_on:
+      - backend
+      - mongo
+    deploy:
+      replicas: 200
+      resources:
+        limits:
+          cpus: '0.5'
+          memory: 512M
+        reservations:
+          cpus: '0.25'
+          memory: 256M
+    networks:
+      - sovereign-net
+
+  # Load balancer for node agents
+  nginx:
+    image: nginx:alpine
+    ports:
+      - "8080:80"
+    volumes:
+      - ./nginx.conf:/etc/nginx/nginx.conf:ro
+    depends_on:
+      - node-agent
+
+  # Monitoring (from docker-compose.monitoring.yml)
+  prometheus:
+    image: prom/prometheus:latest
+    ports:
+      - "9090:9090"
+    volumes:
+      - ./monitoring/prometheus.yml:/etc/prometheus/prometheus.yml:ro
+
+  grafana:
+    image: grafana/grafana:latest
+    ports:
+      - "3001:3000"
+    environment:
+      - GF_SECURITY_ADMIN_PASSWORD=admin
+
+networks:
+  sovereign-net:
+    driver: bridge
+
+volumes:
+  mongo_data:
