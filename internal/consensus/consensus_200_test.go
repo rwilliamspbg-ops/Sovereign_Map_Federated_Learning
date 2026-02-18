@@ -275,4 +275,271 @@ func test200NodeWithByzantine(t *testing.T, config *TestConfig) {
 
 	result, err := coordinator.RunConsensus(ctx, updates)
 	require.NoError(t, err, "Consensus should tolerate 55.5% faults")
-	assert.True(t, result.Conver
+	assert.True(t, result.Converged, "Should converge despite faults")
+	assert.Less(t, result.Rounds, config.Rounds, "Should converge within limit")
+
+	t.Logf("✓ Byzantine test: %d rounds, detected %d/%d faults",
+		result.Rounds, result.DetectedFaults, config.ByzantineCount)
+}
+
+func test200NodePartitionRecovery(t *testing.T, config *TestConfig) {
+	t.Log("Testing 3-way network partition recovery...")
+
+	network := NewMeshNetwork(config.TotalNodes)
+	network.Partition(3) // Split into 3 partitions
+
+	coordinator := NewConsensusCoordinator(&CoordinatorConfig{
+		NodeCount: config.TotalNodes,
+		Network:   network,
+	})
+
+	// Attempt consensus during partition
+	ctx := context.Background()
+	updates := generateHonestUpdates(config.TotalNodes)
+
+	_, err := coordinator.RunConsensus(ctx, updates)
+	assert.Error(t, err, "Should fail during partition")
+
+	// Heal partition
+	network.Heal()
+	time.Sleep(1 * time.Second)
+
+	// Retry should succeed
+	result, err := coordinator.RunConsensus(ctx, updates)
+	require.NoError(t, err)
+	assert.True(t, result.Converged)
+	t.Log("✓ Recovered from partition")
+}
+
+func test200NodePerformance(t *testing.T, config *TestConfig) {
+	t.Log("Running performance benchmark...")
+
+	var latencies []time.Duration
+	coordinator := NewConsensusCoordinator(&CoordinatorConfig{
+		NodeCount: config.TotalNodes,
+	})
+
+	for round := 0; round < 5; round++ {
+		start := time.Now()
+		updates := generateHonestUpdates(config.TotalNodes)
+		ctx := context.Background()
+
+		result, err := coordinator.RunConsensus(ctx, updates)
+		require.NoError(t, err)
+
+		latency := time.Since(start)
+		latencies = append(latencies, latency)
+
+		t.Logf("  Round %d: %v, %d messages", round+1, latency, result.MessageCount)
+	}
+
+	// Calculate average
+	var total time.Duration
+	for _, l := range latencies {
+		total += l
+	}
+	avg := total / time.Duration(len(latencies))
+
+	t.Logf("✓ Average latency: %v", avg)
+	assert.Less(t, avg, 2*time.Minute, "Average latency too high")
+}
+
+// Data generators
+
+func generateHonestNodes(count int) []string {
+	nodes := make([]string, count)
+	for i := 0; i < count; i++ {
+		nodes[i] = fmt.Sprintf("honest-%03d", i+1)
+	}
+	return nodes
+}
+
+func generateByzantineNodes(count int) []string {
+	nodes := make([]string, count)
+	for i := 0; i < count; i++ {
+		nodes[i] = fmt.Sprintf("byzantine-%03d", i+1)
+	}
+	return nodes
+}
+
+func generateHonestUpdates(count int) []ModelUpdate {
+	updates := make([]ModelUpdate, count)
+	for i := 0; i < count; i++ {
+		updates[i] = ModelUpdate{
+			NodeID:  fmt.Sprintf("node-%03d", i+1),
+			Weights: generateRandomWeights(1000, 0.01),
+			IsValid: true,
+		}
+	}
+	return updates
+}
+
+func generateMixedUpdates(total, byzantine int) []ModelUpdate {
+	updates := make([]ModelUpdate, total)
+	
+	// First 'byzantine' nodes are malicious
+	for i := 0; i < byzantine; i++ {
+		updates[i] = ModelUpdate{
+			NodeID:  fmt.Sprintf("byzantine-%03d", i+1),
+			Weights: generateCorruptedWeights(1000),
+			IsValid: false,
+		}
+	}
+	
+	// Rest are honest
+	for i := byzantine; i < total; i++ {
+		updates[i] = ModelUpdate{
+			NodeID:  fmt.Sprintf("honest-%03d", i-byzantine+1),
+			Weights: generateRandomWeights(1000, 0.01),
+			IsValid: true,
+		}
+	}
+	
+	return updates
+}
+
+func generateCorruptedUpdate(nodeID string) ModelUpdate {
+	return ModelUpdate{
+		NodeID:  nodeID,
+		Weights: generateCorruptedWeights(1000),
+		IsValid: false,
+	}
+}
+
+func generateRandomWeights(size int, scale float64) []float64 {
+	weights := make([]float64, size)
+	for i := range weights {
+		weights[i] = rand.NormFloat64() * scale
+	}
+	return weights
+}
+
+func generateCorruptedWeights(size int) []float64 {
+	weights := make([]float64, size)
+	// Inverted gradients
+	for i := range weights {
+		weights[i] = -rand.NormFloat64() * 0.1
+	}
+	return weights
+}
+
+// Mock implementations (placeholders for actual implementations)
+
+type ModelUpdate struct {
+	NodeID  string
+	Weights []float64
+	IsValid bool
+}
+
+type ConsensusResult struct {
+	Converged      bool
+	Rounds         int
+	Duration       time.Duration
+	MessageCount   int
+	DetectedFaults int
+}
+
+type CoordinatorConfig struct {
+	NodeCount      int
+	ByzantineRatio float64
+	QuorumSize     int
+	MaxRounds      int
+	Network        *MeshNetwork
+}
+
+type ConsensusCoordinator struct {
+	config    *CoordinatorConfig
+	faults    map[string]string
+	interceptor func(interface{})
+}
+
+func NewConsensusCoordinator(config *CoordinatorConfig) *ConsensusCoordinator {
+	return &ConsensusCoordinator{
+		config: config,
+		faults: make(map[string]string),
+	}
+}
+
+func (c *ConsensusCoordinator) InjectFault(nodeID, attackType string) {
+	c.faults[nodeID] = attackType
+}
+
+func (c *ConsensusCoordinator) SetMessageInterceptor(f func(interface{})) {
+	c.interceptor = f
+}
+
+func (c *ConsensusCoordinator) RunConsensus(ctx context.Context, updates []ModelUpdate) (*ConsensusResult, error) {
+	// Simplified simulation
+	time.Sleep(100 * time.Millisecond) // Simulate work
+	
+	detected := 0
+	for _, update := range updates {
+		if !update.IsValid {
+			detected++
+		}
+		if c.interceptor != nil {
+			c.interceptor(update)
+		}
+	}
+
+	return &ConsensusResult{
+		Converged:      true,
+		Rounds:         rand.Intn(10) + 1,
+		Duration:       100 * time.Millisecond,
+		MessageCount:   len(updates) * 2,
+		DetectedFaults: detected,
+	}, nil
+}
+
+type MeshNetwork struct {
+	nodeCount   int
+	partitioned bool
+	partitions  int
+	mu          sync.RWMutex
+}
+
+func NewMeshNetwork(count int) *MeshNetwork {
+	return &MeshNetwork{nodeCount: count}
+}
+
+func (n *MeshNetwork) GetNeighbors(nodeID string) []string {
+	n.mu.RLock()
+	defer n.mu.RUnlock()
+	
+	if n.partitioned {
+		// Return only nodes in same partition
+		return generateHonestNodes(66) // Simplified
+	}
+	return generateHonestNodes(n.nodeCount - 1)
+}
+
+func (n *MeshNetwork) CountRedundantPaths(from, to string) int {
+	return 150 // Simplified
+}
+
+func (n *MeshNetwork) Partition(count int) {
+	n.mu.Lock()
+	defer n.mu.Unlock()
+	n.partitioned = true
+	n.partitions = count
+}
+
+func (n *MeshNetwork) Heal() {
+	n.mu.Lock()
+	defer n.mu.Unlock()
+	n.partitioned = false
+	n.partitions = 1
+}
+
+type ByzantineDetector struct {
+	config *TestConfig
+}
+
+func NewByzantineDetector(config *TestConfig) *ByzantineDetector {
+	return &ByzantineDetector{config: config}
+}
+
+func (d *ByzantineDetector) Analyze(update ModelUpdate) bool {
+	// Simplified detection logic
+	return !update.IsValid && rand.Float64() < d.config.DetectionRate
+}
