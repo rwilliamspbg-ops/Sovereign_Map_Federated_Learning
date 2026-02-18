@@ -1,0 +1,12 @@
+{
+  "timestamp": "2026-02-18T16:11:03Z",
+  "aggregator_ip": "",
+  "running_clients": 0,
+  "expected_clients": 200,
+  "test_configuration": {
+    "rounds": 30,
+    "byzantine_nodes": 20,
+    "dataset": "MNIST",
+    "privacy_epsilon": 3.88
+  }
+}
