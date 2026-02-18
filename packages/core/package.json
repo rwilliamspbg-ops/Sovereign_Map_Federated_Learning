@@ -45,7 +45,7 @@
     "@grpc/grpc-js": "^1.9.14",
     "libp2p": "^1.0.0",
     "@libp2p/tcp": "^9.0.0",
-    "@chainsafe/libp2p-yamux": "^10.0.0",
+    "@chainsafe/libp2p-yamux": "^8.0.1",
     "@chainsafe/libp2p-noise": "^15.0.0",
     "@multiformats/multiaddr": "^12.1.0",
     "eventemitter3": "^5.0.1",
