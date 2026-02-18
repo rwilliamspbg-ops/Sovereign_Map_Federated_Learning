@@ -18,11 +18,12 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v4
 
+      # ⚠️ Use v2 and explicitly skip install so it does NOT look for pnpm-lock.yaml
       - name: Install pnpm
-        uses: pnpm/action-setup@v4
+        uses: pnpm/action-setup@v2
         with:
           version: 9
-          run_install: false   # do not auto-install, avoids lockfile requirement
+          run_install: false
 
       - name: Set up Node.js
         uses: actions/setup-node@v4
@@ -30,6 +31,7 @@ jobs:
           node-version: '20'
           cache: 'pnpm'
 
+      # We control install ourselves, without frozen lockfile
       - name: Install dependencies
         run: pnpm install --no-frozen-lockfile
 
