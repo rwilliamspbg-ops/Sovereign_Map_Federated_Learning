@@ -129,12 +129,6 @@ resource "aws_launch_template" "client" {
 
   vpc_security_group_ids = [aws_security_group.client.id]
 
-
-
-  tag_specifications {
-    resource_type = "instance"
-    tags = {
-      Name = "sovereign-client"
     }
   }
 }
