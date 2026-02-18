@@ -53,4 +53,3 @@ jobs:
         run: |
           docker compose -f docker-compose.200nodes.yml logs
           docker ps -a
-
