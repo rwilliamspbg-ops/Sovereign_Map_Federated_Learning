@@ -50,16 +50,46 @@ module "vpc" {
 resource "aws_security_group" "aggregator" {
   name_prefix = "sovereign-aggregator-"
   vpc_id      = module.vpc.vpc_id
-  ingress { from_port = 22; to_port = 22; protocol = "tcp"; cidr_blocks = ["0.0.0.0/0"] }
-  ingress { from_port = 8080; to_port = 8080; protocol = "tcp"; cidr_blocks = ["0.0.0.0/0"] }
-  egress { from_port = 0; to_port = 0; protocol = "-1"; cidr_blocks = ["0.0.0.0/0"] }
+
+  ingress {
+    from_port   = 22
+    to_port     = 22
+    protocol    = "tcp"
+    cidr_blocks = ["0.0.0.0/0"]
+  }
+
+  ingress {
+    from_port   = 8080
+    to_port     = 8080
+    protocol    = "tcp"
+    cidr_blocks = ["0.0.0.0/0"]
+  }
+
+  egress {
+    from_port   = 0
+    to_port     = 0
+    protocol    = "-1"
+    cidr_blocks = ["0.0.0.0/0"]
+  }
 }
 
 resource "aws_security_group" "client" {
   name_prefix = "sovereign-client-"
   vpc_id      = module.vpc.vpc_id
-  ingress { from_port = 22; to_port = 22; protocol = "tcp"; cidr_blocks = ["0.0.0.0/0"] }
-  egress { from_port = 0; to_port = 0; protocol = "-1"; cidr_blocks = ["0.0.0.0/0"] }
+
+  ingress {
+    from_port   = 22
+    to_port     = 22
+    protocol    = "tcp"
+    cidr_blocks = ["0.0.0.0/0"]
+  }
+
+  egress {
+    from_port   = 0
+    to_port     = 0
+    protocol    = "-1"
+    cidr_blocks = ["0.0.0.0/0"]
+  }
 }
 
 resource "aws_instance" "aggregator" {
@@ -68,7 +98,9 @@ resource "aws_instance" "aggregator" {
   key_name               = var.key_pair_name
   vpc_security_group_ids = [aws_security_group.aggregator.id]
   subnet_id              = module.vpc.public_subnets[0]
-  tags = { Name = "sovereign-aggregator" }
+  tags = {
+    Name = "sovereign-aggregator"
+  }
 }
 
 resource "aws_launch_template" "client" {
@@ -91,11 +123,19 @@ resource "aws_autoscaling_group" "clients" {
         launch_template_id = aws_launch_template.client.id
         version            = "$Latest"
       }
-      override { instance_type = "t3.medium" }
-      override { instance_type = "t3.small" }
-      override { instance_type = "t2.medium" }
+      override {
+        instance_type = "t3.medium"
+      }
+      override {
+        instance_type = "t3.small"
+      }
+      override {
+        instance_type = "t2.medium"
+      }
     }
   }
 }
 
-output "aggregator_ip" { value = aws_instance.aggregator.public_ip }
+output "aggregator_ip" {
+  value = aws_instance.aggregator.public_ip
+}
