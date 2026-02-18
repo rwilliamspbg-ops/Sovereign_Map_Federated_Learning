@@ -10,8 +10,14 @@
   "pipeline": {
     "build": {
       "dependsOn": ["^build", "proto:generate"],
-      "outputs": [".next/**", "!.next/cache/**", "dist/**", "build/**", "*.tsbuildinfo"],
-      "outputMode": "hash"
+      "outputs": [
+        ".next/**",
+        "!.next/cache/**",
+        "dist/**",
+        "build/**",
+        "*.tsbuildinfo"
+      ],
+      "outputMode": "full"
     },
     "test": {
       "dependsOn": ["build"],
