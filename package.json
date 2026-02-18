@@ -1,0 +1,35 @@
+{
+  "name": "@sovereignmap/sdk",
+  "version": "0.1.0-alpha",
+  "private": true,
+  "description": "Sovereign Map DePIN SDK - Privacy-preserving decentralized mapping",
+  "workspaces": [
+    "packages/*",
+    "apps/*"
+  ],
+  "scripts": {
+    "build": "turbo run build",
+    "test": "turbo run test",
+    "lint": "turbo run lint",
+    "typecheck": "turbo run typecheck",
+    "dev": "turbo run dev",
+    "proto:generate": "buf generate proto/",
+    "wasm:build": "cd tooling/wasm && ./build.sh",
+    "sdk:publish": "changeset publish"
+  },
+  "devDependencies": {
+    "@changesets/cli": "^2.27.1",
+    "@turbo/gen": "^1.12.0",
+    "turbo": "^1.12.0",
+    "typescript": "^5.3.3",
+    "vitest": "^1.2.0"
+  },
+  "engines": {
+    "node": ">=18.0.0"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/rwilliamspbg-ops/sovereignmap-sdk.git"
+  },
+  "license": "Apache-2.0"
+}
