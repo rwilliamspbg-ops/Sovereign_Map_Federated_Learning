@@ -129,12 +129,7 @@ resource "aws_launch_template" "client" {
 
   vpc_security_group_ids = [aws_security_group.client.id]
 
-  instance_market_options {
-    market_type = "spot"
-    spot_options {
-      max_price = "0.05"
-    }
-  }
+
 
   tag_specifications {
     resource_type = "instance"
