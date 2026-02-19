@@ -101,7 +101,7 @@ services:
       - sovereign-net-200
 
   # ==========================================
-  # Node Agent Template (Scaled to 200)
+  # Node Agent Template (Optimized for CI)
   # ==========================================
   node-agent:
     build:
@@ -122,14 +122,14 @@ services:
       - mongo
       - redis
     deploy:
-      replicas: 200
+      replicas: 20 # Scaled down for GitHub Actions; use 200 for local prod hardware
       resources:
         limits:
-          cpus: '0.5'
-          memory: 512M
+          cpus: '0.2'
+          memory: 128M
         reservations:
-          cpus: '0.25'
-          memory: 256M
+          cpus: '0.1'
+          memory: 64M
     restart_policy:
       condition: on-failure
       delay: 5s
@@ -151,7 +151,6 @@ services:
       - "80:80"
       - "443:443"
     volumes:
-      # FIX: Use the nginx.conf located in root
       - ./nginx.conf:/etc/nginx/nginx.conf:ro
     depends_on:
       - backend
@@ -169,7 +168,6 @@ services:
     ports:
       - "9090:9090"
     volumes:
-      # FIX: Point to prometheus.yml in root instead of monitoring/
       - ./prometheus.yml:/etc/prometheus/prometheus.yml:ro
       - prometheus_data_200:/prometheus
     command:
@@ -193,9 +191,6 @@ services:
       - GF_SERVER_ROOT_URL=http://localhost:3001
     volumes:
       - grafana_data_200:/var/lib/grafana
-      # Note: Ensure these folders exist or remove mounts if not using custom dashboards
-      - ./monitoring/grafana/dashboards:/etc/grafana/provisioning/dashboards:ro
-      - ./monitoring/grafana/datasources:/etc/grafana/provisioning/datasources:ro
     depends_on:
       - prometheus
     restart: always
@@ -213,7 +208,6 @@ services:
       - '--path.procfs=/host/proc'
       - '--path.rootfs=/rootfs'
       - '--path.sysfs=/host/sys'
-      - '--collector.filesystem.mount-points-exclude=^/(sys|proc|dev|host|etc)($$|/)'
     restart: always
     networks:
       - sovereign-net-200
