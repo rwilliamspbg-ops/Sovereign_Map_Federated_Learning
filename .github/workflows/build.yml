@@ -61,4 +61,4 @@ jobs:
 
       - name: Run Consensus Verification
         run: |
-          python3 verify_consensus.py || echo "Script not found, skipping verification for now."
+          python3 verify_consensus.py
