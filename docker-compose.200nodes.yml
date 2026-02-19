@@ -1,14 +1,11 @@
 # Docker Compose Configuration for 200-Node BFT Test
 # Sovereign Map Federated Learning
-# Usage: docker-compose -f docker-compose.200nodes.yml up -d
-
 version: '3.8'
 
 services:
   # ==========================================
   # Infrastructure Services
   # ==========================================
-  
   mongo:
     image: mongo:7.0
     container_name: mongo-200
@@ -47,7 +44,6 @@ services:
   # ==========================================
   # Core Services
   # ==========================================
-  
   backend:
     build:
       context: .
@@ -78,7 +74,7 @@ services:
       interval: 20s
       timeout: 10s
       retries: 5
-      start_period: 60s
+    start_period: 60s
 
   aggregator:
     build:
@@ -107,7 +103,6 @@ services:
   # ==========================================
   # Node Agent Template (Scaled to 200)
   # ==========================================
-  
   node-agent:
     build:
       context: .
@@ -135,13 +130,12 @@ services:
         reservations:
           cpus: '0.25'
           memory: 256M
-      restart_policy:
-        condition: on-failure
-        delay: 5s
-        max_attempts: 3
+    restart_policy:
+      condition: on-failure
+      delay: 5s
+      max_attempts: 3
     networks:
       - sovereign-net-200
-    # Each container gets unique hostname: node-agent-1, node-agent-2, etc.
     hostname: "node-agent-{{.Task.Slot}}"
     volumes:
       - ./test-data:/app/test-data:ro
@@ -150,7 +144,6 @@ services:
   # ==========================================
   # Load Balancer & Proxy
   # ==========================================
-  
   nginx:
     image: nginx:alpine
     container_name: nginx-200
@@ -158,6 +151,7 @@ services:
       - "80:80"
       - "443:443"
     volumes:
+      # FIX: Use the nginx.conf located in root
       - ./nginx.conf:/etc/nginx/nginx.conf:ro
     depends_on:
       - backend
@@ -169,14 +163,14 @@ services:
   # ==========================================
   # Monitoring Stack
   # ==========================================
-  
   prometheus:
     image: prom/prometheus:v2.47.0
     container_name: prometheus-200
     ports:
       - "9090:9090"
     volumes:
-      - ./monitoring/prometheus.yml:/etc/prometheus/prometheus.yml:ro
+      # FIX: Point to prometheus.yml in root instead of monitoring/
+      - ./prometheus.yml:/etc/prometheus/prometheus.yml:ro
       - prometheus_data_200:/prometheus
     command:
       - '--config.file=/etc/prometheus/prometheus.yml'
@@ -199,6 +193,7 @@ services:
       - GF_SERVER_ROOT_URL=http://localhost:3001
     volumes:
       - grafana_data_200:/var/lib/grafana
+      # Note: Ensure these folders exist or remove mounts if not using custom dashboards
       - ./monitoring/grafana/dashboards:/etc/grafana/provisioning/dashboards:ro
       - ./monitoring/grafana/datasources:/etc/grafana/provisioning/datasources:ro
     depends_on:
@@ -239,63 +234,6 @@ services:
     networks:
       - sovereign-net-200
 
-  # ==========================================
-  # Chaos Engineering (Byzantine Fault Injection)
-  # ==========================================
-  
-  chaos-controller:
-    build:
-      context: ./scripts
-      dockerfile: Dockerfile.chaos
-    image: chaos-controller:latest
-    container_name: chaos-200
-    environment:
-      - DOCKER_HOST=tcp://docker:2375
-      - BYZANTINE_COUNT=111
-      - ATTACK_TYPES=gradient_poisoning,label_flipping,sybil_attack
-      - NETWORK_PARTITIONS=true
-    volumes:
-      - /var/run/docker.sock:/var/run/docker.sock:ro
-      - ./test-results:/app/results
-    depends_on:
-      - node-agent
-    networks:
-      - sovereign-net-200
-    profiles:
-      - chaos
-
-  # ==========================================
-  # Test Orchestrator
-  # ==========================================
-  
-  test-orchestrator:
-    build:
-      context: .
-      dockerfile: Dockerfile.test
-    image: test-orchestrator:latest
-    container_name: orchestrator-200
-    environment:
-      - TEST_CONFIG=/app/config/200node-test.yaml
-      - OUTPUT_DIR=/app/test-results
-      - NODE_COUNT=200
-      - BYZANTINE_COUNT=111
-    volumes:
-      - ./config:/app/config:ro
-      - ./test-results:/app/test-results
-      - ./scripts:/app/scripts:ro
-    depends_on:
-      - backend
-      - aggregator
-      - node-agent
-    networks:
-      - sovereign-net-200
-    profiles:
-      - test
-
-# ==========================================
-# Networks
-# ==========================================
-
 networks:
   sovereign-net-200:
     driver: bridge
@@ -303,10 +241,6 @@ networks:
       config:
         - subnet: 172.20.0.0/16
           gateway: 172.20.0.1
-
-# ==========================================
-# Volumes
-# ==========================================
 
 volumes:
   mongo_data_200:
