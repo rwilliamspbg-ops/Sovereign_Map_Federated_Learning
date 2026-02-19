@@ -2,36 +2,30 @@ import subprocess
 import sys
 import time
 
+def get_logs(container):
+    try:
+        return subprocess.check_output(
+            ["docker", "logs", "--tail", "20", container],
+            stderr=subprocess.STDOUT
+        ).decode("utf-8")
+    except:
+        return "Could not retrieve logs."
 
 def verify():
-    print("--- Starting CI Consensus Verification ---")
-
-    # Check 10 times, waiting 20s between checks (Total ~3.3 minutes)
     for attempt in range(1, 11):
-        print(f"Attempt {attempt}/10: Checking aggregator logs...")
-        try:
-            # Matches the container_name in your docker-compose.ci.yml
-            logs = subprocess.check_output(
-                ["docker", "logs", "--tail", "50", "aggregator-ci"],
-                stderr=subprocess.STDOUT,
-            ).decode("utf-8")
-
-            if "Global model updated" in logs or "Round 1 complete" in logs:
-                print("✅ SUCCESS: BFT Consensus reached!")
-                return True
-
-        except Exception as e:
-            print(f"⚠️ Container not ready yet: {e}")
-
-        print("Waiting 20 seconds...")
+        print(f"Attempt {attempt}/10: Checking aggregator...")
+        agg_logs = get_logs("aggregator-ci")
+        
+        if "Global model updated" in agg_logs:
+            print("✅ SUCCESS: Consensus reached!")
+            return True
+        
         time.sleep(20)
 
+    print("❌ TIMEOUT: Printing diagnostics...")
+    print(f"--- Aggregator Last Logs ---\n{agg_logs}")
+    print(f"--- Node-1 Last Logs ---\n{get_logs('sovereign_map_federated_learning-node-1-1')}")
     return False
 
-
 if __name__ == "__main__":
-    if verify():
-        sys.exit(0)
-    else:
-        print("❌ TIMEOUT: Consensus not reached.")
-        sys.exit(1)
+    sys.exit(0 if verify() else 1)
