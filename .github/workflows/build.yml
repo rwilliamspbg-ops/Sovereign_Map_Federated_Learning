@@ -46,8 +46,7 @@ jobs:
           docker compose -f docker-compose.200nodes.yml build --no-cache
 
       - name: Start services
-        run: |
-          docker compose -f docker-compose.200nodes.yml up -d
+        run: docker compose -f docker-compose.ci.yml up -d
 
       - name: Wait for backend health
         run: |
