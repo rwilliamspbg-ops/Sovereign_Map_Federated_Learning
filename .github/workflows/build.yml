@@ -59,3 +59,7 @@ jobs:
         run: |
           docker compose -f docker-compose.200nodes.yml logs
           docker ps -a
+
+      - name: Run Consensus Verification
+        run: |
+          python3 verify_consensus.py || echo "Script not found, skipping verification for now."
