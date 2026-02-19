@@ -1,4 +1,4 @@
-cat > terraform/main.tf << 'EOF'
+cat > terraform/main.tf << "EOF"
 provider "aws" {
   region = var.aws_region
 }
