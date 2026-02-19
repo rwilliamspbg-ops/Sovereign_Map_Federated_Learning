@@ -1,118 +1,51 @@
 # 200-Node Byzantine Fault Tolerance Test Configuration
-# Sovereign Map Federated Learning - Large Scale BFT Validation
-# Version: 1.0.0
-# Date: 2026-02-18
-
 test_metadata:
   id: "bft-200-node-test"
   name: "200 Node Byzantine Fault Tolerance Test"
-  description: "Validates 55.5% malicious node resilience in mesh topology"
+  description: "Validates 55.5% malicious node resilience"
   version: "1.0.0"
-  created: "2026-02-18"
-  
-# Network Topology Configuration
+  date: "2026-02-18"
+
 topology:
-  type: "mesh"                    # Options: mesh, star, hybrid
+  type: "mesh"
   node_count: 200
-  connection_pattern: "full-mesh" # Each node connects to all others
-  max_hops: 1                     # Direct connections only
-  
-# Byzantine Fault Parameters
+  connection_pattern: "full-mesh"
+
 byzantine_faults:
   enabled: true
-  ratio: 0.555                    # 55.5% malicious nodes (111 of 200)
-  count: 111                      # Explicit count for verification
+  ratio: 0.555
+  count: 111
   attack_types:
-    - "gradient_poisoning"         # Corrupt model updates
-    - "label_flipping"             # Invert labels
-    - "sybil_attack"               # Fake identities
-    - "free_rider"                 # Submit empty updates
-  behavior_distribution:
-    gradient_poisoning: 40        # 40% of Byzantine nodes
-    label_flipping: 30
-    sybil_attack: 20
-    free_rider: 21
+    - "gradient_poisoning"
+    - "label_flipping"
+    - "sybil_attack"
+    - "free_rider"
 
-# Consensus Parameters
 consensus:
-  algorithm: "quorum-voting"
-  quorum_percentage: 66.7         # ⌈(2n/3)⌉ + 1 = 134 nodes for n=200
+  quorum_percentage: 66.7
   quorum_absolute: 134
-  timeout_seconds: 300            # 5 minutes for large network
+  timeout_seconds: 300
   max_rounds: 50
-  round_timeout_seconds: 60
-  cryptographic_verification: true
-  tpm_required: false             # Disabled for simulation speed
-  
-# Node Agent Configuration
+
 node_agent:
-  image: "federated-learning:latest"
   resources:
     cpu_limit: "0.5"
     memory_limit: "512M"
-    cpu_reservation: "0.25"
-    memory_reservation: "256M"
   batch_size: 32
-  timeout: "30s"
-  wasm_binary_path: "/app/wasm/verify.wasm"
-  log_level: "info"
-  
-# Network Simulation
+
 network_simulation:
-  enabled: true
-  latency_ms: 50                    # Simulate WAN conditions
-  jitter_ms: 10
+  latency_ms: 50
   packet_loss_percent: 0.1
-  bandwidth_mbps: 100
-  partition_scenarios:
-    enabled: true
-    partitions: 3                   # Split into 3 groups temporarily
-    duration_seconds: 60
-    interval_seconds: 300
 
-# Model Configuration
-model:
-  type: "neural-network"
-  input_size: 784                 # MNIST-style
-  hidden_layers: [256, 128]
-  output_size: 10
-  aggregation_method: "fedavg"
-  differential_privacy:
-    enabled: true
-    epsilon: 1.0
-    delta: 1.0e-5
-    max_gradient_norm: 1.0
-
-# Test Execution
-test_execution:
-  warmup_rounds: 5
-  test_rounds: 20
-  convergence_threshold: 0.95
-  accuracy_degradation_limit: 0.15  # Max 15% accuracy drop with faults
-  
-# Monitoring & Metrics
 monitoring:
   prometheus_enabled: true
-  prometheus_retention: "24h"
   grafana_enabled: true
-  grafana_dashboard: "sovereign-bft-dashboard"
-  metrics_collection_interval: "10s"
-  alert_on_byzantine_detection: true
-  
-# Results Recording
+
 results:
   output_directory: "test-results/200-node-bft"
   formats: ["json", "csv", "md"]
-  include_metrics: true
-  include_logs: true
-  include_docker_stats: true
-  auto_commit: false              # Manual commit required
-  
-# Success Criteria
+
 success_criteria:
-  min_consensus_rate: 0.95        # 95% consensus success
-  max_latency_seconds: 120        # Per-round latency
-  accuracy_threshold: 0.80        # Minimum model accuracy
-  byzantine_detection_rate: 0.90  # Detect 90% of faults
-  max_memory_per_node_mb: 512
-  max_cpu_per_node_percent: 50
+  min_consensus_rate: 0.95
+  max_latency_seconds: 120
+  accuracy_threshold: 0.80

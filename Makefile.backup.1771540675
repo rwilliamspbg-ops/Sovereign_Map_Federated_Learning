@@ -279,20 +279,3 @@ help:
 	@echo "  make lint    - Run linters"
 	@echo "  make check   - Run all checks"
 	@echo ""
-
-# 200-Node BFT Test Targets (Auto-added)
-.PHONY: test-200-bft setup-200-test clean-200-test
-
-setup-200-test:
-	@mkdir -p test-results/200-node-bft test-data
-	@go run scripts/generate-test-data.go
-	@echo "✅ 200-node test environment ready"
-
-test-200-bft: setup-200-test
-	@chmod +x scripts/run-200-bft-test.sh
-	@./scripts/run-200-bft-test.sh
-
-clean-200-test:
-	@docker-compose -f docker-compose.200nodes.yml down -v 2>/dev/null || true
-	@rm -rf test-results/200-node-bft/* test-data/*
-	@echo "🧹 200-node test environment cleaned"

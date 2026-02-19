@@ -1,69 +1,108 @@
-# Sovereign Map Federated Learning - 200 Node Scale Fix
-# This file is optimized for high-density deployment (25 nodes per host)
 version: '3.8'
 
 services:
-  # ==========================================
-  # Infrastructure Services (Shared on Host)
-  # ==========================================
   mongo:
     image: mongo:7.0
     container_name: mongo-200
-    # Host mode networking for high-speed I/O access by nodes
-    network_mode: "host"
+    volumes:
+      - mongo_data_200:/data/db
+    ports:
+      - "27017:27017"
     environment:
       MONGO_INITDB_ROOT_USERNAME: admin
       MONGO_INITDB_ROOT_PASSWORD: sovereign2026
-    restart: always
-    healthcheck:
-      test: ["CMD", "mongosh", "--eval", "db.adminCommand('ping')"]
-      interval: 10s
+    networks:
+      - sovereign-net-200
 
-  redis:
-    image: redis:7-alpine
-    container_name: redis-200
-    network_mode: "host"
-    restart: always
+  backend:
+    build:
+      context: .
+      dockerfile: Dockerfile.backend
+    container_name: backend-200
+    ports:
+      - "8080:8080"
+      - "5000:5000"
+    environment:
+      - NODE_ID=backend-200
+      - DATABASE_URI=mongodb://admin:sovereign2026@mongo:27017/sovereign_200?authSource=admin
+      - NODE_COUNT=200
+      - QUORUM_SIZE=134
+    depends_on:
+      - mongo
+    networks:
+      - sovereign-net-200
 
-  # ==========================================
-  # Sovereign Client Nodes (25 Replicas)
-  # ==========================================
+  aggregator:
+    build:
+      context: .
+      dockerfile: Dockerfile.backend
+    container_name: aggregator-200
+    ports:
+      - "8081:8080"
+    environment:
+      - NODE_ID=aggregator-200
+      - AGGREGATOR_MODE=true
+      - QUORUM_SIZE=134
+      - BYZANTINE_RATIO=0.555
+    depends_on:
+      - backend
+      - mongo
+    networks:
+      - sovereign-net-200
+
   node-agent:
-    image: ${DOCKER_IMAGE_NAME:-federated-learning:latest}
+    build: .
+    image: federated-learning:latest
+    environment:
+      - AGGREGATOR_URL=http://aggregator:8080
+      - DATABASE_URI=mongodb://admin:sovereign2026@mongo:27017/sovereign_200?authSource=admin
+      - BATCH_SIZE=32
+      - TPM_ENABLED=false
+    depends_on:
+      - aggregator
+      - mongo
     deploy:
-      replicas: 25
+      replicas: 200
       resources:
         limits:
-          memory: ${DOCKER_MEM_LIMIT:-1g}
-        reservations:
-          cpus: '${DOCKER_CPU_RESERVATION:-0.5}'
-      restart_policy:
-        condition: on-failure
-        delay: 5s
-        max_attempts: 3
-    environment:
-      # Connection to the central Genesis Node
-      - AGGREGATOR_URL=http://${AGGREGATOR_IP}:8081
-      # Local Database/Cache (Connecting via localhost due to host networking)
-      - DATABASE_URI=mongodb://admin:sovereign2026@127.0.0.1:27017/sovereign_200?authSource=admin
-      - REDIS_URI=redis://127.0.0.1:6379
-      # Training Hyperparameters
-      - LOCAL_EPOCHS=${LOCAL_EPOCHS:-3}
-      - BATCH_SIZE=${BATCH_SIZE:-32}
-      - PRIVACY_EPSILON=${PRIVACY_EPSILON:-4.0}
-      - BFT_THRESHOLD=${BFT_THRESHOLD:-0.67}
-      - LOG_LEVEL=info
-      - DEBUG=false
-    # FIX: Host networking bypasses the docker0 bridge bottleneck
-    network_mode: "host"
-    logging:
-      driver: "json-file"
-      options:
-        max-size: "10m"
-        max-file: "3"
+          cpus: '0.5'
+          memory: 512M
+    networks:
+      - sovereign-net-200
     volumes:
       - ./test-data:/app/test-data:ro
 
+  prometheus:
+    image: prom/prometheus:v2.47.0
+    container_name: prometheus-200
+    ports:
+      - "9090:9090"
+    volumes:
+      - ./monitoring/prometheus.yml:/etc/prometheus/prometheus.yml:ro
+      - prometheus_data_200:/prometheus
+    networks:
+      - sovereign-net-200
+
+  grafana:
+    image: grafana/grafana:10.1.0
+    container_name: grafana-200
+    ports:
+      - "3001:3000"
+    environment:
+      - GF_SECURITY_ADMIN_USER=admin
+      - GF_SECURITY_ADMIN_PASSWORD=sovereign2026
+    volumes:
+      - grafana_data_200:/var/lib/grafana
+    depends_on:
+      - prometheus
+    networks:
+      - sovereign-net-200
+
+networks:
+  sovereign-net-200:
+    driver: bridge
+
 volumes:
   mongo_data_200:
-  redis_data_200:
+  prometheus_data_200:
+  grafana_data_200:
