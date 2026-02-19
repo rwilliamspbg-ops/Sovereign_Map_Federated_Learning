@@ -121,6 +121,24 @@ services:
       - aggregator
       - mongo
       - redis
+    node-agent:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    image: federated-learning:latest
+    environment:
+      - AGGREGATOR_URL=http://aggregator:8080
+      - DATABASE_URI=mongodb://admin:sovereign2026@mongo:27017/sovereign_200?authSource=admin
+      - REDIS_URI=redis://redis:6379
+      - BATCH_SIZE=32
+      - TIMEOUT=30s
+      - TPM_ENABLED=false
+      - LOG_LEVEL=info
+      - WASM_BINARY_PATH=/app/wasm/verify.wasm
+    depends_on:
+      - aggregator
+      - mongo
+      - redis
     deploy:
       replicas: 20
       resources:
@@ -130,10 +148,10 @@ services:
         reservations:
           cpus: '0.1'
           memory: 64M
-    restart_policy:
-      condition: on-failure
-      delay: 5s
-      max_attempts: 3
+      restart_policy:
+        condition: on-failure
+        delay: 5s
+        max_attempts: 3
     networks:
       - sovereign-net-200
     hostname: "node-agent-{{.Task.Slot}}"
