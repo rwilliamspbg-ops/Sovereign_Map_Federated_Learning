@@ -1,0 +1,56 @@
+name: Production Deployment
+
+on:
+  push:
+    tags:
+      - 'v*' # Triggers only when you create a version tag like v1.0.0
+
+jobs:
+  build-and-push:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write
+
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      - name: Log in to GitHub Container Registry
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Build and Push Backend
+        uses: docker/build-push-action@v5
+        with:
+          context: .
+          file: Dockerfile.backend
+          push: true
+          tags: ghcr.io/${{ github.repository }}/backend:latest
+
+      - name: Build and Push Node Agent
+        uses: docker/build-push-action@v5
+        with:
+          context: .
+          file: Dockerfile
+          push: true
+          tags: ghcr.io/${{ github.repository }}/node-agent:latest
+
+  deploy:
+    needs: build-and-push
+    runs-on: ubuntu-latest
+    # This part requires you to add "SSH_PRIVATE_KEY" and "SERVER_IP" to your Repo Secrets
+    steps:
+      - name: Deploy to Server via SSH
+        uses: appleboy/ssh-action@master
+        with:
+          host: ${{ secrets.SERVER_IP }}
+          username: root
+          key: ${{ secrets.SSH_PRIVATE_KEY }}
+          script: |
+            cd /app/sovereign-map
+            docker compose -f docker-compose.200nodes.yml pull
+            docker compose -f docker-compose.200nodes.yml up -d
