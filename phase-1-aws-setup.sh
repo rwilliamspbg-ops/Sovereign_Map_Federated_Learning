@@ -204,20 +204,40 @@ echo ""
 echo "=========================================="
 echo "Saving Configuration"
 echo "=========================================="
+#================================================================================
+# PHASE 1.7: SAVE OPTIMIZED CONFIGURATION (200-NODE DENSITY)
+#================================================================================
+echo ""
+echo "=========================================="
+echo "Saving Optimized Configuration"
+echo "=========================================="
 
 cat > aws-config.env << EOF
-# Sovereign FL 200-Node Test Configuration
+# Sovereign FL 200-Node Test Configuration (Optimized for 2026)
 # Generated: $(date)
-
 AWS_REGION=${REGION}
 AWS_ACCOUNT_ID=${ACCOUNT_ID}
 S3_BUCKET=${BUCKET_NAME}
 KEY_NAME=${KEY_NAME}
 IAM_ROLE=${ROLE_NAME}
 VPC_NAME=sovereign-fl-vpc
-AGGREGATOR_INSTANCE_TYPE=c5.2xlarge
-CLIENT_INSTANCE_TYPE=t3.medium
-NODE_COUNT=200
+
+# AGGREGATOR: Upgraded for heavy crypto-aggregation of 200 nodes
+AGGREGATOR_INSTANCE_TYPE=c7g.4xlarge 
+
+# CLIENTS: Shifted to high-density compute to avoid vCPU limit failure
+# This setup runs ~25 Docker containers per instance (8 instances total)
+CLIENT_INSTANCE_TYPE=m7g.4xlarge
+INSTANCE_COUNT=8
+NODES_PER_INSTANCE=25
+TOTAL_NODE_COUNT=200
+
+# DOCKER OPTIMIZATION
+DOCKER_MEM_LIMIT=1g
+DOCKER_CPU_RESERVATION=0.5
+
+# COST SAVINGS
+USE_SPOT_INSTANCES=true
 EOF
 
 echo "✓ Configuration saved to: aws-config.env"
