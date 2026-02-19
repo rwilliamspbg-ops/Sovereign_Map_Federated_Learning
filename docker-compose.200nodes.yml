@@ -121,7 +121,7 @@ services:
       - aggregator
       - mongo
       - redis
-    node-agent:
+   node-agent:
     build:
       context: .
       dockerfile: Dockerfile
@@ -148,6 +148,7 @@ services:
         reservations:
           cpus: '0.1'
           memory: 64M
+      # FIX: restart_policy must be indented inside deploy
       restart_policy:
         condition: on-failure
         delay: 5s
