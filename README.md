@@ -30,14 +30,15 @@
 > **Note:** Accuracy is tracked via the `aggregator-ci` logs during the automated Consensus Verification step.
 
 ### 📈 Training Convergence
+
 ```mermaid
 graph LR
     A[Round 1: 65%] --> B[Round 4: 78%]
     B --> C[Round 8: 82.5%]
     C --> D{Target: 85%}
     style D fill:#f9f,stroke:#333,stroke-width:4px
-
-## 🗺️ Sovereign Map DePIN Protocol
+```
+### 🗺️ Sovereign Map DePIN Protocol
 
 **Coordinator-less Privacy-Preserving Decentralized Mapping Network**
 
