@@ -1,0 +1,32 @@
+services:
+  aggregator:
+    build:
+      context: .
+      dockerfile: Dockerfile.backend
+    container_name: aggregator-ci
+    environment:
+      - QUORUM_THRESHOLD=2
+      - BYZANTINE_RATIO=0.0
+    ports:
+      - "5000:5000"
+
+  node-1:
+    build: .
+    environment:
+      - AGGREGATOR_URL=http://aggregator:5000
+    depends_on:
+      - aggregator
+
+  node-2:
+    build: .
+    environment:
+      - AGGREGATOR_URL=http://aggregator:5000
+    depends_on:
+      - aggregator
+
+  node-3:
+    build: .
+    environment:
+      - AGGREGATOR_URL=http://aggregator:5000
+    depends_on:
+      - aggregator
