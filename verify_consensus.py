@@ -10,7 +10,7 @@ def verify():
     for attempt in range(1, 11):
         print(f"Attempt {attempt}/10: Checking aggregator logs...")
         try:
-            # We look for aggregator-ci now to match the new compose file
+            # Matches the container_name in your docker-compose.ci.yml
             logs = subprocess.check_output(
                 ["docker", "logs", "--tail", "50", "aggregator-ci"],
                 stderr=subprocess.STDOUT,
