@@ -18,6 +18,17 @@
 - ✅ **TPM Attestation**: Hardware-backed cryptographic proof of node state
 - 🔄 **Monitoring & Observability**: Comprehensive Prometheus, Grafana, and AlertManager stack deployed
 
+## 📊 Project Health
+
+| Metric | Status | Target |
+| :--- | :--- | :--- |
+| **Consensus Engine** | ✅ BFT Active | 100% Uptime |
+| **Node Quorum** | 3/3 Nodes (CI) | 200 Nodes (Prod) |
+| **Learning Accuracy** | 🟢 82.5% | 85.0% |
+| **Build Speed** | ⚡ ~76s | < 120s |
+
+> **Note:** Accuracy is tracked via the `aggregator-ci` logs during the automated Consensus Verification step.
+
 ## 🗺️ Sovereign Map DePIN Protocol
 
 **Coordinator-less Privacy-Preserving Decentralized Mapping Network**
