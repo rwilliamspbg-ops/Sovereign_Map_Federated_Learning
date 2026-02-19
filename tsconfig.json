@@ -1,17 +1,62 @@
-{
-  "compilerOptions": {
-    "target": "ESNext",
-    "module": "ESNext",
-    "moduleResolution": "node",
-    "skipLibCheck": true,           // Critical: Skips checking d.ts files
-    "noEmit": false,                 // Ensure it actually outputs files
-    "strict": false,                 // Relaxes type checking
-    "noImplicitAny": false,          // Stops blocking on untyped variables
-    "allowJs": true,
-    "baseUrl": ".",
-    "paths": {
-      "@sovereignmap/*": ["packages/*/src"]
-    }
-  },
-  "exclude": ["node_modules", "dist"]
-}
+name: Build and Test
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+
+permissions:
+  contents: read
+  packages: write
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Enable Corepack
+        run: |
+          corepack enable
+          corepack prepare yarn@4.1.0 --activate
+
+      - name: Install dependencies
+        run: yarn install
+        env:
+          YARN_ENABLE_IMMUTABLE_INSTALLS: false
+
+      - name: Build Core Packages
+        # This excludes the frontend and examples to prevent TS5055 overwrite errors
+        run: yarn workspaces foreach -A --exclude "@sovereignmap/frontend" --exclude "@sovereignmap/example-*" run build
+
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.10'
+
+      - name: Build Docker images
+        run: |
+          docker compose -f docker-compose.200nodes.yml build --no-cache
+
+      - name: Start services
+        run: |
+          docker compose -f docker-compose.200nodes.yml up -d
+
+      - name: Wait for backend health
+        run: |
+          echo "Waiting for federated learning nodes to initialize..."
+          sleep 45
+
+      - name: Debug on failure
+        if: failure()
+        run: |
+          docker compose -f docker-compose.200nodes.yml logs
+          docker ps -a
