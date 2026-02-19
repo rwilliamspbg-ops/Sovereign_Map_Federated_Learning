@@ -14,20 +14,20 @@ fi
 KEY_PATH="./terraform/sovereign-fl-key.pem"
 chmod 400 "$KEY_PATH"
 
-# 2. Get Aggregator IP
+# 2. Get Aggregator IP from Terraform
 AGGREGATOR_IP=$(terraform -chdir=terraform output -raw aggregator_ip)
 if [ -z "$AGGREGATOR_IP" ] || [ "$AGGREGATOR_IP" == "null" ]; then
     echo "❌ Error: Aggregator IP not found in Terraform output."
     exit 1
 fi
 
-# 3. Get Client IPs
+# 3. Fetch Client IPs from AWS
 CLIENT_IPS=$(aws ec2 describe-instances \
     --filters "Name=tag:aws:autoscaling:groupName,Values=sovereign-fl-clients" "Name=instance-state-name,Values=running" \
     --query "Reservations[*].Instances[*].PrivateIpAddress" \
     --output text)
 
-# 4. Step 1: Initialize Aggregator (Must be ready first)
+# 4. Initialize Genesis Aggregator (Must be up before nodes check in)
 echo "📦 Setting up Genesis Aggregator ($AGGREGATOR_IP)..."
 ssh -i "$KEY_PATH" -o StrictHostKeyChecking=no ubuntu@"$AGGREGATOR_IP" << EOF
     sudo apt-get update && sudo apt-get install -y docker.io docker-compose
@@ -36,12 +36,12 @@ ssh -i "$KEY_PATH" -o StrictHostKeyChecking=no ubuntu@"$AGGREGATOR_IP" << EOF
     docker-compose up -d aggregator
 EOF
 
-echo "✓ Aggregator is online. Starting parallel node launch..."
+echo "✓ Aggregator is online. Starting parallel node launch across cluster..."
 
-# 5. Step 2: Parallel Deployment to Clients
+# 5. Parallel Deployment to Worker Hosts
 for IP in $CLIENT_IPS; do
     (
-        echo "📲 [Host $IP] Launching 25 nodes..."
+        echo "📲 [Host $IP] Deploying 25 nodes..."
         ssh -i "$KEY_PATH" -o StrictHostKeyChecking=no -J ubuntu@"$AGGREGATOR_IP" ubuntu@"$IP" << EOF
             sudo apt-get update && sudo apt-get install -y docker.io docker-compose
             
@@ -72,17 +72,17 @@ for IP in $CLIENT_IPS; do
                     --restart on-failure:3 \\
                     $DOCKER_IMAGE_NAME > /dev/null
             done
-            echo "✓ Host $IP: All 25 nodes are UP."
+            echo "✓ Host $IP: Successfully launched 25 nodes."
 EOF
     ) & 
 done
 
-# Wait for all background SSH processes to finish
+# Wait for all background threads to complete
 wait
 
 echo ""
 echo "=========================================================="
 echo "SUCCESS: 200 Nodes deployed across 8 instances."
-echo "Aggregator: http://$AGGREGATOR_IP:8081"
-echo "Run 'phase-4-execute-test.sh' to begin FL training."
+echo "Aggregator Dashboard: http://$AGGREGATOR_IP:8081"
+echo "Next: Run 'phase-4-execute-test.sh' to start FL rounds."
 echo "=========================================================="
