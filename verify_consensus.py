@@ -1,19 +1,31 @@
 import subprocess
-import time
 import sys
+import time
 
-def check_logs():
-    print("Searching logs for Consensus Success...")
-    # This command looks at the aggregator logs for the success signal
-    cmd = "docker logs aggregator-200"
-    result = subprocess.check_output(cmd, shell=True).decode('utf-8')
+def verify():
+    print("--- Starting Consensus Verification ---")
+    # Give it a moment to ensure logs are flushed
+    time.sleep(5)
     
-    if "Global model updated" in result or "Round 1 complete" in result:
-        print("✅ SUCCESS: Consensus reached and model updated!")
-        return True
-    return False
+    try:
+        # Check aggregator logs for the BFT success signal
+        logs = subprocess.check_output(
+            ["docker", "logs", "aggregator-200"], 
+            stderr=subprocess.STDOUT
+        ).decode('utf-8')
+        
+        if "Global model updated" in logs or "Round 1 complete" in logs:
+            print("✅ SUCCESS: BFT Consensus reached!")
+            return True
+        else:
+            print("⚠️ PENDING: Aggregator is still processing...")
+            return False
+            
+    except Exception as e:
+        print(f"❌ Error accessing logs: {e}")
+        return False
 
-# Give the cluster time to run a round
-time.sleep(30) 
-if not check_logs():
-    sys.exit(1) # This fails the GitHub Action if consensus isn't found
+if __name__ == "__main__":
+    success = verify()
+    if not success:
+        sys.exit(1)
