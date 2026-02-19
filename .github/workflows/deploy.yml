@@ -6,11 +6,13 @@ on:
       - 'v*' # Triggers only when you create a version tag like v1.0.0
 
 jobs:
-  build-and-push:
+ build-and-push:
     runs-on: ubuntu-latest
+    # ADD THIS BLOCK BELOW
     permissions:
-      contents: read
-      packages: write
+      contents: read    # To checkout the code
+      packages: write    # To push images to GHCR
+      security-events: write # Optional: allows CodeQL to log results
 
     steps:
       - name: Checkout Code
