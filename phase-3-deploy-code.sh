@@ -1,64 +1,81 @@
 #!/bin/bash
 echo "=========================================="
-echo "PHASE 3: Code Deployment (Terraform Mode)"
+echo "PHASE 3: Optimized Code Deployment (200-Node Scale)"
 echo "=========================================="
 
-# 1. Configuration - Paths are relative to the root of the repo
-KEY_PATH="./terraform/sovereign-fl-key.pem"
-REPO_URL="https://github.com/rwilliamspbg-ops/Sovereign_Map_Federated_Learning.git"
-
-# 2. Get the Aggregator IP from Terraform
-# We use -chdir=terraform so we don't have to move into the folder
-AGGREGATOR_IP=$(terraform -chdir=terraform output -raw aggregator_ip)
-
-if [ -z "$AGGREGATOR_IP" ] || [ "$AGGREGATOR_IP" == "null" ]; then
-    echo "❌ Error: Aggregator IP not found in Terraform. Run 'terraform apply' first."
+# 1. Load Configuration
+if [ -f "aws-config.env" ]; then
+    source aws-config.env
+else
+    echo "❌ Error: aws-config.env not found. Run Phase 1 first."
     exit 1
 fi
 
-echo "🚀 Found Aggregator IP: $AGGREGATOR_IP"
+KEY_PATH="./terraform/sovereign-fl-key.pem"
 
-# 3. Get Client Private IPs using AWS CLI
-echo "📡 Finding running client nodes..."
+# 2. Get Aggregator IP
+AGGREGATOR_IP=$(terraform -chdir=terraform output -raw aggregator_ip)
+if [ -z "$AGGREGATOR_IP" ] || [ "$AGGREGATOR_IP" == "null" ]; then
+    echo "❌ Error: Aggregator IP not found in Terraform."
+    exit 1
+fi
+
+# 3. Get Client IPs
 CLIENT_IPS=$(aws ec2 describe-instances \
     --filters "Name=tag:aws:autoscaling:groupName,Values=sovereign-fl-clients" "Name=instance-state-name,Values=running" \
     --query "Reservations[*].Instances[*].PrivateIpAddress" \
     --output text)
 
-if [ -z "$CLIENT_IPS" ]; then
-    echo "⚠️ No running clients found. Checking for initialization..."
-    sleep 10
-    exit 1
-fi
-
 # 4. Deploy to Aggregator
-echo "📦 Configuring Aggregator ($AGGREGATOR_IP)..."
-ssh -i "$KEY_PATH" -o StrictHostKeyChecking=no ubuntu@"$AGGREGATOR_IP" << 'EOF'
-    sudo apt-get update && sudo apt-get install -y docker.io git python3-pip
+echo "📦 Setting up Aggregator ($AGGREGATOR_IP)..."
+ssh -i "$KEY_PATH" -o StrictHostKeyChecking=no ubuntu@"$AGGREGATOR_IP" << EOF
+    sudo apt-get update && sudo apt-get install -y docker.io docker-compose
     if [ ! -d "Sovereign_Map_Federated_Learning" ]; then
         git clone https://github.com/rwilliamspbg-ops/Sovereign_Map_Federated_Learning.git
-    else
-        cd Sovereign_Map_Federated_Learning && git pull
     fi
-    echo "✓ Aggregator setup complete"
+    cd Sovereign_Map_Federated_Learning && git pull
+    # Start the aggregator service
+    docker-compose up -d aggregator
 EOF
 
-# 5. Deploy to Clients (using Aggregator as Jump Host)
+# 5. Deploy to Client Cluster (High Density)
 for IP in $CLIENT_IPS; do
-    echo "📲 Deploying to Client: $IP"
+    echo "📲 Deploying 25 nodes to Client Host: $IP"
     ssh -i "$KEY_PATH" -o StrictHostKeyChecking=no -J ubuntu@"$AGGREGATOR_IP" ubuntu@"$IP" << EOF
-        sudo apt-get update && sudo apt-get install -y python3-pip git
-        if [ ! -d "Sovereign_Map_Federated_Learning" ]; then
-            git clone $REPO_URL
-        else
-            cd Sovereign_Map_Federated_Learning && git pull
-        fi
-        pip3 install -r Sovereign_Map_Federated_Learning/requirements.txt
-        echo "✓ Client $IP configured"
+        sudo apt-get update && sudo apt-get install -y docker.io docker-compose
+        
+        # Clone repo if missing
+        [ ! -d "Sovereign_Map_Federated_Learning" ] && git clone https://github.com/rwilliamspbg-ops/Sovereign_Map_Federated_Learning.git
+        cd Sovereign_Map_Federated_Learning && git pull
+
+        # Clean up old runs
+        docker rm -f \$(docker ps -aq --filter "label=project=sovereign-map") 2>/dev/null
+
+        # Launch 25 containers using the optimized config
+        for i in \$(seq 1 $NODES_PER_INSTANCE); do
+            NODE_PORT=\$((8000 + i))
+            NODE_ID="node_\${IP//./-}_\$i"
+            
+            docker run -d \\
+                --name "\$NODE_ID" \\
+                --label "project=sovereign-map" \\
+                --network host \\
+                --memory "$DOCKER_MEM_LIMIT" \\
+                --cpus "$DOCKER_CPU_RESERVATION" \\
+                -e NODE_ID="\$NODE_ID" \\
+                -e AGGREGATOR_URL="http://$AGGREGATOR_IP:8081" \\
+                -e CLIENT_API_PORT="\$NODE_PORT" \\
+                -e LOCAL_EPOCHS="$LOCAL_EPOCHS" \\
+                -e BATCH_SIZE="$BATCH_SIZE" \\
+                -e PRIVACY_EPSILON="$PRIVACY_EPSILON" \\
+                -e BFT_THRESHOLD="$BFT_THRESHOLD" \\
+                --restart on-failure:3 \\
+                $DOCKER_IMAGE_NAME
+        done
+        echo "✓ Client $IP: 25 nodes launched successfully."
 EOF
 done
 
-echo ""
 echo "=========================================="
-echo "PHASE 3 COMPLETE: 1 Aggregator & $(echo $CLIENT_IPS | wc -w) Clients Ready"
+echo "PHASE 3 COMPLETE: 200 Nodes Deployed Across 8 Hosts"
 echo "=========================================="
