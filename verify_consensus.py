@@ -3,28 +3,34 @@ import sys
 import time
 
 def verify():
-    print("--- Starting Consensus Verification ---")
+    print("--- Starting Robust Consensus Verification ---")
     
-    # We will check 10 times, waiting 20 seconds between each check (total ~3 mins)
+    # Check 10 times, waiting 20s between checks (Total ~3.3 minutes)
     for attempt in range(1, 11):
-        print(f"Check {attempt}/10...")
+        print(f"Attempt {attempt}/10: Checking aggregator logs...")
         try:
+            # Get the last 50 lines of the aggregator logs
             logs = subprocess.check_output(
-                ["docker", "logs", "aggregator-200"], 
+                ["docker", "logs", "--tail", "50", "aggregator-200"], 
                 stderr=subprocess.STDOUT
             ).decode('utf-8')
             
+            # Look for your specific success indicators
             if "Global model updated" in logs or "Round 1 complete" in logs:
-                print("✅ SUCCESS: BFT Consensus reached!")
+                print("✅ SUCCESS: BFT Consensus reached and model updated!")
                 return True
+                
         except Exception as e:
-            print(f"Error reading logs: {e}")
+            print(f"⚠️ Container not ready yet: {e}")
             
-        time.sleep(20) 
+        print("Waiting 20 seconds for next check...")
+        time.sleep(20)
     
-    print("❌ TIMEOUT: Consensus was not reached within 3 minutes.")
     return False
 
 if __name__ == "__main__":
-    if not verify():
-        sys.exit(1)
+    if verify():
+        sys.exit(0) # Pass
+    else:
+        print("❌ TIMEOUT: Consensus was not reached within the time limit.")
+        sys.exit(1) # Fail the GitHub Actionexit(1)
