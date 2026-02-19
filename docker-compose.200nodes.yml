@@ -1,232 +1,69 @@
-# Docker Compose Configuration for 200-Node BFT Test
-# Sovereign Map Federated Learning
+# Sovereign Map Federated Learning - 200 Node Scale Fix
+# This file is optimized for high-density deployment (25 nodes per host)
 version: '3.8'
 
 services:
   # ==========================================
-  # Infrastructure Services
+  # Infrastructure Services (Shared on Host)
   # ==========================================
   mongo:
     image: mongo:7.0
     container_name: mongo-200
-    volumes:
-      - mongo_data_200:/data/db
-    ports:
-      - "27017:27017"
+    # Host mode networking for high-speed I/O access by nodes
+    network_mode: "host"
     environment:
       MONGO_INITDB_ROOT_USERNAME: admin
       MONGO_INITDB_ROOT_PASSWORD: sovereign2026
     restart: always
-    networks:
-      - sovereign-net-200
     healthcheck:
       test: ["CMD", "mongosh", "--eval", "db.adminCommand('ping')"]
       interval: 10s
-      timeout: 5s
-      retries: 5
 
   redis:
     image: redis:7-alpine
     container_name: redis-200
-    ports:
-      - "6379:6379"
-    volumes:
-      - redis_data_200:/data
+    network_mode: "host"
     restart: always
-    networks:
-      - sovereign-net-200
-    healthcheck:
-      test: ["CMD", "redis-cli", "ping"]
-      interval: 10s
-      timeout: 3s
-      retries: 5
 
-  backend:
-    build:
-      context: .
-      dockerfile: Dockerfile.backend
-    image: backend:latest
-    container_name: backend-200
-    ports:
-      - "8080:8080"
-      - "5000:5000"
-    environment:
-      - NODE_ID=backend-200
-      - DATABASE_URI=mongodb://admin:sovereign2026@mongo:27017/sovereign_200?authSource=admin
-      - REDIS_URI=redis://redis:6379
-      - NODE_COUNT=200
-      - QUORUM_SIZE=134
-      - LOG_LEVEL=debug
-      - TPM_ENABLED=false
-    depends_on:
-      mongo:
-        condition: service_healthy
-      redis:
-        condition: service_healthy
-    restart: always
-    networks:
-      - sovereign-net-200
-    healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:5000/health"]
-      interval: 20s
-      timeout: 10s
-      retries: 5
-      start_period: 60s
-
-  aggregator:
-    build:
-      context: .
-      dockerfile: Dockerfile.backend
-    image: aggregator:latest
-    container_name: aggregator-200
-    ports:
-      - "8081:8080"
-    environment:
-      - NODE_ID=aggregator-200
-      - AGGREGATOR_MODE=true
-      - DATABASE_URI=mongodb://admin:sovereign2026@mongo:27017/sovereign_200?authSource=admin
-      - REDIS_URI=redis://redis:6379
-      - QUORUM_SIZE=134
-      - BYZANTINE_RATIO=0.555
-      - LOG_LEVEL=debug
-    depends_on:
-      - backend
-      - mongo
-      - redis
-    restart: always
-    networks:
-      - sovereign-net-200
-
+  # ==========================================
+  # Sovereign Client Nodes (25 Replicas)
+  # ==========================================
   node-agent:
-    build:
-      context: .
-      dockerfile: Dockerfile
-    image: federated-learning:latest
-    environment:
-      - AGGREGATOR_URL=http://aggregator:8080
-      - DATABASE_URI=mongodb://admin:sovereign2026@mongo:27017/sovereign_200?authSource=admin
-      - REDIS_URI=redis://redis:6379
-      - BATCH_SIZE=32
-      - TIMEOUT=30s
-      - TPM_ENABLED=false
-      - LOG_LEVEL=info
-      - WASM_BINARY_PATH=/app/wasm/verify.wasm
-    depends_on:
-      - aggregator
-      - mongo
-      - redis
+    image: ${DOCKER_IMAGE_NAME:-federated-learning:latest}
     deploy:
-      replicas: 20
+      replicas: 25
       resources:
         limits:
-          cpus: '0.2'
-          memory: 128M
+          memory: ${DOCKER_MEM_LIMIT:-1g}
         reservations:
-          cpus: '0.1'
-          memory: 64M
+          cpus: '${DOCKER_CPU_RESERVATION:-0.5}'
       restart_policy:
         condition: on-failure
         delay: 5s
         max_attempts: 3
-    networks:
-      - sovereign-net-200
-    hostname: "node-agent-{{.Task.Slot}}"
+    environment:
+      # Connection to the central Genesis Node
+      - AGGREGATOR_URL=http://${AGGREGATOR_IP}:8081
+      # Local Database/Cache (Connecting via localhost due to host networking)
+      - DATABASE_URI=mongodb://admin:sovereign2026@127.0.0.1:27017/sovereign_200?authSource=admin
+      - REDIS_URI=redis://127.0.0.1:6379
+      # Training Hyperparameters
+      - LOCAL_EPOCHS=${LOCAL_EPOCHS:-3}
+      - BATCH_SIZE=${BATCH_SIZE:-32}
+      - PRIVACY_EPSILON=${PRIVACY_EPSILON:-4.0}
+      - BFT_THRESHOLD=${BFT_THRESHOLD:-0.67}
+      - LOG_LEVEL=info
+      - DEBUG=false
+    # FIX: Host networking bypasses the docker0 bridge bottleneck
+    network_mode: "host"
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
     volumes:
       - ./test-data:/app/test-data:ro
-      - node-agent-logs:/app/logs
-
-  nginx:
-    image: nginx:alpine
-    container_name: nginx-200
-    ports:
-      - "80:80"
-      - "443:443"
-    volumes:
-      - ./nginx.conf:/etc/nginx/nginx.conf:ro
-    depends_on:
-      - backend
-      - aggregator
-    restart: always
-    networks:
-      - sovereign-net-200
-
-  prometheus:
-    image: prom/prometheus:v2.47.0
-    container_name: prometheus-200
-    ports:
-      - "9090:9090"
-    volumes:
-      - ./prometheus.yml:/etc/prometheus/prometheus.yml:ro
-      - prometheus_data_200:/prometheus
-    command:
-      - '--config.file=/etc/prometheus/prometheus.yml'
-      - '--storage.tsdb.path=/prometheus'
-      - '--storage.tsdb.retention.time=24h'
-      - '--web.enable-lifecycle'
-    restart: always
-    networks:
-      - sovereign-net-200
-
-  grafana:
-    image: grafana/grafana:10.1.0
-    container_name: grafana-200
-    ports:
-      - "3001:3000"
-    environment:
-      - GF_SECURITY_ADMIN_USER=admin
-      - GF_SECURITY_ADMIN_PASSWORD=sovereign2026
-      - GF_USERS_ALLOW_SIGN_UP=false
-      - GF_SERVER_ROOT_URL=http://localhost:3001
-    volumes:
-      - grafana_data_200:/var/lib/grafana
-    depends_on:
-      - prometheus
-    restart: always
-    networks:
-      - sovereign-net-200
-
-  node-exporter:
-    image: prom/node-exporter:v1.6.1
-    container_name: node-exporter-200
-    volumes:
-      - /proc:/host/proc:ro
-      - /sys:/host/sys:ro
-      - /:/rootfs:ro
-    command:
-      - '--path.procfs=/host/proc'
-      - '--path.rootfs=/rootfs'
-      - '--path.sysfs=/host/sys'
-    restart: always
-    networks:
-      - sovereign-net-200
-
-  cadvisor:
-    image: gcr.io/cadvisor/cadvisor:v0.47.2
-    container_name: cadvisor-200
-    privileged: true
-    devices:
-      - /dev/kmsg:/dev/kmsg
-    volumes:
-      - /:/rootfs:ro
-      - /var/run:/var/run:ro
-      - /sys:/sys:ro
-      - /var/lib/docker:/var/lib/docker:ro
-      - /cgroup:/cgroup:ro
-    restart: always
-    networks:
-      - sovereign-net-200
-
-networks:
-  sovereign-net-200:
-    driver: bridge
-    ipam:
-      config:
-        - subnet: 172.20.0.0/16
-          gateway: 172.20.0.1
 
 volumes:
   mongo_data_200:
   redis_data_200:
-  prometheus_data_200:
-  grafana_data_200:
-  node-agent-logs:
