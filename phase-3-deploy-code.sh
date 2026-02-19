@@ -1,7 +1,7 @@
 #!/bin/bash
-echo "=========================================="
-echo "PHASE 3: Optimized Code Deployment (200-Node Scale)"
-echo "=========================================="
+echo "=========================================================="
+echo "PHASE 3: High-Density Parallel Deployment (200-Node Scale)"
+echo "=========================================================="
 
 # 1. Load Configuration
 if [ -f "aws-config.env" ]; then
@@ -12,11 +12,12 @@ else
 fi
 
 KEY_PATH="./terraform/sovereign-fl-key.pem"
+chmod 400 "$KEY_PATH"
 
 # 2. Get Aggregator IP
 AGGREGATOR_IP=$(terraform -chdir=terraform output -raw aggregator_ip)
 if [ -z "$AGGREGATOR_IP" ] || [ "$AGGREGATOR_IP" == "null" ]; then
-    echo "❌ Error: Aggregator IP not found in Terraform."
+    echo "❌ Error: Aggregator IP not found in Terraform output."
     exit 1
 fi
 
@@ -26,56 +27,62 @@ CLIENT_IPS=$(aws ec2 describe-instances \
     --query "Reservations[*].Instances[*].PrivateIpAddress" \
     --output text)
 
-# 4. Deploy to Aggregator
-echo "📦 Setting up Aggregator ($AGGREGATOR_IP)..."
+# 4. Step 1: Initialize Aggregator (Must be ready first)
+echo "📦 Setting up Genesis Aggregator ($AGGREGATOR_IP)..."
 ssh -i "$KEY_PATH" -o StrictHostKeyChecking=no ubuntu@"$AGGREGATOR_IP" << EOF
     sudo apt-get update && sudo apt-get install -y docker.io docker-compose
-    if [ ! -d "Sovereign_Map_Federated_Learning" ]; then
-        git clone https://github.com/rwilliamspbg-ops/Sovereign_Map_Federated_Learning.git
-    fi
+    [ ! -d "Sovereign_Map_Federated_Learning" ] && git clone https://github.com/rwilliamspbg-ops/Sovereign_Map_Federated_Learning.git
     cd Sovereign_Map_Federated_Learning && git pull
-    # Start the aggregator service
     docker-compose up -d aggregator
 EOF
 
-# 5. Deploy to Client Cluster (High Density)
+echo "✓ Aggregator is online. Starting parallel node launch..."
+
+# 5. Step 2: Parallel Deployment to Clients
 for IP in $CLIENT_IPS; do
-    echo "📲 Deploying 25 nodes to Client Host: $IP"
-    ssh -i "$KEY_PATH" -o StrictHostKeyChecking=no -J ubuntu@"$AGGREGATOR_IP" ubuntu@"$IP" << EOF
-        sudo apt-get update && sudo apt-get install -y docker.io docker-compose
-        
-        # Clone repo if missing
-        [ ! -d "Sovereign_Map_Federated_Learning" ] && git clone https://github.com/rwilliamspbg-ops/Sovereign_Map_Federated_Learning.git
-        cd Sovereign_Map_Federated_Learning && git pull
-
-        # Clean up old runs
-        docker rm -f \$(docker ps -aq --filter "label=project=sovereign-map") 2>/dev/null
-
-        # Launch 25 containers using the optimized config
-        for i in \$(seq 1 $NODES_PER_INSTANCE); do
-            NODE_PORT=\$((8000 + i))
-            NODE_ID="node_\${IP//./-}_\$i"
+    (
+        echo "📲 [Host $IP] Launching 25 nodes..."
+        ssh -i "$KEY_PATH" -o StrictHostKeyChecking=no -J ubuntu@"$AGGREGATOR_IP" ubuntu@"$IP" << EOF
+            sudo apt-get update && sudo apt-get install -y docker.io docker-compose
             
-            docker run -d \\
-                --name "\$NODE_ID" \\
-                --label "project=sovereign-map" \\
-                --network host \\
-                --memory "$DOCKER_MEM_LIMIT" \\
-                --cpus "$DOCKER_CPU_RESERVATION" \\
-                -e NODE_ID="\$NODE_ID" \\
-                -e AGGREGATOR_URL="http://$AGGREGATOR_IP:8081" \\
-                -e CLIENT_API_PORT="\$NODE_PORT" \\
-                -e LOCAL_EPOCHS="$LOCAL_EPOCHS" \\
-                -e BATCH_SIZE="$BATCH_SIZE" \\
-                -e PRIVACY_EPSILON="$PRIVACY_EPSILON" \\
-                -e BFT_THRESHOLD="$BFT_THRESHOLD" \\
-                --restart on-failure:3 \\
-                $DOCKER_IMAGE_NAME
-        done
-        echo "✓ Client $IP: 25 nodes launched successfully."
+            [ ! -d "Sovereign_Map_Federated_Learning" ] && git clone https://github.com/rwilliamspbg-ops/Sovereign_Map_Federated_Learning.git
+            cd Sovereign_Map_Federated_Learning && git pull
+
+            # Cleanup previous project containers
+            docker rm -f \$(docker ps -aq --filter "label=project=sovereign-map") 2>/dev/null
+
+            # High-density launch loop
+            for i in \$(seq 1 $NODES_PER_INSTANCE); do
+                NODE_PORT=\$((8000 + i))
+                NODE_ID="node_\${IP//./-}_\$i"
+                
+                docker run -d \\
+                    --name "\$NODE_ID" \\
+                    --label "project=sovereign-map" \\
+                    --network host \\
+                    --memory "$DOCKER_MEM_LIMIT" \\
+                    --cpus "$DOCKER_CPU_RESERVATION" \\
+                    -e NODE_ID="\$NODE_ID" \\
+                    -e AGGREGATOR_URL="http://$AGGREGATOR_IP:8081" \\
+                    -e CLIENT_API_PORT="\$NODE_PORT" \\
+                    -e LOCAL_EPOCHS="$LOCAL_EPOCHS" \\
+                    -e BATCH_SIZE="$BATCH_SIZE" \\
+                    -e PRIVACY_EPSILON="$PRIVACY_EPSILON" \\
+                    -e BFT_THRESHOLD="$BFT_THRESHOLD" \\
+                    --restart on-failure:3 \\
+                    $DOCKER_IMAGE_NAME > /dev/null
+            done
+            echo "✓ Host $IP: All 25 nodes are UP."
 EOF
+    ) & 
 done
 
-echo "=========================================="
-echo "PHASE 3 COMPLETE: 200 Nodes Deployed Across 8 Hosts"
-echo "=========================================="
+# Wait for all background SSH processes to finish
+wait
+
+echo ""
+echo "=========================================================="
+echo "SUCCESS: 200 Nodes deployed across 8 instances."
+echo "Aggregator: http://$AGGREGATOR_IP:8081"
+echo "Run 'phase-4-execute-test.sh' to begin FL training."
+echo "=========================================================="
