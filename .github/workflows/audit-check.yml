@@ -14,19 +14,28 @@ jobs:
 
       - name: SGP-001 Standards Check
         run: |
-          # This version reads directly from your 200-node test file
+          # 1. Verify the file exists
           FILE="docker-compose.200nodes.yml"
-          EXPECTED="200"
+          if [ ! -f "$FILE" ]; then
+            echo "❌ CRITICAL: $FILE not found in the root directory!"
+            ls -R
+            exit 1
+          fi
+
+          # 2. Extract value using a more flexible regex
+          # This looks for MIN_PARTICIPANTS followed by any separator and '200'
+          ACTUAL=$(grep -i "MIN_PARTICIPANTS" "$FILE" | sed 's/[^0-9]//g' | head -1)
           
-          # Extract the value from the file
-          ACTUAL=$(grep "MIN_PARTICIPANTS" "$FILE" | head -1 | cut -d'=' -f2 | tr -d ' "' | tr -d '\r' | xargs)
-          
-          if [ "$ACTUAL" != "$EXPECTED" ]; then
-            echo "❌ SGP-001 Violation: MIN_PARTICIPANTS is '$ACTUAL' (Expected '$EXPECTED')"
+          echo "Debug: Extracted value is [$ACTUAL]"
+
+          if [ "$ACTUAL" != "200" ]; then
+            echo "❌ SGP-001 Violation: MIN_PARTICIPANTS found as '$ACTUAL' (Expected '200')"
+            echo "Current file content for debugging:"
+            cat "$FILE"
             exit 1
           fi
           
-          echo "✅ Audit Verified: $ACTUAL participants found in $FILE"
+          echo "✅ Audit Verified: $ACTUAL participants confirmed in $FILE"
 
   lint-scripts:
     runs-on: ubuntu-latest
@@ -34,6 +43,6 @@ jobs:
       - uses: actions/checkout@v4
       - name: Run ShellCheck
         run: |
-          # Fixes the SC2087 warning by quoting the EOF
+          # Auto-fix the SC2087 quoting issue
           sed -i "s/<< EOF/<< 'EOF'/g" phase-3-deploy-code.sh
           shellcheck phase-3-deploy-code.sh
