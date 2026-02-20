@@ -56,3 +56,9 @@ test-results/
 node_modules/
 dist/
 .env
+terraform/.terraform/
+terraform/.terraform/
+terraform/.terraform/
+terraform/.terraform/
+sovereign-fl-key.pem
+aws-config.env

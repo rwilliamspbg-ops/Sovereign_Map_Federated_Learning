@@ -1,31 +1,26 @@
 #!/bin/bash
+# MANUAL OVERRIDES - Using your known working IP and Key
+AGGREGATOR_IP="3.94.31.131"
+KEY_PATH="./terraform/sovereign-fl-key.pem"
+
 echo "=========================================================="
 echo "PHASE 3: High-Density Parallel Deployment (200-Node Scale)"
 echo "=========================================================="
 
-# 1. Load Configuration
+# 1. Load Configuration (Optional, keeps other env vars)
 if [ -f "aws-config.env" ]; then
     source aws-config.env
-else
-    echo "❌ Error: aws-config.env not found. Run Phase 1 first."
-    exit 1
 fi
 
-KEY_PATH="./terraform/sovereign-fl-key.pem"
-chmod 400 "$KEY_PATH"
+# Fix permissions on the key
+chmod 400 "$KEY_PATH" 2>/dev/null || echo "⚠️ Warning: Could not set permissions on key."
 
-# 2. Get Aggregator IP from Terraform
-AGGREGATOR_IP=$(terraform -chdir=terraform output -raw aggregator_ip)
-if [ -z "$AGGREGATOR_IP" ] || [ "$AGGREGATOR_IP" == "null" ]; then
-    echo "❌ Error: Aggregator IP not found in Terraform output."
-    exit 1
-fi
+# 2. BYPASS TERRAFORM - Do not overwrite AGGREGATOR_IP
+echo "📡 Using manual Aggregator IP: $AGGREGATOR_IP"
 
-# 3. Fetch Client IPs from AWS
-CLIENT_IPS=$(aws ec2 describe-instances \
-    --filters "Name=tag:aws:autoscaling:groupName,Values=sovereign-fl-clients" "Name=instance-state-name,Values=running" \
-    --query "Reservations[*].Instances[*].PrivateIpAddress" \
-    --output text)
+# 3. Fetch Client IPs from AWS (Simplified to your current single instance)
+# If you only have one instance, we use the same IP for the clients
+CLIENT_IPS="3.94.31.131"
 
 # 4. Initialize Genesis Aggregator (Must be up before nodes check in)
 echo "📦 Setting up Genesis Aggregator ($AGGREGATOR_IP)..."

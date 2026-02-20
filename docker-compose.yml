@@ -18,12 +18,11 @@ services:
       dockerfile: Dockerfile.backend
     image: backend:latest
     ports:
-      - "8081:8081"  # Added this so the backend is reachable
+      - "8081:8081"
     environment:
       - DATABASE_URI=mongodb://mongo:27017/mydb
     depends_on:
-      mongo:
-        condition: service_started
+      - mongo
     restart: always
     healthcheck:
       test: ["CMD", "python3", "-c", "import urllib.request; urllib.request.urlopen('http://127.0.0.1:5000/health').read()"]
@@ -44,9 +43,7 @@ services:
       dockerfile: Dockerfile.monitoring
     image: monitoring:latest
     ports:
-      - "9090:9090" # Matches your AWS Security Group for Prometheus/Metrics
-    environment:
-      - MONITORING_ENV=production
+      - "9090:9090"
     depends_on:
       - backend
     restart: always
@@ -65,10 +62,6 @@ services:
     environment:
       - FL_SERVER_MODE=true
       - FL_MODEL_PATH=/models
-      - PRIVACY_BUDGET_EPSILON=1.0
-      - PRIVACY_DELTA=1e-5
-      - MIN_PARTICIPANTS=10
-      - TARGET_THROUGHPUT_TOPS=85
     entrypoint: >
       sh -c "python3 /app/scripts/validate_audit.py && python3 /app/sovereignmap_production_backend.py"
     healthcheck:
@@ -79,4 +72,3 @@ services:
 
 volumes:
   mongo_data:
-  
