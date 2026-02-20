@@ -1,12 +1,11 @@
 services:
   frontend:
-    image: frontend:latest
-    ports:
-      - "3000:80"
     build:
       context: .
       dockerfile: Dockerfile.frontend
     image: frontend:latest
+    ports:
+      - "3000:80"
     environment:
       - NODE_ENV=production
     depends_on:
@@ -18,6 +17,8 @@ services:
       context: .
       dockerfile: Dockerfile.backend
     image: backend:latest
+    ports:
+      - "8081:8081"  # Added this so the backend is reachable
     environment:
       - DATABASE_URI=mongodb://mongo:27017/mydb
     depends_on:
@@ -40,8 +41,10 @@ services:
   monitoring:
     build:
       context: .
-      dockerfile: Dockerfile.monitoring # Ensure this file exists in your root
+      dockerfile: Dockerfile.monitoring
     image: monitoring:latest
+    ports:
+      - "9090:9090" # Matches your AWS Security Group for Prometheus/Metrics
     environment:
       - MONITORING_ENV=production
     depends_on:
@@ -75,5 +78,5 @@ services:
       retries: 3
 
 volumes:
-    mongo_data:
+  mongo_data:
   
