@@ -46,3 +46,13 @@ wheels/
 .DS_Store
 Thumbs.db
 *.pem
+
+# Sovereign Map Audit Results
+results-*/
+test-results/
+*.tar.gz
+*.pth
+*.log
+node_modules/
+dist/
+.env
