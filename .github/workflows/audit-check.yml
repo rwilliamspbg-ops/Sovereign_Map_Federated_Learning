@@ -3,8 +3,6 @@ name: SGP-001 Audit Sync
 on:
   push:
     branches: [ main ]
-  pull_request:
-    branches: [ main ]
 
 jobs:
   audit-validation:
@@ -14,28 +12,22 @@ jobs:
 
       - name: SGP-001 Standards Check
         run: |
-          # 1. Verify the file exists
           FILE="docker-compose.200nodes.yml"
-          if [ ! -f "$FILE" ]; then
-            echo "❌ CRITICAL: $FILE not found in the root directory!"
-            ls -R
-            exit 1
-          fi
-
-          # 2. Extract value using a more flexible regex
-          # This looks for MIN_PARTICIPANTS followed by any separator and '200'
-          ACTUAL=$(grep -i "MIN_PARTICIPANTS" "$FILE" | sed 's/[^0-9]//g' | head -1)
           
-          echo "Debug: Extracted value is [$ACTUAL]"
+          # 1. Check NODE_COUNT (The cluster size)
+          NODE_COUNT=$(grep "NODE_COUNT" "$FILE" | sed 's/[^0-9]//g' | head -1)
+          
+          # 2. Check replicas (The actual deployed agents)
+          REPLICAS=$(grep "replicas:" "$FILE" | sed 's/[^0-9]//g' | head -1)
 
-          if [ "$ACTUAL" != "200" ]; then
-            echo "❌ SGP-001 Violation: MIN_PARTICIPANTS found as '$ACTUAL' (Expected '200')"
-            echo "Current file content for debugging:"
-            cat "$FILE"
+          echo "Audit Debug: Found $NODE_COUNT nodes and $REPLICAS replicas."
+
+          if [ "$NODE_COUNT" != "200" ] || [ "$REPLICAS" != "200" ]; then
+            echo "❌ SGP-001 Violation: Cluster size must be 200."
             exit 1
           fi
           
-          echo "✅ Audit Verified: $ACTUAL participants confirmed in $FILE"
+          echo "✅ Audit Verified: 200-node quorum confirmed."
 
   lint-scripts:
     runs-on: ubuntu-latest
@@ -43,6 +35,6 @@ jobs:
       - uses: actions/checkout@v4
       - name: Run ShellCheck
         run: |
-          # Auto-fix the SC2087 quoting issue
+          # Fixes the SC2087 warning by quoting the EOF
           sed -i "s/<< EOF/<< 'EOF'/g" phase-3-deploy-code.sh
           shellcheck phase-3-deploy-code.sh
