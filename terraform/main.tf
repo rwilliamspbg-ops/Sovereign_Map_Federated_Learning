@@ -1,15 +1,32 @@
+terraform {
+  # 1. Combined Backend and Provider Block
+  backend "s3" {
+    bucket         = "sovereign-map-terraform-state" # Ensure this matches your actual bucket name
+    key            = "live-test/100-node.tfstate"
+    region         = "us-east-1"
+    encrypt        = true
+  }
+
+  required_providers {
+    aws = {
+      source  = "hashicorp/aws"
+      version = "~> 6.0" # This fixes the 6.33.0 lock error
+    }
+  }
+}
+
+# 2. Provider Configuration
 provider "aws" {
   region = var.aws_region
 }
 
-# Network: VPC
+# 3. Network Infrastructure
 resource "aws_vpc" "main" {
   cidr_block           = "10.0.0.0/16"
   enable_dns_hostnames = true
   tags                 = { Name = "sovereign-fl-vpc" }
 }
 
-# Network: Subnet
 resource "aws_subnet" "main" {
   vpc_id                  = aws_vpc.main.id
   cidr_block              = "10.0.1.0/24"
@@ -17,7 +34,6 @@ resource "aws_subnet" "main" {
   availability_zone       = "${var.aws_region}a"
 }
 
-# Network: Gateway
 resource "aws_internet_gateway" "main" {
   vpc_id = aws_vpc.main.id
 }
@@ -35,25 +51,22 @@ resource "aws_route_table_association" "main" {
   route_table_id = aws_route_table.main.id
 }
 
-# Security Group
+# 4. Security Group
 resource "aws_security_group" "main" {
   name   = "sovereign-fl-sg"
   vpc_id = aws_vpc.main.id
-
   ingress {
     from_port   = 22
     to_port     = 22
     protocol    = "tcp"
     cidr_blocks = ["0.0.0.0/0"]
   }
-
   ingress {
     from_port   = 0
     to_port     = 0
     protocol    = "-1"
     cidr_blocks = ["10.0.0.0/16"]
   }
-
   egress {
     from_port   = 0
     to_port     = 0
@@ -62,15 +75,14 @@ resource "aws_security_group" "main" {
   }
 }
 
-# Aggregator Instance
+# 5. Compute Resources (100 Nodes)
 resource "aws_instance" "aggregator" {
-  ami                    = "ami-0c7217cdde317cfec" # Ubuntu 22.04 LTS (Update if needed)
+  ami                    = "ami-0c7217cdde317cfec"
   instance_type          = "c5.2xlarge"
   subnet_id              = aws_subnet.main.id
   vpc_security_group_ids = [aws_security_group.main.id]
   key_name               = var.key_pair_name
   iam_instance_profile   = var.iam_role
-
   user_data = <<-EOT
     #!/bin/bash
     apt-get update
@@ -78,27 +90,20 @@ resource "aws_instance" "aggregator" {
     systemctl start docker
     usermod -aG docker ubuntu
   EOT
-
   tags = { Name = "sovereign-aggregator" }
 }
 
-# Client Launch Template
 resource "aws_launch_template" "client" {
   name          = "sovereign-client-template"
   image_id      = "ami-0c7217cdde317cfec"
   instance_type = "m7g.4xlarge"
   key_name      = var.key_pair_name
-
-  iam_instance_profile {
-    name = var.iam_role
-  }
-
+  iam_instance_profile { name = var.iam_role }
   network_interfaces {
     associate_public_ip_address = true
     security_groups             = [aws_security_group.main.id]
     subnet_id                   = aws_subnet.main.id
   }
-
   user_data = base64encode(<<-EOT
     #!/bin/bash
     apt-get update
@@ -108,23 +113,14 @@ resource "aws_launch_template" "client" {
   )
 }
 
-# Worker Instances (Scale based on node_count)
 resource "aws_instance" "worker" {
-  count                  = var.node_count
+  count = var.node_count
   launch_template {
     id      = aws_launch_template.client.id
     version = "$Latest"
   }
-
-  tags = {
-    Name = "sovereign-worker-${count.index}"
-  }
+  tags = { Name = "sovereign-worker-${count.index}" }
 }
 
-output "aggregator_ip" {
-  value = aws_instance.aggregator.public_ip
-}
-
-output "worker_ips" {
-  value = aws_instance.worker[*].public_ip
-}
+output "aggregator_ip" { value = aws_instance.aggregator.public_ip }
+output "worker_ips"    { value = aws_instance.worker[*].public_ip }
