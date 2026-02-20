@@ -1,0 +1,33 @@
+SOVEREIGN MAP / MOHAWK PROTO – COLLECTED TEST VALUES
+============================================================
+
+Generated: 2026-02-17T18:08:44.894488Z
+
+[mega_test.py values]
+  nodes                       : 10000000
+  malicious_fraction          : 0.556
+  bft_threshold               : 0.555
+  bft_safe                    : False
+  recovery_accuracy_values    : [85.6, 87.5, 89.2, 91.4, 93.4, 95.5, 97.7, 97.5, 97.5, 97.4]
+  average_recovery_accuracy   : 93.27
+  raw_metadata_tb             : 40000
+  compressed_metadata_mb      : 28
+  compression_reduction_factor: 1462857.1
+
+[convergence_plot data (rounds 1–25)]
+  rounds                      : [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25]
+  accuracy_per_round          : [86.6, 87.8, 89.2, 90.5, 92.1, 93.7, 95.5, 96.7, 97.0, 85.6, 87.5, 89.2, 91.4, 93.4, 95.5, 97.7, 97.5, 97.5, 97.4, 97.6, 97.7, 97.8, 97.6, 97.6, 97.6]
+  breach_round                : 10
+  breach_accuracy             : 85.6
+  breach_label                : Byzantine Breach (55.6%)
+  final_accuracy              : 97.6
+  peak_accuracy               : 97.8
+  min_accuracy_after_breach   : 85.6
+  recovery_delta              : 12.0
+
+[Consistency / Sanity Checks]
+  bft_claim_matches_plot                : PASS
+  breach_accuracy_in_plot               : FAIL
+  avg_recovery_matches_mega             : PASS
+  final_accuracy_claim                  : PASS
+  compression_factor_sane               : PASS
