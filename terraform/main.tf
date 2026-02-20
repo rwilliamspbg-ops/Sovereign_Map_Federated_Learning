@@ -1,16 +1,28 @@
-# 1. Provider Configuration
+terraform {
+  required_providers {
+    aws = {
+      source  = "hashicorp/aws"
+      version = "~> 6.33.0"
+    }
+  }
+
+  backend "s3" {
+    bucket  = "sovereign-fl-results-722762405531"
+    key     = "terraform/terraform.tfstate"
+    region  = "us-east-1"
+    encrypt = true
+  }
+}
+
 provider "aws" {
   region = var.aws_region
 }
 
-# 2. Network Infrastructure
+# 1. Network Infrastructure
 resource "aws_vpc" "main" {
   cidr_block           = "10.0.0.0/16"
   enable_dns_hostnames = true
-
-  tags = {
-    Name = "sovereign-fl-vpc"
-  }
+  tags = { Name = "sovereign-fl-vpc" }
 }
 
 resource "aws_subnet" "main" {
@@ -26,7 +38,6 @@ resource "aws_internet_gateway" "main" {
 
 resource "aws_route_table" "main" {
   vpc_id = aws_vpc.main.id
-
   route {
     cidr_block = "0.0.0.0/0"
     gateway_id = aws_internet_gateway.main.id
@@ -38,7 +49,7 @@ resource "aws_route_table_association" "main" {
   route_table_id = aws_route_table.main.id
 }
 
-# 3. Security Group
+# 2. Security Group
 resource "aws_security_group" "main" {
   name   = "sovereign-fl-sg"
   vpc_id = aws_vpc.main.id
@@ -65,7 +76,7 @@ resource "aws_security_group" "main" {
   }
 }
 
-# 4. CloudWatch Log Groups (Fixed Naming)
+# 3. CloudWatch Log Groups
 resource "aws_cloudwatch_log_group" "aggregator" {
   name              = "sovereign-fl/aggregator"
   retention_in_days = 7
@@ -76,7 +87,7 @@ resource "aws_cloudwatch_log_group" "clients" {
   retention_in_days = 7
 }
 
-# 5. Compute Resources
+# 4. Compute Resources
 resource "aws_instance" "aggregator" {
   ami                    = "ami-0c7217cdde317cfec"
   instance_type          = "c5.2xlarge"
@@ -85,17 +96,7 @@ resource "aws_instance" "aggregator" {
   key_name               = var.key_pair_name
   iam_instance_profile   = var.iam_role
 
-  user_data = <<-EOT
-    #!/bin/bash
-    apt-get update
-    apt-get install -y docker.io python3-pip
-    systemctl start docker
-    usermod -aG docker ubuntu
-  EOT
-
-  tags = {
-    Name = "sovereign-aggregator"
-  }
+  tags = { Name = "sovereign-aggregator" }
 }
 
 resource "aws_launch_template" "client" {
@@ -113,14 +114,6 @@ resource "aws_launch_template" "client" {
     security_groups             = [aws_security_group.main.id]
     subnet_id                   = aws_subnet.main.id
   }
-
-  user_data = base64encode(<<-EOT
-    #!/bin/bash
-    apt-get update
-    apt-get install -y docker.io
-    systemctl start docker
-  EOT
-  )
 }
 
 resource "aws_instance" "worker" {
@@ -131,12 +124,10 @@ resource "aws_instance" "worker" {
     version = "$Latest"
   }
 
-  tags = {
-    Name = "sovereign-worker-${count.index}"
-  }
+  tags = { Name = "sovereign-worker-${count.index}" }
 }
 
-# 6. Outputs
+# 5. Outputs
 output "aggregator_ip" {
   value = aws_instance.aggregator.public_ip
 }
