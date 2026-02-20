@@ -59,6 +59,10 @@ jobs:
           docker compose -f docker-compose.200nodes.yml logs
           docker ps -a
 
-      - name: Run Consensus Verification
+      - name: Install Python dependencies
         run: |
-          python3 verify_consensus.py
+          python -m pip install --upgrade pip
+          pip install numpy pandas matplotlib  # Add any other libs you need
+
+      - name: Run Consensus Verification
+        run: python3 verify_consensus.py
