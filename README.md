@@ -1,6 +1,5 @@
 # 🌐 Sovereign Map: Federated Learning Framework
 
-![GitHub release (latest by date)](https://img.shields.io/github/v/release/rwilliamspbg-ops/Sovereign_Map_Federated_Learning?include_prereleases&label=release&color=blue)
 ![Build Status](https://img.shields.io/badge/Audit_Accuracy-85.42%25-green)
 ![BFT Resilience](https://img.shields.io/badge/BFT_Resilience-30%25-blueviolet)
 [![SGP-001 Audit Sync](https://github.com/rwilliamspbg-ops/Sovereign_Map_Federated_Learning/actions/workflows/audit-check.yml/badge.svg)](https://github.com/rwilliamspbg-ops/Sovereign_Map_Federated_Learning/actions/workflows/audit-check.yml)
