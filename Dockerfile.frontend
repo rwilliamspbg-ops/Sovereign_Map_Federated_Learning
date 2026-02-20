@@ -3,18 +3,19 @@ FROM node:20-alpine AS build
 
 WORKDIR /app
 
-# Copy package files for better caching
-COPY package*.json ./
+# 1. Copy package files from the frontend subdirectory
+COPY frontend/package*.json ./
 RUN npm install
 
-# Copy source and build
-COPY . .
+# 2. Copy the rest of the frontend source code and build
+COPY frontend/ ./
 RUN npm run build
 
 # Stage 2: Serve with Nginx
 FROM nginx:stable-alpine
 
 # Copy the build output from Stage 1
+# Vite defaults to the 'dist' folder
 COPY --from=build /app/dist /usr/share/nginx/html
 
 # Copy custom Nginx config to handle React Router and API proxying
