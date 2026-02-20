@@ -7,7 +7,7 @@ variable "aws_region" {
 variable "node_count" {
   description = "Number of worker nodes"
   type        = number
-  default     = 1 # Scaled down from 100 for testing
+  default     = 15 
 }
 
 variable "key_pair_name" {
