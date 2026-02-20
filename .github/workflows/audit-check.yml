@@ -1,4 +1,4 @@
-name: name: SGP-001 Audit Sync
+name: SGP-001 Audit Sync
 
 on:
   push:
