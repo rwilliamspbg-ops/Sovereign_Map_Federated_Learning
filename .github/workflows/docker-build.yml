@@ -9,11 +9,11 @@ on:
       - '.github/workflows/docker-build.yml'
       - 'requirements.txt'
 
-# Add these explicit permissions to fix CodeQL Alert #15
+# 1. Fixes CodeQL Permission Alert #15
 permissions:
   contents: read           # Required to check out code
   packages: write          # Required to push images to GHCR
-  security-events: write   # Required for CodeQL/Trivy to upload scan results
+  security-events: write   # Required for CodeQL/Trivy to upload results
 
 jobs:
   build:
@@ -21,6 +21,11 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v4
+
+      # 2. Fixes "repository name must be lowercase" error
+      - name: Lowercase Repo Name
+        run: |
+          echo "IMAGE_REPOSITORY=$(echo ${{ github.repository }} | tr '[:upper:]' '[:lower:]')" >> $GITHUB_ENV
 
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v3
@@ -36,5 +41,6 @@ jobs:
         uses: docker/build-push-action@v6
         with:
           context: .
-          push: true       # Changed to true to utilize the new 'packages: write' permission
-          tags: ghcr.io/${{ github.repository }}:latest
+          push: true
+          # Uses the lowercase environment variable
+          tags: ghcr.io/${{ env.IMAGE_REPOSITORY }}:latest
