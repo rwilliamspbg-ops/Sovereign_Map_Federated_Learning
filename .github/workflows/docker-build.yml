@@ -9,10 +9,15 @@ on:
       - '.github/workflows/docker-build.yml'
       - 'requirements.txt'
 
+# Add these explicit permissions to fix CodeQL Alert #15
+permissions:
+  contents: read           # Required to check out code
+  packages: write          # Required to push images to GHCR
+  security-events: write   # Required for CodeQL/Trivy to upload scan results
+
 jobs:
   build:
     runs-on: ubuntu-latest
-
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -27,10 +32,9 @@ jobs:
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: Build (no push yet)
+      - name: Build and Push (v0.4 Release Candidate)
         uses: docker/build-push-action@v6
         with:
           context: .
-          push: false
-          tags: ghcr.io/rwilliamspbg-ops/sovereign_map_federated_learning:latest
-
+          push: true       # Changed to true to utilize the new 'packages: write' permission
+          tags: ghcr.io/${{ github.repository }}:latest
