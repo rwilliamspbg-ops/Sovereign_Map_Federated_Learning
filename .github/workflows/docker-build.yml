@@ -35,11 +35,11 @@ jobs:
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: Build and Push (v0.4 Release Candidate)
+      - name: Build and Push Backend
         uses: docker/build-push-action@v6
         with:
           context: .
-          file: Dockerfile.backend
+          file: ./Dockerfile
           push: true
           tags: |
             ghcr.io/${{ env.IMAGE_REPOSITORY }}/backend:latest
