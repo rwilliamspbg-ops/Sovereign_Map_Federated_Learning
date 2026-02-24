@@ -49,7 +49,7 @@ class ThreatAnalysis:
 
 class SpatialThreatAnalyzer:
     """Analyze Byzantine threats using Gemini AI"""
-    
+
     def __init__(self, api_key: Optional[str] = None):
         """Initialize threat analyzer with Gemini API"""
         self.api_key = api_key or os.getenv("GEMINI_API_KEY")
@@ -60,31 +60,34 @@ class SpatialThreatAnalyzer:
             self.mock_mode = False
             try:
                 import google.generativeai as genai
+
                 genai.configure(api_key=self.api_key)
                 self.model = genai.GenerativeModel("gemini-3-pro")
             except Exception as e:
-                print(f"[WARNING] Failed to initialize Gemini: {e}. Using mock mode.")
+                print(
+                    f"[WARNING] Failed to initialize Gemini: {e}. Using mock mode."
+                )
                 self.mock_mode = True
-        
+
         self.analysis_history: List[ThreatAnalysis] = []
         self.last_analysis: Optional[ThreatAnalysis] = None
-    
+
     async def analyze_threats(self, metrics: BFTMetrics) -> ThreatAnalysis:
         """Analyze Byzantine threats and generate recommendations"""
-        
+
         if self.mock_mode:
             return self._mock_analysis(metrics)
-        
+
         try:
             return await self._gemini_analysis(metrics)
         except Exception as e:
             print(f"[WARNING] Gemini analysis failed: {e}. Using mock analysis.")
             return self._mock_analysis(metrics)
-    
+
     async def _gemini_analysis(self, metrics: BFTMetrics) -> ThreatAnalysis:
         """Analyze using Gemini AI"""
         prompt = self._build_prompt(metrics)
-        
+
         try:
             response = self.model.generate_content(prompt)
             analysis_text = response.text
@@ -92,7 +95,7 @@ class SpatialThreatAnalyzer:
         except Exception as e:
             print(f"[ERROR] Gemini API error: {e}")
             raise
-    
+
     def _build_prompt(self, metrics: BFTMetrics) -> str:
         """Build analysis prompt for Gemini"""
         return f"""
@@ -133,8 +136,10 @@ RESPONSE FORMAT (JSON):
 
 Prioritize actionable, specific recommendations that can be executed autonomously.
 """
-    
-    def _parse_gemini_response(self, response_text: str, metrics: BFTMetrics) -> ThreatAnalysis:
+
+    def _parse_gemini_response(
+        self, response_text: str, metrics: BFTMetrics
+    ) -> ThreatAnalysis:
         """Parse Gemini response into ThreatAnalysis"""
         try:
             # Extract JSON from response
@@ -146,9 +151,9 @@ Prioritize actionable, specific recommendations that can be executed autonomousl
                 start = response_text.find("{")
                 end = response_text.rfind("}") + 1
                 json_str = response_text[start:end]
-            
+
             data = json.loads(json_str)
-            
+
             return ThreatAnalysis(
                 threat_level=ThreatLevel[data.get("threat_level", "alert").upper()],
                 severity_score=float(data.get("severity_score", 50)),
@@ -158,15 +163,15 @@ Prioritize actionable, specific recommendations that can be executed autonomousl
                 estimated_recovery_time=float(data.get("estimated_recovery_time", 1.0)),
                 confidence=float(data.get("confidence", 70)),
                 recommended_defense=data.get("recommended_defense", "Hierarchical aggregation with trim"),
-                ai_insights=data.get("ai_insights", "Analysis complete")
+                ai_insights=data.get("ai_insights", "Analysis complete"),
             )
         except Exception as e:
             print(f"[WARNING] Failed to parse Gemini response: {e}")
             return self._mock_analysis(metrics)
-    
+
     def _mock_analysis(self, metrics: BFTMetrics) -> ThreatAnalysis:
         """Generate mock analysis (for testing without Gemini)"""
-        
+
         # Determine threat level
         if metrics.byzantine_percentage > 55:
             threat_level = ThreatLevel.CRITICAL
@@ -183,7 +188,7 @@ Prioritize actionable, specific recommendations that can be executed autonomousl
         else:
             threat_level = ThreatLevel.SAFE
             severity_score = 20
-        
+
         # Risk factors
         risk_factors = []
         if metrics.byzantine_percentage > 45:
@@ -193,10 +198,12 @@ Prioritize actionable, specific recommendations that can be executed autonomousl
         if metrics.recovery_time_rounds > 10:
             risk_factors.append("Slow recovery from Byzantine perturbations")
         if metrics.network_partition_detected:
-            risk_factors.append("Network partition detected - Byzantine vectors multiplied")
+            risk_factors.append(
+                "Network partition detected - Byzantine vectors multiplied"
+            )
         if metrics.cascading_failure_detected:
             risk_factors.append("Cascading failures in progress")
-        
+
         # Immediate actions
         immediate_actions = []
         if threat_level in [ThreatLevel.CRITICAL, ThreatLevel.ALERT]:
@@ -208,7 +215,7 @@ Prioritize actionable, specific recommendations that can be executed autonomousl
             immediate_actions.append("Log all Byzantine attack patterns")
         if metrics.network_partition_detected:
             immediate_actions.append("Activate partition recovery protocol")
-        
+
         return ThreatAnalysis(
             threat_level=threat_level,
             severity_score=severity_score,
@@ -218,12 +225,12 @@ Prioritize actionable, specific recommendations that can be executed autonomousl
             estimated_recovery_time=max(1.0, metrics.recovery_time_rounds * 0.5),
             confidence=85.0,
             recommended_defense="Hierarchical aggregation (26% faster, more stable)",
-            ai_insights=f"System at {threat_level.value} threat level. Byzantine nodes: {metrics.byzantine_percentage:.1f}%. Amplification: {metrics.amplification_factor:.2f}x. Recovery time: {metrics.recovery_time_rounds} rounds."
+            ai_insights=f"System at {threat_level.value} threat level. Byzantine nodes: {metrics.byzantine_percentage:.1f}%. Amplification: {metrics.amplification_factor:.2f}x. Recovery time: {metrics.recovery_time_rounds} rounds.",
         )
-    
+
     def get_defense_protocol(self, analysis: ThreatAnalysis) -> Dict:
         """Get automated defense protocol based on analysis"""
-        
+
         protocol = {
             "protocol_id": f"defense_{analysis.threat_level.value}_{int(analysis.severity_score)}",
             "threat_level": analysis.threat_level.value,
@@ -233,51 +240,53 @@ Prioritize actionable, specific recommendations that can be executed autonomousl
                 "trim_percentage": min(0.25, 0.10 + (analysis.severity_score / 500)),
                 "timeout_per_round": 10 + (analysis.severity_score / 5),
                 "node_isolation_threshold": 2.5,
-                "cascading_failure_detection": "enabled"
+                "cascading_failure_detection": "enabled",
             },
             "actions": analysis.immediate_actions,
             "monitoring": {
                 "amplification_factor_threshold": 2.5,
                 "convergence_threshold": 50,
-                "recovery_time_limit": 15
-            }
+                "recovery_time_limit": 15,
+            },
         }
-        
+
         return protocol
-    
+
     def store_analysis(self, analysis: ThreatAnalysis) -> None:
         """Store analysis for historical tracking"""
         self.analysis_history.append(analysis)
         self.last_analysis = analysis
-    
+
     def get_threat_trend(self) -> Dict:
         """Analyze threat trend over time"""
         if len(self.analysis_history) < 2:
             return {"trend": "insufficient_data"}
-        
+
         recent = self.analysis_history[-10:]
         severity_scores = [a.severity_score for a in recent]
         threat_levels = [a.threat_level.value for a in recent]
-        
+
         return {
             "recent_analyses": len(recent),
             "avg_severity": sum(severity_scores) / len(severity_scores),
-            "severity_trend": "increasing" if severity_scores[-1] > severity_scores[0] else "decreasing",
+            "severity_trend": "increasing"
+            if severity_scores[-1] > severity_scores[0]
+            else "decreasing",
             "threat_levels": threat_levels,
             "latest_threat_level": threat_levels[-1],
             "max_severity": max(severity_scores),
-            "min_severity": min(severity_scores)
+            "min_severity": min(severity_scores),
         }
 
 
 # Example usage
 if __name__ == "__main__":
     import asyncio
-    
+
     async def main():
         # Create analyzer
         analyzer = SpatialThreatAnalyzer()
-        
+
         # Test metrics
         metrics = BFTMetrics(
             byzantine_percentage=52.0,
@@ -289,13 +298,13 @@ if __name__ == "__main__":
             attack_patterns=["coordinated_flip", "amplification"],
             throughput=74000,
             network_partition_detected=False,
-            cascading_failure_detected=False
+            cascading_failure_detected=False,
         )
-        
+
         # Analyze
         analysis = await analyzer.analyze_threats(metrics)
         analyzer.store_analysis(analysis)
-        
+
         # Display results
         print(f"Threat Level: {analysis.threat_level.value}")
         print(f"Severity Score: {analysis.severity_score:.1f}/100")
@@ -308,10 +317,10 @@ if __name__ == "__main__":
             print(f"  - {action}")
         print(f"\nMitigation Strategy: {analysis.mitigation_strategy}")
         print(f"Recommended Defense: {analysis.recommended_defense}")
-        
+
         # Get protocol
         protocol = analyzer.get_defense_protocol(analysis)
         print(f"\nDefense Protocol:")
         print(json.dumps(protocol, indent=2))
-    
+
     asyncio.run(main())
