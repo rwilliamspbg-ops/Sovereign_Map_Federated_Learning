@@ -1,0 +1,35 @@
+FROM python:3.11-slim
+
+WORKDIR /app
+
+# Install system dependencies
+RUN apt-get update && apt-get install -y \
+    gcc \
+    curl \
+    git \
+    && rm -rf /var/lib/apt/lists/*
+
+# Copy requirements
+COPY requirements-backend.txt .
+
+# Install Python dependencies
+RUN pip install --no-cache-dir -r requirements-backend.txt
+
+# Copy application files
+COPY fl_metrics_translator.py .
+COPY spatial_threat_analyzer.py .
+COPY sovereign_federation_backend.py .
+COPY bft_week2_*.py ./tests/
+
+# Create data directory
+RUN mkdir -p /app/data
+
+# Health check
+HEALTHCHECK --interval=30s --timeout=10s --start-period=10s --retries=3 \
+    CMD curl -f http://localhost:8000/health || exit 1
+
+# Expose port
+EXPOSE 8000
+
+# Run application
+CMD ["python", "sovereign_federation_backend.py"]
