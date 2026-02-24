@@ -1,20 +1,45 @@
-# Docker volumes
+# ============================================================================
+# Sovereign Map: Federated Learning Framework - .gitignore
+# ============================================================================
+
+# ============================================================================
+# DOCKER & CONTAINERIZATION
+# ============================================================================
+
+# Docker volumes and data
+docker-volumes/
 prometheus-data/
 grafana-data/
 loki-data/
+redis-data/
+postgres-data/
+mysql-data/
 
-# Logs
-*.log
-logs/
+# Docker files (environment-specific, local)
+.dockerignore
+docker/.env
+docker/.env.local
+docker/.env.*.local
 
-# Docker-related
+# Docker build artifacts
 .docker/
+docker-build/
+*.tar
+*.tar.gz
 
-# Python
+# ============================================================================
+# PYTHON & DEPENDENCIES
+# ============================================================================
+
+# Byte-compiled / optimized / DLL files
 __pycache__/
 *.py[cod]
 *$py.class
+
+# C extensions
 *.so
+
+# Distribution / packaging
 .Python
 env/
 venv/
@@ -31,34 +56,438 @@ parts/
 sdist/
 var/
 wheels/
+pip-wheel-metadata/
+share/python-wheels/
 *.egg-info/
 .installed.cfg
 *.egg
+MANIFEST
 
-# IDE
+# PyInstaller
+*.manifest
+*.spec
+
+# Unit test / coverage reports
+htmlcov/
+.tox/
+.nox/
+.coverage
+.coverage.*
+.cache
+nosetests.xml
+coverage.xml
+*.cover
+*.py,cover
+.hypothesis/
+.pytest_cache/
+
+# Virtual environments
+venv/
+env/
+.venv
+.env
+
+# ============================================================================
+# JAVASCRIPT / NODE / FRONTEND
+# ============================================================================
+
+# Node modules
+node_modules/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+lerna-debug.log*
+package-lock.json
+yarn.lock
+
+# Build artifacts
+dist/
+build/
+.next/
+out/
+.nuxt/
+.cache/
+.vuepress/dist/
+.serverless/
+.fusebox/
+.dynamodb/
+.tern-port
+.vscode-test
+.yarn/cache
+.yarn/unplugged
+.yarn/build-state.yml
+.yarn/install-state.gz
+.pnp.*
+
+# ============================================================================
+# IDE & EDITORS
+# ============================================================================
+
+# VS Code
 .vscode/
+.vscode-insiders/
+*.code-workspace
+.history/
+
+# JetBrains IDEs
 .idea/
+*.iml
+*.iws
+*.ipr
+*.sublime-workspace
+*.sublime-project
+
+# vim
 *.swp
 *.swo
 *~
+.vim/
 
-# OS
+# Emacs
+*~
+\#*\#
+.\#*
+
+# Sublime Text
+*.sublime-workspace
+*.sublime-project
+
+# Nano
+.nano_history
+
+# ============================================================================
+# OPERATING SYSTEM
+# ============================================================================
+
+# macOS
 .DS_Store
-Thumbs.db
-*.pem
+.AppleDouble
+.LSOverride
+*.swp
+._*
+.Spotlight-V100
+.Trashes
 
-# Sovereign Map Audit Results
-results-*/
-test-results/
-*.tar.gz
-*.pth
+# Windows
+Thumbs.db
+ehthumbs.db
+Desktop.ini
+$RECYCLE.BIN/
+*.lnk
+
+# Linux
+.directory
+.Trash-*
+
+# ============================================================================
+# LOGS & OUTPUT
+# ============================================================================
+
+# Logs
 *.log
-node_modules/
-dist/
+logs/
+*.log.*
+debug.log
+error.log
+access.log
+
+# Output files
+output/
+results/
+*.out
+*.tmp
+
+# Test results
+test-results/
+results-*/
+audit_results/
+*_results/
+.pytest_cache/
+
+# ============================================================================
+# CREDENTIALS & SECRETS
+# ============================================================================
+
+# Environment files (NEVER commit these!)
 .env
-terraform/.terraform/
-terraform/.terraform/
-terraform/.terraform/
-terraform/.terraform/
-sovereign-fl-key.pem
+.env.local
+.env.*.local
+.env.production
+.env.staging
+.env.development
 aws-config.env
+*.pem
+*.key
+*.pub
+*.crt
+*.cert
+secrets/
+.secrets/
+
+# SSH keys
+*.pem
+*.key
+~/.ssh/
+
+# API keys & tokens
+.apikey
+.token
+credentials.json
+oauth.json
+
+# ============================================================================
+# TERRAFORM & INFRASTRUCTURE
+# ============================================================================
+
+# Local terraform directories
+terraform/.terraform/
+terraform/.terraform.lock.hcl
+terraform/terraform.tfstate
+terraform/terraform.tfstate.*
+terraform/.terraform.tfvars.json
+terraform/.terraformignore
+terraform/crash.log
+terraform/override.tf
+terraform/override.tf.json
+terraform/*_override.tf
+terraform/*_override.tf.json
+terraform/.terraformrc
+terraform/terraform.rc
+
+# Terraform output files
+terraform/*.tfvars
+!terraform/terraform.tfvars.example
+terraform/tfplan
+terraform/*.json
+
+# ============================================================================
+# DATABASES & PERSISTENCE
+# ============================================================================
+
+# Database files
+*.db
+*.sqlite
+*.sqlite3
+*.sql
+*.sql.gz
+data/
+db/
+database/
+
+# Backup files
+*.backup
+*.bak
+*.swp
+
+# ============================================================================
+# CERTIFICATES & KEYS
+# ============================================================================
+
+# SSL/TLS certificates
+*.pem
+*.key
+*.crt
+*.cert
+*.cer
+*.p12
+*.pfx
+*.jks
+certificates/
+keys/
+certs/
+
+# ============================================================================
+# BUILD & COMPILATION ARTIFACTS
+# ============================================================================
+
+# Go build
+*.exe
+*.dll
+*.so
+*.dylib
+*.test
+*.out
+
+# Rust build
+target/
+Cargo.lock
+
+# Java build
+*.class
+*.jar
+*.war
+*.ear
+.gradle/
+build/
+target/
+
+# C/C++ build
+*.o
+*.a
+*.so
+*.dylib
+CMakeCache.txt
+CMakeFiles/
+cmake_install.cmake
+
+# ============================================================================
+# MONITORING & METRICS
+# ============================================================================
+
+# Prometheus data
+prometheus_data/
+*.db
+chunks_head/
+
+# Grafana
+grafana_data/
+plugins/
+
+# Alert manager
+alertmanager_data/
+
+# ============================================================================
+# BENCHMARKING & PROFILING
+# ============================================================================
+
+# Profiling output
+*.prof
+*.pprof
+*.cpu
+*.mem
+*.plist
+
+# Benchmark results
+benchmark_results/
+benchmarks/
+*.bench
+
+# ============================================================================
+# CI/CD
+# ============================================================================
+
+# GitHub Actions
+.github/workflows/artifacts/
+.github/workflows/logs/
+
+# GitLab CI
+.gitlab-ci/artifacts/
+.gitlab-ci/logs/
+
+# Jenkins
+build/
+.jenkins/
+artifacts/
+
+# Travis CI
+.travis/
+
+# ============================================================================
+# DOCUMENTATION
+# ============================================================================
+
+# Generated documentation
+docs/_build/
+docs/site/
+docs/.sass-cache/
+
+# API documentation
+api-docs/
+generated/
+
+# Jupyter notebooks
+.ipynb_checkpoints/
+*.ipynb_checkpoints
+
+# ============================================================================
+# TEMPORARY & ARCHIVE FILES
+# ============================================================================
+
+# Temporary files
+*.tmp
+*.temp
+*.swp
+.tmp/
+temp/
+tmp/
+
+# Archive files
+*.zip
+*.rar
+*.7z
+*.tar
+*.tar.gz
+*.tar.bz2
+*.gz
+
+# Backup directories
+*.backup/
+backups/
+old/
+archive/
+
+# ============================================================================
+# PROJECT-SPECIFIC
+# ============================================================================
+
+# Research & testing artifacts
+week1_results/
+week2_results/
+audit_results/
+test-results/
+benchmark_results/
+
+# Model checkpoints (keep small or exclude)
+*.pth
+*.h5
+*.pb
+models/checkpoints/
+checkpoints/
+
+# Data files (excluding test fixtures)
+data/
+*.csv
+*.json
+!fixtures/
+!config/*.json
+
+# TPM-related
+tpm_data/
+tpm_state/
+
+# MQTT/Kafka
+kafka_data/
+mosquitto_data/
+
+# ============================================================================
+# ALLOWED EXCEPTIONS (!) - Files to keep
+# ============================================================================
+
+# Keep these critical files
+!.github/
+!.github/workflows/
+!config/*.yml
+!config/*.yaml
+!config/examples/
+!documentation/
+!scripts/
+!tests/fixtures/
+!terraform/examples/
+!docker/
+
+# ============================================================================
+# PATTERN RULES
+# ============================================================================
+
+# Ignore all files in certain directories
+__pycache__/
+.git/
+.pytest_cache/
+.mypy_cache/
+.coverage/
+htmlcov/
+
+# But keep important config examples
+!**/.env.example
+!**/config.example.yml
+!**/terraform.tfvars.example
