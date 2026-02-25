@@ -65,4 +65,4 @@ jobs:
           pip install numpy pandas matplotlib  # Add any other libs you need
 
       - name: Run Consensus Verification
-        run: python3 verify_consensus.py
+        run: python3 src/verify_consensus.py
