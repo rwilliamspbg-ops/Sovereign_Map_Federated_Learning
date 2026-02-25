@@ -23,6 +23,7 @@ jobs:
 
       - name: Lowercase Repo Name
         run: |
+          # Converts rwilliamspbg-ops/Sovereign_Map_Federated_Learning to lowercase
           echo "IMAGE_REPOSITORY=$(echo ${{ github.repository }} | tr '[:upper:]' '[:lower:]')" >> $GITHUB_ENV
 
       - name: Set up Docker Buildx
