@@ -424,15 +424,14 @@ tmp/
 *.backup/
 backups/
 old/
-archive/
 
 # ============================================================================
 # PROJECT-SPECIFIC
 # ============================================================================
 
-# Research & testing artifacts
-week1_results/
-week2_results/
+# Research & testing artifacts (old - now in archive/)
+# week1_results/
+# week2_results/
 audit_results/
 test-results/
 benchmark_results/
