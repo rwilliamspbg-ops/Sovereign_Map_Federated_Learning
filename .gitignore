@@ -193,7 +193,7 @@ access.log
 
 # Output files
 output/
-results/
+# results/        (keep test results - see exception below)
 *.out
 *.tmp
 
@@ -470,9 +470,12 @@ mosquitto_data/
 !config/examples/
 !documentation/
 !scripts/
+!tests/
 !tests/fixtures/
 !terraform/examples/
 !docker/
+!results/
+!results/*.md
 
 # ============================================================================
 # PATTERN RULES
