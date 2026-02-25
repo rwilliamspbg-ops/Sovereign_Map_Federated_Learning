@@ -18,7 +18,7 @@ services:
       dockerfile: Dockerfile.backend
     image: backend:latest
     ports:
-      - "8081:8081"
+      - "8081:5000"
     environment:
       - DATABASE_URI=mongodb://mongo:27017/mydb
     depends_on:
@@ -64,6 +64,25 @@ services:
       - FL_MODEL_PATH=/models
     entrypoint: >
       sh -c "python3 /app/scripts/validate_audit.py && python3 /app/sovereignmap_production_backend.py"
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:6000/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+  node-agent:
+    build: .
+    image: federated-learning:latest
+    depends_on:
+      backend:
+        condition: service_healthy
+      mongo:
+        condition: service_started
+    environment:
+      - NODE_AGENT_MODE=true
+      - NODE_PEER_ID=node_agent
+      - BACKEND_URL=http://backend:5000
+    restart: always
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:6000/health"]
       interval: 30s

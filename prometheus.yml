@@ -1,60 +1,44 @@
-# Prometheus configuration for Sovereign Maps
+
+# Prometheus configuration for BFT monitoring
+
 global:
   scrape_interval: 15s
   evaluation_interval: 15s
   external_labels:
-    cluster: 'sovereignmap'
+    cluster: 'federated-learning'
     environment: 'production'
 
-# Alerting configuration (optional)
+# Alertmanager configuration
 alerting:
   alertmanagers:
     - static_configs:
-        - targets: []
+        - targets:
+            - localhost:9093
 
-# Scrape configurations
+# Rule files
+rule_files:
+  - 'bft_rules.yml'
+
+# Scrape configs
 scrape_configs:
-  # Sovereign Maps Backend
-  - job_name: 'sovereignmap-backend'
-    static_configs:
-      - targets: ['backend:5000']
-    metrics_path: '/metrics'
-    scrape_interval: 10s
-
   # Prometheus self-monitoring
   - job_name: 'prometheus'
     static_configs:
       - targets: ['localhost:9090']
 
-# Recording rules for derived metrics
-rule_files:
-  # - 'alerts.yml'
+  # BFT Metrics Exporter
+  - job_name: 'bft_metrics'
+    static_configs:
+      - targets: ['localhost:8000']
+    scrape_interval: 10s
+    metrics_path: '/metrics'
 
-# Example recording rules (create alerts.yml for these)
-# groups:
-#   - name: sovereignmap_rules
-#     interval: 30s
-#     rules:
-#       - record: sovereignmap:fl_success_rate
-#         expr: rate(sovereignmap_fl_rounds_total[5m])
-#       
-#       - record: sovereignmap:avg_cxl_latency
-#         expr: histogram_quantile(0.95, rate(sovereignmap_cxl_access_latency_ns_bucket[5m]))
-#       
-#       - alert: MeshDisconnected
-#         expr: sovereignmap_mesh_connected == 0
-#         for: 5m
-#         labels:
-#           severity: critical
-#         annotations:
-#           summary: "Mesh network disconnected"
-#           description: "Sovereign Maps mesh has been disconnected for >5 minutes"
-#       
-#       - alert: HighCXLUtilization
-#         expr: sovereignmap_cxl_pool_utilization_percent > 90
-#         for: 10m
-#         labels:
-#           severity: warning
-#         annotations:
-#           summary: "CXL memory pool nearly full"
-#           description: "CXL utilization at {{ $value }}%"
+  # Grafana
+  - job_name: 'grafana'
+    static_configs:
+      - targets: ['localhost:3000']
+
+  # Node Exporters (for system metrics)
+  - job_name: 'node_exporter'
+    static_configs:
+      - targets: ['localhost:9100']
