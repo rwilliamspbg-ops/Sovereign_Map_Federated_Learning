@@ -50,10 +50,10 @@ jobs:
       
       - name: Validate Docker Compose files
         run: |
-          docker-compose -f docker-compose.full.yml config > /dev/null
-          docker-compose -f docker-compose.monitoring.yml config > /dev/null
-          docker-compose -f docker-compose.tpm-secure.yml config > /dev/null
-          docker-compose -f docker-compose.monitoring.tpm.yml config > /dev/null
+          docker compose -f docker-compose.full.yml config > /dev/null
+          docker compose -f docker-compose.monitoring.yml config > /dev/null
+          docker compose -f docker-compose.tpm-secure.yml config > /dev/null
+          docker compose -f docker-compose.monitoring.tpm.yml config > /dev/null
           echo "✅ All Docker Compose files valid"
       
       - name: Check documentation
@@ -146,16 +146,16 @@ jobs:
             git clone --depth 1 https://github.com/${{ github.repository }}.git . || git pull origin main
             
             # Pull latest images
-            docker-compose -f docker-compose.full.yml pull || true
+            docker compose -f docker-compose.full.yml pull || true
             
             # Deploy with 50 nodes (staging)
-            NUM_NODES=50 docker-compose -f docker-compose.full.yml up -d --scale node-agent=50
+            NUM_NODES=50 docker compose -f docker-compose.full.yml up -d --scale node-agent=50
             
             # Wait for services
             sleep 30
             
             # Verify deployment
-            docker-compose -f docker-compose.full.yml ps
+            docker compose -f docker-compose.full.yml ps
             
             echo "✅ Staging deployment complete"
         continue-on-error: true
@@ -230,19 +230,19 @@ jobs:
             git clone --depth 1 https://github.com/${{ github.repository }}.git . || git pull origin main
             
             # Backup current state
-            docker-compose -f docker-compose.full.yml config > backup-$(date +%s).yml || true
+            docker compose -f docker-compose.full.yml config > backup-$(date +%s).yml || true
             
             # Pull latest images
-            docker-compose -f docker-compose.full.yml pull
+            docker compose -f docker-compose.full.yml pull
             
             # Deploy with 100 nodes (production)
-            NUM_NODES=100 docker-compose -f docker-compose.full.yml up -d --scale node-agent=100
+            NUM_NODES=100 docker compose -f docker-compose.full.yml up -d --scale node-agent=100
             
             # Wait for services to be healthy
             sleep 60
             
             # Verify deployment
-            docker-compose -f docker-compose.full.yml ps
+            docker compose -f docker-compose.full.yml ps
             
             echo "✅ Production deployment complete"
       
@@ -301,10 +301,10 @@ jobs:
             fi
             
             echo "📋 Restoring from: $LATEST_BACKUP"
-            docker-compose -f "$LATEST_BACKUP" down
-            docker-compose -f "$LATEST_BACKUP" up -d
+            docker compose -f "$LATEST_BACKUP" down
+            docker compose -f "$LATEST_BACKUP" up -d
             
             sleep 30
-            docker-compose ps
+            docker compose ps
             
             echo "✅ Rollback complete"
