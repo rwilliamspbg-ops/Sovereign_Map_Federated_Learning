@@ -1,0 +1,191 @@
+{
+  "dashboard": {
+    "title": "Mohawk Observability Dashboard - 10M+ Nodes",
+    "tags": [
+      "Sovereign Map",
+      "Byzantine Fault Tolerance",
+      "Real-time Monitoring"
+    ],
+    "timezone": "browser",
+    "version": 1,
+    "panels": [
+      {
+        "id": 1,
+        "title": "Model Accuracy (All Nodes)",
+        "type": "graph",
+        "gridPos": {
+          "h": 8,
+          "w": 12,
+          "x": 0,
+          "y": 0
+        },
+        "targets": [
+          {
+            "expr": "bft_convergence_accuracy",
+            "legendFormat": "Accuracy at {{byzantine_level}}%",
+            "refId": "A"
+          }
+        ],
+        "yaxes": [
+          {
+            "format": "percent",
+            "label": "Accuracy (%)"
+          }
+        ]
+      },
+      {
+        "id": 2,
+        "title": "Byzantine Margin Ratio",
+        "type": "graph",
+        "gridPos": {
+          "h": 8,
+          "w": 12,
+          "x": 12,
+          "y": 0
+        },
+        "targets": [
+          {
+            "expr": "bft_byzantine_margin_ratio",
+            "legendFormat": "Margin {{byzantine_level}}%",
+            "refId": "A"
+          }
+        ],
+        "yaxes": [
+          {
+            "format": "short",
+            "label": "Margin Ratio"
+          }
+        ]
+      },
+      {
+        "id": 3,
+        "title": "Convergence Speed (Rounds)",
+        "type": "graph",
+        "gridPos": {
+          "h": 8,
+          "w": 12,
+          "x": 0,
+          "y": 8
+        },
+        "targets": [
+          {
+            "expr": "bft_convergence_rounds",
+            "legendFormat": "Rounds {{node_count}} nodes",
+            "refId": "A"
+          }
+        ],
+        "yaxes": [
+          {
+            "format": "short",
+            "label": "Rounds to Convergence"
+          }
+        ]
+      },
+      {
+        "id": 4,
+        "title": "Active Nodes",
+        "type": "singlestat",
+        "gridPos": {
+          "h": 4,
+          "w": 6,
+          "x": 12,
+          "y": 8
+        },
+        "targets": [
+          {
+            "expr": "bft_active_nodes",
+            "refId": "A"
+          }
+        ],
+        "format": "short",
+        "sparkline": {
+          "show": true
+        }
+      },
+      {
+        "id": 5,
+        "title": "Byzantine Nodes Detected",
+        "type": "singlestat",
+        "gridPos": {
+          "h": 4,
+          "w": 6,
+          "x": 18,
+          "y": 8
+        },
+        "targets": [
+          {
+            "expr": "bft_byzantine_nodes_detected",
+            "refId": "A"
+          }
+        ],
+        "format": "short"
+      },
+      {
+        "id": 6,
+        "title": "System Throughput (Updates/sec)",
+        "type": "graph",
+        "gridPos": {
+          "h": 8,
+          "w": 24,
+          "x": 0,
+          "y": 12
+        },
+        "targets": [
+          {
+            "expr": "rate(bft_updates_total[1m])",
+            "legendFormat": "{{node_count}} nodes",
+            "refId": "A"
+          }
+        ],
+        "yaxes": [
+          {
+            "format": "short",
+            "label": "Updates/sec"
+          }
+        ]
+      },
+      {
+        "id": 7,
+        "title": "Memory Usage Trend",
+        "type": "graph",
+        "gridPos": {
+          "h": 8,
+          "w": 12,
+          "x": 0,
+          "y": 20
+        },
+        "targets": [
+          {
+            "expr": "bft_memory_usage_bytes / 1024 / 1024",
+            "legendFormat": "{{component}} MB",
+            "refId": "A"
+          }
+        ],
+        "yaxes": [
+          {
+            "format": "short",
+            "label": "Memory (MB)"
+          }
+        ]
+      },
+      {
+        "id": 8,
+        "title": "Byzantine Attack Events",
+        "type": "graph",
+        "gridPos": {
+          "h": 8,
+          "w": 12,
+          "x": 12,
+          "y": 20
+        },
+        "targets": [
+          {
+            "expr": "bft_attack_detected",
+            "legendFormat": "{{attack_type}}",
+            "refId": "A"
+          }
+        ]
+      }
+    ]
+  }
+}
