@@ -1,0 +1,194 @@
+# TPM Trust & Verification Alert Rules
+# Prometheus alerting rules for certificate and trust chain monitoring
+
+groups:
+  - name: tpm_trust_alerts
+    interval: 30s
+    rules:
+      # =========================================================================
+      # Certificate Expiration Alerts
+      # =========================================================================
+      
+      - alert: CertificateExpiringIn30Days
+        expr: tpm_certificate_expiry_seconds < 2592000
+        for: 5m
+        labels:
+          severity: warning
+          component: tpm
+        annotations:
+          summary: "Certificate expiring in 30 days (Node {{ $labels.node_id }})"
+          description: "Node {{ $labels.node_id }} certificate expires in {{ $value | humanizeDuration }}"
+          
+      - alert: CertificateExpiringIn7Days
+        expr: tpm_certificate_expiry_seconds < 604800
+        for: 5m
+        labels:
+          severity: critical
+          component: tpm
+        annotations:
+          summary: "Certificate expiring in 7 days (Node {{ $labels.node_id }})"
+          description: "Node {{ $labels.node_id }} certificate expires in {{ $value | humanizeDuration }}"
+          
+      - alert: CertificateExpired
+        expr: tpm_certificate_expiry_seconds < 0
+        for: 1m
+        labels:
+          severity: critical
+          component: tpm
+        annotations:
+          summary: "Certificate expired (Node {{ $labels.node_id }})"
+          description: "Node {{ $labels.node_id }} certificate has expired"
+      
+      # =========================================================================
+      # Trust Chain Alerts
+      # =========================================================================
+      
+      - alert: CertificateVerificationFailed
+        expr: tpm_trust_verification_failures_total > 0
+        for: 5m
+        labels:
+          severity: warning
+          component: tpm
+        annotations:
+          summary: "Certificate verification failures detected"
+          description: "{{ $value | humanize }} certificate verification failures detected"
+          
+      - alert: InvalidTrustChain
+        expr: tpm_trust_chain_valid == 0
+        for: 5m
+        labels:
+          severity: critical
+          component: tpm
+        annotations:
+          summary: "Invalid trust chain (Node {{ $labels.node_id }})"
+          description: "Node {{ $labels.node_id }} has an invalid trust chain"
+          
+      - alert: CAInvalid
+        expr: tpm_ca_certificate_valid == 0
+        for: 1m
+        labels:
+          severity: critical
+          component: tpm
+        annotations:
+          summary: "Certificate Authority is invalid"
+          description: "The root CA certificate is invalid or missing"
+      
+      # =========================================================================
+      # Signature & Authentication Alerts
+      # =========================================================================
+      
+      - alert: SignatureVerificationFailures
+        expr: rate(tpm_signature_verification_failures_total[5m]) > 0
+        for: 5m
+        labels:
+          severity: warning
+          component: tpm
+        annotations:
+          summary: "Signature verification failures from node {{ $labels.from_node_id }}"
+          description: "Node {{ $labels.from_node_id }} is sending messages with invalid signatures"
+          
+      - alert: HighSignatureFailureRate
+        expr: rate(tpm_signature_verification_failures_total[1m]) > 0.1
+        for: 2m
+        labels:
+          severity: critical
+          component: tpm
+        annotations:
+          summary: "High signature failure rate from node {{ $labels.from_node_id }}"
+          description: "More than 10% of signatures from node {{ $labels.from_node_id }} are failing verification"
+      
+      # =========================================================================
+      # Certificate Revocation Alerts
+      # =========================================================================
+      
+      - alert: CertificateRevoked
+        expr: tpm_node_certificate_revoked == 1
+        for: 1m
+        labels:
+          severity: critical
+          component: tpm
+        annotations:
+          summary: "Certificate revoked (Node {{ $labels.node_id }})"
+          description: "Node {{ $labels.node_id }} certificate has been revoked"
+          
+      - alert: HighCRLSize
+        expr: tpm_crl_size > 10
+        for: 5m
+        labels:
+          severity: warning
+          component: tpm
+        annotations:
+          summary: "Certificate Revocation List has many entries"
+          description: "{{ $value | humanize }} certificates have been revoked"
+      
+      # =========================================================================
+      # Node Trust Status Alerts
+      # =========================================================================
+      
+      - alert: LowNodeTrustScore
+        expr: tpm_node_trust_score < 50
+        for: 5m
+        labels:
+          severity: warning
+          component: tpm
+        annotations:
+          summary: "Low trust score for node {{ $labels.node_id }}"
+          description: "Node {{ $labels.node_id }} has trust score of {{ $value | humanize }}/100"
+          
+      - alert: ZeroNodeTrustScore
+        expr: tpm_node_trust_score == 0
+        for: 1m
+        labels:
+          severity: critical
+          component: tpm
+        annotations:
+          summary: "Zero trust score for node {{ $labels.node_id }}"
+          description: "Node {{ $labels.node_id }} is not trusted - possible revocation or compromise"
+      
+      # =========================================================================
+      # Performance & Verification Time Alerts
+      # =========================================================================
+      
+      - alert: SlowTrustVerification
+        expr: histogram_quantile(0.95, rate(tpm_trust_verification_duration_seconds_bucket[5m])) > 1
+        for: 5m
+        labels:
+          severity: warning
+          component: tpm
+        annotations:
+          summary: "Trust verification is slow"
+          description: "95th percentile trust verification time is {{ $value | humanizeDuration }}"
+          
+      - alert: SlowMessageVerification
+        expr: histogram_quantile(0.95, rate(tpm_message_verification_duration_seconds_bucket[5m])) > 0.5
+        for: 5m
+        labels:
+          severity: warning
+          component: tpm
+        annotations:
+          summary: "Message verification is slow"
+          description: "95th percentile message verification time is {{ $value | humanizeDuration }}"
+      
+      # =========================================================================
+      # Network Trust Alerts
+      # =========================================================================
+      
+      - alert: MostCertificatesNotVerified
+        expr: (1 - tpm_certificates_verified_total / tpm_certificates_total) > 0.2
+        for: 5m
+        labels:
+          severity: warning
+          component: tpm
+        annotations:
+          summary: "Most certificates are not verified"
+          description: "Only {{ $value | humanizePercentage }} of certificates are verified"
+          
+      - alert: HighRatioOfRevokedCertificates
+        expr: tpm_certificates_revoked_total / tpm_certificates_total > 0.1
+        for: 5m
+        labels:
+          severity: warning
+          component: tpm
+        annotations:
+          summary: "High ratio of revoked certificates"
+          description: "{{ $value | humanizePercentage }} of certificates are revoked"

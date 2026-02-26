@@ -1,0 +1,147 @@
+version: "3.9"
+
+# Complete TPM Trust & Metrics Monitoring Pipeline
+# Prometheus + Grafana + Alertmanager with full TPM integration
+
+services:
+  # Prometheus with TPM alert rules
+  prometheus:
+    image: prom/prometheus:latest
+    container_name: sovereign-prometheus
+    ports:
+      - "9090:9090"
+    volumes:
+      - ./prometheus.yml:/etc/prometheus/prometheus.yml
+      - ./tpm_alerts.yml:/etc/prometheus/tpm_alerts.yml
+      - ./bft_rules.yml:/etc/prometheus/bft_rules.yml
+      - prometheus-data:/prometheus
+    command:
+      - '--config.file=/etc/prometheus/prometheus.yml'
+      - '--storage.tsdb.path=/prometheus'
+      - '--storage.tsdb.retention.time=30d'
+    networks:
+      - sovereign-network
+    healthcheck:
+      test: ["CMD", "wget", "--spider", "-q", "http://localhost:9090/-/healthy"]
+      interval: 10s
+      timeout: 5s
+      retries: 3
+    restart: unless-stopped
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
+
+  # TPM Metrics Exporter
+  tpm-metrics:
+    image: python:3.11-slim
+    container_name: sovereign-tpm-metrics
+    volumes:
+      - ./tpm_metrics_exporter.py:/app/tpm_metrics_exporter.py
+      - ./tpm_cert_manager.py:/app/tpm_cert_manager.py
+      - tpm-certs:/etc/sovereign/certs
+    working_dir: /app
+    command: python -m pip install prometheus-client flask cryptography && python tpm_metrics_exporter.py
+    ports:
+      - "9091:9091"
+    networks:
+      - sovereign-network
+    depends_on:
+      - prometheus
+    restart: unless-stopped
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
+
+  # Alertmanager for TPM alerts
+  alertmanager:
+    image: prom/alertmanager:latest
+    container_name: sovereign-alertmanager
+    ports:
+      - "9093:9093"
+    volumes:
+      - ./alertmanager.yml:/etc/alertmanager/config.yml
+      - alertmanager-data:/alertmanager
+    command:
+      - '--config.file=/etc/alertmanager/config.yml'
+      - '--storage.path=/alertmanager'
+    networks:
+      - sovereign-network
+    restart: unless-stopped
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
+
+  # Grafana with TPM dashboards
+  grafana:
+    image: grafana/grafana:latest
+    container_name: sovereign-grafana
+    ports:
+      - "3000:3000"
+    environment:
+      - GF_SECURITY_ADMIN_USER=admin
+      - GF_SECURITY_ADMIN_PASSWORD=admin
+      - GF_USERS_ALLOW_SIGN_UP=false
+      - GF_INSTALL_PLUGINS=grafana-piechart-panel
+    volumes:
+      - grafana-data:/var/lib/grafana
+      # Datasources
+      - ./grafana/provisioning/datasources:/etc/grafana/provisioning/datasources
+      # Dashboards
+      - ./monitoring/dashboards/mohawk-observability.json:/etc/grafana/provisioning/dashboards/mohawk-observability.json
+      - ./monitoring/dashboards/tpm_trust_dashboard.json:/etc/grafana/provisioning/dashboards/tpm_trust_dashboard.json
+      - ./grafana_bft_dashboard.json:/etc/grafana/provisioning/dashboards/bft_dashboard.json
+    networks:
+      - sovereign-network
+    depends_on:
+      - prometheus
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:3000/api/health"]
+      interval: 10s
+      timeout: 5s
+      retries: 3
+    restart: unless-stopped
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
+
+  # Loki for log aggregation (optional but recommended)
+  loki:
+    image: grafana/loki:latest
+    container_name: sovereign-loki
+    ports:
+      - "3100:3100"
+    volumes:
+      - loki-data:/loki
+    command: -config.file=/etc/loki/local-config.yml
+    networks:
+      - sovereign-network
+    restart: unless-stopped
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
+
+volumes:
+  prometheus-data:
+    driver: local
+  grafana-data:
+    driver: local
+  alertmanager-data:
+    driver: local
+  loki-data:
+    driver: local
+  tpm-certs:
+    external: true
+
+networks:
+  sovereign-network:
+    external: true

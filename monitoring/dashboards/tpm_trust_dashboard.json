@@ -1,0 +1,377 @@
+{
+  "dashboard": {
+    "title": "TPM Trust & Verification Monitoring",
+    "tags": ["TPM", "Trust", "Security", "Sovereign Map"],
+    "timezone": "browser",
+    "refresh": "30s",
+    "time": {
+      "from": "now-1h",
+      "to": "now"
+    },
+    "panels": [
+      {
+        "id": 1,
+        "title": "Certificate Trust Status",
+        "type": "stat",
+        "gridPos": { "h": 4, "w": 6, "x": 0, "y": 0 },
+        "targets": [
+          {
+            "expr": "tpm_certificates_total",
+            "refId": "A",
+            "legendFormat": "Total Certs"
+          }
+        ],
+        "options": {
+          "colorMode": "value",
+          "graphMode": "none"
+        }
+      },
+      {
+        "id": 2,
+        "title": "Verified Certificates",
+        "type": "stat",
+        "gridPos": { "h": 4, "w": 6, "x": 6, "y": 0 },
+        "targets": [
+          {
+            "expr": "tpm_certificates_verified_total",
+            "refId": "A",
+            "legendFormat": "Verified"
+          }
+        ]
+      },
+      {
+        "id": 3,
+        "title": "Revoked Certificates",
+        "type": "stat",
+        "gridPos": { "h": 4, "w": 6, "x": 12, "y": 0 },
+        "targets": [
+          {
+            "expr": "tpm_certificates_revoked_total",
+            "refId": "A",
+            "legendFormat": "Revoked"
+          }
+        ],
+        "fieldConfig": {
+          "defaults": {
+            "color": { "mode": "fixed", "fixedColor": "red" }
+          }
+        }
+      },
+      {
+        "id": 4,
+        "title": "CA Certificate Valid",
+        "type": "stat",
+        "gridPos": { "h": 4, "w": 6, "x": 18, "y": 0 },
+        "targets": [
+          {
+            "expr": "tpm_ca_certificate_valid",
+            "refId": "A"
+          }
+        ],
+        "options": {
+          "colorMode": "value"
+        }
+      },
+      {
+        "id": 5,
+        "title": "Certificate Expiry Timeline",
+        "type": "graph",
+        "gridPos": { "h": 8, "w": 12, "x": 0, "y": 4 },
+        "targets": [
+          {
+            "expr": "tpm_certificate_expiry_seconds / 86400",
+            "legendFormat": "Node {{ $labels.node_id }} (days)",
+            "refId": "A"
+          }
+        ],
+        "yaxes": [
+          {
+            "format": "short",
+            "label": "Days Until Expiry"
+          }
+        ],
+        "alert": {
+          "conditions": [
+            {
+              "evaluator": { "params": [30], "type": "lt" },
+              "operator": { "type": "and" }
+            }
+          ],
+          "message": "Certificate expiring soon"
+        }
+      },
+      {
+        "id": 6,
+        "title": "Certificate Age Distribution",
+        "type": "graph",
+        "gridPos": { "h": 8, "w": 12, "x": 12, "y": 4 },
+        "targets": [
+          {
+            "expr": "tpm_certificate_age_seconds / 86400",
+            "legendFormat": "Node {{ $labels.node_id }} (days)",
+            "refId": "A"
+          }
+        ],
+        "yaxes": [
+          {
+            "format": "short",
+            "label": "Certificate Age (days)"
+          }
+        ]
+      },
+      {
+        "id": 7,
+        "title": "Trust Chain Validity Status",
+        "type": "graph",
+        "gridPos": { "h": 8, "w": 12, "x": 0, "y": 12 },
+        "targets": [
+          {
+            "expr": "tpm_trust_chain_valid",
+            "legendFormat": "Node {{ $labels.node_id }}",
+            "refId": "A"
+          }
+        ],
+        "yaxes": [
+          {
+            "format": "short",
+            "label": "Valid (1=Yes, 0=No)"
+          }
+        ]
+      },
+      {
+        "id": 8,
+        "title": "Node Trust Scores",
+        "type": "graph",
+        "gridPos": { "h": 8, "w": 12, "x": 12, "y": 12 },
+        "targets": [
+          {
+            "expr": "tpm_node_trust_score",
+            "legendFormat": "Node {{ $labels.node_id }}",
+            "refId": "A"
+          }
+        ],
+        "yaxes": [
+          {
+            "format": "short",
+            "label": "Trust Score (0-100)"
+          }
+        ],
+        "thresholds": [
+          { "color": "red", "value": 0 },
+          { "color": "yellow", "value": 50 },
+          { "color": "green", "value": 75 }
+        ]
+      },
+      {
+        "id": 9,
+        "title": "Messages Signed Rate",
+        "type": "graph",
+        "gridPos": { "h": 8, "w": 12, "x": 0, "y": 20 },
+        "targets": [
+          {
+            "expr": "rate(tpm_messages_signed_total[5m])",
+            "legendFormat": "Node {{ $labels.node_id }}",
+            "refId": "A"
+          }
+        ],
+        "yaxes": [
+          {
+            "format": "ops",
+            "label": "Messages/sec"
+          }
+        ]
+      },
+      {
+        "id": 10,
+        "title": "Message Verification Rate",
+        "type": "graph",
+        "gridPos": { "h": 8, "w": 12, "x": 12, "y": 20 },
+        "targets": [
+          {
+            "expr": "rate(tpm_messages_verified_total[5m])",
+            "legendFormat": "To Node {{ $labels.node_id }} from {{ $labels.from_node_id }}",
+            "refId": "A"
+          }
+        ],
+        "yaxes": [
+          {
+            "format": "ops",
+            "label": "Messages/sec"
+          }
+        ]
+      },
+      {
+        "id": 11,
+        "title": "Signature Verification Failures Rate",
+        "type": "graph",
+        "gridPos": { "h": 8, "w": 12, "x": 0, "y": 28 },
+        "targets": [
+          {
+            "expr": "rate(tpm_signature_verification_failures_total[5m])",
+            "legendFormat": "From Node {{ $labels.from_node_id }}",
+            "refId": "A"
+          }
+        ],
+        "yaxes": [
+          {
+            "format": "ops",
+            "label": "Failures/sec"
+          }
+        ],
+        "alert": {
+          "conditions": [
+            {
+              "evaluator": { "params": [0.1], "type": "gt" }
+            }
+          ],
+          "message": "High signature verification failure rate"
+        }
+      },
+      {
+        "id": 12,
+        "title": "Trust Verification Duration (P95)",
+        "type": "graph",
+        "gridPos": { "h": 8, "w": 12, "x": 12, "y": 28 },
+        "targets": [
+          {
+            "expr": "histogram_quantile(0.95, rate(tpm_trust_verification_duration_seconds_bucket[5m]))",
+            "legendFormat": "P95",
+            "refId": "A"
+          }
+        ],
+        "yaxes": [
+          {
+            "format": "s",
+            "label": "Duration (seconds)"
+          }
+        ]
+      },
+      {
+        "id": 13,
+        "title": "Message Verification Duration (P95)",
+        "type": "graph",
+        "gridPos": { "h": 8, "w": 12, "x": 0, "y": 36 },
+        "targets": [
+          {
+            "expr": "histogram_quantile(0.95, rate(tpm_message_verification_duration_seconds_bucket[5m]))",
+            "legendFormat": "P95",
+            "refId": "A"
+          }
+        ],
+        "yaxes": [
+          {
+            "format": "ms",
+            "label": "Duration (ms)"
+          }
+        ]
+      },
+      {
+        "id": 14,
+        "title": "Revoked Nodes Status",
+        "type": "graph",
+        "gridPos": { "h": 8, "w": 12, "x": 12, "y": 36 },
+        "targets": [
+          {
+            "expr": "tpm_node_certificate_revoked",
+            "legendFormat": "Node {{ $labels.node_id }}",
+            "refId": "A"
+          }
+        ],
+        "yaxes": [
+          {
+            "format": "short",
+            "label": "Revoked (1=Yes, 0=No)"
+          }
+        ]
+      },
+      {
+        "id": 15,
+        "title": "Certificate Verification Status Heatmap",
+        "type": "heatmap",
+        "gridPos": { "h": 8, "w": 24, "x": 0, "y": 44 },
+        "targets": [
+          {
+            "expr": "tpm_node_certificate_valid",
+            "format": "heatmap",
+            "legendFormat": "Node {{ $labels.node_id }}",
+            "refId": "A"
+          }
+        ]
+      },
+      {
+        "id": 16,
+        "title": "Trust Verification Failures",
+        "type": "stat",
+        "gridPos": { "h": 4, "w": 6, "x": 0, "y": 52 },
+        "targets": [
+          {
+            "expr": "tpm_trust_verification_failures_total",
+            "refId": "A"
+          }
+        ],
+        "fieldConfig": {
+          "defaults": {
+            "color": { "mode": "fixed", "fixedColor": "red" }
+          }
+        }
+      },
+      {
+        "id": 17,
+        "title": "Trust Cache Hit Rate",
+        "type": "stat",
+        "gridPos": { "h": 4, "w": 6, "x": 6, "y": 52 },
+        "targets": [
+          {
+            "expr": "tpm_trust_cache_hits_total / (tpm_trust_cache_hits_total + tpm_trust_cache_misses_total)",
+            "refId": "A",
+            "legendFormat": "Hit Rate"
+          }
+        ]
+      },
+      {
+        "id": 18,
+        "title": "Verification Status Summary",
+        "type": "table",
+        "gridPos": { "h": 8, "w": 24, "x": 0, "y": 56 },
+        "targets": [
+          {
+            "expr": "tpm_node_trust_score",
+            "format": "table",
+            "instant": true,
+            "refId": "A"
+          }
+        ],
+        "transformations": [
+          {
+            "id": "organize",
+            "options": {
+              "excludeByName": {},
+              "indexByName": {
+                "node_id": 0,
+                "Value": 1
+              },
+              "renameByName": {
+                "node_id": "Node ID",
+                "Value": "Trust Score"
+              }
+            }
+          }
+        ]
+      }
+    ],
+    "templating": {
+      "list": []
+    },
+    "annotations": {
+      "list": [
+        {
+          "datasource": "Prometheus",
+          "enable": true,
+          "expr": "ALERTS",
+          "name": "Alerts",
+          "step": "60s"
+        }
+      ]
+    }
+  }
+}
