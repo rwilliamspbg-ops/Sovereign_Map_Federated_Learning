@@ -124,6 +124,8 @@ jobs:
     runs-on: ubuntu-latest
     needs: build
     if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    permissions:
+      contents: read
     environment:
       name: staging
     
@@ -183,6 +185,8 @@ jobs:
     runs-on: ubuntu-latest
     needs: deploy-staging
     if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    permissions:
+      contents: read
     
     steps:
       - name: Checkout code
@@ -207,6 +211,8 @@ jobs:
     runs-on: ubuntu-latest
     needs: smoke-test
     if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    permissions:
+      contents: read
     environment:
       name: production
     
@@ -277,6 +283,8 @@ jobs:
     name: Rollback Production (Manual)
     runs-on: ubuntu-latest
     if: github.event_name == 'workflow_dispatch'
+    permissions:
+      contents: read
     environment:
       name: production
     
