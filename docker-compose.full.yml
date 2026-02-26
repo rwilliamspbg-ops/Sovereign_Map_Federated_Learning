@@ -1,36 +1,26 @@
 services:
-  # ============================================================================
-  # FEDERATED LEARNING BACKEND
-  # ============================================================================
-  
-  fl-backend:
-    build:
-      context: .
-      dockerfile: Dockerfile.fl-backend
-    container_name: sovereign-fl-backend
+  # Backend aggregator
+  backend:
+    image: python:3.11-slim
+    container_name: sovereign-backend
     ports:
       - "8000:8000"
     environment:
       - FLASK_ENV=production
       - PROMETHEUS_PORT=8000
-      - NODE_COUNT=100000
-      - SECRET_KEY=sovereign-federation-secret-key
-      - GEMINI_API_KEY=${GEMINI_API_KEY:-}
     volumes:
-      - ./fl_metrics_translator.py:/app/fl_metrics_translator.py
-      - ./spatial_threat_analyzer.py:/app/spatial_threat_analyzer.py
-      - ./sovereign_federation_backend.py:/app/sovereign_federation_backend.py
-      - fl-data:/app/data
-    depends_on:
-      - prometheus
+      - ./sovereignmap_production_backend_v2.py:/app/sovereignmap_production_backend_v2.py
+    working_dir: /app
+    command: python -m pip install flask prometheus-client && python sovereignmap_production_backend_v2.py
     networks:
       - sovereign-network
+    depends_on:
+      - prometheus
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
       interval: 10s
       timeout: 5s
       retries: 3
-      start_period: 10s
     restart: unless-stopped
     logging:
       driver: "json-file"
@@ -38,18 +28,35 @@ services:
         max-size: "10m"
         max-file: "3"
 
-  # ============================================================================
-  # PROMETHEUS METRICS COLLECTION
-  # ============================================================================
-  
+  # Node agents (scalable)
+  node-agent:
+    image: python:3.11-slim
+    environment:
+      - NODE_ID=${NODE_ID:-1}
+      - BACKEND_URL=http://backend:8000
+    volumes:
+      - ./src:/app/src
+      - ./requirements.txt:/app/requirements.txt
+    working_dir: /app
+    command: python -m pip install -r requirements.txt && python src/client.py --aggregator backend:8000
+    networks:
+      - sovereign-network
+    depends_on:
+      - backend
+    restart: unless-stopped
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
+
+  # Prometheus metrics database
   prometheus:
     image: prom/prometheus:latest
     container_name: sovereign-prometheus
     ports:
       - "9090:9090"
     volumes:
-      - ./prometheus.yml:/etc/prometheus/prometheus.yml
-      - ./bft_rules.yml:/etc/prometheus/bft_rules.yml
       - prometheus-data:/prometheus
     command:
       - '--config.file=/etc/prometheus/prometheus.yml'
@@ -69,10 +76,7 @@ services:
         max-size: "10m"
         max-file: "3"
 
-  # ============================================================================
-  # GRAFANA DASHBOARDS & VISUALIZATION
-  # ============================================================================
-  
+  # Grafana dashboards
   grafana:
     image: grafana/grafana:latest
     container_name: sovereign-grafana
@@ -82,11 +86,8 @@ services:
       - GF_SECURITY_ADMIN_USER=admin
       - GF_SECURITY_ADMIN_PASSWORD=admin
       - GF_INSTALL_PLUGINS=grafana-piechart-panel
-      - GF_PATHS_PROVISIONING=/etc/grafana/provisioning
     volumes:
       - grafana-data:/var/lib/grafana
-      - ./grafana_bft_dashboard.json:/etc/grafana/provisioning/dashboards/bft_dashboard.json
-      - ./grafana-datasources.yml:/etc/grafana/provisioning/datasources/datasources.yml
     networks:
       - sovereign-network
     depends_on:
@@ -103,20 +104,15 @@ services:
         max-size: "10m"
         max-file: "3"
 
-  # ============================================================================
-  # ALERTMANAGER FOR CRITICAL ALERTS
-  # ============================================================================
-  
+  # Alertmanager
   alertmanager:
     image: prom/alertmanager:latest
     container_name: sovereign-alertmanager
     ports:
       - "9093:9093"
     volumes:
-      - ./alertmanager.yml:/etc/alertmanager/config.yml
       - alertmanager-data:/alertmanager
     command:
-      - '--config.file=/etc/alertmanager/config.yml'
       - '--storage.path=/alertmanager'
     networks:
       - sovereign-network
@@ -127,120 +123,14 @@ services:
         max-size: "10m"
         max-file: "3"
 
-  # ============================================================================
-  # SPATIAL FRONTEND (Sovereign Map V2)
-  # ============================================================================
-  
-  spatial-frontend:
-    build:
-      context: ./spatial-frontend
-      dockerfile: Dockerfile
-    container_name: sovereign-spatial-frontend
-    ports:
-      - "5173:5173"
-    environment:
-      - VITE_API_URL=http://fl-backend:8000
-      - VITE_WS_URL=ws://localhost:8000
-      - VITE_PROMETHEUS_URL=http://prometheus:9090
-      - VITE_GEMINI_API_KEY=${GEMINI_API_KEY:-}
-      - VITE_3D_QUALITY=high
-      - VITE_REAL_TIME_UPDATE_INTERVAL=1000
-      - VITE_THREAT_ANALYSIS_ENABLED=true
-    networks:
-      - sovereign-network
-    depends_on:
-      - fl-backend
-    healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:5173"]
-      interval: 10s
-      timeout: 5s
-      retries: 3
-      start_period: 30s
-    restart: unless-stopped
-    logging:
-      driver: "json-file"
-      options:
-        max-size: "10m"
-        max-file: "3"
-
-  # ============================================================================
-  # REDIS FOR REAL-TIME CACHING
-  # ============================================================================
-  
-  redis:
-    image: redis:7-alpine
-    container_name: sovereign-redis
-    ports:
-      - "6379:6379"
-    volumes:
-      - redis-data:/data
-    command: redis-server --appendonly yes
-    networks:
-      - sovereign-network
-    healthcheck:
-      test: ["CMD", "redis-cli", "ping"]
-      interval: 10s
-      timeout: 5s
-      retries: 3
-    restart: unless-stopped
-    logging:
-      driver: "json-file"
-      options:
-        max-size: "10m"
-        max-file: "3"
-
-  # ============================================================================
-  # REVERSE PROXY (NGINX)
-  # ============================================================================
-  
-  nginx:
-    image: nginx:alpine
-    container_name: sovereign-nginx
-    ports:
-      - "80:80"
-      - "443:443"
-    volumes:
-      - ./nginx.conf:/etc/nginx/nginx.conf:ro
-      - ./ssl:/etc/nginx/ssl:ro
-      - nginx-data:/usr/share/nginx/html
-    networks:
-      - sovereign-network
-    depends_on:
-      - fl-backend
-      - grafana
-      - spatial-frontend
-    restart: unless-stopped
-    logging:
-      driver: "json-file"
-      options:
-        max-size: "10m"
-        max-file: "3"
-
-# ============================================================================
-# VOLUMES
-# ============================================================================
-
 volumes:
-  fl-data:
-    driver: local
   prometheus-data:
     driver: local
   grafana-data:
     driver: local
   alertmanager-data:
     driver: local
-  redis-data:
-    driver: local
-  nginx-data:
-    driver: local
-
-# ============================================================================
-# NETWORKS
-# ============================================================================
 
 networks:
   sovereign-network:
     driver: bridge
-    ipam:
-      config:
-        - subnet: 172.25.0.0/16
