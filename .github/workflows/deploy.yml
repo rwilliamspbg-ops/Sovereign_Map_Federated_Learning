@@ -147,7 +147,6 @@ jobs:
     if: github.event_name == 'push' && github.ref == 'refs/heads/main'
     environment:
       name: staging
-      url: http://${{ secrets.STAGING_HOST }}:8000
     
     steps:
       - name: Checkout code
@@ -252,7 +251,6 @@ jobs:
     if: github.event_name == 'push' && github.ref == 'refs/heads/main'
     environment:
       name: production
-      url: http://${{ secrets.PROD_HOST }}:8000
     
     steps:
       - name: Checkout code
@@ -262,9 +260,9 @@ jobs:
         uses: 8398a7/action-slack@v3
         with:
           status: ${{ job.status }}
-          text: '🚀 Production deployment in progress...'
+          text: '🚀 Production deployment in progress... ${{ secrets.PROD_HOST }}:8000'
           webhook_url: ${{ secrets.SLACK_WEBHOOK }}
-        if: always()
+        if: always() && secrets.SLACK_WEBHOOK
       
       - name: Deploy to production via SSH
         uses: appleboy/ssh-action@master
@@ -314,9 +312,9 @@ jobs:
         uses: 8398a7/action-slack@v3
         with:
           status: success
-          text: '✅ Production deployment successful! Environment: ${{ secrets.PROD_HOST }}'
+          text: '✅ Production deployment successful! Check: http://${{ secrets.PROD_HOST }}:8000'
           webhook_url: ${{ secrets.SLACK_WEBHOOK }}
-        if: success()
+        if: success() && secrets.SLACK_WEBHOOK != ''
       
       - name: Notify Slack - Failure
         uses: 8398a7/action-slack@v3
@@ -324,7 +322,7 @@ jobs:
           status: failure
           text: '❌ Production deployment failed! Check logs at ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}'
           webhook_url: ${{ secrets.SLACK_WEBHOOK }}
-        if: failure()
+        if: failure() && secrets.SLACK_WEBHOOK != ''
 
   # ========================================================================
   # ROLLBACK PLAN (Manual)
