@@ -43,7 +43,9 @@ services:
   # ========================================================================
   
   node-agent:
-    image: python:3.11-slim
+    build:
+      context: .
+      dockerfile: Dockerfile
     environment:
       - PYTHONUNBUFFERED=1
       - NODE_ID=${NODE_ID:-1}
@@ -51,10 +53,9 @@ services:
       - AGGREGATOR_PORT=8080
       - BYZANTINE=${BYZANTINE:-false}
     command: >
-      /bin/bash -c "pip install -q flwr torch torchvision opacus ecdsa cryptography numpy pandas &&
-      python src/client.py
+      python -u src/client.py
       --node-id ${NODE_ID:-1}
-      --aggregator backend:8080"
+      --aggregator backend:8080
     volumes:
       - ./src:/app/src:ro
       - ./requirements.txt:/app/requirements.txt:ro
