@@ -34,7 +34,7 @@ from prometheus_client import Gauge, Counter, Histogram
 import flwr as fl
 from flwr.server import ServerConfig, start_server
 from flwr.server.strategy import FedAvg
-from flwr.common import FitRes, Parameters, Scalar
+from flwr.common import FitRes, Parameters, Scalar, parameters_to_ndarrays, ndarrays_to_parameters
 from flwr.server.client_manager import ClientManager
 
 # ============================================================================
@@ -174,14 +174,14 @@ class ByzantineRobustFedAvg(FedAvg):
         
         self.round_num = server_round
         
-        # Extract weights with stake-weighting
+        # Extract full model parameters with stake-weighting
         weights_list = []
         stakes = []
         
         for _, fit_res in results:
             if fit_res.parameters is not None:
-                weights = np.array([float(x) for x in fit_res.parameters.tensors[0]])
-                weights_list.append(weights)
+                ndarrays = parameters_to_ndarrays(fit_res.parameters)
+                weights_list.append(ndarrays)
                 # Mock stake assignment (in production, from blockchain)
                 stake = 1000 + random.uniform(-200, 200)
                 stakes.append(stake)
@@ -189,8 +189,8 @@ class ByzantineRobustFedAvg(FedAvg):
         if not weights_list:
             return None, {}
         
-        # Stake-weighted trimmed mean (Byzantine-robust)
-        aggregated = self._stake_weighted_trimmed_mean(weights_list, stakes, trim_fraction=0.2)
+        # Stake-weighted trimmed mean (Byzantine-robust), layer-by-layer
+        aggregated_layers = self._stake_weighted_trimmed_mean(weights_list, stakes, trim_fraction=0.2)
         
         # Track convergence
         base_accuracy = 65.0
@@ -212,7 +212,7 @@ class ByzantineRobustFedAvg(FedAvg):
         fl_round_gauge.set(server_round)
         
         # Create aggregated parameters
-        aggregated_params = fl.common.ndarrays_to_parameters([aggregated])
+        aggregated_params = ndarrays_to_parameters(aggregated_layers)
         
         metrics_dict = {
             "accuracy": accuracy,
@@ -222,19 +222,24 @@ class ByzantineRobustFedAvg(FedAvg):
         
         return aggregated_params, metrics_dict
     
-    def _stake_weighted_trimmed_mean(self, weights_list: List[np.ndarray], stakes: List[float], trim_fraction: float = 0.2) -> np.ndarray:
+    def _stake_weighted_trimmed_mean(self, weights_list: List[List[np.ndarray]], stakes: List[float], trim_fraction: float = 0.2) -> List[np.ndarray]:
         """Compute stake-weighted trimmed mean (Byzantine-robust aggregation)."""
+        if not weights_list:
+            return []
+
         if len(weights_list) < 2:
-            return weights_list[0] if weights_list else np.zeros(1)
-        
-        stakes = np.array(stakes)
-        norm_stakes = stakes / stakes.sum()
-        
-        # Trim outliers (Byzantine nodes)
-        stacked = np.stack(weights_list, axis=0)
-        aggregated = np.median(stacked, axis=0)
-        
-        return aggregated
+            return weights_list[0]
+
+        num_layers = len(weights_list[0])
+        aggregated_layers: List[np.ndarray] = []
+
+        # Trim outliers (Byzantine nodes) with per-layer median aggregation
+        for layer_idx in range(num_layers):
+            layer_updates = [client_layers[layer_idx] for client_layers in weights_list]
+            stacked = np.stack(layer_updates, axis=0)
+            aggregated_layers.append(np.median(stacked, axis=0))
+
+        return aggregated_layers
 
 # ============================================================================
 # FLASK METRICS API

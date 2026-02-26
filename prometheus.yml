@@ -5,6 +5,9 @@ global:
     cluster: 'sovereign-map'
     environment: 'testnet'
 
+rule_files:
+  - 'tpm_alerts.yml'
+
 scrape_configs:
   - job_name: 'prometheus'
     static_configs:

@@ -86,6 +86,7 @@ services:
     volumes:
       - prometheus-data:/prometheus
       - ./prometheus.yml:/etc/prometheus/prometheus.yml:ro
+      - ./tpm_alerts.yml:/etc/prometheus/tpm_alerts.yml:ro
     command:
       - '--config.file=/etc/prometheus/prometheus.yml'
       - '--storage.tsdb.path=/prometheus'
@@ -115,7 +116,8 @@ services:
       - GF_INSTALL_PLUGINS=grafana-piechart-panel
     volumes:
       - grafana-data:/var/lib/grafana
-      - ./monitoring/dashboards:/etc/grafana/provisioning/dashboards:ro
+      - ./grafana/provisioning:/etc/grafana/provisioning:ro
+      - ./packages/core/dashboards:/var/lib/grafana/dashboards:ro
     networks:
       - sovereign-network
     depends_on:
@@ -139,7 +141,7 @@ services:
       - "9093:9093"
     volumes:
       - alertmanager-data:/alertmanager
-      - ./tpm_alerts.yml:/etc/alertmanager/config.yml:ro
+      - ./alertmanager.yml:/etc/alertmanager/config.yml:ro
     command:
       - '--config.file=/etc/alertmanager/config.yml'
       - '--storage.path=/alertmanager'
