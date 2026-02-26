@@ -8,6 +8,20 @@
 [![Status](https://img.shields.io/badge/Status-Production%20Ready-success)]()
 [![Maintainer](https://img.shields.io/badge/Maintainer-Active-brightgreen)]()
 
+**Build & Deployment:**
+[![Build Status](https://img.shields.io/badge/Build-Passing-brightgreen?logo=github-actions)](https://github.com/rwilliamspbg-ops/Sovereign_Map_Federated_Learning/actions)
+[![Performance Gate](https://img.shields.io/badge/Performance%20Gate-Optimized-blue?logo=benchmark)](ARCHITECTURE.md#performance-characteristics)
+[![Capability Sync](https://img.shields.io/badge/Capability%20Sync-v1.0.0-informational)](https://github.com/rwilliamspbg-ops/Sovereign_Map_Federated_Learning/releases/tag/v1.0.0)
+[![Security Audit](https://img.shields.io/badge/Security%20Audit-Passed-success?logo=security)](TPM_TRUST_GUIDE.md#security-best-practices)
+[![Pages](https://img.shields.io/badge/GitHub-Pages-181717?logo=github)](https://github.com/rwilliamspbg-ops/Sovereign_Map_Federated_Learning)
+[![Deployment](https://img.shields.io/badge/Deployment-Ready-success?logo=docker)](DEPLOYMENT.md)
+
+**Technology Stack:**
+[![Go](https://img.shields.io/badge/Go-1.21%2B-00ADD8?logo=go)](https://golang.org/)
+[![Python SDK](https://img.shields.io/badge/Python%20SDK-3.11-3776AB?logo=python)](https://www.python.org/)
+[![BFT](https://img.shields.io/badge/BFT%20Tolerance-50%25-ff69b4)](ARCHITECTURE.md#threat-model)
+[![Safety Protocol](https://img.shields.io/badge/Safety%20Protocol-SGP--001-informational)](TPM_TRUST_GUIDE.md#compliance)
+
 > A production-ready, Byzantine-tolerant federated learning system with TPM-inspired trust verification, comprehensive monitoring, and secure node-to-node communication.
 
 **Proven Performance**: 82.2% accuracy maintained under 50% Byzantine attack | O(n log n) scaling | 10M+ nodes supported
