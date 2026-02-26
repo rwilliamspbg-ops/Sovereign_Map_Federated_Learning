@@ -1,5 +1,4 @@
 services:
-  # Backend aggregator
   backend:
     image: python:3.11-slim
     container_name: sovereign-backend
@@ -11,7 +10,10 @@ services:
     volumes:
       - ./sovereignmap_production_backend_v2.py:/app/sovereignmap_production_backend_v2.py
     working_dir: /app
-    command: python -m pip install flask prometheus-client && python sovereignmap_production_backend_v2.py
+    entrypoint:
+      - /bin/bash
+      - -c
+      - python -m pip install flask prometheus-client && python sovereignmap_production_backend_v2.py
     networks:
       - sovereign-network
     depends_on:
@@ -28,7 +30,6 @@ services:
         max-size: "10m"
         max-file: "3"
 
-  # Node agents (scalable)
   node-agent:
     image: python:3.11-slim
     environment:
@@ -38,7 +39,10 @@ services:
       - ./src:/app/src
       - ./requirements.txt:/app/requirements.txt
     working_dir: /app
-    command: python -m pip install -r requirements.txt && python src/client.py --aggregator backend:8000
+    entrypoint:
+      - /bin/bash
+      - -c
+      - python -m pip install -r requirements.txt && python src/client.py --aggregator backend:8000
     networks:
       - sovereign-network
     depends_on:
@@ -50,7 +54,6 @@ services:
         max-size: "10m"
         max-file: "3"
 
-  # Prometheus metrics database
   prometheus:
     image: prom/prometheus:latest
     container_name: sovereign-prometheus
@@ -76,7 +79,6 @@ services:
         max-size: "10m"
         max-file: "3"
 
-  # Grafana dashboards
   grafana:
     image: grafana/grafana:latest
     container_name: sovereign-grafana
@@ -104,7 +106,6 @@ services:
         max-size: "10m"
         max-file: "3"
 
-  # Alertmanager
   alertmanager:
     image: prom/alertmanager:latest
     container_name: sovereign-alertmanager
