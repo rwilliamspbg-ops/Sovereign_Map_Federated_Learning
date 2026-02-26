@@ -1,7 +1,5 @@
-version: '3.9'
-
 # Secure Node-to-Node Communication with TPM Certificates
-# Usage: docker-compose -f docker-compose.tpm-secure.yml up -d
+# Usage: docker compose -f docker-compose.tpm-secure.yml up -d
 
 services:
   # Backend with secure communication

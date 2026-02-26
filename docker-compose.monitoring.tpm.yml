@@ -1,5 +1,3 @@
-version: "3.9"
-
 # Complete TPM Trust & Metrics Monitoring Pipeline
 # Prometheus + Grafana + Alertmanager with full TPM integration
 
