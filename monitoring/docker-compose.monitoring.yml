@@ -1,0 +1,58 @@
+version: "3.9"
+
+services:
+  # 1. PROMETHEUS: Configured to scrape the Sovereign Map Backend & Nodes
+  prometheus:
+    image: prom/prometheus:latest
+    container_name: mohawk-prometheus
+    command:
+      - '--config.file=/etc/prometheus/prometheus.yml'
+      - '--storage.tsdb.path=/prometheus'
+    networks:
+      - sovereign-network
+    volumes:
+      # Inline Prometheus Configuration
+      - ./:/etc/prometheus/config/:ro
+    entrypoint:
+      - /bin/sh
+      - -c
+      - |
+        cat <<EOF > /etc/prometheus/prometheus.yml
+        global:
+          scrape_interval: 5s
+        scrape_configs:
+          - job_name: 'sovereign-backend'
+            static_configs:
+              - targets: ['backend:8000']
+          - job_name: 'sovereign-nodes'
+            static_configs:
+              - targets: ['node-agent:2112']
+        EOF
+        /bin/prometheus "\$@"
+    ports:
+      - "9090:9090"
+    restart: unless-stopped
+
+  # 2. GRAFANA: Provisioned with your Mohawk Observability Dashboard
+  grafana:
+    image: grafana/grafana:latest
+    container_name: mohawk-grafana
+    environment:
+      - GF_SECURITY_ADMIN_USER=admin
+      - GF_SECURITY_ADMIN_PASSWORD=admin
+      - GF_AUTH_ANONYMOUS_ENABLED=true
+    networks:
+      - sovereign-network
+    ports:
+      - "3000:3000"
+    volumes:
+      # Auto-provision the Prometheus datasource
+      - ./grafana/provisioning/datasources:/etc/grafana/provisioning/datasources
+      # Point to your custom dashboard JSON
+      - ./monitoring/dashboards:/var/lib/grafana/dashboards
+    restart: unless-stopped
+
+networks:
+  # This links the monitoring stack to the existing production network
+  sovereign-network:
+    external: true
