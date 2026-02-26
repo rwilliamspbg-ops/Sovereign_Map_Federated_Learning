@@ -1,9 +1,12 @@
 # Sovereign Map v1.0.0 - Byzantine-Tolerant Federated Learning
 
-![GitHub](https://img.shields.io/badge/GitHub-Live-brightgreen)
-![Docker](https://img.shields.io/badge/Docker-Production--Ready-blue)
-![Status](https://img.shields.io/badge/Status-v1.0.0--GA-green)
-![License](https://img.shields.io/badge/License-MIT-orange)
+[![GitHub Release](https://img.shields.io/github/v/release/rwilliamspbg-ops/Sovereign_Map_Federated_Learning?label=Release&color=brightgreen)](https://github.com/rwilliamspbg-ops/Sovereign_Map_Federated_Learning/releases)
+[![Docker Ready](https://img.shields.io/badge/Docker-Compose%20Ready-2496ED?logo=docker)](https://docs.docker.com/compose/)
+[![Python](https://img.shields.io/badge/Python-3.11%2B-3776AB?logo=python)](https://www.python.org/)
+[![License](https://img.shields.io/badge/License-MIT-green)](LICENSE)
+[![GitHub Actions](https://img.shields.io/badge/CI%2FCD-GitHub%20Actions-2088FF?logo=github-actions)](https://github.com/rwilliamspbg-ops/Sovereign_Map_Federated_Learning/actions)
+[![Status](https://img.shields.io/badge/Status-Production%20Ready-success)]()
+[![Maintainer](https://img.shields.io/badge/Maintainer-Active-brightgreen)]()
 
 > A production-ready, Byzantine-tolerant federated learning system with TPM-inspired trust verification, comprehensive monitoring, and secure node-to-node communication.
 
