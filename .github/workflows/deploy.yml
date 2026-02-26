@@ -229,7 +229,6 @@ jobs:
           host: ${{ secrets.PROD_HOST }}
           username: ${{ secrets.DEPLOY_USER }}
           key: ${{ secrets.DEPLOY_KEY }}
-          script_stop_on_error: true
           script: |
             set -e
             echo "🚀 Deploying to Production..."
