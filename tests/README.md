@@ -4,6 +4,16 @@ Comprehensive test suites for Byzantine-tolerant federated learning validation.
 
 ---
 
+## Final Summaries
+
+Consolidated checkpoints for latest captured runs.
+
+```
+FINAL_TEST_SUMMARY_20260227.md  - Final 200-round capture summary (latest)
+```
+
+---
+
 ## Scale Tests (tests/scale-tests/)
 
 Large-scale performance and scalability validation.
