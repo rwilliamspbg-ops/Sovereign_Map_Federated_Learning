@@ -126,7 +126,7 @@ jobs:
     name: Deploy to Staging
     runs-on: ubuntu-latest
     needs: build
-    if: github.event_name == 'push' && github.ref == 'refs/heads/main' && secrets.STAGING_HOST != '' && secrets.DEPLOY_USER != '' && secrets.DEPLOY_KEY != '' && secrets.DEPLOY_PATH != ''
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
     permissions:
       contents: read
     environment:
@@ -135,11 +135,35 @@ jobs:
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
+
+      - name: Validate staging deploy inputs
+        id: staging_inputs
+        run: |
+          RAW_HOST="${{ secrets.STAGING_HOST }}"
+          DEPLOY_USER="${{ secrets.DEPLOY_USER }}"
+          DEPLOY_KEY="${{ secrets.DEPLOY_KEY }}"
+          DEPLOY_PATH="${{ secrets.DEPLOY_PATH }}"
+
+          STAGING_HOST="${RAW_HOST#http://}"
+          STAGING_HOST="${STAGING_HOST#https://}"
+          STAGING_HOST="${STAGING_HOST%%/*}"
+          STAGING_HOST="${STAGING_HOST%%:*}"
+
+          if [ -z "$STAGING_HOST" ] || [ -z "$DEPLOY_USER" ] || [ -z "$DEPLOY_KEY" ] || [ -z "$DEPLOY_PATH" ]; then
+            echo "ready=false" >> "$GITHUB_OUTPUT"
+            echo "host=$STAGING_HOST" >> "$GITHUB_OUTPUT"
+            echo "⚠️ Missing staging deploy inputs; staging deploy/health steps will be skipped"
+            exit 0
+          fi
+
+          echo "ready=true" >> "$GITHUB_OUTPUT"
+          echo "host=$STAGING_HOST" >> "$GITHUB_OUTPUT"
       
       - name: Deploy to staging via SSH
+        if: steps.staging_inputs.outputs.ready == 'true'
         uses: appleboy/ssh-action@master
         with:
-          host: ${{ secrets.STAGING_HOST }}
+          host: ${{ steps.staging_inputs.outputs.host }}
           username: ${{ secrets.DEPLOY_USER }}
           key: ${{ secrets.DEPLOY_KEY }}
           script: |
@@ -166,17 +190,9 @@ jobs:
         continue-on-error: true
       
       - name: Health check
+        if: steps.staging_inputs.outputs.ready == 'true'
         run: |
-          RAW_HOST="${{ secrets.STAGING_HOST }}"
-          STAGING_HOST="${RAW_HOST#http://}"
-          STAGING_HOST="${STAGING_HOST#https://}"
-          STAGING_HOST="${STAGING_HOST%%/*}"
-          STAGING_HOST="${STAGING_HOST%%:*}"
-
-          if [ -z "$STAGING_HOST" ]; then
-            echo "⚠️  STAGING_HOST is empty after normalization; skipping health check"
-            exit 0
-          fi
+          STAGING_HOST="${{ steps.staging_inputs.outputs.host }}"
 
           for i in {1..30}; do
             if curl -f "http://${STAGING_HOST}:8000/health"; then
@@ -198,7 +214,7 @@ jobs:
     name: Smoke Tests
     runs-on: ubuntu-latest
     needs: deploy-staging
-    if: github.event_name == 'push' && github.ref == 'refs/heads/main' && secrets.STAGING_HOST != ''
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
     permissions:
       contents: read
     
@@ -235,7 +251,7 @@ jobs:
     name: Deploy to Production
     runs-on: ubuntu-latest
     needs: smoke-test
-    if: github.event_name == 'push' && github.ref == 'refs/heads/main' && secrets.PROD_HOST != '' && secrets.DEPLOY_USER != '' && secrets.DEPLOY_KEY != '' && secrets.DEPLOY_PATH != ''
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
     permissions:
       contents: read
     environment:
@@ -244,11 +260,35 @@ jobs:
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
+
+      - name: Validate production deploy inputs
+        id: prod_inputs
+        run: |
+          RAW_HOST="${{ secrets.PROD_HOST }}"
+          DEPLOY_USER="${{ secrets.DEPLOY_USER }}"
+          DEPLOY_KEY="${{ secrets.DEPLOY_KEY }}"
+          DEPLOY_PATH="${{ secrets.DEPLOY_PATH }}"
+
+          PROD_HOST="${RAW_HOST#http://}"
+          PROD_HOST="${PROD_HOST#https://}"
+          PROD_HOST="${PROD_HOST%%/*}"
+          PROD_HOST="${PROD_HOST%%:*}"
+
+          if [ -z "$PROD_HOST" ] || [ -z "$DEPLOY_USER" ] || [ -z "$DEPLOY_KEY" ] || [ -z "$DEPLOY_PATH" ]; then
+            echo "ready=false" >> "$GITHUB_OUTPUT"
+            echo "host=$PROD_HOST" >> "$GITHUB_OUTPUT"
+            echo "⚠️ Missing production deploy inputs; production deploy steps will be skipped"
+            exit 0
+          fi
+
+          echo "ready=true" >> "$GITHUB_OUTPUT"
+          echo "host=$PROD_HOST" >> "$GITHUB_OUTPUT"
       
       - name: Deploy to production via SSH
+        if: steps.prod_inputs.outputs.ready == 'true'
         uses: appleboy/ssh-action@master
         with:
-          host: ${{ secrets.PROD_HOST }}
+          host: ${{ steps.prod_inputs.outputs.host }}
           username: ${{ secrets.DEPLOY_USER }}
           key: ${{ secrets.DEPLOY_KEY }}
           script: |
@@ -277,18 +317,10 @@ jobs:
             echo "✅ Production deployment complete"
       
       - name: Production health verification
+        if: steps.prod_inputs.outputs.ready == 'true'
         run: |
           echo "🔍 Performing production health checks..."
-          RAW_HOST="${{ secrets.PROD_HOST }}"
-          PROD_HOST="${RAW_HOST#http://}"
-          PROD_HOST="${PROD_HOST#https://}"
-          PROD_HOST="${PROD_HOST%%/*}"
-          PROD_HOST="${PROD_HOST%%:*}"
-
-          if [ -z "$PROD_HOST" ]; then
-            echo "⚠️  PROD_HOST is empty after normalization; skipping production health check"
-            exit 0
-          fi
+          PROD_HOST="${{ steps.prod_inputs.outputs.host }}"
 
           for i in {1..60}; do
             if curl -f "http://${PROD_HOST}:8000/health"; then
@@ -300,12 +332,9 @@ jobs:
           done
       
       - name: Deployment summary
+        if: steps.prod_inputs.outputs.ready == 'true'
         run: |
-          RAW_HOST="${{ secrets.PROD_HOST }}"
-          PROD_HOST="${RAW_HOST#http://}"
-          PROD_HOST="${PROD_HOST#https://}"
-          PROD_HOST="${PROD_HOST%%/*}"
-          PROD_HOST="${PROD_HOST%%:*}"
+          PROD_HOST="${{ steps.prod_inputs.outputs.host }}"
 
           echo "=========================================="
           echo "✅ Production Deployment Successful"
