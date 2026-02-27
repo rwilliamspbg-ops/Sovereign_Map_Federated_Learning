@@ -169,7 +169,7 @@ def write_markdown_report(
     )
 
     header = [
-        "# 20-Node 200-Round Byzantine Resilience Boundary Report",
+        f"# {nodes:,}-Node {rounds}-Round Byzantine Resilience Boundary Report",
         "",
         f"- Generated: {timestamp}",
         f"- Configuration: {nodes} nodes, {rounds} rounds, sweep {min_pct}% to {max_pct}% Byzantine",
@@ -197,7 +197,7 @@ def main() -> None:
             "and identify where accuracy drops below 80%."
         )
     )
-    parser.add_argument("--nodes", type=int, default=20)
+    parser.add_argument("--nodes", type=int, default=10000)
     parser.add_argument("--rounds", type=int, default=200)
     parser.add_argument("--min-byzantine", type=int, default=50)
     parser.add_argument("--max-byzantine", type=int, default=70)
@@ -247,14 +247,16 @@ def main() -> None:
         "round_data_by_level": to_json_serializable(round_records_by_level),
     }
 
-    json_latest = results_test_runs / "bft_20node_200round_50_70_results.json"
-    json_timestamped = results_test_runs / f"bft_20node_200round_50_70_results_{timestamp}.json"
-    csv_summary_latest = results_benchmarks / "bft_20node_200round_50_70_summary.csv"
-    csv_summary_timestamped = results_benchmarks / f"bft_20node_200round_50_70_summary_{timestamp}.csv"
-    csv_rounds_latest = results_benchmarks / "bft_20node_200round_50_70_rounds.csv"
-    csv_rounds_timestamped = results_benchmarks / f"bft_20node_200round_50_70_rounds_{timestamp}.csv"
-    md_latest = results_analysis / "BFT_20NODE_200ROUND_BOUNDARY_REPORT.md"
-    md_timestamped = results_analysis / f"BFT_20NODE_200ROUND_BOUNDARY_REPORT_{timestamp}.md"
+    base_name = f"bft_{args.nodes}node_{args.rounds}round_{args.min_byzantine}_{args.max_byzantine}"
+    json_latest = results_test_runs / f"{base_name}_results.json"
+    json_timestamped = results_test_runs / f"{base_name}_results_{timestamp}.json"
+    csv_summary_latest = results_benchmarks / f"{base_name}_summary.csv"
+    csv_summary_timestamped = results_benchmarks / f"{base_name}_summary_{timestamp}.csv"
+    csv_rounds_latest = results_benchmarks / f"{base_name}_rounds.csv"
+    csv_rounds_timestamped = results_benchmarks / f"{base_name}_rounds_{timestamp}.csv"
+    report_base = f"BFT_{args.nodes}NODE_{args.rounds}ROUND_BOUNDARY_REPORT"
+    md_latest = results_analysis / f"{report_base}.md"
+    md_timestamped = results_analysis / f"{report_base}_{timestamp}.md"
 
     for json_path in (json_latest, json_timestamped):
         json_path.write_text(json.dumps(payload, indent=2), encoding="utf-8")
