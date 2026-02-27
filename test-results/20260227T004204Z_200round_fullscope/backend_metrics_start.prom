@@ -1,0 +1,123 @@
+# HELP python_gc_objects_collected_total Objects collected during gc
+# TYPE python_gc_objects_collected_total counter
+python_gc_objects_collected_total{generation="0"} 6253.0
+python_gc_objects_collected_total{generation="1"} 322.0
+python_gc_objects_collected_total{generation="2"} 5.0
+# HELP python_gc_objects_uncollectable_total Uncollectable objects found during GC
+# TYPE python_gc_objects_uncollectable_total counter
+python_gc_objects_uncollectable_total{generation="0"} 0.0
+python_gc_objects_uncollectable_total{generation="1"} 0.0
+python_gc_objects_uncollectable_total{generation="2"} 0.0
+# HELP python_gc_collections_total Number of times this generation was collected
+# TYPE python_gc_collections_total counter
+python_gc_collections_total{generation="0"} 158.0
+python_gc_collections_total{generation="1"} 14.0
+python_gc_collections_total{generation="2"} 1.0
+# HELP python_info Python platform information
+# TYPE python_info gauge
+python_info{implementation="CPython",major="3",minor="11",patchlevel="14",version="3.11.14"} 1.0
+# HELP process_virtual_memory_bytes Virtual memory size in bytes.
+# TYPE process_virtual_memory_bytes gauge
+process_virtual_memory_bytes 3.058118656e+09
+# HELP process_resident_memory_bytes Resident memory size in bytes.
+# TYPE process_resident_memory_bytes gauge
+process_resident_memory_bytes 9.97244928e+08
+# HELP process_start_time_seconds Start time of the process since unix epoch in seconds.
+# TYPE process_start_time_seconds gauge
+process_start_time_seconds 1.77215285949e+09
+# HELP process_cpu_seconds_total Total user and system CPU time spent in seconds.
+# TYPE process_cpu_seconds_total counter
+process_cpu_seconds_total 4.56
+# HELP process_open_fds Number of open file descriptors.
+# TYPE process_open_fds gauge
+process_open_fds 19.0
+# HELP process_max_fds Maximum number of open file descriptors.
+# TYPE process_max_fds gauge
+process_max_fds 1024.0
+# HELP flask_exporter_info Information about the Prometheus Flask exporter
+# TYPE flask_exporter_info gauge
+flask_exporter_info{version="0.23.0"} 1.0
+# HELP flask_http_request_duration_seconds Flask HTTP request duration in seconds
+# TYPE flask_http_request_duration_seconds histogram
+flask_http_request_duration_seconds_bucket{endpoint="health",le="0.005",method="GET",status="200"} 22.0
+flask_http_request_duration_seconds_bucket{endpoint="health",le="0.01",method="GET",status="200"} 22.0
+flask_http_request_duration_seconds_bucket{endpoint="health",le="0.025",method="GET",status="200"} 22.0
+flask_http_request_duration_seconds_bucket{endpoint="health",le="0.05",method="GET",status="200"} 22.0
+flask_http_request_duration_seconds_bucket{endpoint="health",le="0.075",method="GET",status="200"} 22.0
+flask_http_request_duration_seconds_bucket{endpoint="health",le="0.1",method="GET",status="200"} 22.0
+flask_http_request_duration_seconds_bucket{endpoint="health",le="0.25",method="GET",status="200"} 22.0
+flask_http_request_duration_seconds_bucket{endpoint="health",le="0.5",method="GET",status="200"} 22.0
+flask_http_request_duration_seconds_bucket{endpoint="health",le="0.75",method="GET",status="200"} 22.0
+flask_http_request_duration_seconds_bucket{endpoint="health",le="1.0",method="GET",status="200"} 22.0
+flask_http_request_duration_seconds_bucket{endpoint="health",le="2.5",method="GET",status="200"} 22.0
+flask_http_request_duration_seconds_bucket{endpoint="health",le="5.0",method="GET",status="200"} 22.0
+flask_http_request_duration_seconds_bucket{endpoint="health",le="7.5",method="GET",status="200"} 22.0
+flask_http_request_duration_seconds_bucket{endpoint="health",le="10.0",method="GET",status="200"} 22.0
+flask_http_request_duration_seconds_bucket{endpoint="health",le="+Inf",method="GET",status="200"} 22.0
+flask_http_request_duration_seconds_count{endpoint="health",method="GET",status="200"} 22.0
+flask_http_request_duration_seconds_sum{endpoint="health",method="GET",status="200"} 0.002704960003029555
+flask_http_request_duration_seconds_bucket{endpoint="get_convergence",le="0.005",method="GET",status="200"} 33.0
+flask_http_request_duration_seconds_bucket{endpoint="get_convergence",le="0.01",method="GET",status="200"} 33.0
+flask_http_request_duration_seconds_bucket{endpoint="get_convergence",le="0.025",method="GET",status="200"} 33.0
+flask_http_request_duration_seconds_bucket{endpoint="get_convergence",le="0.05",method="GET",status="200"} 33.0
+flask_http_request_duration_seconds_bucket{endpoint="get_convergence",le="0.075",method="GET",status="200"} 33.0
+flask_http_request_duration_seconds_bucket{endpoint="get_convergence",le="0.1",method="GET",status="200"} 33.0
+flask_http_request_duration_seconds_bucket{endpoint="get_convergence",le="0.25",method="GET",status="200"} 33.0
+flask_http_request_duration_seconds_bucket{endpoint="get_convergence",le="0.5",method="GET",status="200"} 33.0
+flask_http_request_duration_seconds_bucket{endpoint="get_convergence",le="0.75",method="GET",status="200"} 33.0
+flask_http_request_duration_seconds_bucket{endpoint="get_convergence",le="1.0",method="GET",status="200"} 33.0
+flask_http_request_duration_seconds_bucket{endpoint="get_convergence",le="2.5",method="GET",status="200"} 33.0
+flask_http_request_duration_seconds_bucket{endpoint="get_convergence",le="5.0",method="GET",status="200"} 33.0
+flask_http_request_duration_seconds_bucket{endpoint="get_convergence",le="7.5",method="GET",status="200"} 33.0
+flask_http_request_duration_seconds_bucket{endpoint="get_convergence",le="10.0",method="GET",status="200"} 33.0
+flask_http_request_duration_seconds_bucket{endpoint="get_convergence",le="+Inf",method="GET",status="200"} 33.0
+flask_http_request_duration_seconds_count{endpoint="get_convergence",method="GET",status="200"} 33.0
+flask_http_request_duration_seconds_sum{endpoint="get_convergence",method="GET",status="200"} 0.006745637001586147
+flask_http_request_duration_seconds_bucket{endpoint="status",le="0.005",method="GET",status="200"} 1.0
+flask_http_request_duration_seconds_bucket{endpoint="status",le="0.01",method="GET",status="200"} 1.0
+flask_http_request_duration_seconds_bucket{endpoint="status",le="0.025",method="GET",status="200"} 1.0
+flask_http_request_duration_seconds_bucket{endpoint="status",le="0.05",method="GET",status="200"} 1.0
+flask_http_request_duration_seconds_bucket{endpoint="status",le="0.075",method="GET",status="200"} 1.0
+flask_http_request_duration_seconds_bucket{endpoint="status",le="0.1",method="GET",status="200"} 1.0
+flask_http_request_duration_seconds_bucket{endpoint="status",le="0.25",method="GET",status="200"} 1.0
+flask_http_request_duration_seconds_bucket{endpoint="status",le="0.5",method="GET",status="200"} 1.0
+flask_http_request_duration_seconds_bucket{endpoint="status",le="0.75",method="GET",status="200"} 1.0
+flask_http_request_duration_seconds_bucket{endpoint="status",le="1.0",method="GET",status="200"} 1.0
+flask_http_request_duration_seconds_bucket{endpoint="status",le="2.5",method="GET",status="200"} 1.0
+flask_http_request_duration_seconds_bucket{endpoint="status",le="5.0",method="GET",status="200"} 1.0
+flask_http_request_duration_seconds_bucket{endpoint="status",le="7.5",method="GET",status="200"} 1.0
+flask_http_request_duration_seconds_bucket{endpoint="status",le="10.0",method="GET",status="200"} 1.0
+flask_http_request_duration_seconds_bucket{endpoint="status",le="+Inf",method="GET",status="200"} 1.0
+flask_http_request_duration_seconds_count{endpoint="status",method="GET",status="200"} 1.0
+flask_http_request_duration_seconds_sum{endpoint="status",method="GET",status="200"} 0.00012150000111432746
+# HELP flask_http_request_duration_seconds_created Flask HTTP request duration in seconds
+# TYPE flask_http_request_duration_seconds_created gauge
+flask_http_request_duration_seconds_created{endpoint="health",method="GET",status="200"} 1.7721528732598093e+09
+flask_http_request_duration_seconds_created{endpoint="get_convergence",method="GET",status="200"} 1.7721528741982577e+09
+flask_http_request_duration_seconds_created{endpoint="status",method="GET",status="200"} 1.7721529471297896e+09
+# HELP flask_http_request_total Total number of HTTP requests
+# TYPE flask_http_request_total counter
+flask_http_request_total{method="GET",status="200"} 56.0
+# HELP flask_http_request_created Total number of HTTP requests
+# TYPE flask_http_request_created gauge
+flask_http_request_created{method="GET",status="200"} 1.7721528732599056e+09
+# HELP flask_http_request_exceptions_total Total number of HTTP requests which resulted in an exception
+# TYPE flask_http_request_exceptions_total counter
+# HELP sovereignmap_fl_rounds_total Completed FL rounds
+# TYPE sovereignmap_fl_rounds_total counter
+sovereignmap_fl_rounds_total 7.0
+# HELP sovereignmap_fl_rounds_created Completed FL rounds
+# TYPE sovereignmap_fl_rounds_created gauge
+sovereignmap_fl_rounds_created 1.7721528707080042e+09
+# HELP sovereignmap_fl_accuracy Current FL model accuracy %
+# TYPE sovereignmap_fl_accuracy gauge
+sovereignmap_fl_accuracy 82.5714158676117
+# HELP sovereignmap_fl_loss Current FL model loss
+# TYPE sovereignmap_fl_loss gauge
+sovereignmap_fl_loss 1.1421296954563858
+# HELP sovereignmap_fl_round Current FL round number
+# TYPE sovereignmap_fl_round gauge
+sovereignmap_fl_round 7.0
+# HELP sovereignmap_active_nodes Currently connected nodes
+# TYPE sovereignmap_active_nodes gauge
+sovereignmap_active_nodes 0.0

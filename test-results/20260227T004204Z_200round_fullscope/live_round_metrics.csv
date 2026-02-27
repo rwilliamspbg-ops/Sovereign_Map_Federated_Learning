@@ -1,0 +1,8 @@
+timestamp_utc,current_round,current_accuracy,current_loss,rounds_total,fl_round_gauge,node_running,backend_restarts,backend_error_count_15s,alertmanager_status
+2026-02-27T00:42:49Z,,,,9.0,9.0,10,1,0,Up 6 minutes
+2026-02-27T00:43:05Z,,,,10.0,10.0,10,1,0,Up 6 minutes
+2026-02-27T00:43:20Z,,,,12.0,12.0,10,1,0,Up 6 minutes
+2026-02-27T00:43:35Z,13,96.88740836904933,0.1,13.0,13.0,10,1,0,Up 7 minutes
+2026-02-27T00:43:52Z,14,99.5,0.1,14.0,14.0,10,1,0,Up 7 minutes
+2026-02-27T00:44:07Z,16,99.5,0.1,16.0,16.0,10,1,0,Up 7 minutes
+2026-02-27T00:44:23Z,17,99.5,0.1,17.0,17.0,10,1,0,Up 7 minutes

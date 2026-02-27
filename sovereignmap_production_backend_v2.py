@@ -327,18 +327,27 @@ def run_flower_server():
     global strategy
     
     logger.info("Starting Flower aggregation server on port 8080...")
+
+    min_fit_clients = int(os.getenv("MIN_FIT_CLIENTS", "1"))
+    min_available_clients = int(os.getenv("MIN_AVAILABLE_CLIENTS", str(min_fit_clients)))
+    round_timeout = float(os.getenv("ROUND_TIMEOUT_SECONDS", "600"))
+    num_rounds = int(os.getenv("NUM_ROUNDS", "100"))
+    logger.info(
+        f"FL config: num_rounds={num_rounds}, min_fit_clients={min_fit_clients}, "
+        f"min_available_clients={min_available_clients}, round_timeout={round_timeout}s"
+    )
     
     strategy = ByzantineRobustFedAvg(
         fraction_fit=1.0,
         fraction_evaluate=0.0,
-        min_fit_clients=1,
+        min_fit_clients=min_fit_clients,
         min_evaluate_clients=0,
-        min_available_clients=1,
+        min_available_clients=min_available_clients,
     )
     
     config = ServerConfig(
-        num_rounds=100,
-        round_timeout=600.0,
+        num_rounds=num_rounds,
+        round_timeout=round_timeout,
     )
     
     start_server(
