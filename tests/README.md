@@ -13,6 +13,7 @@ bft_week2_100k_nodes.py          - 100K node scaling validation
 bft_week2_5000_node_scaling.py   - 5K node scaling test
 bft_stress_test_500k.py          - 500K node stress test
 bft_extreme_scale_10m.py         - 10M node extreme scale test
+bft_20node_200round_boundary.py  - 20 node, 200 round, 50-70% BFT boundary sweep
 ```
 
 ### Running Scale Tests
@@ -21,6 +22,7 @@ bft_extreme_scale_10m.py         - 10M node extreme scale test
 python tests/scale-tests/bft_week2_100k_nodes.py        # 100K validation
 python tests/scale-tests/bft_stress_test_500k.py        # 500K stress
 python tests/scale-tests/bft_extreme_scale_10m.py       # 10M extreme
+python tests/scale-tests/bft_20node_200round_boundary.py # 20-node 200-round boundary
 ```
 
 ---
