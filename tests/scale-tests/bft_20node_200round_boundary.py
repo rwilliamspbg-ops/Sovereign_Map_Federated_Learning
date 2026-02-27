@@ -48,7 +48,9 @@ def run_level(
     records: list[RoundRecord] = []
 
     for round_number in range(1, rounds + 1):
-        byzantine_nodes = sum(1 for _ in range(nodes) if rng.random() < (byzantine_pct / 100.0))
+        byzantine_nodes = sum(
+            1 for _ in range(nodes) if rng.random() < (byzantine_pct / 100.0)
+        )
         honest_nodes = nodes - byzantine_nodes
 
         support_ratio = honest_nodes / nodes
@@ -76,7 +78,9 @@ def run_level(
         )
 
     accuracies = [r.accuracy for r in records]
-    first_below_80_round = next((r.round_number for r in records if r.accuracy < 80.0), None)
+    first_below_80_round = next(
+        (r.round_number for r in records if r.accuracy < 80.0), None
+    )
 
     summary = LevelSummary(
         byzantine_pct=byzantine_pct,
@@ -90,8 +94,13 @@ def run_level(
     return records, summary
 
 
-def to_json_serializable(round_records_by_level: dict[int, list[RoundRecord]]) -> dict[str, list[dict[str, Any]]]:
-    return {str(level): [asdict(record) for record in records] for level, records in round_records_by_level.items()}
+def to_json_serializable(
+    round_records_by_level: dict[int, list[RoundRecord]],
+) -> dict[str, list[dict[str, Any]]]:
+    return {
+        str(level): [asdict(record) for record in records]
+        for level, records in round_records_by_level.items()
+    }
 
 
 def write_csv_summary(path: Path, summaries: list[LevelSummary]) -> None:
@@ -117,12 +126,18 @@ def write_csv_summary(path: Path, summaries: list[LevelSummary]) -> None:
                     item.avg_accuracy,
                     item.min_accuracy,
                     item.max_accuracy,
-                    item.first_below_80_round if item.first_below_80_round is not None else "",
+                    (
+                        item.first_below_80_round
+                        if item.first_below_80_round is not None
+                        else ""
+                    ),
                 ]
             )
 
 
-def write_csv_rounds(path: Path, round_records_by_level: dict[int, list[RoundRecord]]) -> None:
+def write_csv_rounds(
+    path: Path, round_records_by_level: dict[int, list[RoundRecord]]
+) -> None:
     with path.open("w", newline="", encoding="utf-8") as f:
         writer = csv.writer(f)
         writer.writerow(
@@ -231,7 +246,9 @@ def main() -> None:
         round_records_by_level[byzantine_pct] = records
         summaries.append(summary)
 
-    threshold_pct = next((s.byzantine_pct for s in summaries if s.final_accuracy < 80.0), None)
+    threshold_pct = next(
+        (s.byzantine_pct for s in summaries if s.final_accuracy < 80.0), None
+    )
 
     payload = {
         "meta": {
@@ -251,7 +268,9 @@ def main() -> None:
     json_latest = results_test_runs / f"{base_name}_results.json"
     json_timestamped = results_test_runs / f"{base_name}_results_{timestamp}.json"
     csv_summary_latest = results_benchmarks / f"{base_name}_summary.csv"
-    csv_summary_timestamped = results_benchmarks / f"{base_name}_summary_{timestamp}.csv"
+    csv_summary_timestamped = (
+        results_benchmarks / f"{base_name}_summary_{timestamp}.csv"
+    )
     csv_rounds_latest = results_benchmarks / f"{base_name}_rounds.csv"
     csv_rounds_timestamped = results_benchmarks / f"{base_name}_rounds_{timestamp}.csv"
     report_base = f"BFT_{args.nodes}NODE_{args.rounds}ROUND_BOUNDARY_REPORT"
