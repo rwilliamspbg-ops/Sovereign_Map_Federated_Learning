@@ -1,0 +1,13 @@
+nohup: ignoring input
+sample round=94
+sample round=108
+sample round=121
+sample round=135
+sample round=150
+sample round=163
+sample round=178
+sample round=192
+sample round=200
+target_round_reached=1
+final_round=200
+artifacts_ready=/workspaces/Sovereign_Map_Federated_Learning/test-results/round200_live/20260227_014246_10node_bft
