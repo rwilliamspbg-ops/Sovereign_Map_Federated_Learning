@@ -75,14 +75,18 @@ services:
       - tpm-certs:/etc/sovereign/certs
       - sovereign-logs:/var/log/sovereign
     working_dir: /app
-    command: python -c "
-      from tpm_cert_manager import TPMCertificateManager;
-      mgr = TPMCertificateManager('/etc/sovereign/certs');
-      print('CA Service Ready - Certificates available at /etc/sovereign/certs');
-      import time;
-      while True:
-        time.sleep(3600)
-    "
+    command:
+      - python
+      - -c
+      - |
+        from tpm_cert_manager import TPMCertificateManager
+        import time
+
+        TPMCertificateManager('/etc/sovereign/certs')
+        print('CA Service Ready - Certificates available at /etc/sovereign/certs')
+
+        while True:
+            time.sleep(3600)
     networks:
       - sovereign-network
     restart: unless-stopped
