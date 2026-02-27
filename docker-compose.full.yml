@@ -54,12 +54,18 @@ services:
       - PYTHONUNBUFFERED=1
       - OMP_NUM_THREADS=1
       - MKL_NUM_THREADS=1
+      - ENABLE_DP=${ENABLE_DP:-false}
+      - LOCAL_EPOCHS=${LOCAL_EPOCHS:-1}
+      - BATCH_SIZE=${BATCH_SIZE:-16}
+      - MAX_SAMPLES_PER_NODE=${MAX_SAMPLES_PER_NODE:-120}
       - NODE_ID=${NODE_ID:-1}
       - AGGREGATOR_HOST=backend
       - AGGREGATOR_PORT=8080
       - BYZANTINE=${BYZANTINE:-false}
     command: >
-      sh -c "python -u src/client.py --node-id ${NODE_ID:-1} --aggregator backend:8080 $${BYZANTINE:+--byzantine}"
+      python -u src/client.py
+      --node-id ${NODE_ID:-1}
+      --aggregator backend:8080
     volumes:
       - ./src:/app/src:ro
       - ./requirements.txt:/app/requirements.txt:ro
@@ -81,6 +87,8 @@ services:
       - "description=Sovereign Maps Federated Learning Node"
 
   node-agent-byzantine:
+    profiles:
+      - byzantine
     build:
       context: .
       dockerfile: Dockerfile
@@ -93,7 +101,10 @@ services:
       - AGGREGATOR_PORT=8080
       - BYZANTINE=1
     command: >
-      sh -c "python -u src/client.py --node-id ${NODE_ID:-1} --aggregator backend:8080 $${BYZANTINE:+--byzantine}"
+      python -u src/client.py
+      --node-id ${NODE_ID:-1}
+      --aggregator backend:8080
+      --byzantine
     volumes:
       - ./src:/app/src:ro
       - ./requirements.txt:/app/requirements.txt:ro
