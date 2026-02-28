@@ -59,7 +59,7 @@ services:
       - "27017:27017"
     environment:
       MONGO_INITDB_ROOT_USERNAME: admin
-      MONGO_INITDB_ROOT_PASSWORD: sovereignmap
+      MONGO_INITDB_ROOT_PASSWORD: ${MONGO_PASSWORD:-CHANGE_ME_SCALE}
       MONGO_INITDB_DATABASE: sovereignmap
     restart: always
     healthcheck:
