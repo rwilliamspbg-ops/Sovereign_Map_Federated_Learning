@@ -97,13 +97,12 @@ services:
         max-size: "5m"
         max-file: "2"
 
-  # Node Agent (single instance for development)
+  # Node Agent (scalable in development)
   node-agent:
     build:
       context: .
       dockerfile: Dockerfile
     image: sovereignmap/node-agent:dev
-    container_name: sovereignmap-node-agent-dev
     environment:
       - NODE_AGENT_MODE=true
       - BACKEND_URL=http://backend:8000
@@ -122,6 +121,7 @@ services:
       - "${ASCEND_DAVINCI_MGR_DEVICE:-/dev/null}:/dev/davinci_manager"
     volumes:
       - ./src:/app/src
+      - tpm_certs:/etc/sovereign/certs
     logging:
       driver: "json-file"
       options:
