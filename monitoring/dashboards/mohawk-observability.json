@@ -1,191 +1,491 @@
 {
-  "dashboard": {
-    "title": "Mohawk Observability Dashboard - 10M+ Nodes",
-    "tags": [
-      "Sovereign Map",
-      "Byzantine Fault Tolerance",
-      "Real-time Monitoring"
-    ],
-    "timezone": "browser",
-    "version": 1,
-    "panels": [
-      {
-        "id": 1,
-        "title": "Model Accuracy (All Nodes)",
-        "type": "graph",
-        "gridPos": {
-          "h": 8,
-          "w": 12,
-          "x": 0,
-          "y": 0
-        },
-        "targets": [
-          {
-            "expr": "bft_convergence_accuracy",
-            "legendFormat": "Accuracy at {{byzantine_level}}%",
-            "refId": "A"
-          }
-        ],
-        "yaxes": [
-          {
-            "format": "percent",
-            "label": "Accuracy (%)"
-          }
-        ]
+  "annotations": {
+    "list": []
+  },
+  "editable": true,
+  "fiscalYearStartMonth": 0,
+  "graphTooltip": 1,
+  "id": null,
+  "links": [],
+  "liveNow": false,
+  "panels": [
+    {
+      "datasource": {
+        "type": "prometheus",
+        "uid": "$datasource"
       },
-      {
-        "id": 2,
-        "title": "Byzantine Margin Ratio",
-        "type": "graph",
-        "gridPos": {
-          "h": 8,
-          "w": 12,
-          "x": 12,
-          "y": 0
+      "fieldConfig": {
+        "defaults": {
+          "unit": "short"
         },
-        "targets": [
-          {
-            "expr": "bft_byzantine_margin_ratio",
-            "legendFormat": "Margin {{byzantine_level}}%",
-            "refId": "A"
-          }
-        ],
-        "yaxes": [
-          {
-            "format": "short",
-            "label": "Margin Ratio"
-          }
-        ]
+        "overrides": []
       },
-      {
-        "id": 3,
-        "title": "Convergence Speed (Rounds)",
-        "type": "graph",
-        "gridPos": {
-          "h": 8,
-          "w": 12,
-          "x": 0,
-          "y": 8
-        },
-        "targets": [
-          {
-            "expr": "bft_convergence_rounds",
-            "legendFormat": "Rounds {{node_count}} nodes",
-            "refId": "A"
-          }
-        ],
-        "yaxes": [
-          {
-            "format": "short",
-            "label": "Rounds to Convergence"
-          }
-        ]
+      "gridPos": {
+        "h": 4,
+        "w": 6,
+        "x": 0,
+        "y": 0
       },
-      {
-        "id": 4,
-        "title": "Active Nodes",
-        "type": "singlestat",
-        "gridPos": {
-          "h": 4,
-          "w": 6,
-          "x": 12,
-          "y": 8
+      "id": 1,
+      "options": {
+        "colorMode": "value",
+        "graphMode": "area",
+        "justifyMode": "auto",
+        "orientation": "auto",
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
         },
-        "targets": [
-          {
-            "expr": "bft_active_nodes",
-            "refId": "A"
-          }
-        ],
-        "format": "short",
-        "sparkline": {
-          "show": true
+        "textMode": "value_and_name"
+      },
+      "targets": [
+        {
+          "expr": "max(sovereignmap_active_nodes or fl_connected_clients or bft_active_nodes)",
+          "legendFormat": "Active Nodes",
+          "refId": "A"
         }
+      ],
+      "title": "Active FL Nodes",
+      "type": "stat"
+    },
+    {
+      "datasource": {
+        "type": "prometheus",
+        "uid": "$datasource"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "short"
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 4,
+        "w": 6,
+        "x": 6,
+        "y": 0
+      },
+      "id": 2,
+      "options": {
+        "colorMode": "value",
+        "graphMode": "none",
+        "justifyMode": "auto",
+        "orientation": "auto",
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "textMode": "value_and_name"
+      },
+      "targets": [
+        {
+          "expr": "count(up{job=~\"fl_backend|backend|sovereign-backend|sovereign-nodes|node-agent|tpm_metrics\"} == 1)",
+          "legendFormat": "Up Instances",
+          "refId": "A"
+        }
+      ],
+      "title": "Scraped Online Instances",
+      "type": "stat"
+    },
+    {
+      "datasource": {
+        "type": "prometheus",
+        "uid": "$datasource"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "short"
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 4,
+        "w": 6,
+        "x": 12,
+        "y": 0
+      },
+      "id": 3,
+      "options": {
+        "colorMode": "value",
+        "graphMode": "none",
+        "justifyMode": "auto",
+        "orientation": "auto",
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "textMode": "value_and_name"
+      },
+      "targets": [
+        {
+          "expr": "max(sovereignmap_fl_round or fl_round or bft_current_round)",
+          "legendFormat": "Round",
+          "refId": "A"
+        }
+      ],
+      "title": "Current FL Round",
+      "type": "stat"
+    },
+    {
+      "datasource": {
+        "type": "prometheus",
+        "uid": "$datasource"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "short"
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 4,
+        "w": 6,
+        "x": 18,
+        "y": 0
+      },
+      "id": 4,
+      "options": {
+        "colorMode": "value",
+        "graphMode": "none",
+        "justifyMode": "auto",
+        "orientation": "auto",
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "textMode": "value_and_name"
+      },
+      "targets": [
+        {
+          "expr": "max(sovereignmap_fl_rounds_total or fl_rounds_total or bft_rounds_total)",
+          "legendFormat": "Total Rounds",
+          "refId": "A"
+        }
+      ],
+      "title": "Completed Rounds (Total)",
+      "type": "stat"
+    },
+    {
+      "datasource": {
+        "type": "prometheus",
+        "uid": "$datasource"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "short"
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 12,
+        "x": 0,
+        "y": 4
+      },
+      "id": 5,
+      "targets": [
+        {
+          "expr": "sovereignmap_active_nodes or fl_connected_clients or bft_active_nodes",
+          "legendFormat": "Active Nodes",
+          "refId": "A"
+        }
+      ],
+      "title": "Node Count Trend",
+      "type": "timeseries"
+    },
+    {
+      "datasource": {
+        "type": "prometheus",
+        "uid": "$datasource"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "percent"
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 12,
+        "x": 12,
+        "y": 4
+      },
+      "id": 6,
+      "targets": [
+        {
+          "expr": "sovereignmap_fl_accuracy or fl_accuracy or bft_convergence_accuracy",
+          "legendFormat": "Accuracy",
+          "refId": "A"
+        }
+      ],
+      "title": "Model Accuracy",
+      "type": "timeseries"
+    },
+    {
+      "datasource": {
+        "type": "prometheus",
+        "uid": "$datasource"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "short"
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 12,
+        "x": 0,
+        "y": 12
+      },
+      "id": 7,
+      "targets": [
+        {
+          "expr": "sovereignmap_fl_loss or fl_loss",
+          "legendFormat": "Loss",
+          "refId": "A"
+        }
+      ],
+      "title": "Model Loss",
+      "type": "timeseries"
+    },
+    {
+      "datasource": {
+        "type": "prometheus",
+        "uid": "$datasource"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "ops"
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 12,
+        "x": 12,
+        "y": 12
+      },
+      "id": 8,
+      "targets": [
+        {
+          "expr": "60 * rate((sovereignmap_fl_rounds_total or fl_rounds_total or bft_rounds_total)[5m])",
+          "legendFormat": "Rounds/min",
+          "refId": "A"
+        }
+      ],
+      "title": "FL Throughput",
+      "type": "timeseries"
+    },
+    {
+      "datasource": {
+        "type": "prometheus",
+        "uid": "$datasource"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "custom": {
+            "align": "auto"
+          },
+          "unit": "short"
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 12,
+        "x": 0,
+        "y": 20
+      },
+      "id": 9,
+      "options": {
+        "showHeader": true
+      },
+      "targets": [
+        {
+          "expr": "up{job=~\"fl_backend|backend|sovereign-backend|sovereign-nodes|node-agent|tpm_metrics|prometheus|grafana|alertmanager\", instance=~\"$node\"}",
+          "format": "table",
+          "instant": true,
+          "legendFormat": "{{job}} {{instance}}",
+          "refId": "A"
+        }
+      ],
+      "title": "Instance Health",
+      "transformations": [
+        {
+          "id": "organize",
+          "options": {
+            "excludeByName": {
+              "Time": true,
+              "__name__": true
+            }
+          }
+        }
+      ],
+      "type": "table"
+    },
+    {
+      "datasource": {
+        "type": "prometheus",
+        "uid": "$datasource"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "reqps"
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 12,
+        "x": 12,
+        "y": 20
+      },
+      "id": 10,
+      "targets": [
+        {
+          "expr": "sum by (method, status) (rate(flask_http_request_total{instance=~\"$node\"}[5m]))",
+          "legendFormat": "{{method}} {{status}}",
+          "refId": "A"
+        }
+      ],
+      "title": "HTTP Request Rate",
+      "type": "timeseries"
+    },
+    {
+      "datasource": {
+        "type": "prometheus",
+        "uid": "$datasource"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "percent"
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 12,
+        "x": 0,
+        "y": 28
+      },
+      "id": 11,
+      "targets": [
+        {
+          "expr": "rate(process_cpu_seconds_total{instance=~\"$node\"}[5m]) * 100",
+          "legendFormat": "{{instance}} CPU",
+          "refId": "A"
+        }
+      ],
+      "title": "Process CPU Usage",
+      "type": "timeseries"
+    },
+    {
+      "datasource": {
+        "type": "prometheus",
+        "uid": "$datasource"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "decbytes"
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 12,
+        "x": 12,
+        "y": 28
+      },
+      "id": 12,
+      "targets": [
+        {
+          "expr": "process_resident_memory_bytes{instance=~\"$node\"}",
+          "legendFormat": "{{instance}} RSS",
+          "refId": "A"
+        }
+      ],
+      "title": "Process Memory Usage",
+      "type": "timeseries"
+    }
+  ],
+  "refresh": "10s",
+  "schemaVersion": 39,
+  "style": "dark",
+  "tags": [
+    "Sovereign Map",
+    "Federated Learning",
+    "Dynamic Nodes"
+  ],
+  "templating": {
+    "list": [
+      {
+        "current": {
+          "selected": true,
+          "text": "Prometheus",
+          "value": "Prometheus"
+        },
+        "hide": 0,
+        "includeAll": false,
+        "label": "Data source",
+        "multi": false,
+        "name": "datasource",
+        "options": [],
+        "query": "prometheus",
+        "refresh": 1,
+        "regex": "",
+        "type": "datasource"
       },
       {
-        "id": 5,
-        "title": "Byzantine Nodes Detected",
-        "type": "singlestat",
-        "gridPos": {
-          "h": 4,
-          "w": 6,
-          "x": 18,
-          "y": 8
+        "allValue": ".*",
+        "current": {
+          "selected": true,
+          "text": "All",
+          "value": "$__all"
         },
-        "targets": [
-          {
-            "expr": "bft_byzantine_nodes_detected",
-            "refId": "A"
-          }
-        ],
-        "format": "short"
-      },
-      {
-        "id": 6,
-        "title": "System Throughput (Updates/sec)",
-        "type": "graph",
-        "gridPos": {
-          "h": 8,
-          "w": 24,
-          "x": 0,
-          "y": 12
+        "datasource": {
+          "type": "prometheus",
+          "uid": "$datasource"
         },
-        "targets": [
-          {
-            "expr": "rate(bft_updates_total[1m])",
-            "legendFormat": "{{node_count}} nodes",
-            "refId": "A"
-          }
-        ],
-        "yaxes": [
-          {
-            "format": "short",
-            "label": "Updates/sec"
-          }
-        ]
-      },
-      {
-        "id": 7,
-        "title": "Memory Usage Trend",
-        "type": "graph",
-        "gridPos": {
-          "h": 8,
-          "w": 12,
-          "x": 0,
-          "y": 20
+        "definition": "label_values(up{job=~\"fl_backend|backend|sovereign-backend|sovereign-nodes|node-agent|tpm_metrics|prometheus|grafana|alertmanager\"}, instance)",
+        "hide": 0,
+        "includeAll": true,
+        "label": "Node",
+        "multi": true,
+        "name": "node",
+        "options": [],
+        "query": {
+          "qryType": 1,
+          "query": "label_values(up{job=~\"fl_backend|backend|sovereign-backend|sovereign-nodes|node-agent|tpm_metrics|prometheus|grafana|alertmanager\"}, instance)",
+          "refId": "StandardVariableQuery"
         },
-        "targets": [
-          {
-            "expr": "bft_memory_usage_bytes / 1024 / 1024",
-            "legendFormat": "{{component}} MB",
-            "refId": "A"
-          }
-        ],
-        "yaxes": [
-          {
-            "format": "short",
-            "label": "Memory (MB)"
-          }
-        ]
-      },
-      {
-        "id": 8,
-        "title": "Byzantine Attack Events",
-        "type": "graph",
-        "gridPos": {
-          "h": 8,
-          "w": 12,
-          "x": 12,
-          "y": 20
-        },
-        "targets": [
-          {
-            "expr": "bft_attack_detected",
-            "legendFormat": "{{attack_type}}",
-            "refId": "A"
-          }
-        ]
+        "refresh": 2,
+        "regex": "",
+        "sort": 1,
+        "type": "query"
       }
     ]
-  }
+  },
+  "time": {
+    "from": "now-6h",
+    "to": "now"
+  },
+  "timepicker": {},
+  "timezone": "browser",
+  "title": "Mohawk Observability Dashboard - Dynamic Nodes",
+  "uid": "mohawk-observability",
+  "version": 2,
+  "weekStart": ""
 }

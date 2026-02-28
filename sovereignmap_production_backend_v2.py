@@ -210,6 +210,7 @@ class ByzantineRobustFedAvg(FedAvg):
         fl_accuracy_gauge.set(accuracy)
         fl_loss_gauge.set(loss)
         fl_round_gauge.set(server_round)
+        active_nodes_gauge.set(len(results))
         
         # Create aggregated parameters
         aggregated_params = ndarrays_to_parameters(aggregated_layers)

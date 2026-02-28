@@ -90,10 +90,9 @@ services:
       - grafana-data:/var/lib/grafana
       # Datasources
       - ./grafana/provisioning/datasources:/etc/grafana/provisioning/datasources
-      # Dashboards
-      - ./monitoring/dashboards/mohawk-observability.json:/etc/grafana/provisioning/dashboards/mohawk-observability.json
-      - ./monitoring/dashboards/tpm_trust_dashboard.json:/etc/grafana/provisioning/dashboards/tpm_trust_dashboard.json
-      - ./grafana_bft_dashboard.json:/etc/grafana/provisioning/dashboards/bft_dashboard.json
+      # Dashboard provider + files
+      - ./grafana/provisioning/dashboards:/etc/grafana/provisioning/dashboards
+      - ./monitoring/dashboards:/var/lib/grafana/dashboards
     networks:
       - sovereign-network
     depends_on:

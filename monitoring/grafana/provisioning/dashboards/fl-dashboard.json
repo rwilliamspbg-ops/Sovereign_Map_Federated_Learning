@@ -1,76 +1,283 @@
 {
-  "dashboard": {
-    "title": "Federated Learning Overview",
-    "tags": ["federated-learning", "sovereign-map"],
-    "timezone": "browser",
-    "panels": [
-      {
-        "id": 1,
-        "title": "Convergence Rate",
-        "type": "graph",
-        "targets": [{
-          "expr": "fl_convergence_rate",
-          "legendFormat": "Convergence Rate"
-        }],
-        "gridPos": {"x": 0, "y": 0, "w": 12, "h": 8}
+  "annotations": {
+    "list": []
+  },
+  "editable": true,
+  "graphTooltip": 1,
+  "id": null,
+  "panels": [
+    {
+      "datasource": {
+        "type": "prometheus",
+        "uid": "${DS_PROMETHEUS}"
       },
-      {
-        "id": 2,
-        "title": "Gradient Norm",
-        "type": "graph",
-        "targets": [{
-          "expr": "fl_gradient_norm",
-          "legendFormat": "Gradient Norm"
-        }],
-        "gridPos": {"x": 12, "y": 0, "w": 12, "h": 8}
+      "fieldConfig": {
+        "defaults": {
+          "unit": "short"
+        },
+        "overrides": []
       },
-      {
-        "id": 3,
-        "title": "Pending Updates",
-        "type": "stat",
-        "targets": [{
-          "expr": "fl_pending_updates"
-        }],
-        "gridPos": {"x": 0, "y": 8, "w": 6, "h": 4}
+      "gridPos": {
+        "h": 4,
+        "w": 6,
+        "x": 0,
+        "y": 0
       },
-      {
-        "id": 4,
-        "title": "Active Nodes",
-        "type": "stat",
-        "targets": [{
-          "expr": "fl_active_nodes"
-        }],
-        "gridPos": {"x": 6, "y": 8, "w": 6, "h": 4}
+      "id": 1,
+      "options": {
+        "colorMode": "value",
+        "graphMode": "area",
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "textMode": "value_and_name"
       },
-      {
-        "id": 5,
-        "title": "Island Mode Status",
-        "type": "stat",
-        "targets": [{
-          "expr": "fl_island_mode"
-        }],
-        "gridPos": {"x": 12, "y": 8, "w": 6, "h": 4}
+      "targets": [
+        {
+          "expr": "max(sovereignmap_active_nodes or fl_connected_clients or bft_active_nodes)",
+          "legendFormat": "Active",
+          "refId": "A"
+        }
+      ],
+      "title": "Active Nodes",
+      "type": "stat"
+    },
+    {
+      "datasource": {
+        "type": "prometheus",
+        "uid": "${DS_PROMETHEUS}"
       },
-      {
-        "id": 6,
-        "title": "Aggregation Duration",
-        "type": "graph",
-        "targets": [{
-          "expr": "fl_aggregation_duration_seconds",
-          "legendFormat": "Duration (s)"
-        }],
-        "gridPos": {"x": 0, "y": 12, "w": 12, "h": 8}
+      "fieldConfig": {
+        "defaults": {
+          "unit": "short"
+        },
+        "overrides": []
       },
-      {
-        "id": 7,
-        "title": "Update Processing Rate",
-        "type": "graph",
-        "targets": [{
-          "expr": "rate(fl_updates_processed_total[5m])",
-          "legendFormat": "Updates/s"
-        }],
-        "gridPos": {"x": 12, "y": 12, "w": 12, "h": 8}
-      }
-    ]
-  }
+      "gridPos": {
+        "h": 4,
+        "w": 6,
+        "x": 6,
+        "y": 0
+      },
+      "id": 2,
+      "options": {
+        "colorMode": "value",
+        "graphMode": "none",
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "textMode": "value_and_name"
+      },
+      "targets": [
+        {
+          "expr": "max(sovereignmap_fl_round or fl_round)",
+          "legendFormat": "Round",
+          "refId": "A"
+        }
+      ],
+      "title": "Current Round",
+      "type": "stat"
+    },
+    {
+      "datasource": {
+        "type": "prometheus",
+        "uid": "${DS_PROMETHEUS}"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "percent"
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 4,
+        "w": 6,
+        "x": 12,
+        "y": 0
+      },
+      "id": 3,
+      "options": {
+        "colorMode": "value",
+        "graphMode": "none",
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "textMode": "value_and_name"
+      },
+      "targets": [
+        {
+          "expr": "max(sovereignmap_fl_accuracy or fl_accuracy)",
+          "legendFormat": "Accuracy",
+          "refId": "A"
+        }
+      ],
+      "title": "Latest Accuracy",
+      "type": "stat"
+    },
+    {
+      "datasource": {
+        "type": "prometheus",
+        "uid": "${DS_PROMETHEUS}"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "short"
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 4,
+        "w": 6,
+        "x": 18,
+        "y": 0
+      },
+      "id": 4,
+      "options": {
+        "colorMode": "value",
+        "graphMode": "none",
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "textMode": "value_and_name"
+      },
+      "targets": [
+        {
+          "expr": "max(sovereignmap_fl_loss or fl_loss)",
+          "legendFormat": "Loss",
+          "refId": "A"
+        }
+      ],
+      "title": "Latest Loss",
+      "type": "stat"
+    },
+    {
+      "datasource": {
+        "type": "prometheus",
+        "uid": "${DS_PROMETHEUS}"
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 12,
+        "x": 0,
+        "y": 4
+      },
+      "id": 5,
+      "targets": [
+        {
+          "expr": "sovereignmap_active_nodes or fl_connected_clients or bft_active_nodes",
+          "legendFormat": "Active Nodes",
+          "refId": "A"
+        }
+      ],
+      "title": "Node Participation Over Time",
+      "type": "timeseries"
+    },
+    {
+      "datasource": {
+        "type": "prometheus",
+        "uid": "${DS_PROMETHEUS}"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "percent"
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 12,
+        "x": 12,
+        "y": 4
+      },
+      "id": 6,
+      "targets": [
+        {
+          "expr": "sovereignmap_fl_accuracy or fl_accuracy or bft_convergence_accuracy",
+          "legendFormat": "Accuracy",
+          "refId": "A"
+        }
+      ],
+      "title": "Convergence / Accuracy",
+      "type": "timeseries"
+    },
+    {
+      "datasource": {
+        "type": "prometheus",
+        "uid": "${DS_PROMETHEUS}"
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 12,
+        "x": 0,
+        "y": 12
+      },
+      "id": 7,
+      "targets": [
+        {
+          "expr": "sovereignmap_fl_loss or fl_loss",
+          "legendFormat": "Loss",
+          "refId": "A"
+        }
+      ],
+      "title": "Loss Trend",
+      "type": "timeseries"
+    },
+    {
+      "datasource": {
+        "type": "prometheus",
+        "uid": "${DS_PROMETHEUS}"
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 12,
+        "x": 12,
+        "y": 12
+      },
+      "id": 8,
+      "targets": [
+        {
+          "expr": "60 * rate((sovereignmap_fl_rounds_total or fl_rounds_total)[5m])",
+          "legendFormat": "Rounds/min",
+          "refId": "A"
+        }
+      ],
+      "title": "Aggregation Throughput",
+      "type": "timeseries"
+    }
+  ],
+  "refresh": "10s",
+  "schemaVersion": 39,
+  "style": "dark",
+  "tags": [
+    "federated-learning",
+    "sovereign-map",
+    "dynamic-nodes"
+  ],
+  "templating": {
+    "list": []
+  },
+  "time": {
+    "from": "now-6h",
+    "to": "now"
+  },
+  "timezone": "browser",
+  "title": "Federated Learning Overview",
+  "uid": "fl-overview",
+  "version": 2
 }
