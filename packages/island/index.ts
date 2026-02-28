@@ -166,9 +166,25 @@ export class IslandModeManager {
       mode: 'online', // Updated by caller based on connectivity
       updatesQueued: this.sequenceNumber,
       lastSync: Date.now(), // Last successful sync timestamp
-      storageUsed: 0, // TODO: Implement
-      chainIntegrity: true, // TODO: Verify on demand
+      storageUsed: this.calculateStorageUsed(),
+      chainIntegrity: this.verifyChainIntegrity(this.updates).valid,
     };
+  }
+  
+  private calculateStorageUsed(): number {
+    // Estimate storage usage based on cached updates
+    // Each update has metadata (JSON) + model weights (binary)
+    let totalBytes = 0;
+    
+    for (const update of this.updates) {
+      // Approximate size: metadata (~500 bytes) + weights (variable)
+      totalBytes += 500;
+      if (update.weights) {
+        totalBytes += update.weights.length * 8; // Float64Array
+      }
+    }
+    
+    return totalBytes;
   }
   
   private async initializeChain(): Promise<void> {

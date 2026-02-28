@@ -1,4 +1,4 @@
-aggregator.go// Copyright 2026 Sovereign-Mohawk Core Team
+// Copyright 2026 Sovereign-Mohawk Core Team
 // Licensed under the Apache License, Version 2.0
 
 package consensus

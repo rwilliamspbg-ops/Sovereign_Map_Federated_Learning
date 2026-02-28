@@ -26,8 +26,8 @@ import (
 	"time"
 )
 
-// PeerInfo represents information about a peer node
-type PeerInfo struct {
+// PeerDetail represents detailed information about a peer node
+type PeerDetail struct {
 	ID            string
 	Address       string
 	PublicKey     []byte
@@ -36,8 +36,8 @@ type PeerInfo struct {
 	Reputation    float64
 }
 
-// VerificationRequest represents a request to verify model updates
-type VerificationRequest struct {
+// ModelVerificationRequest represents a request to verify model updates
+type ModelVerificationRequest struct {
 	RequestID     string
 	ModelWeights  []byte
 	Proof         []byte
@@ -46,8 +46,8 @@ type VerificationRequest struct {
 	Timestamp     time.Time
 }
 
-// VerificationResponse represents a peer's verification result
-type VerificationResponse struct {
+// ModelVerificationResponse represents a peer's verification result
+type ModelVerificationResponse struct {
 	RequestID     string
 	VerifierID    string
 	Valid         bool
@@ -60,8 +60,8 @@ type VerificationResponse struct {
 type Verifier struct {
 	mu               sync.RWMutex
 	nodeID           string
-	peers            map[string]*PeerInfo
-	verifications    map[string][]*VerificationResponse
+	peers            map[string]*PeerDetail
+	verifications    map[string][]*ModelVerificationResponse
 	minVerifications int
 	timeout          time.Duration
 }
@@ -70,15 +70,15 @@ type Verifier struct {
 func NewVerifier(nodeID string, minVerifications int, timeout time.Duration) *Verifier {
 	return &Verifier{
 		nodeID:           nodeID,
-		peers:            make(map[string]*PeerInfo),
-		verifications:    make(map[string][]*VerificationResponse),
+		peers:            make(map[string]*PeerDetail),
+		verifications:    make(map[string][]*ModelVerificationResponse),
 		minVerifications: minVerifications,
 		timeout:          timeout,
 	}
 }
 
 // RegisterPeer adds a new peer to the verification network
-func (v *Verifier) RegisterPeer(peer *PeerInfo) error {
+func (v *Verifier) RegisterPeer(peer *PeerDetail) error {
 	v.mu.Lock()
 	defer v.mu.Unlock()
 	
@@ -105,7 +105,7 @@ func (v *Verifier) RemovePeer(peerID string) {
 }
 
 // RequestVerification broadcasts a verification request to peers
-func (v *Verifier) RequestVerification(ctx context.Context, req *VerificationRequest) (string, error) {
+func (v *Verifier) RequestVerification(ctx context.Context, req *ModelVerificationRequest) (string, error) {
 	v.mu.Lock()
 	defer v.mu.Unlock()
 	
@@ -113,13 +113,13 @@ func (v *Verifier) RequestVerification(ctx context.Context, req *VerificationReq
 		req.RequestID = v.generateRequestID(req)
 	}
 	
-	v.verifications[req.RequestID] = make([]*VerificationResponse, 0)
+	v.verifications[req.RequestID] = make([]*ModelVerificationResponse, 0)
 	
 	return req.RequestID, nil
 }
 
 // SubmitVerification records a verification response from a peer
-func (v *Verifier) SubmitVerification(ctx context.Context, resp *VerificationResponse) error {
+func (v *Verifier) SubmitVerification(ctx context.Context, resp *ModelVerificationResponse) error {
 	v.mu.Lock()
 	defer v.mu.Unlock()
 	
@@ -181,12 +181,12 @@ func (v *Verifier) CheckVerificationStatus(requestID string) (bool, float64, err
 }
 
 // GetActivePeers returns list of active peers
-func (v *Verifier) GetActivePeers() []*PeerInfo {
+func (v *Verifier) GetActivePeers() []*PeerDetail {
 	v.mu.RLock()
 	defer v.mu.RUnlock()
 	
 	activeTimeout := 5 * time.Minute
-	active := make([]*PeerInfo, 0)
+	active := make([]*PeerDetail, 0)
 	
 	for _, peer := range v.peers {
 		if time.Since(peer.LastSeen) < activeTimeout {
@@ -198,7 +198,7 @@ func (v *Verifier) GetActivePeers() []*PeerInfo {
 }
 
 // updateReputation adjusts peer reputation based on verification behavior
-func (v *Verifier) updateReputation(peer *PeerInfo, valid bool) {
+func (v *Verifier) updateReputation(peer *PeerDetail, valid bool) {
 	if valid {
 		peer.Reputation = min(peer.Reputation+0.1, 2.0)
 	} else {
@@ -207,7 +207,7 @@ func (v *Verifier) updateReputation(peer *PeerInfo, valid bool) {
 }
 
 // generateRequestID creates a unique ID for verification requests
-func (v *Verifier) generateRequestID(req *VerificationRequest) string {
+func (v *Verifier) generateRequestID(req *ModelVerificationRequest) string {
 	data := fmt.Sprintf("%s-%d-%d", req.ProposerID, req.Round, req.Timestamp.Unix())
 	hash := sha256.Sum256([]byte(data))
 	return hex.EncodeToString(hash[:])
