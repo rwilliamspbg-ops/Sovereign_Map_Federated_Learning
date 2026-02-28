@@ -19,6 +19,12 @@ scrape_configs:
     metrics_path: '/metrics'
     scrape_interval: 10s
 
+  - job_name: 'tpm-metrics'
+    static_configs:
+      - targets: ['tpm-metrics:9091']
+    metrics_path: '/metrics'
+    scrape_interval: 10s
+
   - job_name: 'alertmanager'
     static_configs:
       - targets: ['alertmanager:9093']
