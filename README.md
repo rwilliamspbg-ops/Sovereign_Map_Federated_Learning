@@ -1,5 +1,29 @@
 # Sovereign Map v1.0.0 - Byzantine-Tolerant Federated Learning
 
+## 🚀 Genesis Block Launch - Production Ready
+
+**🎉 Sovereign Map is ready for Genesis Block launch!**
+
+### Quick Start → Genesis Launch in 5 Minutes
+
+```bash
+git clone https://github.com/rwilliamspbg-ops/Sovereign_Map_Federated_Learning.git
+cd Sovereign_Map_Federated_Learning
+./genesis-launch.sh
+```
+
+**Access Professional Dashboards:**
+- 🎯 **Genesis Launch Overview**: [http://localhost:3000/d/genesis-launch-overview](http://localhost:3000/d/genesis-launch-overview)
+- 🌐 **Network Performance**: [http://localhost:3000/d/network-performance-health](http://localhost:3000/d/network-performance-health)
+- 🔒 **Consensus & Trust**: [http://localhost:3000/d/consensus-trust-monitoring](http://localhost:3000/d/consensus-trust-monitoring)
+
+**📖 Documentation:**
+- **Quick Start**: [GENESIS_QUICK_START.md](GENESIS_QUICK_START.md) (5-minute guide)
+- **Full Guide**: [GENESIS_LAUNCH_GUIDE.md](GENESIS_LAUNCH_GUIDE.md) (comprehensive documentation)
+- **Architecture**: [ARCHITECTURE.md](ARCHITECTURE.md) (system design)
+
+---
+
 ## 🎖️ Status Badges
 
 ### Release & Build Status
