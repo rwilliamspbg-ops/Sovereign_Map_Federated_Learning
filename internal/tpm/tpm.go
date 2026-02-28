@@ -21,7 +21,7 @@ func GetVerifiedQuote(nodeID string) ([]byte, error) {
 	cacheMutex.RLock()
 	entry, found := quoteCache[nodeID]
 	cacheMutex.RUnlock()
-	
+
 	if found && time.Now().Before(entry.ExpiresAt) {
 		return entry.Quote, nil
 	}
@@ -54,7 +54,7 @@ func GenerateTPMQuote() ([]byte, error) {
 }
 
 // VerifyByzantineResilience implements the safety check for Theorem 1.
-// It ensures the number of nodes (n) can support the declared 
+// It ensures the number of nodes (n) can support the declared
 // Byzantine fault tolerance (f) per the Hierarchical Multi-Krum proof.
 // Reference: /proofs/bft_resilience.md
 func VerifyByzantineResilience(totalNodes int, maliciousNodes int) (bool, error) {

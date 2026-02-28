@@ -49,7 +49,7 @@ func (h *Handler) HealthCheck(w http.ResponseWriter, r *http.Request) {
 	}
 
 	response := map[string]string{
-		"status": "healthy",
+		"status":  "healthy",
 		"service": "sovereign-map-fl",
 	}
 
@@ -65,8 +65,8 @@ func (h *Handler) GetStatus(w http.ResponseWriter, r *http.Request) {
 	}
 
 	response := map[string]interface{}{
-		"status":     "operational",
-		"version":    "0.1.0",
+		"status":  "operational",
+		"version": "0.1.0",
 		"components": map[string]string{
 			"aggregator":  "ready",
 			"convergence": "monitoring",
@@ -98,7 +98,7 @@ func (h *Handler) GetMetrics(w http.ResponseWriter, r *http.Request) {
 		summary := h.metrics.GetSummary()
 		response["total_metrics"] = summary["total_metrics"]
 		response["aggregations"] = summary["aggregations"]
-		
+
 		// Get specific metric aggregations
 		if agg := h.metrics.GetAggregation(monitoring.MetricPeerCount); agg != nil {
 			response["active_nodes"] = int(agg.Mean)
@@ -131,7 +131,7 @@ func (h *Handler) GetConvergence(w http.ResponseWriter, r *http.Request) {
 	if h.convergence != nil {
 		metrics := h.convergence.GetMetrics()
 		converged := h.convergence.IsConverged()
-		
+
 		response["converged"] = converged
 		response["iterations"] = metrics["iterations"]
 		response["convergence_rate"] = metrics["convergence_rate"]
@@ -166,11 +166,11 @@ func (h *Handler) GetIslandStatus(w http.ResponseWriter, r *http.Request) {
 		} else if mode == island.ModeTransition {
 			modeStr = "transition"
 		}
-		
+
 		cachedCount, maxCached := h.island.GetCachedUpdateStats()
 		lastSync := h.island.GetLastSyncTime()
 		timeSinceSync := time.Since(lastSync)
-		
+
 		response["mode"] = modeStr
 		response["cached_updates"] = cachedCount
 		response["max_cached_updates"] = maxCached
@@ -197,7 +197,7 @@ func (h *Handler) GetPeers(w http.ResponseWriter, r *http.Request) {
 	if h.p2pNetwork != nil {
 		peers := h.p2pNetwork.GetPeers()
 		activePeers := h.p2pNetwork.GetActivePeerCount()
-		
+
 		response["total_peers"] = len(peers)
 		response["active_peers"] = activePeers
 		response["peers"] = peers

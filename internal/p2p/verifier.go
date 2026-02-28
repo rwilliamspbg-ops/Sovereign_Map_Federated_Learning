@@ -28,32 +28,32 @@ import (
 
 // PeerDetail represents detailed information about a peer node
 type PeerDetail struct {
-	ID            string
-	Address       string
-	PublicKey     []byte
+	ID             string
+	Address        string
+	PublicKey      []byte
 	TPMAttestation []byte
-	LastSeen      time.Time
-	Reputation    float64
+	LastSeen       time.Time
+	Reputation     float64
 }
 
 // ModelVerificationRequest represents a request to verify model updates
 type ModelVerificationRequest struct {
-	RequestID     string
-	ModelWeights  []byte
-	Proof         []byte
-	ProposerID    string
-	Round         int
-	Timestamp     time.Time
+	RequestID    string
+	ModelWeights []byte
+	Proof        []byte
+	ProposerID   string
+	Round        int
+	Timestamp    time.Time
 }
 
 // ModelVerificationResponse represents a peer's verification result
 type ModelVerificationResponse struct {
-	RequestID     string
-	VerifierID    string
-	Valid         bool
-	Signature     []byte
-	Timestamp     time.Time
-	ReasonCode    string
+	RequestID  string
+	VerifierID string
+	Valid      bool
+	Signature  []byte
+	Timestamp  time.Time
+	ReasonCode string
 }
 
 // Verifier handles peer-to-peer verification of model updates
@@ -81,19 +81,19 @@ func NewVerifier(nodeID string, minVerifications int, timeout time.Duration) *Ve
 func (v *Verifier) RegisterPeer(peer *PeerDetail) error {
 	v.mu.Lock()
 	defer v.mu.Unlock()
-	
+
 	if peer.ID == "" {
 		return fmt.Errorf("peer ID cannot be empty")
 	}
-	
+
 	// Initialize reputation score
 	if peer.Reputation == 0 {
 		peer.Reputation = 1.0
 	}
-	
+
 	peer.LastSeen = time.Now()
 	v.peers[peer.ID] = peer
-	
+
 	return nil
 }
 
@@ -108,13 +108,13 @@ func (v *Verifier) RemovePeer(peerID string) {
 func (v *Verifier) RequestVerification(ctx context.Context, req *ModelVerificationRequest) (string, error) {
 	v.mu.Lock()
 	defer v.mu.Unlock()
-	
+
 	if req.RequestID == "" {
 		req.RequestID = v.generateRequestID(req)
 	}
-	
+
 	v.verifications[req.RequestID] = make([]*ModelVerificationResponse, 0)
-	
+
 	return req.RequestID, nil
 }
 
@@ -122,24 +122,24 @@ func (v *Verifier) RequestVerification(ctx context.Context, req *ModelVerificati
 func (v *Verifier) SubmitVerification(ctx context.Context, resp *ModelVerificationResponse) error {
 	v.mu.Lock()
 	defer v.mu.Unlock()
-	
+
 	// Verify the peer exists
 	peer, exists := v.peers[resp.VerifierID]
 	if !exists {
 		return fmt.Errorf("unknown verifier: %s", resp.VerifierID)
 	}
-	
+
 	// Check if request exists
 	if _, exists := v.verifications[resp.RequestID]; !exists {
 		return fmt.Errorf("unknown request: %s", resp.RequestID)
 	}
-	
+
 	// Record verification
 	v.verifications[resp.RequestID] = append(v.verifications[resp.RequestID], resp)
-	
+
 	// Update peer reputation based on response
 	v.updateReputation(peer, resp.Valid)
-	
+
 	return nil
 }
 
@@ -147,20 +147,20 @@ func (v *Verifier) SubmitVerification(ctx context.Context, resp *ModelVerificati
 func (v *Verifier) CheckVerificationStatus(requestID string) (bool, float64, error) {
 	v.mu.RLock()
 	defer v.mu.RUnlock()
-	
+
 	responses, exists := v.verifications[requestID]
 	if !exists {
 		return false, 0, fmt.Errorf("request not found: %s", requestID)
 	}
-	
+
 	if len(responses) < v.minVerifications {
 		return false, 0, nil
 	}
-	
+
 	// Calculate weighted verification score based on peer reputation
 	totalWeight := 0.0
 	validWeight := 0.0
-	
+
 	for _, resp := range responses {
 		if peer, exists := v.peers[resp.VerifierID]; exists {
 			totalWeight += peer.Reputation
@@ -169,13 +169,13 @@ func (v *Verifier) CheckVerificationStatus(requestID string) (bool, float64, err
 			}
 		}
 	}
-	
+
 	if totalWeight == 0 {
 		return false, 0, fmt.Errorf("no valid verifiers")
 	}
-	
+
 	confidenceScore := validWeight / totalWeight
-	
+
 	// Require >66% confidence for Byzantine fault tolerance
 	return confidenceScore > 0.66, confidenceScore, nil
 }
@@ -184,16 +184,16 @@ func (v *Verifier) CheckVerificationStatus(requestID string) (bool, float64, err
 func (v *Verifier) GetActivePeers() []*PeerDetail {
 	v.mu.RLock()
 	defer v.mu.RUnlock()
-	
+
 	activeTimeout := 5 * time.Minute
 	active := make([]*PeerDetail, 0)
-	
+
 	for _, peer := range v.peers {
 		if time.Since(peer.LastSeen) < activeTimeout {
 			active = append(active, peer)
 		}
 	}
-	
+
 	return active
 }
 

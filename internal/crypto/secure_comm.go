@@ -20,12 +20,12 @@ import (
 
 // SecureChannel manages encrypted peer-to-peer communication
 type SecureChannel struct {
-	privateKey *ecdsa.PrivateKey
-	publicKey  *ecdsa.PublicKey
-	peerKeys   map[string]*ecdsa.PublicKey
+	privateKey  *ecdsa.PrivateKey
+	publicKey   *ecdsa.PublicKey
+	peerKeys    map[string]*ecdsa.PublicKey
 	sessionKeys map[string][]byte
-	mu         sync.RWMutex
-	tlsConfig  *tls.Config
+	mu          sync.RWMutex
+	tlsConfig   *tls.Config
 }
 
 // NewSecureChannel creates a new secure communication channel
@@ -251,11 +251,11 @@ func createTLSConfig() *tls.Config {
 
 // SecureMessage wraps an encrypted message with metadata
 type SecureMessage struct {
-	SenderID   string
+	SenderID    string
 	RecipientID string
-	Timestamp  time.Time
-	Ciphertext []byte
-	Signature  []byte
+	Timestamp   time.Time
+	Ciphertext  []byte
+	Signature   []byte
 }
 
 // SecureModelUpdate encrypts and signs a model update

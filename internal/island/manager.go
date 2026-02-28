@@ -37,11 +37,11 @@ type Manager struct {
 
 // Update represents a federated learning update
 type Update struct {
-	Timestamp   time.Time
-	Round       int
-	ModelDelta  []byte
-	Metadata    map[string]interface{}
-	PeerID      string
+	Timestamp  time.Time
+	Round      int
+	ModelDelta []byte
+	Metadata   map[string]interface{}
+	PeerID     string
 }
 
 // ModeChangeListener is called when mode changes

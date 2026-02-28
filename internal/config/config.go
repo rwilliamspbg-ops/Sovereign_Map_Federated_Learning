@@ -22,27 +22,27 @@ import (
 
 // Config holds the application configuration
 type Config struct {
-	NodeID          string
-	AggregatorURL   string
-	DatabaseURI     string
-	BatchSize       int
-	Timeout         time.Duration
-	WASMBinaryPath  string
-	TPMEnabled      bool
-	LogLevel        string
+	NodeID         string
+	AggregatorURL  string
+	DatabaseURI    string
+	BatchSize      int
+	Timeout        time.Duration
+	WASMBinaryPath string
+	TPMEnabled     bool
+	LogLevel       string
 }
 
 // Load reads configuration from environment variables with defaults
 func Load() *Config {
 	return &Config{
-		NodeID:          getEnv("NODE_ID", "node-1"),
-		AggregatorURL:   getEnv("AGGREGATOR_URL", "http://aggregator:8080"),
-		DatabaseURI:     getEnv("DATABASE_URI", "mongodb://mongo:27017/mydb"),
-		BatchSize:       getEnvInt("BATCH_SIZE", 32),
-		Timeout:         getEnvDuration("TIMEOUT", 30*time.Second),
-		WASMBinaryPath:  getEnv("WASM_BINARY_PATH", "/app/wasm/verify.wasm"),
-		TPMEnabled:      getEnvBool("TPM_ENABLED", false),
-		LogLevel:        getEnv("LOG_LEVEL", "info"),
+		NodeID:         getEnv("NODE_ID", "node-1"),
+		AggregatorURL:  getEnv("AGGREGATOR_URL", "http://aggregator:8080"),
+		DatabaseURI:    getEnv("DATABASE_URI", "mongodb://mongo:27017/mydb"),
+		BatchSize:      getEnvInt("BATCH_SIZE", 32),
+		Timeout:        getEnvDuration("TIMEOUT", 30*time.Second),
+		WASMBinaryPath: getEnv("WASM_BINARY_PATH", "/app/wasm/verify.wasm"),
+		TPMEnabled:     getEnvBool("TPM_ENABLED", false),
+		LogLevel:       getEnv("LOG_LEVEL", "info"),
 	}
 }
 

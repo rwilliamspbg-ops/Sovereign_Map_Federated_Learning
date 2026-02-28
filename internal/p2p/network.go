@@ -18,13 +18,13 @@ type Network struct {
 
 // Peer represents a connected peer node
 type Peer struct {
-	ID           string                 `json:"id"`
-	Address      string                 `json:"address"`
-	Connected    bool                   `json:"connected"`
-	LastSeen     time.Time             `json:"last_seen"`
-	Reputation   float64               `json:"reputation"`
-	UpdateCount  int                   `json:"update_count"`
-	Metadata     map[string]interface{} `json:"metadata,omitempty"`
+	ID          string                 `json:"id"`
+	Address     string                 `json:"address"`
+	Connected   bool                   `json:"connected"`
+	LastSeen    time.Time              `json:"last_seen"`
+	Reputation  float64                `json:"reputation"`
+	UpdateCount int                    `json:"update_count"`
+	Metadata    map[string]interface{} `json:"metadata,omitempty"`
 }
 
 // NewNetwork creates a new P2P network instance
@@ -40,7 +40,7 @@ func NewNetwork(nodeID string, minVerifiers int, timeout time.Duration) *Network
 func (n *Network) AddPeer(id, address string, reputation float64) {
 	n.mu.Lock()
 	defer n.mu.Unlock()
-	
+
 	n.peers[id] = &Peer{
 		ID:          id,
 		Address:     address,
@@ -63,7 +63,7 @@ func (n *Network) RemovePeer(id string) {
 func (n *Network) UpdatePeerLastSeen(id string) {
 	n.mu.Lock()
 	defer n.mu.Unlock()
-	
+
 	if peer, exists := n.peers[id]; exists {
 		peer.LastSeen = time.Now()
 	}
@@ -73,7 +73,7 @@ func (n *Network) UpdatePeerLastSeen(id string) {
 func (n *Network) GetPeers() []map[string]interface{} {
 	n.mu.RLock()
 	defer n.mu.RUnlock()
-	
+
 	result := make([]map[string]interface{}, 0, len(n.peers))
 	for _, peer := range n.peers {
 		result = append(result, map[string]interface{}{
@@ -92,11 +92,11 @@ func (n *Network) GetPeers() []map[string]interface{} {
 func (n *Network) GetActivePeerCount() int {
 	n.mu.RLock()
 	defer n.mu.RUnlock()
-	
+
 	activeCount := 0
 	now := time.Now()
 	timeout := 5 * time.Minute
-	
+
 	for _, peer := range n.peers {
 		if peer.Connected && now.Sub(peer.LastSeen) < timeout {
 			activeCount++
@@ -109,12 +109,12 @@ func (n *Network) GetActivePeerCount() int {
 func (n *Network) GetPeer(id string) (*Peer, bool) {
 	n.mu.RLock()
 	defer n.mu.RUnlock()
-	
+
 	peer, exists := n.peers[id]
 	if !exists {
 		return nil, false
 	}
-	
+
 	// Return a copy to prevent race conditions
 	copy := *peer
 	return &copy, true
@@ -130,13 +130,13 @@ func (n *Network) Broadcast(message []byte) error {
 		}
 	}
 	n.mu.RUnlock()
-	
+
 	// In production, implement actual network communication
 	// For now, this is a placeholder for the networking layer
 	for _, peer := range peers {
 		_ = peer // Would send message to peer
 	}
-	
+
 	return nil
 }
 
@@ -144,7 +144,7 @@ func (n *Network) Broadcast(message []byte) error {
 func (n *Network) SetPeerConnected(id string, connected bool) {
 	n.mu.Lock()
 	defer n.mu.Unlock()
-	
+
 	if peer, exists := n.peers[id]; exists {
 		peer.Connected = connected
 		if connected {

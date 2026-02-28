@@ -19,10 +19,10 @@ type SovereignMapClient struct {
 	mu         sync.Mutex
 
 	// Model training state
-	model       ModelWeights
-	localData   TrainingData
-	epochs      int
-	batchSize   int
+	model     ModelWeights
+	localData TrainingData
+	epochs    int
+	batchSize int
 
 	// Metrics
 	lastAccuracy float32
@@ -30,7 +30,7 @@ type SovereignMapClient struct {
 	trainingTime time.Duration
 
 	// Configuration
-	byzantine bool
+	byzantine     bool
 	privacyBudget float32
 }
 
@@ -49,12 +49,12 @@ type TrainingData struct {
 
 // MetricsUpdate represents convergence metrics
 type MetricsUpdate struct {
-	Round      int32
-	Accuracy   float32
-	Loss       float32
-	Timestamp  int64
-	NodeID     string
-	Byzantine  bool
+	Round     int32
+	Accuracy  float32
+	Loss      float32
+	Timestamp int64
+	NodeID    string
+	Byzantine bool
 }
 
 // NewSovereignMapClient creates a new federated learning client

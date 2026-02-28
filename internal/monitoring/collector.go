@@ -11,14 +11,14 @@ import (
 type MetricType string
 
 const (
-	MetricGradient    MetricType = "gradient"
-	MetricLoss        MetricType = "loss"
-	MetricAccuracy    MetricType = "accuracy"
-	MetricRoundTime   MetricType = "round_time"
-	MetricPeerCount   MetricType = "peer_count"
-	MetricNetworkLag  MetricType = "network_lag"
-	MetricTPMAttest   MetricType = "tpm_attestation"
-	MetricConsensus   MetricType = "consensus_votes"
+	MetricGradient   MetricType = "gradient"
+	MetricLoss       MetricType = "loss"
+	MetricAccuracy   MetricType = "accuracy"
+	MetricRoundTime  MetricType = "round_time"
+	MetricPeerCount  MetricType = "peer_count"
+	MetricNetworkLag MetricType = "network_lag"
+	MetricTPMAttest  MetricType = "tpm_attestation"
+	MetricConsensus  MetricType = "consensus_votes"
 )
 
 // Metric represents a single metric observation
