@@ -23,7 +23,6 @@ CONVERGENCE_LOG="$RESULTS_DIR/convergence.log"
 # Colors
 RED='\033[0;31m'
 GREEN='\033[0;32m'
-YELLOW='\033[1;33m'
 BLUE='\033[0;34m'
 NC='\033[0m'
 
@@ -32,10 +31,12 @@ mkdir -p "$RESULTS_DIR"
 
 # Logging functions
 log() {
-    local level=$1
+    local level="$1"
     shift
-    local msg="$@"
-    local timestamp=$(date '+%Y-%m-%d %H:%M:%S')
+    local msg
+    msg="$*"
+    local timestamp
+    timestamp=$(date '+%Y-%m-%d %H:%M:%S')
     echo -e "${timestamp} [${level}] ${msg}" | tee -a "$LOG_FILE"
 }
 
@@ -49,15 +50,15 @@ log_convergence() {
 
 # Status output
 status() {
-    echo -e "${BLUE}[$(date '+%H:%M:%S')]${NC} ${GREEN}➜${NC} $@"
+    echo -e "${BLUE}[$(date '+%H:%M:%S')]${NC} ${GREEN}➜${NC} $*"
 }
 
 error() {
-    echo -e "${RED}[ERROR]${NC} $@" | tee -a "$LOG_FILE"
+    echo -e "${RED}[ERROR]${NC} $*" | tee -a "$LOG_FILE"
 }
 
 success() {
-    echo -e "${GREEN}[SUCCESS]${NC} $@" | tee -a "$LOG_FILE"
+    echo -e "${GREEN}[SUCCESS]${NC} $*" | tee -a "$LOG_FILE"
 }
 
 # Cleanup function
@@ -163,18 +164,23 @@ monitor_convergence() {
     local round=$1
     local current_nodes=$2
     
-    local convergence_data=$(get_convergence)
+    local convergence_data
+    convergence_data=$(get_convergence)
     
     if [ -z "$convergence_data" ] || [ "$convergence_data" = "{}" ]; then
         return 1
     fi
     
-    local accuracy=$(echo "$convergence_data" | jq -r '.current_accuracy // 0' 2>/dev/null || echo 0)
-    local loss=$(echo "$convergence_data" | jq -r '.current_loss // 0' 2>/dev/null || echo 0)
-    local timestamp=$(date '+%Y-%m-%d %H:%M:%S')
+    local accuracy
+    accuracy=$(echo "$convergence_data" | jq -r '.current_accuracy // 0' 2>/dev/null || echo 0)
+    local loss
+    loss=$(echo "$convergence_data" | jq -r '.current_loss // 0' 2>/dev/null || echo 0)
+    local timestamp
+    timestamp=$(date '+%Y-%m-%d %H:%M:%S')
     
     # Log convergence data
-    local convergence_entry=$(jq -n \
+    local convergence_entry
+    convergence_entry=$(jq -n \
         --arg ts "$timestamp" \
         --arg round "$round" \
         --arg nodes "$current_nodes" \
@@ -194,12 +200,14 @@ monitor_convergence() {
 
 # Check if convergence reached
 check_convergence() {
-    local convergence_data=$(get_convergence)
+    local convergence_data
+    convergence_data=$(get_convergence)
     if [ -z "$convergence_data" ] || [ "$convergence_data" = "{}" ]; then
         return 1
     fi
     
-    local accuracy=$(echo "$convergence_data" | jq -r '.current_accuracy // 0' 2>/dev/null || echo 0)
+    local accuracy
+    accuracy=$(echo "$convergence_data" | jq -r '.current_accuracy // 0' 2>/dev/null || echo 0)
     (( $(echo "$accuracy >= $CONVERGENCE_THRESHOLD" | bc -l) ))
 }
 
@@ -208,7 +216,7 @@ scale_nodes() {
     local target_nodes=$1
     log "INFO" "Scaling from $(get_node_count) to $target_nodes nodes..."
     
-    docker compose -f "$COMPOSE_FILE" up -d --scale node-agent=$target_nodes 2>&1 | tee -a "$LOG_FILE"
+    docker compose -f "$COMPOSE_FILE" up -d --scale node-agent="$target_nodes" 2>&1 | tee -a "$LOG_FILE"
     
     sleep 10
     success "Scaled to $target_nodes nodes"
@@ -219,15 +227,15 @@ collect_metrics() {
     local round=$1
     local nodes=$2
     
-    local timestamp=$(date '+%Y-%m-%d %H:%M:%S')
+    local timestamp
+    timestamp=$(date '+%Y-%m-%d %H:%M:%S')
     
     # Get docker stats
-    local backend_stats=$(docker stats --no-stream sovereignmap-backend --format "{{.CPUPerc}},{{.MemUsage}}" 2>/dev/null || echo "N/A,N/A")
+    local backend_stats
+    backend_stats=$(docker stats --no-stream sovereignmap-backend --format "{{.CPUPerc}},{{.MemUsage}}" 2>/dev/null || echo "N/A,N/A")
     
-    # Get Prometheus metrics
-    local prometheus_metrics=$(curl -s "http://localhost:9090/api/v1/query?query=sovereignmap_active_nodes" 2>/dev/null || echo "{}")
-    
-    local metrics_entry=$(jq -n \
+    local metrics_entry
+    metrics_entry=$(jq -n \
         --arg ts "$timestamp" \
         --arg round "$round" \
         --arg nodes "$nodes" \
@@ -236,8 +244,7 @@ collect_metrics() {
             timestamp: $ts,
             round: $round,
             nodes: $nodes,
-            backend_stats: $backend_stats,
-            prometheus_metrics: $prometheus_metrics
+            backend_stats: $backend_stats
         }')
     
     log_metric "$metrics_entry"
@@ -350,7 +357,7 @@ generate_report() {
         echo ""
         echo "## Test Configuration"
         echo "- **Test Name**: $TEST_NAME"
-        echo "- **Start Time**: $(head -1 $CONVERGENCE_LOG | jq -r '.timestamp // "N/A"')"
+        echo "- **Start Time**: $(head -1 "$CONVERGENCE_LOG" | jq -r '.timestamp // "N/A"')"
         echo "- **Initial Nodes**: $INITIAL_NODES"
         echo "- **Increment Size**: $INCREMENT_NODES"
         echo "- **Max Nodes**: $MAX_NODES"
@@ -372,8 +379,10 @@ generate_report() {
         echo ""
         
         echo "## Test Results"
-        local final_accuracy=$(tail -1 "$CONVERGENCE_LOG" | jq -r '.accuracy // "N/A"' 2>/dev/null)
-        local convergence_events=$(grep -c "Convergence.*Scaling" "$LOG_FILE" || echo 0)
+        local final_accuracy
+        final_accuracy=$(tail -1 "$CONVERGENCE_LOG" | jq -r '.accuracy // "N/A"' 2>/dev/null)
+        local convergence_events
+        convergence_events=$(grep -c "Convergence.*Scaling" "$LOG_FILE" || echo 0)
         
         echo "- **Final Accuracy**: ${final_accuracy}%"
         echo "- **Convergence Events**: $convergence_events"
