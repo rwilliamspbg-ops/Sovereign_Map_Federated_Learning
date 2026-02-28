@@ -108,12 +108,18 @@ services:
       - NODE_AGENT_MODE=true
       - BACKEND_URL=http://backend:8000
       - NODE_PEER_ID=dev_node_1
+      - NPU_ENABLED=${NPU_ENABLED:-true}
+      - ASCEND_RT_VISIBLE_DEVICES=${ASCEND_RT_VISIBLE_DEVICES:-0}
+      - ASCEND_DEVICE_ID=${ASCEND_DEVICE_ID:-0}
     depends_on:
       - backend
       - mongo
     restart: unless-stopped
     networks:
       - sovereignmap
+    devices:
+      - "${ASCEND_DAVINCI0_DEVICE:-/dev/null}:/dev/davinci0"
+      - "${ASCEND_DAVINCI_MGR_DEVICE:-/dev/null}:/dev/davinci_manager"
     volumes:
       - ./src:/app/src
     logging:
