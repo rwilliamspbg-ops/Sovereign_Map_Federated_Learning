@@ -1,0 +1,38 @@
+# CodeQL Analysis Ignore Patterns
+
+# Mobile apps (incomplete Gradle setup, excluded from analysis)
+mobile-apps/
+go-mobile/
+
+# Archive and legacy code
+archive/
+legacy/
+
+# Test data and results
+test-data/
+test-results/
+results/
+audit_results/
+
+# Build outputs
+dist/
+build/
+target/
+*.egg-info/
+
+# Dependencies
+node_modules/
+vendor/
+
+# Generated code
+**/*_pb.go
+**/*_grpc.pb.go
+**/*.pb.go
+
+# Frontend build artifacts
+frontend/dist/
+frontend/build/
+frontend/.next/
+
+# Documentation
+*.md

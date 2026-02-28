@@ -4,40 +4,40 @@ package privacy
 
 import (
 	"crypto/rand"
+	"encoding/binary"
 	"fmt"
 	"math"
 	"sync"
-  	"encoding/binary"
 )
 
 // SGP001Config defines the privacy budget parameters for SGP-001 standard
 type SGP001Config struct {
-	Epsilon float64 // Privacy loss parameter (ε = 1.0)
-	Delta   float64 // Privacy failure probability (δ = 1e-5)
+	Epsilon       float64 // Privacy loss parameter (ε = 1.0)
+	Delta         float64 // Privacy failure probability (δ = 1e-5)
 	L2Sensitivity float64 // L2 sensitivity of the query
-	mu sync.Mutex
+	mu            sync.Mutex
 }
 
 // NewSGP001Config creates a new SGP-001 configuration with standard parameters
 func NewSGP001Config() *SGP001Config {
 	return &SGP001Config{
-		Epsilon: 1.0,
-		Delta:   1e-5,
+		Epsilon:       1.0,
+		Delta:         1e-5,
 		L2Sensitivity: 1.0,
 	}
 }
 
 // DifferentialPrivacy handles privacy-preserving operations
 type DifferentialPrivacy struct {
-	config *SGP001Config
+	config     *SGP001Config
 	budgetUsed float64
-	mu sync.RWMutex
+	mu         sync.RWMutex
 }
 
 // NewDifferentialPrivacy creates a new differential privacy manager
 func NewDifferentialPrivacy(config *SGP001Config) *DifferentialPrivacy {
 	return &DifferentialPrivacy{
-		config: config,
+		config:     config,
 		budgetUsed: 0.0,
 	}
 }
@@ -92,7 +92,7 @@ func (dp *DifferentialPrivacy) calculateNoiseScale() float64 {
 	// σ = Δ * sqrt(2 * ln(1.25/δ)) / ε
 	dp.config.mu.Lock()
 	defer dp.config.mu.Unlock()
-	
+
 	term := 2.0 * math.Log(1.25/dp.config.Delta)
 	sigma := dp.config.L2Sensitivity * math.Sqrt(term) / dp.config.Epsilon
 	return sigma
@@ -102,19 +102,19 @@ func (dp *DifferentialPrivacy) calculateNoiseScale() float64 {
 func (dp *DifferentialPrivacy) gaussianNoise(mean, stddev float64) (float64, error) {
 	// Box-Muller transform for generating Gaussian random variables
 	var u1, u2 float64
-	
+
 	// Generate uniform random numbers
 	buf := make([]byte, 8)
 	if _, err := rand.Read(buf); err != nil {
 		return 0, err
 	}
 	u1 = float64(binary.BigEndian.Uint64(buf)) / float64(math.MaxUint64)
-	
+
 	if _, err := rand.Read(buf); err != nil {
 		return 0, err
 	}
 	u2 = float64(binary.BigEndian.Uint64(buf)) / float64(math.MaxUint64)
-	
+
 	// Box-Muller transform
 	z0 := math.Sqrt(-2.0*math.Log(u1)) * math.Cos(2.0*math.Pi*u2)
 	return mean + z0*stddev, nil
@@ -126,7 +126,7 @@ func (dp *DifferentialPrivacy) laplaceNoise(scale float64) (float64, error) {
 	if _, err := rand.Read(buf); err != nil {
 		return 0, err
 	}
-	
+
 	u := float64(binary.BigEndian.Uint64(buf))/float64(math.MaxUint64) - 0.5
 	return -scale * math.Copysign(1.0, u) * math.Log(1.0-2.0*math.Abs(u)), nil
 }
@@ -149,7 +149,7 @@ func (dp *DifferentialPrivacy) ResetPrivacyBudget() {
 func (dp *DifferentialPrivacy) VerifyPrivacyCompliance() error {
 	dp.config.mu.Lock()
 	defer dp.config.mu.Unlock()
-	
+
 	if dp.config.Epsilon != 1.0 {
 		return fmt.Errorf("SGP-001 violation: epsilon must be 1.0, got %.2f", dp.config.Epsilon)
 	}
@@ -165,10 +165,10 @@ func (dp *DifferentialPrivacy) AddNoiseToGradients(gradients []float64, clipNorm
 	defer dp.mu.Unlock()
 
 	noisyGradients := make([]float64, len(gradients))
-	
+
 	// Clip gradients to bound sensitivity
 	clippedGradients := dp.clipGradients(gradients, clipNorm)
-	
+
 	// Add Gaussian noise to each gradient component
 	sigma := dp.calculateNoiseScale()
 	for i, grad := range clippedGradients {
@@ -178,7 +178,7 @@ func (dp *DifferentialPrivacy) AddNoiseToGradients(gradients []float64, clipNorm
 		}
 		noisyGradients[i] = grad + noise
 	}
-	
+
 	return noisyGradients, nil
 }
 
@@ -190,7 +190,7 @@ func (dp *DifferentialPrivacy) clipGradients(gradients []float64, clipNorm float
 		norm += g * g
 	}
 	norm = math.Sqrt(norm)
-	
+
 	// Clip if necessary
 	if norm > clipNorm {
 		clipFactor := clipNorm / norm
@@ -200,7 +200,6 @@ func (dp *DifferentialPrivacy) clipGradients(gradients []float64, clipNorm float
 		}
 		return clipped
 	}
-	
+
 	return gradients
 }
-

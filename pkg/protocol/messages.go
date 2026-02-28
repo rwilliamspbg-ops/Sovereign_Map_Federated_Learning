@@ -20,12 +20,12 @@ import (
 
 // ModelUpdate represents a model update from a participant node
 type ModelUpdate struct {
-	NodeID       string    `json:"node_id"`
-	Round        int       `json:"round"`
-	Weights      []byte    `json:"weights"`
-	Proof        []byte    `json:"proof"`
-	Timestamp    time.Time `json:"timestamp"`
-	Metrics      Metrics   `json:"metrics"`
+	NodeID    string    `json:"node_id"`
+	Round     int       `json:"round"`
+	Weights   []byte    `json:"weights"`
+	Proof     []byte    `json:"proof"`
+	Timestamp time.Time `json:"timestamp"`
+	Metrics   Metrics   `json:"metrics"`
 }
 
 // Metrics holds training metrics

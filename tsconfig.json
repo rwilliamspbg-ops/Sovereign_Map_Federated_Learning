@@ -9,18 +9,22 @@
     "allowSyntheticDefaultImports": true,
     "resolveJsonModule": true,
     "declaration": true,
+    "declarationMap": true,
     "sourceMap": true,
     "composite": true,
     "incremental": true,
     "isolatedModules": true,
     "allowJs": true,
-    "checkJs": false
+    "checkJs": false,
+    "outDir": "dist",
+    "rootDir": "."
   },
   "exclude": [
     "node_modules",
     "dist",
     "frontend",
     "examples",
+    "scripts",
     "**/*.config.js"
   ]
 }

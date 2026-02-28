@@ -30,21 +30,27 @@ type Manager struct {
 	maxCachedUpdates  int
 	lastSync          time.Time
 	listeners         []ModeChangeListener
+	syncer            UpdateSyncer
 	ctx               context.Context
 	cancel            context.CancelFunc
 }
 
 // Update represents a federated learning update
 type Update struct {
-	Timestamp   time.Time
-	Round       int
-	ModelDelta  []byte
-	Metadata    map[string]interface{}
-	PeerID      string
+	Timestamp  time.Time
+	Round      int
+	ModelDelta []byte
+	Metadata   map[string]interface{}
+	PeerID     string
 }
 
 // ModeChangeListener is called when mode changes
 type ModeChangeListener func(oldMode, newMode Mode)
+
+// UpdateSyncer sends updates to the aggregation server
+type UpdateSyncer interface {
+	SyncUpdates(updates []Update) error
+}
 
 // NewManager creates a new Island Mode manager
 func NewManager(checkInterval time.Duration, maxCachedUpdates int, connectivityCheck func() bool) *Manager {
@@ -59,6 +65,7 @@ func NewManager(checkInterval time.Duration, maxCachedUpdates int, connectivityC
 		listeners:         make([]ModeChangeListener, 0),
 		ctx:               ctx,
 		cancel:            cancel,
+		syncer:            nil, // Can be set via SetSyncer()
 	}
 }
 
@@ -154,11 +161,23 @@ func (m *Manager) syncCachedUpdates() {
 	updates := m.cachedUpdates
 	m.cachedUpdates = make([]Update, 0, m.maxCachedUpdates)
 	m.lastSync = time.Now()
+	syncer := m.syncer
 	m.mu.Unlock()
 
-	// TODO: Send updates to aggregation server
-	// This would integrate with the batch aggregator
-	_ = updates // Placeholder for actual sync logic
+	// Send updates to aggregation server if syncer is configured
+	if syncer != nil && len(updates) > 0 {
+		if err := syncer.SyncUpdates(updates); err != nil {
+			// Log error but don't re-cache updates
+			// In production, implement exponential backoff and retry logic
+		}
+	}
+}
+
+// SetSyncer configures the update syncer for sending cached updates
+func (m *Manager) SetSyncer(syncer UpdateSyncer) {
+	m.mu.Lock()
+	defer m.mu.Unlock()
+	m.syncer = syncer
 }
 
 // AddModeChangeListener registers a callback for mode changes
@@ -208,4 +227,25 @@ func (m *Manager) ForceSync() error {
 	}
 	go m.syncCachedUpdates()
 	return nil
+}
+
+// CurrentMode returns the current operational mode
+func (m *Manager) CurrentMode() Mode {
+	m.mu.RLock()
+	defer m.mu.RUnlock()
+	return m.mode
+}
+
+// GetCachedUpdateStats returns cache statistics
+func (m *Manager) GetCachedUpdateStats() (cached int, maxCached int) {
+	m.mu.RLock()
+	defer m.mu.RUnlock()
+	return len(m.cachedUpdates), m.maxCachedUpdates
+}
+
+// GetLastSyncTime returns when last sync occurred
+func (m *Manager) GetLastSyncTime() time.Time {
+	m.mu.RLock()
+	defer m.mu.RUnlock()
+	return m.lastSync
 }

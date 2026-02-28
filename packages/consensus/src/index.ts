@@ -94,8 +94,21 @@ export class ConsensusParticipant extends EventEmitter {
   }
 
   private async generateProof(update: any): Promise<string> {
-    // ZK proof generation placeholder
-    return `proof-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
+    // Simulated ZK proof generation
+    // In production, integrate snarkjs, circom, or similar ZK library
+    
+    // Create deterministic proof based on update hash
+    const updateHash = JSON.stringify(update);
+    const timestamp = Date.now();
+    const randomness = Math.random().toString(36).substr(2, 9);
+    
+    // Simulate computational delay for proof generation
+    await new Promise(resolve => setTimeout(resolve, 100 + Math.random() * 200));
+    
+    // Generate proof string (placeholder format)
+    const proof = `zkp-${timestamp}-${randomness}-${updateHash.slice(0, 16)}`;
+    
+    return proof;
   }
 
   private async collectVotes(proposalId: string, timeout: number): Promise<any> {

@@ -26,42 +26,42 @@ import (
 	"time"
 )
 
-// PeerInfo represents information about a peer node
-type PeerInfo struct {
-	ID            string
-	Address       string
-	PublicKey     []byte
+// PeerDetail represents detailed information about a peer node
+type PeerDetail struct {
+	ID             string
+	Address        string
+	PublicKey      []byte
 	TPMAttestation []byte
-	LastSeen      time.Time
-	Reputation    float64
+	LastSeen       time.Time
+	Reputation     float64
 }
 
-// VerificationRequest represents a request to verify model updates
-type VerificationRequest struct {
-	RequestID     string
-	ModelWeights  []byte
-	Proof         []byte
-	ProposerID    string
-	Round         int
-	Timestamp     time.Time
+// ModelVerificationRequest represents a request to verify model updates
+type ModelVerificationRequest struct {
+	RequestID    string
+	ModelWeights []byte
+	Proof        []byte
+	ProposerID   string
+	Round        int
+	Timestamp    time.Time
 }
 
-// VerificationResponse represents a peer's verification result
-type VerificationResponse struct {
-	RequestID     string
-	VerifierID    string
-	Valid         bool
-	Signature     []byte
-	Timestamp     time.Time
-	ReasonCode    string
+// ModelVerificationResponse represents a peer's verification result
+type ModelVerificationResponse struct {
+	RequestID  string
+	VerifierID string
+	Valid      bool
+	Signature  []byte
+	Timestamp  time.Time
+	ReasonCode string
 }
 
 // Verifier handles peer-to-peer verification of model updates
 type Verifier struct {
 	mu               sync.RWMutex
 	nodeID           string
-	peers            map[string]*PeerInfo
-	verifications    map[string][]*VerificationResponse
+	peers            map[string]*PeerDetail
+	verifications    map[string][]*ModelVerificationResponse
 	minVerifications int
 	timeout          time.Duration
 }
@@ -70,30 +70,30 @@ type Verifier struct {
 func NewVerifier(nodeID string, minVerifications int, timeout time.Duration) *Verifier {
 	return &Verifier{
 		nodeID:           nodeID,
-		peers:            make(map[string]*PeerInfo),
-		verifications:    make(map[string][]*VerificationResponse),
+		peers:            make(map[string]*PeerDetail),
+		verifications:    make(map[string][]*ModelVerificationResponse),
 		minVerifications: minVerifications,
 		timeout:          timeout,
 	}
 }
 
 // RegisterPeer adds a new peer to the verification network
-func (v *Verifier) RegisterPeer(peer *PeerInfo) error {
+func (v *Verifier) RegisterPeer(peer *PeerDetail) error {
 	v.mu.Lock()
 	defer v.mu.Unlock()
-	
+
 	if peer.ID == "" {
 		return fmt.Errorf("peer ID cannot be empty")
 	}
-	
+
 	// Initialize reputation score
 	if peer.Reputation == 0 {
 		peer.Reputation = 1.0
 	}
-	
+
 	peer.LastSeen = time.Now()
 	v.peers[peer.ID] = peer
-	
+
 	return nil
 }
 
@@ -105,41 +105,41 @@ func (v *Verifier) RemovePeer(peerID string) {
 }
 
 // RequestVerification broadcasts a verification request to peers
-func (v *Verifier) RequestVerification(ctx context.Context, req *VerificationRequest) (string, error) {
+func (v *Verifier) RequestVerification(ctx context.Context, req *ModelVerificationRequest) (string, error) {
 	v.mu.Lock()
 	defer v.mu.Unlock()
-	
+
 	if req.RequestID == "" {
 		req.RequestID = v.generateRequestID(req)
 	}
-	
-	v.verifications[req.RequestID] = make([]*VerificationResponse, 0)
-	
+
+	v.verifications[req.RequestID] = make([]*ModelVerificationResponse, 0)
+
 	return req.RequestID, nil
 }
 
 // SubmitVerification records a verification response from a peer
-func (v *Verifier) SubmitVerification(ctx context.Context, resp *VerificationResponse) error {
+func (v *Verifier) SubmitVerification(ctx context.Context, resp *ModelVerificationResponse) error {
 	v.mu.Lock()
 	defer v.mu.Unlock()
-	
+
 	// Verify the peer exists
 	peer, exists := v.peers[resp.VerifierID]
 	if !exists {
 		return fmt.Errorf("unknown verifier: %s", resp.VerifierID)
 	}
-	
+
 	// Check if request exists
 	if _, exists := v.verifications[resp.RequestID]; !exists {
 		return fmt.Errorf("unknown request: %s", resp.RequestID)
 	}
-	
+
 	// Record verification
 	v.verifications[resp.RequestID] = append(v.verifications[resp.RequestID], resp)
-	
+
 	// Update peer reputation based on response
 	v.updateReputation(peer, resp.Valid)
-	
+
 	return nil
 }
 
@@ -147,20 +147,20 @@ func (v *Verifier) SubmitVerification(ctx context.Context, resp *VerificationRes
 func (v *Verifier) CheckVerificationStatus(requestID string) (bool, float64, error) {
 	v.mu.RLock()
 	defer v.mu.RUnlock()
-	
+
 	responses, exists := v.verifications[requestID]
 	if !exists {
 		return false, 0, fmt.Errorf("request not found: %s", requestID)
 	}
-	
+
 	if len(responses) < v.minVerifications {
 		return false, 0, nil
 	}
-	
+
 	// Calculate weighted verification score based on peer reputation
 	totalWeight := 0.0
 	validWeight := 0.0
-	
+
 	for _, resp := range responses {
 		if peer, exists := v.peers[resp.VerifierID]; exists {
 			totalWeight += peer.Reputation
@@ -169,36 +169,36 @@ func (v *Verifier) CheckVerificationStatus(requestID string) (bool, float64, err
 			}
 		}
 	}
-	
+
 	if totalWeight == 0 {
 		return false, 0, fmt.Errorf("no valid verifiers")
 	}
-	
+
 	confidenceScore := validWeight / totalWeight
-	
+
 	// Require >66% confidence for Byzantine fault tolerance
 	return confidenceScore > 0.66, confidenceScore, nil
 }
 
 // GetActivePeers returns list of active peers
-func (v *Verifier) GetActivePeers() []*PeerInfo {
+func (v *Verifier) GetActivePeers() []*PeerDetail {
 	v.mu.RLock()
 	defer v.mu.RUnlock()
-	
+
 	activeTimeout := 5 * time.Minute
-	active := make([]*PeerInfo, 0)
-	
+	active := make([]*PeerDetail, 0)
+
 	for _, peer := range v.peers {
 		if time.Since(peer.LastSeen) < activeTimeout {
 			active = append(active, peer)
 		}
 	}
-	
+
 	return active
 }
 
 // updateReputation adjusts peer reputation based on verification behavior
-func (v *Verifier) updateReputation(peer *PeerInfo, valid bool) {
+func (v *Verifier) updateReputation(peer *PeerDetail, valid bool) {
 	if valid {
 		peer.Reputation = min(peer.Reputation+0.1, 2.0)
 	} else {
@@ -207,7 +207,7 @@ func (v *Verifier) updateReputation(peer *PeerInfo, valid bool) {
 }
 
 // generateRequestID creates a unique ID for verification requests
-func (v *Verifier) generateRequestID(req *VerificationRequest) string {
+func (v *Verifier) generateRequestID(req *ModelVerificationRequest) string {
 	data := fmt.Sprintf("%s-%d-%d", req.ProposerID, req.Round, req.Timestamp.Unix())
 	hash := sha256.Sum256([]byte(data))
 	return hex.EncodeToString(hash[:])

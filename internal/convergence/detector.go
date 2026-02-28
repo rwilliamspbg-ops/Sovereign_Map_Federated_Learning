@@ -11,14 +11,14 @@ import (
 // Detector monitors federated learning convergence across distributed nodes
 // Implements Theorem 6: Convergence guarantees under non-IID conditions
 type Detector struct {
-	mu               sync.RWMutex
-	threshold        float64   // ε target convergence threshold
-	heterogeneity    float64   // ζ² bound for data heterogeneity
-	gradientHistory  []float64 // Historical gradient norms
-	lossHistory      []float64 // Historical loss values
-	windowSize       int       // Moving window for convergence detection
-	minIterations    int       // Minimum iterations before declaring convergence
-	lastCheckTime    time.Time
+	mu              sync.RWMutex
+	threshold       float64   // ε target convergence threshold
+	heterogeneity   float64   // ζ² bound for data heterogeneity
+	gradientHistory []float64 // Historical gradient norms
+	lossHistory     []float64 // Historical loss values
+	windowSize      int       // Moving window for convergence detection
+	minIterations   int       // Minimum iterations before declaring convergence
+	lastCheckTime   time.Time
 }
 
 // NewDetector initializes convergence detector with proof-backed bounds

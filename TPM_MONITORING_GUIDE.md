@@ -155,6 +155,31 @@ docker-compose -f docker-compose.monitoring.tpm.yml up -d
 docker-compose -f docker-compose.monitoring.tpm.yml ps
 ```
 
+### Grafana Provisioning Mounts (Required)
+
+Use the same mount layout in both `docker-compose.monitoring.tpm.yml` and `docker-compose.monitoring.yml` so Grafana auto-loads dashboards and picks up updates without manual imports.
+
+```yaml
+grafana:
+   volumes:
+      - grafana_data:/var/lib/grafana
+      - ./grafana/provisioning/datasources:/etc/grafana/provisioning/datasources
+      - ./grafana/provisioning/dashboards:/etc/grafana/provisioning/dashboards
+      - ./monitoring/dashboards:/var/lib/grafana/dashboards
+```
+
+Notes:
+- Dashboard provider file: `grafana/provisioning/dashboards/dashboards.yml`
+- Dashboard JSON directory: `monitoring/dashboards`
+- Datasource config: `grafana/provisioning/datasources/prometheus.yml`
+
+Reload after dashboard edits:
+
+```bash
+docker compose -f docker-compose.monitoring.tpm.yml restart grafana
+docker compose -f docker-compose.monitoring.yml restart grafana
+```
+
 ### Access Points
 
 ```bash

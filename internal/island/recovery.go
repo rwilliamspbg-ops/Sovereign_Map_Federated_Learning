@@ -12,16 +12,16 @@ import (
 
 // RecoveryManager handles state recovery after offline periods
 type RecoveryManager struct {
-	stateManager *StateManager
-	islandManager *Manager
+	stateManager    *StateManager
+	islandManager   *Manager
 	persistencePath string
 }
 
 // NewRecoveryManager creates a new recovery manager
 func NewRecoveryManager(stateManager *StateManager, islandManager *Manager, persistencePath string) *RecoveryManager {
 	return &RecoveryManager{
-		stateManager: stateManager,
-		islandManager: islandManager,
+		stateManager:    stateManager,
+		islandManager:   islandManager,
 		persistencePath: persistencePath,
 	}
 }
@@ -40,9 +40,9 @@ func (rm *RecoveryManager) PersistState() error {
 	// Create recovery data structure
 	recoveryData := map[string]interface{}{
 		"timestamp": time.Now(),
-		"snapshot": snapshot,
-		"updates": updates,
-		"mode": rm.islandManager.GetMode(),
+		"snapshot":  snapshot,
+		"updates":   updates,
+		"mode":      rm.islandManager.GetMode(),
 	}
 
 	// Serialize to JSON
@@ -122,14 +122,14 @@ func (rm *RecoveryManager) GetRecoveryStatus() map[string]interface{} {
 	if err != nil {
 		return map[string]interface{}{
 			"available": false,
-			"path": rm.persistencePath,
+			"path":      rm.persistencePath,
 		}
 	}
 
 	return map[string]interface{}{
 		"available": true,
-		"path": rm.persistencePath,
-		"size": info.Size(),
-		"modified": info.ModTime(),
+		"path":      rm.persistencePath,
+		"size":      info.Size(),
+		"modified":  info.ModTime(),
 	}
 }

@@ -23,12 +23,12 @@ type VerificationRequest struct {
 
 // VerificationResponse contains the result of a verification
 type VerificationResponse struct {
-	RequestID    string
-	Valid        bool
-	VerifierID   string
-	Proof        []byte
-	VerifiedAt   time.Time
-	Confidence   float64
+	RequestID  string
+	Valid      bool
+	VerifierID string
+	Proof      []byte
+	VerifiedAt time.Time
+	Confidence float64
 }
 
 // VerificationProtocol manages peer-to-peer verification
@@ -44,11 +44,11 @@ type VerificationProtocol struct {
 
 // PeerInfo stores information about a peer
 type PeerInfo struct {
-	ID              string
-	ReputationScore float64
-	LastSeen        time.Time
+	ID                string
+	ReputationScore   float64
+	LastSeen          time.Time
 	VerificationCount int
-	SuccessRate      float64
+	SuccessRate       float64
 }
 
 // NewVerificationProtocol creates a new verification protocol instance
@@ -176,11 +176,11 @@ func (vp *VerificationProtocol) RegisterPeer(peerID string) error {
 	}
 
 	vp.peers[peerID] = &PeerInfo{
-		ID:              peerID,
-		ReputationScore: 1.0,
-		LastSeen:        time.Now(),
+		ID:                peerID,
+		ReputationScore:   1.0,
+		LastSeen:          time.Now(),
 		VerificationCount: 0,
-		SuccessRate:      1.0,
+		SuccessRate:       1.0,
 	}
 
 	return nil
@@ -288,9 +288,9 @@ func (vp *VerificationProtocol) GetVerificationMetrics() map[string]interface{} 
 	defer vp.mu.RUnlock()
 
 	return map[string]interface{}{
-		"total_peers":         len(vp.peers),
-		"pending_requests":    len(vp.pendingRequests),
+		"total_peers":             len(vp.peers),
+		"pending_requests":        len(vp.pendingRequests),
 		"completed_verifications": len(vp.verifications),
-		"min_verifiers":       vp.minVerifiers,
+		"min_verifiers":           vp.minVerifiers,
 	}
 }

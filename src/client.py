@@ -61,7 +61,7 @@ class SovereignClient(fl.client.NumPyClient):
         self.node_id = node_id
         self.byzantine = byzantine
         self.server_address = server_address
-        self.device = torch.device("cpu")
+        self.device = self._select_device()
         self.model = MNISTNet().to(self.device)
         self.batch_size = int(os.getenv("BATCH_SIZE", "16"))
         self.local_epochs = int(os.getenv("LOCAL_EPOCHS", "1"))
@@ -89,7 +89,31 @@ class SovereignClient(fl.client.NumPyClient):
         else:
             logger.info(f"Node {self.node_id}: Differential privacy disabled")
         
-        logger.info(f"Node {self.node_id}: Initialized (Byzantine={byzantine})")
+        logger.info(f"Node {self.node_id}: Initialized (Byzantine={byzantine}, Device={self.device})")
+
+    def _select_device(self) -> torch.device:
+        """Select training device with NPU/CUDA/CPU fallback."""
+        force_cpu = os.getenv("FORCE_CPU", "false").lower() in ("1", "true", "yes")
+        if force_cpu:
+            return torch.device("cpu")
+
+        npu_enabled = os.getenv("NPU_ENABLED", "true").lower() in ("1", "true", "yes")
+        if npu_enabled and hasattr(torch, "npu"):
+            try:
+                if torch.npu.is_available():
+                    visible = os.getenv("ASCEND_RT_VISIBLE_DEVICES", "0")
+                    device_index = str(visible).split(",")[0].strip() or "0"
+                    selected_device = torch.device(f"npu:{device_index}")
+                    torch.npu.set_device(selected_device)
+                    logger.info(f"Node {self.node_id}: Using NPU device {selected_device}")
+                    return selected_device
+            except Exception as e:
+                logger.warning(f"Node {self.node_id}: NPU requested but unavailable ({e}), falling back")
+
+        if torch.cuda.is_available():
+            return torch.device("cuda:0")
+
+        return torch.device("cpu")
 
     def _load_data(self, node_id: int) -> DataLoader:
         """Load MNIST data with node-specific subset."""
@@ -182,6 +206,7 @@ class SovereignClient(fl.client.NumPyClient):
         metrics = {
             "byzantine": self.byzantine,
             "avg_loss": float(np.mean(loss_history)) if loss_history else 0.0,
+            "device": str(self.device),
         }
         if epsilon is not None:
             metrics["epsilon"] = float(epsilon)

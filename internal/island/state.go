@@ -24,8 +24,8 @@ type StateSnapshot struct {
 
 // StateManager handles state persistence and recovery
 type StateManager struct {
-	mu         sync.RWMutex
-	snapshots  []StateSnapshot
+	mu           sync.RWMutex
+	snapshots    []StateSnapshot
 	maxSnapshots int
 	lastSnapshot time.Time
 }
@@ -33,7 +33,7 @@ type StateManager struct {
 // NewStateManager creates a new state manager
 func NewStateManager(maxSnapshots int) *StateManager {
 	return &StateManager{
-		snapshots:   make([]StateSnapshot, 0, maxSnapshots),
+		snapshots:    make([]StateSnapshot, 0, maxSnapshots),
 		maxSnapshots: maxSnapshots,
 		lastSnapshot: time.Now(),
 	}

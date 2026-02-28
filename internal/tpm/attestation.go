@@ -83,7 +83,7 @@ func (am *AttestationManager) GenerateAttestation(nodeID string, nonce []byte) (
 		Quote:     quote,
 		PCRValues: pcrValues,
 		Nonce:     nonce,
-		Signature: []byte("signature-stub"), // Would be actual TPM signature
+		Signature: []byte("signature-stub"),  // Would be actual TPM signature
 		PublicKey: []byte("public-key-stub"), // Would be actual TPM public key
 	}
 

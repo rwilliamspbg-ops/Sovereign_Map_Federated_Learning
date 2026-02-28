@@ -1,11 +1,9 @@
-version: '3.9'
-
 services:
   # Backend: Federated Learning Aggregator + Flask Metrics API (with hot reload)
   backend:
     build:
       context: .
-      dockerfile: Dockerfile.backend.optimized
+      dockerfile: Dockerfile
     image: sovereignmap/backend:dev
     container_name: sovereignmap-backend-dev
     ports:
@@ -30,8 +28,6 @@ services:
       # Bind mount source code for hot reload during development
       - ./src:/app/src
       - ./sovereignmap_production_backend_v2.py:/app/sovereignmap_production_backend_v2.py
-      - ./fl_metrics_translator.py:/app/fl_metrics_translator.py
-      - ./spatial_threat_analyzer.py:/app/spatial_threat_analyzer.py
       - backend_data:/app/data
     logging:
       driver: "json-file"
@@ -57,7 +53,6 @@ services:
       # Mount source for development
       - ./frontend/src:/app/src
       - ./frontend/public:/app/public
-      - ./nginx.conf:/etc/nginx/conf.d/default.conf:ro
     logging:
       driver: "json-file"
       options:
@@ -66,13 +61,13 @@ services:
 
   # MongoDB: Primary Data Store
   mongo:
-    image: mongo:7.0-alpine
+    image: mongo:7.0
     container_name: sovereignmap-mongo-dev
     ports:
       - "27017:27017"
     environment:
       MONGO_INITDB_ROOT_USERNAME: dev
-      MONGO_INITDB_ROOT_PASSWORD: dev
+      MONGO_INITDB_ROOT_PASSWORD: ${MONGO_PASSWORD:-dev_only_not_for_production}
       MONGO_INITDB_DATABASE: sovereignmap
     restart: unless-stopped
     networks:
@@ -102,25 +97,31 @@ services:
         max-size: "5m"
         max-file: "2"
 
-  # Node Agent (single instance for development)
+  # Node Agent (scalable in development)
   node-agent:
     build:
       context: .
       dockerfile: Dockerfile
     image: sovereignmap/node-agent:dev
-    container_name: sovereignmap-node-agent-dev
     environment:
       - NODE_AGENT_MODE=true
       - BACKEND_URL=http://backend:8000
       - NODE_PEER_ID=dev_node_1
+      - NPU_ENABLED=${NPU_ENABLED:-true}
+      - ASCEND_RT_VISIBLE_DEVICES=${ASCEND_RT_VISIBLE_DEVICES:-0}
+      - ASCEND_DEVICE_ID=${ASCEND_DEVICE_ID:-0}
     depends_on:
       - backend
       - mongo
     restart: unless-stopped
     networks:
       - sovereignmap
+    devices:
+      - "${ASCEND_DAVINCI0_DEVICE:-/dev/null}:/dev/davinci0"
+      - "${ASCEND_DAVINCI_MGR_DEVICE:-/dev/null}:/dev/davinci_manager"
     volumes:
       - ./src:/app/src
+      - tpm_certs:/etc/sovereign/certs
     logging:
       driver: "json-file"
       options:
@@ -129,7 +130,7 @@ services:
 
   # Prometheus: Metrics Collection
   prometheus:
-    image: prom/prometheus:v2.48.0-alpine
+    image: prom/prometheus:latest
     container_name: sovereignmap-prometheus-dev
     ports:
       - "9090:9090"
@@ -149,18 +150,44 @@ services:
         max-size: "5m"
         max-file: "2"
 
+  # TPM Metrics Exporter: Certificate and trust telemetry
+  tpm-metrics:
+    image: python:3.11-slim
+    container_name: sovereignmap-tpm-metrics-dev
+    volumes:
+      - ./tpm_metrics_exporter.py:/app/tpm_metrics_exporter.py:ro
+      - ./tpm_cert_manager.py:/app/tpm_cert_manager.py:ro
+      - tpm_certs:/etc/sovereign/certs
+    working_dir: /app
+    command: ["sh", "-c", "python -m pip install prometheus-client flask cryptography && python tpm_metrics_exporter.py"]
+    ports:
+      - "9091:9091"
+    networks:
+      - sovereignmap
+    depends_on:
+      - backend
+    restart: unless-stopped
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "5m"
+        max-file: "2"
+
   # Grafana: Visualization & Dashboards
   grafana:
-    image: grafana/grafana:10.2-alpine
+    image: grafana/grafana:latest
     container_name: sovereignmap-grafana-dev
     ports:
       - "3001:3000"
     environment:
-      - GF_SECURITY_ADMIN_PASSWORD=dev
+      - GF_SECURITY_ADMIN_PASSWORD=${GRAFANA_ADMIN_PASSWORD:-dev}
       - GF_SECURITY_ADMIN_USER=admin
       - GF_USERS_ALLOW_SIGN_UP=false
     volumes:
       - grafana_data:/var/lib/grafana
+      - ./grafana/provisioning/datasources:/etc/grafana/provisioning/datasources
+      - ./grafana/provisioning/dashboards:/etc/grafana/provisioning/dashboards
+      - ./monitoring/dashboards:/var/lib/grafana/dashboards
     depends_on:
       - prometheus
     restart: unless-stopped
@@ -182,3 +209,4 @@ volumes:
   backend_data:
   prometheus_data:
   grafana_data:
+  tpm_certs:

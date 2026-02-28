@@ -50,11 +50,6 @@ func NewHost(ctx context.Context, wasmBin []byte) (*Host, error) {
 	}, nil
 }
 
-// NewRunner is a compatibility alias for NewHost.
-func NewRunner(ctx context.Context, wasmBin []byte) (*Host, error) {
-	return NewHost(ctx, wasmBin)
-}
-
 // Verify executes the zk-SNARK proof verification in the Wasm sandbox.
 func (h *Host) Verify(ctx context.Context, proof []byte) (bool, error) {
 	h.mu.Lock()
