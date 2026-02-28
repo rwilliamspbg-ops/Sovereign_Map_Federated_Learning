@@ -57,7 +57,8 @@ validate_system_requirements() {
     # Check Docker
     if command -v docker &> /dev/null; then
         DOCKER_VERSION=$(docker --version | grep -oP '\d+\.\d+' | head -1)
-        if [[ $(echo "$DOCKER_VERSION >= 24.0" | bc -l) -eq 1 ]]; then
+        DOCKER_MAJOR=$(echo "$DOCKER_VERSION" | cut -d. -f1)
+        if [[ $DOCKER_MAJOR -ge 24 ]]; then
             check_pass "Docker version $DOCKER_VERSION >= 24.0"
         else
             check_fail "Docker version $DOCKER_VERSION < 24.0 (upgrade required)"
@@ -69,10 +70,11 @@ validate_system_requirements() {
     # Check Docker Compose
     if docker compose version &> /dev/null; then
         COMPOSE_VERSION=$(docker compose version | grep -oP '\d+\.\d+' | head -1)
-        if [[ $(echo "$COMPOSE_VERSION >= 2.20" | bc -l) -eq 1 ]]; then
-            check_pass "Docker Compose version $COMPOSE_VERSION >= 2.20"
+        COMPOSE_MAJOR=$(echo "$COMPOSE_VERSION" | cut -d. -f1)
+        if [[ $COMPOSE_MAJOR -ge 2 ]]; then
+            check_pass "Docker Compose version $COMPOSE_VERSION >= 2.0"
         else
-            check_fail "Docker Compose version $COMPOSE_VERSION < 2.20 (upgrade required)"
+            check_fail "Docker Compose version $COMPOSE_VERSION < 2.0 (upgrade required)"
         fi
     else
         check_fail "Docker Compose not installed"
@@ -86,7 +88,7 @@ validate_system_requirements() {
         check_warn "CPU cores: $CPU_CORES < 8 (recommended: 8+)"
     fi
     
-    TOTAL_RAM=$(free -g | awk '/^Mem:/{print $2}')
+    TOTAL_RAM=$(free -m | awk '/^Mem:/{print int($2/1024)}')
     if [[ $TOTAL_RAM -ge 16 ]]; then
         check_pass "RAM: ${TOTAL_RAM}GB >= 16GB"
     else
@@ -285,7 +287,9 @@ validate_python_env() {
     
     if command -v python3 &> /dev/null; then
         PYTHON_VERSION=$(python3 --version | grep -oP '\d+\.\d+')
-        if [[ $(echo "$PYTHON_VERSION >= 3.11" | bc -l) -eq 1 ]]; then
+        PYTHON_MAJOR=$(echo "$PYTHON_VERSION" | cut -d. -f1)
+        PYTHON_MINOR=$(echo "$PYTHON_VERSION" | cut -d. -f2)
+        if [[ $PYTHON_MAJOR -gt 3 ]] || [[ $PYTHON_MAJOR -eq 3 && $PYTHON_MINOR -ge 11 ]]; then
             check_pass "Python version $PYTHON_VERSION >= 3.11"
         else
             check_warn "Python version $PYTHON_VERSION < 3.11 (recommended: 3.11+)"
