@@ -1,7 +1,9 @@
 {
   "scripts": {
     "nodes:burst": "bash scripts/burst-scale-with-certs.sh",
-    "nodes:burst:25": "bash scripts/burst-scale-with-certs.sh 25 docker-compose.dev.yml"
+    "nodes:burst:25": "bash scripts/burst-scale-with-certs.sh 25 docker-compose.dev.yml",
+    "nodes:burst:50": "bash scripts/burst-scale-with-certs.sh 50 docker-compose.dev.yml",
+    "nodes:burst:75": "bash scripts/burst-scale-with-certs.sh 75 docker-compose.dev.yml"
   },
   "compilerOptions": {
     "target": "ESNext",
