@@ -5,6 +5,7 @@
     "nodes:burst:50": "bash scripts/burst-scale-with-certs.sh 50 docker-compose.dev.yml",
     "nodes:burst:75": "bash scripts/burst-scale-with-certs.sh 75 docker-compose.dev.yml",
     "ports:audit": "node scripts/audit-compose-ports.mjs --out-dir test-results/port-audit --target-file docker-compose.dev.yml",
+    "ports:audit:all": "bash scripts/audit-compose-ports-all.sh",
     "demo:10min": "bash scripts/demo-10min-auditable.sh"
   },
   "compilerOptions": {
