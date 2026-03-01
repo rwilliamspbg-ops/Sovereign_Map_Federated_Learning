@@ -1,0 +1,17 @@
+name: "Sovereign Map CodeQL Config"
+
+# Keep analysis focused on production paths and avoid incomplete mobile modules.
+paths-ignore:
+  - mobile-apps/**
+  - go-mobile/**
+  - archive/**
+  - legacy/**
+  - test-data/**
+  - test-results/**
+  - results/**
+  - audit_results/**
+
+# Additional query packs can be enabled here later if needed.
+# queries:
+#   - uses: security-extended
+#   - uses: security-and-quality

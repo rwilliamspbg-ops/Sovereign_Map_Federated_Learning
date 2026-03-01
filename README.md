@@ -22,6 +22,8 @@ cd Sovereign_Map_Federated_Learning
 - **Full Guide**: [GENESIS_LAUNCH_GUIDE.md](GENESIS_LAUNCH_GUIDE.md) (comprehensive documentation)
 - **Architecture**: [ARCHITECTURE.md](ARCHITECTURE.md) (system design)
 
+**🤝 Contributing:** See [CONTRIBUTING.md](CONTRIBUTING.md) for PR checklist, CodeQL guardrails, and branch protection recommendations.
+
 ---
 
 ## 🎖️ Status Badges
@@ -784,6 +786,14 @@ receivers:
 ---
 
 ## 🔒 Security
+
+### ⚠️ Temporary CI Note (CodeQL)
+
+- Use only the advanced CodeQL workflow: `.github/workflows/codeql-analysis.yml`
+- Do **not** enable GitHub CodeQL **Default Setup** for this repository
+- Enabling Default Setup can trigger Java/Kotlin extraction on `mobile-apps/` and fail with `build-mode: none`
+- If those errors appear, disable Default Setup in **Security → Code scanning** and re-run the workflow
+- See `.github/CODEQL.md` for full troubleshooting details
 
 ### Threat Model
 
