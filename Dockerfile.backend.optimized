@@ -1,0 +1,65 @@
+# Multi-stage Dockerfile for Sovereign Map Backend (Optimized)
+
+# Stage 1: Builder
+FROM python:3.11-slim as builder
+
+WORKDIR /build
+
+# Install build tools (minimal set)
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    build-essential \
+    libssl-dev \
+    libffi-dev \
+    && rm -rf /var/lib/apt/lists/*
+
+# Copy requirements first (leverage layer caching)
+COPY requirements-backend.txt .
+
+# Install Python dependencies with optimization flags
+RUN pip install --no-cache-dir --user --no-warn-script-location \
+    --compile \
+    -r requirements-backend.txt
+
+# Stage 2: Runtime
+FROM python:3.11-slim
+
+WORKDIR /app
+
+# Install minimal runtime dependencies
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    curl \
+    ca-certificates \
+    && rm -rf /var/lib/apt/lists/*
+
+# Copy Python dependencies from builder (significantly smaller image)
+COPY --from=builder /root/.local /root/.local
+
+# Set environment variables for Python optimization
+ENV PATH=/root/.local/bin:$PATH \
+    PYTHONUNBUFFERED=1 \
+    PYTHONDONTWRITEBYTECODE=1 \
+    PYTHONOPTIMIZE=2
+
+# Copy application code (least likely to change)
+COPY fl_metrics_translator.py .
+COPY spatial_threat_analyzer.py .
+COPY sovereign_federation_backend.py .
+COPY src/ ./src/
+COPY config/ ./config/
+
+# Create data directory
+RUN mkdir -p /app/data && chmod 755 /app/data
+
+# Non-root user for security
+RUN useradd -m -u 1001 appuser && chown -R appuser:appuser /app
+USER appuser
+
+# Health check with proper error handling
+HEALTHCHECK --interval=30s --timeout=10s --start-period=20s --retries=3 \
+    CMD curl -f http://localhost:8000/health || exit 1
+
+# Expose ports
+EXPOSE 8000
+
+# Run application with exec form (proper signal handling)
+CMD ["python", "sovereign_federation_backend.py"]
