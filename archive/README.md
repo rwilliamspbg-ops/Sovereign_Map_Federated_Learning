@@ -1,5 +1,7 @@
 # 📦 SOVEREIGN MAP - ARCHIVE STRUCTURE
 
+> Historical content notice: files under `archive/` preserve past working notes, experiments, and interim claims. They are not authoritative for current branch status. Use `README.md` and `CI_STATUS_AND_CLAIMS.md` for current, evidence-scoped claims.
+
 **Organization Date:** February 25, 2026  
 **Status:** Repository Cleanup & Organization Complete  
 **Purpose:** Archive Week 1 & 2 development files for reference
@@ -161,7 +163,7 @@ Session 3 (Feb 24)
   → 10M node breakthrough
   → 100M theoretical validation
   → Production finalization
-  → Status: ✅ COMPLETE & PRODUCTION-READY
+  → Status: ✅ COMPLETE (historical milestone)
 ```
 
 ---
@@ -169,7 +171,7 @@ Session 3 (Feb 24)
 ## 🔗 NAVIGATION
 
 ### Production System
-For the current **production-ready system**, see:
+For the current active system documentation, see:
 - Main repository root
 - `tests/` directory (current test suite)
 - `documentation/` directory (current docs)

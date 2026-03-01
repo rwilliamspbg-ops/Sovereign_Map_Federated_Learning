@@ -2,6 +2,8 @@
 
 Comprehensive test results, benchmarks, and analysis from all validation phases.
 
+> Benchmark interpretation note: these artifacts are historical run outputs captured under specific environments/configurations. They support engineering analysis but are not universal guarantees for every deployment.
+
 ---
 
 ## Structure

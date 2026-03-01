@@ -1,8 +1,10 @@
-# 🚀 Sovereign Map v1.0.0 - Testnet Ready! Implementation Summary
+# 🚀 Sovereign Map v1.0.0 - Testnet Implementation Summary
 
-## ✅ Status: TESTNET READY FOR DEPLOYMENT
+> Note: This document is a point-in-time implementation summary. For current branch health and safe claim wording, see [CI_STATUS_AND_CLAIMS.md](CI_STATUS_AND_CLAIMS.md).
 
-All critical blockers have been resolved. System is production-ready for 5-1000+ node deployments.
+## ✅ Status: TESTNET-ORIENTED DEPLOYMENT BASELINE
+
+Core blockers described in this summary were addressed at the time of capture. Current confidence should be derived from active CI workflows and fresh environment-specific validation.
 
 ---
 
@@ -91,10 +93,10 @@ node-agent:
 - 15-second scrape interval
 - Proper job configuration
 
-### 7. ✅ GitHub Actions Workflow Fixed
+### 7. ✅ GitHub Actions Workflow Updated
 
 **Previous Commit**: Removed invalid `script_stop_on_error` parameter
-**Status**: Workflow now valid, ready for GitHub Secrets setup
+**Status**: Workflow update completed for that change set
 
 ---
 
@@ -252,7 +254,7 @@ NUM_BYZANTINE=2 docker compose -f docker-compose.full.yml up --scale node-agent=
 
 # Monitor accuracy convergence
 # Expected: Still converges, but slower
-# Actual Byzantine tolerance: 50% (proven with 10M nodes)
+# Historical benchmark artifacts report tolerance behavior up to ~50% in selected runs
 ```
 
 ### Expected Results
