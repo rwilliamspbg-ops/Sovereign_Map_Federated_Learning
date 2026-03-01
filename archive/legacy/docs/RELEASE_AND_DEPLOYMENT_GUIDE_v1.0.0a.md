@@ -19,10 +19,10 @@ git checkout v1.0.0a
 ### 2. Deploy with Docker Compose
 ```bash
 # Full stack deployment (recommended)
-docker-compose -f docker/docker-compose.full.yml up -d
+docker compose -f docker/docker-compose.full.yml up -d
 
 # Or minimal deployment
-docker-compose up -d
+docker compose up -d
 ```
 
 ### 3. Verify Deployment
@@ -31,7 +31,7 @@ docker-compose up -d
 curl http://localhost:8000/health
 
 # View logs
-docker-compose logs -f backend
+docker compose logs -f backend
 
 # Access dashboards
 # API:        http://localhost:8000
@@ -101,7 +101,7 @@ Scaling:         O(n log n) (confirmed)
 
 ### Option 1: Local Development (5 min)
 ```bash
-docker-compose up -d
+docker compose up -d
 # Ready at http://localhost:8000
 ```
 
@@ -292,7 +292,7 @@ docker logs -f sovereign-map-backend
 docker ps
 
 # Check logs
-docker-compose logs -f
+docker compose logs -f
 
 # Verify Python installation
 python --version

@@ -19,8 +19,8 @@ services:
       - NUM_NODES=${NUM_NODES:-1000}
       - NUM_ROUNDS=${NUM_ROUNDS:-100}
       - FLASK_PORT=8000
-      - DATABASE_URI=mongodb://mongo:27017/sovereignmap
-      - REDIS_URL=redis://redis:6379/0
+      - DATABASE_URI=mongodb://${MONGO_USER:-admin}:${MONGO_PASSWORD:-CHANGE_ME_SCALE}@mongo:27017/sovereignmap?authSource=admin
+      - REDIS_URL=redis://:${REDIS_PASSWORD:-CHANGE_ME_REDIS}@redis:6379/0
       - WORKERS=4
     depends_on:
       mongo:
@@ -56,7 +56,7 @@ services:
     image: mongo:7.0
     container_name: sovereignmap-mongo-scale
     ports:
-      - "27017:27017"
+      - "127.0.0.1:27017:27017"
     environment:
       MONGO_INITDB_ROOT_USERNAME: admin
       MONGO_INITDB_ROOT_PASSWORD: ${MONGO_PASSWORD:-CHANGE_ME_SCALE}
@@ -93,7 +93,7 @@ services:
     image: redis:7-alpine
     container_name: sovereignmap-redis-scale
     ports:
-      - "6379:6379"
+      - "127.0.0.1:6379:6379"
     restart: always
     healthcheck:
       test: ["CMD", "redis-cli", "ping"]
@@ -109,7 +109,7 @@ services:
       options:
         max-size: "50m"
         max-file: "5"
-    command: redis-server --appendonly yes --maxmemory 2gb --maxmemory-policy allkeys-lru
+    command: redis-server --appendonly yes --requirepass ${REDIS_PASSWORD:-CHANGE_ME_REDIS} --maxmemory 2gb --maxmemory-policy allkeys-lru
     deploy:
       resources:
         limits:
@@ -203,8 +203,9 @@ services:
     ports:
       - "3001:3000"
     environment:
-      - GF_SECURITY_ADMIN_PASSWORD=sovereignmap
+      - GF_SECURITY_ADMIN_PASSWORD=${GRAFANA_ADMIN_PASSWORD:-CHANGE_ME_GRAFANA}
       - GF_SECURITY_ADMIN_USER=admin
+      - GF_USERS_ALLOW_SIGN_UP=false
       - GF_PANELS_PLUGIN_SUPPORT=enable
       - GF_INSTALL_PLUGINS=grafana-piechart-panel
     volumes:

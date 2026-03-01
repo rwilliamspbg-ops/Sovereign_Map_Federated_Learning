@@ -1,7 +1,7 @@
 🚀 Quick Start
 | File                                                                                                                           | Size         | Description                     | Download                                                                                           |
 | ------------------------------------------------------------------------------------------------------------------------------ | ------------ | ------------------------------- | -------------------------------------------------------------------------------------------------- |
-| **[run-test.sh](sandbox:///mnt/kimi/output/sovereign-fl-200-node-test/run-test.sh)**                                           | 3,053 bytes  | **Master orchestration script** | [Download](sandbox:///mnt/kimi/output/sovereign-fl-200-node-test/run-test.sh)                      |
+| **[tests/scripts/bash/run-test.sh](../../tests/scripts/bash/run-test.sh)**                                           | 3,053 bytes  | **Master orchestration script** | [Open](../../tests/scripts/bash/run-test.sh)                      |
 | **[phase-1-aws-setup.sh](sandbox:///mnt/kimi/output/sovereign-fl-200-node-test/phase-1-aws-setup.sh)**                         | 8,198 bytes  | AWS account setup               | [Download](sandbox:///mnt/kimi/output/sovereign-fl-200-node-test/phase-1-aws-setup.sh)             |
 | **[phase-2-deploy-infrastructure.sh](sandbox:///mnt/kimi/output/sovereign-fl-200-node-test/phase-2-deploy-infrastructure.sh)** | 15,808 bytes | Terraform deployment            | [Download](sandbox:///mnt/kimi/output/sovereign-fl-200-node-test/phase-2-deploy-infrastructure.sh) |
 | **[phase-3-deploy-code.sh](sandbox:///mnt/kimi/output/sovereign-fl-200-node-test/phase-3-deploy-code.sh)**                     | 14,713 bytes | Code deployment                 | [Download](sandbox:///mnt/kimi/output/sovereign-fl-200-node-test/phase-3-deploy-code.sh)           |
@@ -18,18 +18,18 @@
 Copy
 # Download all files, then:
 chmod +x *.sh
-./run-test.sh all
+./tests/scripts/bash/run-test.sh all
 ```
 ---
 Or step by step:
 ```bash
 Copy
-./run-test.sh setup    # Phase 1: AWS setup
-./run-test.sh deploy   # Phase 2: Deploy 200 EC2 instances
-./run-test.sh code     # Phase 3: Deploy FL code
-./run-test.sh test     # Phase 4: Run 3-hour training
-./run-test.sh results  # Phase 5: Capture results
-./run-test.sh cleanup  # Phase 6: Destroy infrastructure
+./tests/scripts/bash/run-test.sh setup    # Phase 1: AWS setup
+./tests/scripts/bash/run-test.sh deploy   # Phase 2: Deploy 200 EC2 instances
+./tests/scripts/bash/run-test.sh code     # Phase 3: Deploy FL code
+./tests/scripts/bash/run-test.sh test     # Phase 4: Run 3-hour training
+./tests/scripts/bash/run-test.sh results  # Phase 5: Capture results
+./tests/scripts/bash/run-test.sh cleanup  # Phase 6: Destroy infrastructure
 ```
 ---
 All files are ready to use for a legitimate 200-node federated learning test on AWS with Byzantine fault tolerance and differential privacy.

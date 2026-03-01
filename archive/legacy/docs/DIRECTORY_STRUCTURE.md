@@ -477,10 +477,10 @@ pytest tests/
 ### 3. Deploy Locally
 ```bash
 # Build Docker images
-docker-compose -f docker/docker-compose.dev.yml build
+docker compose -f docker/docker-compose.dev.yml build
 
 # Start services
-docker-compose -f docker/docker-compose.dev.yml up
+docker compose -f docker/docker-compose.dev.yml up
 
 # View dashboard
 open http://localhost:3000  # Grafana

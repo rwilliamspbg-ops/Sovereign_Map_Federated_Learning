@@ -292,7 +292,7 @@ ssh ubuntu@production.example.com
 
 # Edit and add restrictions to the key
 # Before: ssh-rsa AAAA...
-# After: command="docker-compose pull && docker-compose up -d", restrict ssh-rsa AAAA...
+# After: command="docker compose pull && docker compose up -d", restrict ssh-rsa AAAA...
 
 # This limits what the key can do
 ```
@@ -433,10 +433,10 @@ cd /home/ubuntu/sovereign-map
 git log --oneline -5
 
 # Check current containers
-docker-compose ps
+docker compose ps
 
 # Tail logs
-docker-compose logs -f backend
+docker compose logs -f backend
 ```
 
 ### 2. Monitor GitHub Actions

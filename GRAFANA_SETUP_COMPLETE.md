@@ -30,7 +30,7 @@ All Grafana dashboards have been successfully created, configured, and integrate
   - Health check configured
 
 #### 4. **Validation & Documentation** ✅
-- [x] `validate-grafana.ps1` - Comprehensive validation script
+- [x] `tests/scripts/powershell/validate-grafana.ps1` - Comprehensive validation script
 - [x] `GRAFANA_DASHBOARDS_COMPLETE.md` - Full setup guide (10.7 KB)
 
 ### Dashboard Specifications
@@ -89,7 +89,7 @@ sleep 60
 # Home → Dashboards → Sovereign folder → Select dashboard
 
 # 6. Run test with monitoring
-./run-5000-round-test.ps1
+./tests/scripts/powershell/run-5000-round-test.ps1
 
 # 7. Watch metrics update in real-time
 # All 6 dashboards show live data during test
@@ -171,7 +171,7 @@ Get-ChildItem Sovereign_Map_Federated_Learning/grafana/provisioning/dashboards/*
 Get-ChildItem Sovereign_Map_Federated_Learning/grafana/provisioning/datasources/
 Get-ChildItem Sovereign_Map_Federated_Learning/grafana/provisioning/dashboards/dashboard*
 
-# Check docker-compose has mounts
+# Check Docker Compose has mounts
 Select-String "grafana/provisioning" Sovereign_Map_Federated_Learning/docker-compose.production.yml
 ```
 
@@ -184,7 +184,7 @@ Select-String "grafana/provisioning" Sovereign_Map_Federated_Learning/docker-com
 - ✅ `grafana/provisioning/dashboards/sovereign-map-scaling.json`
 - ✅ `grafana/provisioning/dashboards/sovereign-map-tpm-security.json`
 - ✅ `grafana/provisioning/dashboards/sovereign-map-npu-acceleration.json`
-- ✅ `validate-grafana.ps1` (validation script)
+- ✅ `tests/scripts/powershell/validate-grafana.ps1` (validation script)
 - ✅ `GRAFANA_DASHBOARDS_COMPLETE.md` (comprehensive guide)
 
 **Files Modified:**
@@ -206,7 +206,7 @@ curl http://localhost:8000/metrics
 
 **Metrics showing no data?**
 1. Verify backend is running: `docker ps | grep backend`
-2. Run a test to generate data: `./run-5000-round-test.ps1`
+2. Run a test to generate data: `./tests/scripts/powershell/run-5000-round-test.ps1`
 3. Wait 30 seconds for Prometheus to scrape
 4. Refresh Grafana dashboard
 
@@ -236,7 +236,7 @@ curl http://localhost:8000/metrics
 
 4. **Run Tests**
    ```bash
-   ./run-5000-round-test.ps1
+   ./tests/scripts/powershell/run-5000-round-test.ps1
    ```
 
 5. **Monitor in Real-Time**
@@ -288,6 +288,6 @@ sovereignmap_inference_time_npu_ms
 
 ## ✅ SETUP COMPLETE
 
-All 6 Grafana dashboards are configured, provisioned, and ready for production monitoring. Start the docker-compose stack and begin testing immediately.
+All 6 Grafana dashboards are configured, provisioned, and ready for production monitoring. Start the Docker Compose stack and begin testing immediately.
 
 **Status:** Ready for 100-node testing with full real-time visualization

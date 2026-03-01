@@ -514,7 +514,7 @@ docker compose up -d
 **Documentation:**
 - Architecture: [ARCHITECTURE.md](ARCHITECTURE.md)
 - Deployment: [DEPLOYMENT.md](DEPLOYMENT.md)
-- Testing: [TEST_GUIDE.md](TEST_GUIDE.md)
+- Testing: [tests/docs/TEST_GUIDE.md](tests/docs/TEST_GUIDE.md)
 
 ---
 

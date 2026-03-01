@@ -183,7 +183,7 @@ docker compose -f docker-compose.production.yml up -d
 
 # Wait 60 seconds for services
 # Run full test
-./run-5000-round-test.ps1
+./tests/scripts/powershell/run-5000-round-test.ps1
 
 # Expected:
 # - Duration: 9-10 seconds
@@ -198,7 +198,7 @@ docker compose -f docker-compose.production.yml up -d
 docker compose -f docker-compose.production.yml up -d
 
 # Run incremental scaling
-./test-incremental-scale.sh
+./tests/scripts/bash/test-incremental-scale.sh
 
 # Expected:
 # - 20 nodes (2 sec)
@@ -214,7 +214,7 @@ docker compose -f docker-compose.production.yml up -d
 docker compose -f docker-compose.production.yml up -d
 
 # Run continuous load test to find limits
-./continuous-load-test.ps1
+./tests/scripts/powershell/continuous-load-test.ps1
 
 # Expected:
 # - Stabilizes at 100 nodes
@@ -232,7 +232,7 @@ docker compose -f docker-compose.production.yml up -d
 # http://localhost:3001 (Grafana)
 
 # Run test
-./run-5000-round-test.ps1
+./tests/scripts/powershell/run-5000-round-test.ps1
 
 # Watch live:
 # - Overview: Node count 20→40→60→80→100

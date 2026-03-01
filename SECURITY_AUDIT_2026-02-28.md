@@ -215,7 +215,7 @@ grep "PASSWORD" .env.example
 ### 3. Test Configuration Loading
 ```bash
 # Ensure compose files load environment variables correctly
-docker-compose -f docker-compose.200nodes.yml config | grep "PASSWORD"
+docker compose -f docker-compose.200nodes.yml config | grep "PASSWORD"
 ```
 
 ---
@@ -285,10 +285,28 @@ Before deploying to production, ensure:
 
 - [ ] **Test configuration loading**
   ```bash
-  docker-compose config | grep "PASSWORD" | grep -v "CHANGE_ME"
+  docker compose config | grep "PASSWORD" | grep -v "CHANGE_ME"
   ```
 
 - [ ] **Rotate passwords every 90 days**
+
+---
+
+## ✅ Addendum: Final Hardening (March 1, 2026)
+
+Additional production hardening has been completed after the original audit:
+
+- ✅ Enforced authenticated backend datastore URLs in `docker-compose.production.yml`
+  - MongoDB URI now includes `${MONGO_USER}` and `${MONGO_PASSWORD}` with `authSource=admin`
+  - Redis URL now includes `${REDIS_PASSWORD}`
+- ✅ Enforced authenticated datastore URLs in `docker-compose.large-scale.yml`
+- ✅ Enabled Redis password requirement in `docker-compose.large-scale.yml`
+- ✅ Reduced external attack surface by binding MongoDB/Redis ports to localhost in production-scale compose files
+- ✅ Disabled Grafana self-signup in production-scale and full deployment profiles
+- ✅ Added deployment pre-flight secret validation in `deploy.sh` for `prod` and `large-scale` profiles
+  - Deployment now fails fast if placeholder values (`CHANGE_ME*`, `changeme`, etc.) are detected
+
+**Result**: Security controls now prevent insecure production startup paths in default deployment workflows.
 
 ---
 

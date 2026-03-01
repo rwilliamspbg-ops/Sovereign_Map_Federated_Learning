@@ -166,7 +166,7 @@ Status: ✅ CONFIRMED
 **Development:**
 ```
 ✅ Local Python: python src/sovereign_federation_backend.py
-✅ Docker Compose: docker-compose -f docker/docker-compose.full.yml up -d
+✅ Docker Compose: docker compose -f docker/docker-compose.full.yml up -d
 ✅ Kubernetes: kubectl apply -f config/kubernetes/
 ```
 
@@ -214,7 +214,7 @@ cd Sovereign_Map_Federated_Learning
 git checkout v1.0.0a
 
 # Deploy
-docker-compose -f docker/docker-compose.full.yml up -d
+docker compose -f docker/docker-compose.full.yml up -d
 
 # Verify
 curl http://localhost:8000/health

@@ -11,6 +11,7 @@ PROJECT_NAME="sovereignmap"
 GREEN='\033[0;32m'
 YELLOW='\033[1;33m'
 BLUE='\033[0;34m'
+RED='\033[0;31m'
 NC='\033[0m'
 
 echo -e "${BLUE}"
@@ -90,6 +91,52 @@ if [ ! -f "$COMPOSE_FILE" ]; then
 fi
 echo -e "${GREEN}✓ $COMPOSE_FILE found${NC}"
 
+if [ "$PROFILE" = "prod" ] || [ "$PROFILE" = "production" ] || [ "$PROFILE" = "large-scale" ]; then
+    echo -e "${YELLOW}Validating required security secrets for $PROFILE...${NC}"
+
+    MONGO_PASSWORD_VALUE="${MONGO_PASSWORD:-}"
+    REDIS_PASSWORD_VALUE="${REDIS_PASSWORD:-}"
+    GRAFANA_PASSWORD_VALUE="${GRAFANA_ADMIN_PASSWORD:-}"
+
+    if [ -f ".env" ]; then
+        if [ -z "$MONGO_PASSWORD_VALUE" ]; then
+            MONGO_PASSWORD_VALUE=$(grep -E '^MONGO_PASSWORD=' .env | tail -n1 | cut -d '=' -f2-)
+        fi
+        if [ -z "$REDIS_PASSWORD_VALUE" ]; then
+            REDIS_PASSWORD_VALUE=$(grep -E '^REDIS_PASSWORD=' .env | tail -n1 | cut -d '=' -f2-)
+        fi
+        if [ -z "$GRAFANA_PASSWORD_VALUE" ]; then
+            GRAFANA_PASSWORD_VALUE=$(grep -E '^GRAFANA_ADMIN_PASSWORD=' .env | tail -n1 | cut -d '=' -f2-)
+        fi
+    fi
+
+    case "$MONGO_PASSWORD_VALUE" in
+        ""|CHANGE_ME*|dev_only_not_for_production)
+            echo -e "${RED}✗ MONGO_PASSWORD is missing or insecure placeholder.${NC}"
+            echo "  Set a strong value in environment or .env before production deployment."
+            exit 1
+            ;;
+    esac
+
+    case "$REDIS_PASSWORD_VALUE" in
+        ""|CHANGE_ME*|dev_only_not_for_production)
+            echo -e "${RED}✗ REDIS_PASSWORD is missing or insecure placeholder.${NC}"
+            echo "  Set a strong value in environment or .env before production deployment."
+            exit 1
+            ;;
+    esac
+
+    case "$GRAFANA_PASSWORD_VALUE" in
+        ""|CHANGE_ME*|changeme|dev_only_not_for_production)
+            echo -e "${RED}✗ GRAFANA_ADMIN_PASSWORD is missing or insecure placeholder.${NC}"
+            echo "  Set a strong value in environment or .env before production deployment."
+            exit 1
+            ;;
+    esac
+
+    echo -e "${GREEN}✓ Security secrets validation passed${NC}"
+fi
+
 # Build images
 echo ""
 echo -e "${YELLOW}[2/4] Building Docker images...${NC}"
@@ -126,7 +173,7 @@ echo ""
 echo -e "${BLUE}Access Points:${NC}"
 echo "  Frontend:     ${GREEN}http://localhost:3000${NC}"
 echo "  Backend API:  ${GREEN}http://localhost:8000${NC}"
-echo "  Grafana:      ${GREEN}http://localhost:3001${NC}  (admin/admin or admin/dev)"
+echo "  Grafana:      ${GREEN}http://localhost:3001${NC}  (credentials from GRAFANA_USER/GRAFANA_ADMIN_PASSWORD)"
 echo "  Prometheus:   ${GREEN}http://localhost:9090${NC}"
 echo ""
 

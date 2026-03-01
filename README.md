@@ -182,11 +182,17 @@ curl http://localhost:8000/convergence | jq '.current_accuracy'
 
 | Service | URL | Credentials |
 |---------|-----|-------------|
-| **Grafana** | http://localhost:3000 | admin / admin |
+| **Grafana** | http://localhost:3000 | `${GRAFANA_USER:-admin}` / `${GRAFANA_ADMIN_PASSWORD}` |
 | **Prometheus** | http://localhost:9090 | (no auth) |
 | **Backend API** | http://localhost:8000 | (no auth) |
 | **Flower Aggregator** | localhost:8080 | (internal gRPC) |
 | **Alertmanager** | http://localhost:9093 | (no auth) |
+
+Before production-like deploys, validate required secrets:
+
+```bash
+bash validate-secrets.sh prod
+```
 
 ### Scale to Production (100 Nodes)
 

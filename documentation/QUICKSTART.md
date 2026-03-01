@@ -25,13 +25,13 @@ cd Sovereign_Map_Federated_Learning
 
 ### Step 2: Start Full Stack
 ```bash
-docker-compose -f docker/docker-compose.full.yml up -d
+docker compose -f docker/docker-compose.full.yml up -d
 ```
 
 ### Step 3: Verify Health
 ```bash
 # Check all services running
-docker-compose -f docker/docker-compose.full.yml ps
+docker compose -f docker/docker-compose.full.yml ps
 
 # Expected output:
 # NAME                 STATUS           PORTS
@@ -175,16 +175,16 @@ Expected results:
 
 ```bash
 # View logs
-docker-compose -f docker/docker-compose.full.yml logs -f
+docker compose -f docker/docker-compose.full.yml logs -f
 
 # Stop all services
-docker-compose -f docker/docker-compose.full.yml down
+docker compose -f docker/docker-compose.full.yml down
 
 # Rebuild images
-docker-compose -f docker/docker-compose.full.yml build
+docker compose -f docker/docker-compose.full.yml build
 
 # View specific service logs
-docker-compose -f docker/docker-compose.full.yml logs fl-backend
+docker compose -f docker/docker-compose.full.yml logs fl-backend
 ```
 
 ### Python Tests

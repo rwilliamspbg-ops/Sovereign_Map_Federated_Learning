@@ -65,7 +65,7 @@ Alertmanager (9093)    → Alert management
 cd Sovereign_Map_Federated_Learning
 
 # Start monitoring stack
-docker-compose -f docker-compose.monitoring.yml up -d
+docker compose -f docker-compose.monitoring.yml up -d
 
 # Verify services
 docker ps | grep -E 'prometheus|grafana|alertmanager'
@@ -266,7 +266,7 @@ byzantine_config = {
 # deploy_hierarchical_optimized.sh
 
 # 1. Deploy Grafana monitoring
-docker-compose -f docker-compose.monitoring.yml up -d
+docker compose -f docker-compose.monitoring.yml up -d
 
 # 2. Start BFT application with hierarchical aggregation
 python your_bft_app.py \

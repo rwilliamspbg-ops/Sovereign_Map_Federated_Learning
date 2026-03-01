@@ -158,18 +158,45 @@ jobs:
 
           echo "ready=true" >> "$GITHUB_OUTPUT"
           echo "host=$STAGING_HOST" >> "$GITHUB_OUTPUT"
+
+      - name: Validate staging secrets
+        if: steps.staging_inputs.outputs.ready == 'true'
+        env:
+          STAGING_MONGO_PASSWORD: ${{ secrets.STAGING_MONGO_PASSWORD }}
+          STAGING_REDIS_PASSWORD: ${{ secrets.STAGING_REDIS_PASSWORD }}
+          STAGING_GRAFANA_ADMIN_PASSWORD: ${{ secrets.STAGING_GRAFANA_ADMIN_PASSWORD }}
+          MONGO_PASSWORD_FALLBACK: ${{ secrets.MONGO_PASSWORD }}
+          REDIS_PASSWORD_FALLBACK: ${{ secrets.REDIS_PASSWORD }}
+          GRAFANA_ADMIN_PASSWORD_FALLBACK: ${{ secrets.GRAFANA_ADMIN_PASSWORD }}
+        run: |
+          export MONGO_PASSWORD="${STAGING_MONGO_PASSWORD:-$MONGO_PASSWORD_FALLBACK}"
+          export REDIS_PASSWORD="${STAGING_REDIS_PASSWORD:-$REDIS_PASSWORD_FALLBACK}"
+          export GRAFANA_ADMIN_PASSWORD="${STAGING_GRAFANA_ADMIN_PASSWORD:-$GRAFANA_ADMIN_PASSWORD_FALLBACK}"
+          bash ./validate-secrets.sh prod
       
       - name: Deploy to staging via SSH
         if: steps.staging_inputs.outputs.ready == 'true'
         uses: appleboy/ssh-action@master
+        env:
+          STAGING_MONGO_PASSWORD: ${{ secrets.STAGING_MONGO_PASSWORD }}
+          STAGING_REDIS_PASSWORD: ${{ secrets.STAGING_REDIS_PASSWORD }}
+          STAGING_GRAFANA_ADMIN_PASSWORD: ${{ secrets.STAGING_GRAFANA_ADMIN_PASSWORD }}
+          MONGO_PASSWORD_FALLBACK: ${{ secrets.MONGO_PASSWORD }}
+          REDIS_PASSWORD_FALLBACK: ${{ secrets.REDIS_PASSWORD }}
+          GRAFANA_ADMIN_PASSWORD_FALLBACK: ${{ secrets.GRAFANA_ADMIN_PASSWORD }}
         with:
           host: ${{ steps.staging_inputs.outputs.host }}
           username: ${{ secrets.DEPLOY_USER }}
           key: ${{ secrets.DEPLOY_KEY }}
+          envs: STAGING_MONGO_PASSWORD,STAGING_REDIS_PASSWORD,STAGING_GRAFANA_ADMIN_PASSWORD,MONGO_PASSWORD_FALLBACK,REDIS_PASSWORD_FALLBACK,GRAFANA_ADMIN_PASSWORD_FALLBACK
           script: |
             set -e
             echo "📦 Deploying to Staging..."
             cd ${{ secrets.DEPLOY_PATH }}/staging || mkdir -p ${{ secrets.DEPLOY_PATH }}/staging && cd ${{ secrets.DEPLOY_PATH }}/staging
+
+            MONGO_PASSWORD="${STAGING_MONGO_PASSWORD:-$MONGO_PASSWORD_FALLBACK}"
+            REDIS_PASSWORD="${STAGING_REDIS_PASSWORD:-$REDIS_PASSWORD_FALLBACK}"
+            GRAFANA_ADMIN_PASSWORD="${STAGING_GRAFANA_ADMIN_PASSWORD:-$GRAFANA_ADMIN_PASSWORD_FALLBACK}"
             
             # Pull latest code
             git clone --depth 1 https://github.com/${{ github.repository }}.git . || git pull origin main
@@ -178,7 +205,11 @@ jobs:
             docker compose -f docker-compose.full.yml pull || true
             
             # Deploy with 50 nodes (staging)
-            NUM_NODES=50 docker compose -f docker-compose.full.yml up -d --scale node-agent=50
+            NUM_NODES=50 \
+            MONGO_PASSWORD="$MONGO_PASSWORD" \
+            REDIS_PASSWORD="$REDIS_PASSWORD" \
+            GRAFANA_ADMIN_PASSWORD="$GRAFANA_ADMIN_PASSWORD" \
+            docker compose -f docker-compose.full.yml up -d --scale node-agent=50
             
             # Wait for services
             sleep 30
@@ -283,14 +314,28 @@ jobs:
 
           echo "ready=true" >> "$GITHUB_OUTPUT"
           echo "host=$PROD_HOST" >> "$GITHUB_OUTPUT"
+
+      - name: Validate production secrets
+        if: steps.prod_inputs.outputs.ready == 'true'
+        env:
+          MONGO_PASSWORD: ${{ secrets.MONGO_PASSWORD }}
+          REDIS_PASSWORD: ${{ secrets.REDIS_PASSWORD }}
+          GRAFANA_ADMIN_PASSWORD: ${{ secrets.GRAFANA_ADMIN_PASSWORD }}
+        run: |
+          bash ./validate-secrets.sh prod
       
       - name: Deploy to production via SSH
         if: steps.prod_inputs.outputs.ready == 'true'
         uses: appleboy/ssh-action@master
+        env:
+          MONGO_PASSWORD: ${{ secrets.MONGO_PASSWORD }}
+          REDIS_PASSWORD: ${{ secrets.REDIS_PASSWORD }}
+          GRAFANA_ADMIN_PASSWORD: ${{ secrets.GRAFANA_ADMIN_PASSWORD }}
         with:
           host: ${{ steps.prod_inputs.outputs.host }}
           username: ${{ secrets.DEPLOY_USER }}
           key: ${{ secrets.DEPLOY_KEY }}
+          envs: MONGO_PASSWORD,REDIS_PASSWORD,GRAFANA_ADMIN_PASSWORD
           script: |
             set -e
             echo "🚀 Deploying to Production..."
@@ -306,7 +351,11 @@ jobs:
             docker compose -f docker-compose.full.yml pull
             
             # Deploy with 100 nodes (production)
-            NUM_NODES=100 docker compose -f docker-compose.full.yml up -d --scale node-agent=100
+            NUM_NODES=100 \
+            MONGO_PASSWORD="$MONGO_PASSWORD" \
+            REDIS_PASSWORD="$REDIS_PASSWORD" \
+            GRAFANA_ADMIN_PASSWORD="$GRAFANA_ADMIN_PASSWORD" \
+            docker compose -f docker-compose.full.yml up -d --scale node-agent=100
             
             # Wait for services to be healthy
             sleep 60

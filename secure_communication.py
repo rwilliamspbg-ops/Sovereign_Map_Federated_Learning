@@ -6,6 +6,7 @@ Integrates TPM-inspired trust & verification with Flask backend
 import json
 import logging
 import time
+import hashlib
 from functools import wraps
 from typing import Dict, Any, Callable, Optional
 from datetime import datetime
@@ -27,6 +28,7 @@ class SecureNodeCommunication:
         # Trust cache to avoid repeated verification
         self.trust_cache = {}
         self.cache_ttl = 3600  # 1 hour
+        self.max_clock_skew_seconds = 300  # 5 minutes
         
         logger.info(f"SecureNodeCommunication initialized for node {node_id}")
     
@@ -53,8 +55,12 @@ class SecureNodeCommunication:
                 return jsonify({"error": "Missing authentication headers"}), 401
             
             try:
+                request_data = None
+                if request.method in {'POST', 'PUT', 'PATCH'}:
+                    request_data = request.get_json(silent=True)
+
                 # Verify the request is signed by a trusted node
-                if not self._verify_request(from_node, signature, auth_header):
+                if not self._verify_request(from_node, signature, auth_header, request_data):
                     logger.warning(f"Signature verification failed from node {from_node}")
                     return jsonify({"error": "Invalid signature"}), 401
                 
@@ -75,14 +81,41 @@ class SecureNodeCommunication:
         
         return decorated_function
     
-    def _verify_request(self, from_node: str, signature: str, message_hash: str) -> bool:
+    def _verify_request(
+        self,
+        from_node: str,
+        signature: str,
+        auth_payload_hex: str,
+        request_data: Optional[Dict[str, Any]] = None,
+    ) -> bool:
         """Verify that a request is properly signed."""
         try:
             from_node_id = int(from_node)
             signature_bytes = bytes.fromhex(signature)
+            auth_payload_bytes = bytes.fromhex(auth_payload_hex)
+
+            payload = json.loads(auth_payload_bytes.decode())
+            payload_from_node = int(payload.get("from_node"))
+            payload_timestamp = int(payload.get("timestamp"))
+
+            if payload_from_node != from_node_id:
+                logger.warning(
+                    f"Authenticated payload node mismatch: header={from_node_id}, payload={payload_from_node}"
+                )
+                return False
+
+            if abs(int(time.time()) - payload_timestamp) > self.max_clock_skew_seconds:
+                logger.warning(f"Stale or replayed request from node {from_node_id}")
+                return False
+
+            if request_data is not None and payload.get("data") != request_data:
+                logger.warning(f"Signed payload/body mismatch from node {from_node_id}")
+                return False
+
+            payload_digest = hashlib.sha256(auth_payload_bytes).hexdigest()
             
             # Check trust cache
-            cache_key = f"{from_node_id}:{message_hash}"
+            cache_key = f"{from_node_id}:{payload_digest}:{signature}"
             if cache_key in self.trust_cache:
                 cached_time, result = self.trust_cache[cache_key]
                 if time.time() - cached_time < self.cache_ttl:
@@ -90,7 +123,7 @@ class SecureNodeCommunication:
             
             # Verify signature
             result = self.authenticator.verify_message(
-                message_hash.encode(),
+                auth_payload_bytes,
                 signature_bytes,
                 from_node_id
             )
@@ -118,8 +151,7 @@ class SecureNodeCommunication:
             "headers": {
                 "X-From-Node": str(self.node_id),
                 "X-Signature": signature.hex(),
-                "X-Auth": message.hex(),
-                "X-Message-Hash": message.hex()[:64]  # First 64 chars as sample
+                "X-Node-Auth": message.hex(),
             },
             "body": data
         }

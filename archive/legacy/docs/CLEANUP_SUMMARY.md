@@ -268,7 +268,7 @@ documentation/
 
 ### For Operations/DevOps
 **Start Here:** `docker/`
-1. Review docker-compose files
+1. Review Docker Compose files
 2. Read `documentation/DEPLOYMENT.md`
 3. Check `monitoring/` for dashboards
 4. Configure alerts in `config/alertmanager.yml`

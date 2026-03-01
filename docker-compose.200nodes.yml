@@ -5,7 +5,7 @@ services:
     volumes:
       - mongo_data_200:/data/db
     ports:
-      - "27017:27017"
+      - "127.0.0.1:27017:27017"
     environment:
       MONGO_INITDB_ROOT_USERNAME: admin
       MONGO_INITDB_ROOT_PASSWORD: ${MONGO_PASSWORD:-CHANGE_ME_200}
@@ -87,8 +87,9 @@ services:
     ports:
       - "3001:3000"
     environment:
-      - GF_SECURITY_ADMIN_USER=admin
-      - GF_SECURITY_ADMIN_PASSWORD=${GRAFANA_ADMIN_PASSWORD:-changeme}
+      - GF_SECURITY_ADMIN_USER=${GRAFANA_USER:-admin}
+      - GF_SECURITY_ADMIN_PASSWORD=${GRAFANA_ADMIN_PASSWORD:-CHANGE_ME_GRAFANA}
+      - GF_USERS_ALLOW_SIGN_UP=false
     volumes:
       - grafana_data_200:/var/lib/grafana
     depends_on:

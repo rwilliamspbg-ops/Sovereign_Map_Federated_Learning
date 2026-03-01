@@ -41,7 +41,7 @@ cd Sovereign_Map_Federated_Learning
 export GEMINI_API_KEY=your_key_here  # For threat analysis
 
 # Deploy full stack
-docker-compose -f docker-compose.full.yml up -d
+docker compose -f docker-compose.full.yml up -d
 
 # Verify health
 curl http://localhost:8000/health
@@ -277,7 +277,7 @@ AI-powered threat analysis using Gemini 3 Pro API.
 
 ### Option 1: Docker Compose (Recommended)
 ```bash
-docker-compose -f docker/docker-compose.full.yml up -d
+docker compose -f docker/docker-compose.full.yml up -d
 ```
 - ✅ Full stack: Backend, Prometheus, Grafana, Redis, Nginx
 - ✅ 8 coordinated services

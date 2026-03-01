@@ -18,8 +18,8 @@ services:
       - NUM_ROUNDS=${NUM_ROUNDS:-100}
       - FLASK_PORT=8000
       - PYTHONUNBUFFERED=1
-      - DATABASE_URI=mongodb://mongo:27017/sovereignmap
-      - REDIS_URL=redis://redis:6379/0
+      - DATABASE_URI=mongodb://${MONGO_USER:-admin}:${MONGO_PASSWORD:-CHANGE_ME_MONGO}@mongo:27017/sovereignmap?authSource=admin
+      - REDIS_URL=redis://:${REDIS_PASSWORD:-CHANGE_ME_REDIS}@redis:6379/0
     depends_on:
       mongo:
         condition: service_started
@@ -91,10 +91,10 @@ services:
     image: mongo:7.0-alpine
     container_name: sovereignmap-mongo
     ports:
-      - "27017:27017"
+      - "127.0.0.1:27017:27017"
     environment:
       MONGO_INITDB_ROOT_USERNAME: ${MONGO_USER:-admin}
-      MONGO_INITDB_ROOT_PASSWORD: ${MONGO_PASSWORD:-sovereignmap}
+      MONGO_INITDB_ROOT_PASSWORD: ${MONGO_PASSWORD:-CHANGE_ME_MONGO}
       MONGO_INITDB_DATABASE: sovereignmap
     restart: always
     healthcheck:
@@ -125,7 +125,7 @@ services:
     image: redis:7-alpine
     container_name: sovereignmap-redis
     ports:
-      - "6379:6379"
+      - "127.0.0.1:6379:6379"
     restart: always
     healthcheck:
       test: ["CMD", "redis-cli", "ping"]
@@ -136,7 +136,7 @@ services:
       - sovereignmap
     volumes:
       - redis_data:/data
-    command: redis-server --appendonly yes --requirepass ${REDIS_PASSWORD:-sovereignmap}
+    command: redis-server --appendonly yes --requirepass ${REDIS_PASSWORD:-CHANGE_ME_REDIS}
     logging:
       driver: json-file
       options:
@@ -238,8 +238,9 @@ services:
     ports:
       - "3001:3000"
     environment:
-      - GF_SECURITY_ADMIN_PASSWORD=${GRAFANA_PASSWORD:-sovereignmap}
+      - GF_SECURITY_ADMIN_PASSWORD=${GRAFANA_ADMIN_PASSWORD:-CHANGE_ME_GRAFANA}
       - GF_SECURITY_ADMIN_USER=${GRAFANA_USER:-admin}
+      - GF_USERS_ALLOW_SIGN_UP=false
       - GF_INSTALL_PLUGINS=grafana-piechart-panel
       - GF_PATHS_PROVISIONING=/etc/grafana/provisioning
     volumes:

@@ -373,7 +373,7 @@ PROMETHEUS_RETENTION=30d
 GRAFANA_PASSWORD=secure_password
 EOF
 
-# Use with docker compose
+# Use with Docker Compose
 docker compose --env-file .env -f docker-compose.production.yml up -d
 ```
 
@@ -422,7 +422,7 @@ docker exec sovereignmap-mongo mongorestore /backups/mongo_latest
 - [x] Multi-stage Dockerfiles created
 - [x] Image size reduced by 74%
 - [x] Build performance improved 40%
-- [x] Three docker-compose profiles implemented
+- [x] Three Docker Compose profiles implemented
 - [x] .dockerignore optimized
 - [x] Health checks on all services
 - [x] Resource limits configured

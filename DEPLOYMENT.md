@@ -43,7 +43,7 @@ sudo chmod +x /usr/local/bin/docker-compose
 
 # Verify installation
 docker --version
-docker-compose --version
+docker compose version
 ```
 
 ### Network Setup
@@ -72,10 +72,10 @@ ls -la docker-compose.*.yml
 
 ```bash
 # Start the complete stack
-docker-compose -f docker-compose.full.yml up -d
+docker compose -f docker-compose.full.yml up -d
 
 # Wait for services to be ready (30-60 seconds)
-docker-compose -f docker-compose.full.yml ps
+docker compose -f docker-compose.full.yml ps
 
 # Verify all services are 'running'
 ```
@@ -101,45 +101,45 @@ curl http://localhost:8000/convergence | jq
 
 ```bash
 # Backend logs
-docker-compose -f docker-compose.full.yml logs -f backend
+docker compose -f docker-compose.full.yml logs -f backend
 
 # Node agent logs
-docker-compose -f docker-compose.full.yml logs -f node-agent
+docker compose -f docker-compose.full.yml logs -f node-agent
 
 # All services
-docker-compose -f docker-compose.full.yml logs -f
+docker compose -f docker-compose.full.yml logs -f
 ```
 
 ### 5. Scale Nodes (During Development)
 
 ```bash
 # Start with 50 nodes
-docker-compose -f docker-compose.full.yml up -d --scale node-agent=50
+docker compose -f docker-compose.full.yml up -d --scale node-agent=50
 
 # Monitor scaling
-watch -n 1 'docker-compose -f docker-compose.full.yml ps'
+watch -n 1 'docker compose -f docker-compose.full.yml ps'
 
 # Scale up to 100
-docker-compose -f docker-compose.full.yml up -d --scale node-agent=100
+docker compose -f docker-compose.full.yml up -d --scale node-agent=100
 
 # Scale down to 25
-docker-compose -f docker-compose.full.yml up -d --scale node-agent=25
+docker compose -f docker-compose.full.yml up -d --scale node-agent=25
 ```
 
 ### 6. Stop Services
 
 ```bash
 # Stop all services (containers preserved)
-docker-compose -f docker-compose.full.yml stop
+docker compose -f docker-compose.full.yml stop
 
 # Stop and remove containers
-docker-compose -f docker-compose.full.yml down
+docker compose -f docker-compose.full.yml down
 
 # Stop and remove containers + volumes
-docker-compose -f docker-compose.full.yml down -v
+docker compose -f docker-compose.full.yml down -v
 
 # Remove images too
-docker-compose -f docker-compose.full.yml down --rmi all
+docker compose -f docker-compose.full.yml down --rmi all
 ```
 
 ## Production Deployment
@@ -185,16 +185,16 @@ export $(cat .env | xargs)
 docker volume create tpm-certs
 
 # Start monitoring stack (first)
-docker-compose -f docker-compose.monitoring.tpm.yml up -d
+docker compose -f docker-compose.monitoring.tpm.yml up -d
 
 # Start TPM security layer
-docker-compose -f docker-compose.tpm-secure.yml up -d
+docker compose -f docker-compose.tpm-secure.yml up -d
 
 # Start main application (last)
-docker-compose -f docker-compose.full.yml up -d --scale node-agent=100
+docker compose -f docker-compose.full.yml up -d --scale node-agent=100
 
 # Verify all services running
-docker-compose -f docker-compose.full.yml ps
+docker compose -f docker-compose.full.yml ps
 ```
 
 ### 4. Health Checks
@@ -389,9 +389,9 @@ jobs:
           script: |
             cd ${{ secrets.DEPLOY_PATH }}
             git pull origin main
-            docker-compose -f docker-compose.full.yml pull
-            docker-compose -f docker-compose.full.yml up -d --scale node-agent=100
-            docker-compose -f docker-compose.full.yml ps
+            docker compose -f docker-compose.full.yml pull
+            docker compose -f docker-compose.full.yml up -d --scale node-agent=100
+            docker compose -f docker-compose.full.yml ps
       
       - name: Verify deployment
         run: |
@@ -430,8 +430,8 @@ git push origin main
 # SSH to production and check
 ssh ubuntu@production.example.com
 cd /home/ubuntu/sovereign-map
-docker-compose ps
-docker-compose logs -f backend
+docker compose ps
+docker compose logs -f backend
 ```
 
 ## Scaling
@@ -440,13 +440,13 @@ docker-compose logs -f backend
 
 ```bash
 # Current status
-docker-compose -f docker-compose.full.yml ps
+docker compose -f docker-compose.full.yml ps
 
 # Scale up
-docker-compose -f docker-compose.full.yml up -d --scale node-agent=500
+docker compose -f docker-compose.full.yml up -d --scale node-agent=500
 
 # Watch scaling
-watch -n 2 'docker-compose -f docker-compose.full.yml ps | tail -20'
+watch -n 2 'docker compose -f docker-compose.full.yml ps | tail -20'
 ```
 
 ### Vertical Scaling (Increase Resources)
@@ -476,14 +476,14 @@ services:
 
 Apply:
 ```bash
-docker-compose up -d
+docker compose up -d
 ```
 
 ### Multi-Machine Deployment
 
 **Machine 1 (Backend & Monitoring):**
 ```bash
-docker-compose -f docker-compose.full.yml up -d
+docker compose -f docker-compose.full.yml up -d
 ```
 
 **Machines 2-N (Node Agents Only):**
@@ -492,11 +492,11 @@ docker-compose -f docker-compose.full.yml up -d
 # Create sovereign-network
 docker network create sovereign-network
 
-# Modify docker-compose to point to Machine 1
+# Modify Docker Compose to point to Machine 1
 export BACKEND_URL=http://machine1-ip:8000
 
 # Start only node-agent service
-docker-compose -f docker-compose.full.yml up -d node-agent
+docker compose -f docker-compose.full.yml up -d node-agent
 ```
 
 ## Monitoring & Maintenance
@@ -505,11 +505,11 @@ docker-compose -f docker-compose.full.yml up -d node-agent
 
 ```bash
 # Check system health
-docker-compose ps
+docker compose ps
 docker system df
 
 # Review logs for errors
-docker-compose logs | grep -i error
+docker compose logs | grep -i error
 
 # Monitor convergence
 curl http://localhost:8000/convergence | jq '.current_accuracy'
@@ -537,8 +537,8 @@ docker cp sovereign-prometheus:/prometheus-backup.tar.gz ./backups/
 ```bash
 # Rotate certificates (if not automated)
 # Update dependencies
-docker-compose pull
-docker-compose up -d
+docker compose pull
+docker compose up -d
 
 # Review performance metrics
 # Archive logs and metrics
@@ -583,8 +583,8 @@ free -h
 df -h
 
 # Rebuild images
-docker-compose build --no-cache
-docker-compose up -d
+docker compose build --no-cache
+docker compose up -d
 ```
 
 ### Problem: High memory usage
@@ -602,7 +602,7 @@ services:
           memory: 4G
 
 # Reduce number of nodes
-docker-compose up -d --scale node-agent=50
+docker compose up -d --scale node-agent=50
 ```
 
 ### Problem: Metrics not appearing
@@ -634,7 +634,7 @@ docker exec sovereign-backend ls -la /etc/sovereign/certs/
 docker exec sovereign-tpm-ca python tpm_cert_manager.py
 
 # Restart affected services
-docker-compose restart backend node-agent
+docker compose restart backend node-agent
 ```
 
 ## Performance Tuning
@@ -675,7 +675,7 @@ initialize_system(num_nodes=50)
 
 ## Post-Deployment Checklist
 
-- [ ] All services running (`docker-compose ps`)
+- [ ] All services running (`docker compose ps`)
 - [ ] Backend health check passing (`curl http://localhost:8000/health`)
 - [ ] Grafana dashboard accessible
 - [ ] Prometheus metrics being collected
@@ -689,7 +689,7 @@ initialize_system(num_nodes=50)
 ## Support
 
 For deployment issues:
-1. Check logs: `docker-compose logs -f service-name`
+1. Check logs: `docker compose logs -f service-name`
 2. Review troubleshooting section above
 3. Check GitHub Issues
 4. Contact support team

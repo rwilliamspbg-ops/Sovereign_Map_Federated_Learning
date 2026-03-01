@@ -164,7 +164,7 @@ git clone https://github.com/rwilliamspbg-ops/Sovereign_Map_Federated_Learning
 cd Sovereign_Map_Federated_Learning
 
 # 3. Deploy
-docker-compose -f docker/docker-compose.full.yml up -d
+docker compose -f docker/docker-compose.full.yml up -d
 
 # 4. Access
 # Backend: http://localhost:8000

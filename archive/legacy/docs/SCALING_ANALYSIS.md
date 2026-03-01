@@ -189,7 +189,7 @@
     • Check logs: docker logs sovereign_map_federated_learning-backend-1
 
   IF OOM OCCURS:
-    • Emergency: docker-compose down
+    • Emergency: docker compose down
     • Reduce scale: docker compose up -d --scale node-agent=50
     • Free memory: docker system prune
     • Restart: docker compose up -d

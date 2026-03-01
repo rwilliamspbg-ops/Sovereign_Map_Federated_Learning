@@ -335,20 +335,20 @@ Sovereign_Map_Federated_Learning/
 
 ### Local Testnet (5 Nodes)
 ```bash
-docker-compose -f docker-compose.full.yml up -d --scale node-agent=5
+docker compose -f docker-compose.full.yml up -d --scale node-agent=5
 curl http://localhost:8000/convergence | jq
 open http://localhost:3000  # Grafana
 ```
 
 ### Staging Testnet (50 Nodes)
 ```bash
-docker-compose -f docker-compose.full.yml up -d --scale node-agent=50
+docker compose -f docker-compose.full.yml up -d --scale node-agent=50
 curl http://localhost:8000/convergence | jq '.verified_nodes'
 ```
 
 ### Production Testnet (100 Nodes)
 ```bash
-docker-compose -f docker-compose.tpm-secure.yml up -d --scale node-agent-secure=100
+docker compose -f docker-compose.tpm-secure.yml up -d --scale node-agent-secure=100
 curl http://localhost:5001/trust/status | jq
 ```
 
@@ -532,7 +532,7 @@ You now have a **complete, production-ready federated learning system** with:
 
 **Deploy Now**:
 ```bash
-docker-compose -f docker-compose.tpm-secure.yml up -d --scale node-agent-secure=50
+docker compose -f docker-compose.tpm-secure.yml up -d --scale node-agent-secure=50
 ```
 
 **Check Status**:
