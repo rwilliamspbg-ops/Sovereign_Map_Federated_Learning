@@ -25,7 +25,12 @@ CodeQL is configured to analyze:
 
 ## Ignored Paths
 
-The following directories are excluded from CodeQL analysis (see `.codeqlignore`):
+The following directories are excluded from CodeQL analysis:
+
+- Workflow-level ignore config: `.github/codeql/codeql-config.yml`
+- Additional repository-wide ignore patterns: `.codeqlignore`
+
+Key excluded directories:
 
 - `mobile-apps/` - Incomplete Android app
 - `go-mobile/` - Mobile bindings (generated code)
@@ -88,12 +93,20 @@ When CodeQL reports an alert:
 
 ### "No Java/Kotlin code found" Error
 
-This is expected and can be safely ignored. The error occurs because:
-- GitHub detects `.kt` files in `mobile-apps/android-node-app/`
-- CodeQL is configured to skip Java/Kotlin analysis
-- The mobile app lacks complete build configuration
+If this appears together with messages like:
+- `Java was extracted with build-mode set to 'none'`
+- `Could not process Kotlin files without a build`
+- `Required Gradle version not specified`
 
-**Resolution**: Already resolved by explicitly excluding `java-kotlin` from the language matrix.
+then the repository is usually running **GitHub Default Setup** in parallel with this advanced workflow.
+
+**Resolution**:
+1. Open **Security** → **Code scanning** → **CodeQL** settings
+2. Disable/remove **Default setup**
+3. Keep only `.github/workflows/codeql-analysis.yml` (advanced setup)
+4. Re-run the workflow from **Actions**
+
+After that, CodeQL should analyze only the configured matrix languages and stop attempting Java/Kotlin extraction.
 
 ### Build Failures
 

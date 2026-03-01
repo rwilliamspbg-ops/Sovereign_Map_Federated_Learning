@@ -1,5 +1,7 @@
 # 🌐 Sovereign Map: Federated Learning Framework
 
+> Legacy documentation notice: this folder preserves historical release narratives and benchmark snapshots. Treat claims here as archival context, not current CI-backed guarantees.
+
 ![Build Status](https://github.com/rwilliamspbg-ops/Sovereign_Map_Federated_Learning/actions/workflows/docker-build.yml/badge.svg)
 ![BFT Status](https://img.shields.io/badge/BFT%20Tolerance-55.5%25-green)
 ![Scale](https://img.shields.io/badge/Validation-10M%20Nodes-blue)
@@ -41,7 +43,7 @@ cd Sovereign_Map_Federated_Learning
 export GEMINI_API_KEY=your_key_here  # For threat analysis
 
 # Deploy full stack
-docker-compose -f docker-compose.full.yml up -d
+docker compose -f docker-compose.full.yml up -d
 
 # Verify health
 curl http://localhost:8000/health
@@ -277,11 +279,11 @@ AI-powered threat analysis using Gemini 3 Pro API.
 
 ### Option 1: Docker Compose (Recommended)
 ```bash
-docker-compose -f docker/docker-compose.full.yml up -d
+docker compose -f docker/docker-compose.full.yml up -d
 ```
 - ✅ Full stack: Backend, Prometheus, Grafana, Redis, Nginx
 - ✅ 8 coordinated services
-- ✅ Production-ready configuration
+- ✅ Deployment-ready baseline configuration
 - ⏱️ ~30 seconds startup
 
 ### Option 2: Kubernetes

@@ -136,13 +136,13 @@ SAN: node-{id}, node-{id}.sovereign-network, 172.25.0.{id}
 docker network create sovereign-network
 
 # Deploy with secure communication
-docker-compose -f docker-compose.tpm-secure.yml up -d
+docker compose -f docker-compose.tpm-secure.yml up -d
 
 # Check CA service
 docker logs sovereign-tpm-ca
 
 # Verify certificates
-docker-compose -f docker-compose.tpm-secure.yml exec tpm-ca-service python -c "
+docker compose -f docker-compose.tpm-secure.yml exec tpm-ca-service python -c "
 from tpm_cert_manager import TPMCertificateManager
 mgr = TPMCertificateManager('/etc/sovereign/certs')
 print(mgr.get_trust_report())
@@ -153,7 +153,7 @@ print(mgr.get_trust_report())
 
 ```bash
 # Scale node agents to 100 nodes
-docker-compose -f docker-compose.tpm-secure.yml up -d --scale node-agent-secure=100
+docker compose -f docker-compose.tpm-secure.yml up -d --scale node-agent-secure=100
 
 # All nodes automatically get certificates and verify on startup
 ```
@@ -212,16 +212,16 @@ Response: { certificate: "-----BEGIN CERTIFICATE-----..." }
 ```bash
 # Get trust status
 GET /trust/status
-Headers: X-From-Node, X-Signature, X-Message-Hash
+Headers: X-From-Node, X-Signature, X-Node-Auth
 
 # Update node model
 POST /fl/update
-Headers: X-From-Node, X-Signature, X-Message-Hash
+Headers: X-From-Node, X-Signature, X-Node-Auth
 Body: { weights: [...], accuracy: 95.5 }
 
 # Get peer metrics
 GET /metrics/peer/{node_id}
-Headers: X-From-Node, X-Signature, X-Message-Hash
+Headers: X-From-Node, X-Signature, X-Node-Auth
 ```
 
 ## Usage Examples

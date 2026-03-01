@@ -1,5 +1,7 @@
 # WEEK 2 - BYZANTINE BOUNDARY & SCALING VALIDATION
 
+> Historical note: this week summary captures a past development snapshot and should not be treated as current CI-backed status.
+
 **Period:** February 18-22, 2026  
 **Status:** ✅ COMPLETE  
 **Achievement:** Byzantine boundary mapped, 500K nodes validated, repository professionalized
@@ -150,4 +152,4 @@ Pattern:    Sub-linear  Stable      Increases       ✅
 **Week 2 Archive**  
 **Status:** ✅ COMPLETE  
 **Files:** 21 total (11 docs + 10 code)  
-**Infrastructure:** ✅ Production-ready
+**Infrastructure:** ✅ Historical deployment baseline captured

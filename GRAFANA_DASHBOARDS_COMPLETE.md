@@ -122,10 +122,10 @@ All 6 dashboards auto-load in the **Sovereign** folder:
 #### 5. **Run Test While Monitoring**
 ```bash
 # Terminal 1: Start monitoring
-./test-dashboard.sh
+./tests/scripts/bash/test-dashboard.sh
 
 # Terminal 2: Run 5000-round test
-./run-5000-round-test.ps1
+./tests/scripts/powershell/run-5000-round-test.ps1
 ```
 
 Dashboard metrics update in **real-time** as test executes.
@@ -271,7 +271,7 @@ docker inspect sovereignmap-grafana | grep -A 10 Mounts
 #### Dashboards Show Empty Panels
 1. Verify time range is recent (e.g., "Last 1 Hour")
 2. Check data source connectivity
-3. Run a test to generate metrics: `./run-5000-round-test.ps1`
+3. Run a test to generate metrics: `./tests/scripts/powershell/run-5000-round-test.ps1`
 
 #### Performance Issues
 - Reduce dashboard refresh rate (default 10s)
@@ -282,7 +282,7 @@ docker inspect sovereignmap-grafana | grep -A 10 Mounts
 
 1. **Run Full Test Suite**
    ```bash
-   ./run-5000-round-test.ps1
+   ./tests/scripts/powershell/run-5000-round-test.ps1
    ```
    Monitor all 6 dashboards in real-time.
 

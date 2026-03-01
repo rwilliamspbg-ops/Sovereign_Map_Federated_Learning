@@ -258,7 +258,7 @@ docker run -d \
   -p 3100:3100 \
   grafana/loki:latest
 
-# Configure docker-compose to use Loki driver
+# Configure Docker Compose to use Loki driver
 docker plugin install grafana/loki-docker-driver:latest --alias loki --grant-all-permissions
 
 # Update docker-compose.yml

@@ -1,5 +1,10 @@
 {
+  "name": "sovereign-map-federated-learning-monorepo",
+  "private": true,
   "scripts": {
+    "build:libs": "npm --prefix packages/privacy install --no-audit --no-fund && npm --prefix packages/core install --no-audit --no-fund",
+    "test:ci": "npm --prefix packages/core run test:ci",
+    "sdk:publish": "npm --prefix packages/privacy publish --access public && npm --prefix packages/core publish --access public",
     "nodes:burst": "bash scripts/burst-scale-with-certs.sh",
     "nodes:burst:25": "bash scripts/burst-scale-with-certs.sh 25 docker-compose.dev.yml",
     "nodes:burst:50": "bash scripts/burst-scale-with-certs.sh 50 docker-compose.dev.yml",

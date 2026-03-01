@@ -27,4 +27,4 @@ We recommend using the provided [Dev Container](.devcontainer/) or a local Linux
 ### 2. Running Simulations
 Before submitting a PR, ensure your changes do not break the consensus engine by running the 200-node simulation:
 ```bash
-bash scripts /run-test.sh --nodes 200
+bash tests/scripts/bash/run-test.sh all

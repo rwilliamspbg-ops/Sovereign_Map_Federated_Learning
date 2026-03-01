@@ -49,7 +49,7 @@ Complete provisioning configuration in place:
 - ✅ `GRAFANA_DASHBOARDS_COMPLETE.md` (10.7 KB) - Comprehensive setup guide
 - ✅ `GRAFANA_SETUP_COMPLETE.md` (9.8 KB) - Quick reference
 - ✅ `LAPTOP_RESOURCES_INTEGRATION.md` (7.9 KB) - Resource analysis
-- ✅ `validate-grafana.ps1` - Validation script
+- ✅ `tests/scripts/powershell/validate-grafana.ps1` - Validation script
 
 ---
 
@@ -148,7 +148,7 @@ Sovereign_Map_Federated_Learning/
 │   ├── sovereign-map-scaling.json               (7.5 KB)
 │   ├── sovereign-map-tpm-security.json          (8.7 KB)
 │   └── sovereign-map-npu-acceleration.json      (10.8 KB)
-├── validate-grafana.ps1                         (5.1 KB)
+├── tests/scripts/powershell/validate-grafana.ps1 (5.1 KB)
 ├── GRAFANA_DASHBOARDS_COMPLETE.md               (10.7 KB)
 ├── GRAFANA_SETUP_COMPLETE.md                    (9.8 KB)
 └── LAPTOP_RESOURCES_INTEGRATION.md              (7.9 KB)
@@ -202,7 +202,7 @@ Password: sovereignmap
 
 ### Step 6: Run Test
 ```bash
-./run-5000-round-test.ps1
+./tests/scripts/powershell/run-5000-round-test.ps1
 ```
 
 ### Step 7: Monitor in Real-Time

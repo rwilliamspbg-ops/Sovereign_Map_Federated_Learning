@@ -175,13 +175,13 @@ pip install -r requirements-backend.txt
 
 ```bash
 # Build and start all services
-docker-compose -f docker-compose.full.yml up -d
+docker compose -f docker-compose.full.yml up -d
 
 # Check status
-docker-compose -f docker-compose.full.yml ps
+docker compose -f docker-compose.full.yml ps
 
 # View logs
-docker-compose -f docker-compose.full.yml logs -f fl-backend
+docker compose -f docker-compose.full.yml logs -f fl-backend
 ```
 
 ### Step 3: Access Services
@@ -336,7 +336,7 @@ Live 3D Visualization Update
 ### Enable Gemini Integration
 ```bash
 export GEMINI_API_KEY=your_api_key
-docker-compose -f docker-compose.full.yml up -d fl-backend
+docker compose -f docker-compose.full.yml up -d fl-backend
 ```
 
 ### Configure Email Alerts
@@ -367,7 +367,7 @@ receivers:
 # - CPU: 4 cores minimum
 # - Storage: 100GB for Prometheus retention
 
-docker-compose -f docker-compose.full.yml up -d --scale=3
+docker compose -f docker-compose.full.yml up -d --scale=3
 ```
 
 ---
@@ -396,19 +396,19 @@ Alertmanager:  http://localhost:9093/#/alerts
 
 ```bash
 # Check service health
-docker-compose -f docker-compose.full.yml ps
+docker compose -f docker-compose.full.yml ps
 
 # View logs
-docker-compose -f docker-compose.full.yml logs -f
+docker compose -f docker-compose.full.yml logs -f
 
 # Stop all services
-docker-compose -f docker-compose.full.yml down
+docker compose -f docker-compose.full.yml down
 
 # Restart specific service
-docker-compose -f docker-compose.full.yml restart fl-backend
+docker compose -f docker-compose.full.yml restart fl-backend
 
 # Clean everything (including volumes)
-docker-compose -f docker-compose.full.yml down -v
+docker compose -f docker-compose.full.yml down -v
 ```
 
 ---
@@ -417,7 +417,7 @@ docker-compose -f docker-compose.full.yml down -v
 
 1. **Deploy the Stack**
    ```bash
-   docker-compose -f docker-compose.full.yml up -d
+  docker compose -f docker-compose.full.yml up -d
    ```
 
 2. **Verify All Services**
@@ -467,4 +467,4 @@ docker-compose -f docker-compose.full.yml down -v
 
 **All components are production-ready and committed to GitHub.**
 
-Deploy with: `docker-compose -f docker-compose.full.yml up -d`
+Deploy with: `docker compose -f docker-compose.full.yml up -d`

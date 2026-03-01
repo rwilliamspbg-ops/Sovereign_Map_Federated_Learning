@@ -285,7 +285,7 @@ git clone https://github.com/rwilliamspbg-ops/Sovereign_Map_Federated_Learning
 cd Sovereign_Map_Federated_Learning
 
 # Deploy full stack
-docker-compose -f docker/docker-compose.full.yml up -d
+docker compose -f docker/docker-compose.full.yml up -d
 
 # Verify health
 curl http://localhost:8000/health

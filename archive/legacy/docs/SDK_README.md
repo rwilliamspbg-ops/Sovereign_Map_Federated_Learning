@@ -480,7 +480,7 @@ Deploy a full production node with observability:
 
 ```bash
 # Deploy node + monitoring stack
-docker-compose -f docker-compose.yml -f docker-compose.monitoring.yml up -d
+docker compose -f docker-compose.yml -f docker-compose.monitoring.yml up -d
 
 # Access dashboards
 # Grafana: http://localhost:3001
@@ -707,7 +707,7 @@ make build-docker
 make deploy
 
 # View logs
-docker-compose logs -f node-agent
+docker compose logs -f node-agent
 
 # Stop gracefully
 make stop
@@ -750,13 +750,13 @@ go test ./internal/consensus/...
 
 ```bash
 # Start test environment
-docker-compose -f docker-compose.test.yml up -d
+docker compose -f docker-compose.test.yml up -d
 
 # Run integration tests
 make test-integration
 
 # Cleanup
-docker-compose -f docker-compose.test.yml down
+docker compose -f docker-compose.test.yml down
 ```
 
 ### 200-Node Simulation
@@ -765,7 +765,7 @@ Test at scale with 200 simulated nodes:
 
 ```bash
 # Deploy 200-node test environment
-./setup-200node-test.sh
+./tests/scripts/bash/setup-200node-test.sh
 
 # Run test scenario
 ./phase-4-execute-test.sh

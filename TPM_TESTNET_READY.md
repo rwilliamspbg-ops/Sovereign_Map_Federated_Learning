@@ -67,7 +67,7 @@ All TPM (Trusted Platform Module-inspired) trust and security components are ful
 ### 3. ✅ mTLS Communication
 
 **Flask Middleware**
-- Request header validation (X-From-Node, X-Signature, X-Message-Hash)
+- Request header validation (X-From-Node, X-Signature, X-Node-Auth)
 - Automatic signature verification
 - Endpoint decoration: `@comm.secure_endpoint`
 - Peer certificate validation
@@ -113,7 +113,7 @@ All TPM (Trusted Platform Module-inspired) trust and security components are ful
 
 ```bash
 # Deploy with TPM security
-docker-compose -f docker-compose.tpm-secure.yml up -d --scale node-agent-secure=5
+docker compose -f docker-compose.tpm-secure.yml up -d --scale node-agent-secure=5
 
 # Wait for certificate generation (30-60 seconds)
 sleep 30
@@ -125,7 +125,7 @@ curl http://localhost:5001/trust/status | jq
 curl -X POST http://localhost:5001/trust/verify/0 | jq
 
 # View logs
-docker-compose logs tpm-ca-service
+docker compose logs tpm-ca-service
 ```
 
 **Expected Output**:
@@ -143,10 +143,10 @@ docker-compose logs tpm-ca-service
 ### Scale to 50 Nodes (Staging)
 
 ```bash
-docker-compose -f docker-compose.tpm-secure.yml up -d --scale node-agent-secure=50
+docker compose -f docker-compose.tpm-secure.yml up -d --scale node-agent-secure=50
 
 # Monitor certificate generation
-docker-compose logs -f tpm-ca-service | grep "Generated"
+docker compose logs -f tpm-ca-service | grep "Generated"
 
 # Check final status
 curl http://localhost:5001/trust/status | jq '.verified_nodes'
@@ -156,7 +156,7 @@ curl http://localhost:5001/trust/status | jq '.verified_nodes'
 ### Scale to 100 Nodes (Production)
 
 ```bash
-docker-compose -f docker-compose.tpm-secure.yml up -d --scale node-agent-secure=100
+docker compose -f docker-compose.tpm-secure.yml up -d --scale node-agent-secure=100
 
 # Verify all nodes connected and certs verified
 docker compose ps | grep node-agent-secure
@@ -267,17 +267,17 @@ Response: { certificate: "-----BEGIN CERTIFICATE-----..." }
 ```bash
 # Get trust status
 GET /trust/status
-Headers: X-From-Node, X-Signature, X-Message-Hash
+Headers: X-From-Node, X-Signature, X-Node-Auth
 Response: { total_nodes: 100, verified_nodes: 100, revoked: 0 }
 
 # Verify specific node certificate
 POST /trust/verify/{node_id}
-Headers: X-From-Node, X-Signature, X-Message-Hash
+Headers: X-From-Node, X-Signature, X-Node-Auth
 Response: { node_id: 5, verified: true }
 
 # Revoke node certificate (admin only)
 POST /trust/revoke/{node_id}
-Headers: X-From-Node, X-Signature, X-Message-Hash (admin)
+Headers: X-From-Node, X-Signature, X-Node-Auth (admin)
 Response: { node_id: 5, revoked: true }
 ```
 
@@ -299,21 +299,21 @@ Response: { nodes_verified: 100, crl_size: 0, cache_hits: 9532 }
 ### Test 1: Certificate Generation
 
 ```bash
-docker-compose -f docker-compose.tpm-secure.yml up -d --scale node-agent-secure=5
+docker compose -f docker-compose.tpm-secure.yml up -d --scale node-agent-secure=5
 sleep 30
 
 # Check certificates exist
-docker-compose exec backend-secure ls -la /etc/sovereign/certs/
+docker compose exec backend-secure ls -la /etc/sovereign/certs/
 
 # Inspect CA cert
-docker-compose exec backend-secure openssl x509 -in /etc/sovereign/certs/ca-cert.pem -text -noout
+docker compose exec backend-secure openssl x509 -in /etc/sovereign/certs/ca-cert.pem -text -noout
 ```
 
 ### Test 2: Message Signing & Verification
 
 ```bash
 # Run Python test
-docker-compose exec backend-secure python3 << 'EOF'
+docker compose exec backend-secure python3 << 'EOF'
 from tpm_cert_manager import TPMCertificateManager, NodeAuthenticator
 
 mgr = TPMCertificateManager('/etc/sovereign/certs')
@@ -373,7 +373,7 @@ for byzantine_count in 0 5 10 20; do
   echo "Testing with $byzantine_count Byzantine nodes..."
   
   # Scale Byzantine nodes
-  docker-compose up -d --scale node-agent-secure=$((100-$byzantine_count))
+   docker compose up -d --scale node-agent-secure=$((100-$byzantine_count))
   
   # Check all verified
   sleep 30
@@ -546,10 +546,10 @@ done
 
 ```bash
 # Instead of docker-compose.full.yml
-docker-compose -f docker-compose.tpm-secure.yml up -d
+docker compose -f docker-compose.tpm-secure.yml up -d
 
 # Or with monitoring
-docker-compose -f docker-compose.monitoring.tpm.yml up -d
+docker compose -f docker-compose.monitoring.tpm.yml up -d
 ```
 
 ### Send Secure Messages
@@ -593,13 +593,13 @@ curl -X POST http://localhost:5001/trust/verify/5
 
 | Task | Command |
 |------|---------|
-| Deploy secure testnet (5 nodes) | `docker-compose -f docker-compose.tpm-secure.yml up -d --scale node-agent-secure=5` |
+| Deploy secure testnet (5 nodes) | `docker compose -f docker-compose.tpm-secure.yml up -d --scale node-agent-secure=5` |
 | Check trust status | `curl http://localhost:5001/trust/status \| jq` |
 | View trust dashboard | `open http://localhost:3000` (Grafana) |
 | List certificates | `docker exec backend ls /etc/sovereign/certs/*.pem` |
 | Verify certificate | `openssl verify -CAfile ca-cert.pem node-0-cert.pem` |
 | Revoke node | `curl -X POST http://localhost:5001/trust/revoke/5` |
-| View logs | `docker-compose logs tpm-ca-service` |
+| View logs | `docker compose logs tpm-ca-service` |
 | Run tests | `docker exec backend python tpm_cert_manager.py` |
 
 ---
@@ -639,7 +639,7 @@ curl -X POST http://localhost:5001/trust/verify/5
 
 **Deployment Command**:
 ```bash
-docker-compose -f docker-compose.tpm-secure.yml up -d --scale node-agent-secure=50
+docker compose -f docker-compose.tpm-secure.yml up -d --scale node-agent-secure=50
 ```
 
 **Verify Command**:

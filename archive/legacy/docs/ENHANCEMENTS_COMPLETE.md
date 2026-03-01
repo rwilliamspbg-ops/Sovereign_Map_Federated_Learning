@@ -152,7 +152,7 @@ Advantage        | 5% faster    | 13% slower*   | 3% faster     | 3% faster
 python monitoring_setup.py
 
 # Start the stack
-docker-compose -f docker-compose.monitoring.yml up -d
+docker compose -f docker-compose.monitoring.yml up -d
 
 # Verify
 docker ps | grep prometheus && echo "Monitoring ready!"

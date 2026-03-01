@@ -179,7 +179,7 @@ environment:
 
 ### ⚠️ Unit Test API Mismatches (Known Issue)
 
-**Status**: Documented in VALIDATION_REPORT.md  
+**Status**: Documented in tests/results/reports/VALIDATION_REPORT.md  
 **Impact**: None on production  
 **Priority**: Low  
 **Action**: Can be updated post-launch

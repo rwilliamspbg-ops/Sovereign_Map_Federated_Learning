@@ -1,8 +1,8 @@
 # Sovereign Map v1.0.0 - Byzantine-Tolerant Federated Learning
 
-## 🚀 Genesis Block Launch - Production Ready
+## 🚀 Genesis Block Launch - CI-Verified Testnet Stack
 
-**🎉 Sovereign Map is ready for Genesis Block launch!**
+**Sovereign Map provides a CI-verified federated learning + trust/monitoring stack for testnet and research workloads.**
 
 ### Quick Start → Genesis Launch in 5 Minutes
 
@@ -22,15 +22,28 @@ cd Sovereign_Map_Federated_Learning
 - **Full Guide**: [GENESIS_LAUNCH_GUIDE.md](GENESIS_LAUNCH_GUIDE.md) (comprehensive documentation)
 - **Architecture**: [ARCHITECTURE.md](ARCHITECTURE.md) (system design)
 
+**🤝 Contributing:** See [CONTRIBUTING.md](CONTRIBUTING.md) for PR checklist, CodeQL guardrails, and branch protection recommendations.
+
 ---
 
 ## 🎖️ Status Badges
 
-### Release & Build Status
-[![GitHub Release](https://img.shields.io/github/v/release/rwilliamspbg-ops/Sovereign_Map_Federated_Learning?label=Release&color=brightgreen&style=flat-square)](https://github.com/rwilliamspbg-ops/Sovereign_Map_Federated_Learning/releases)
-[![Build Status](https://img.shields.io/badge/Build-Passing-brightgreen?logo=github-actions&style=flat-square)](https://github.com/rwilliamspbg-ops/Sovereign_Map_Federated_Learning/actions)
-[![Testnet Status](https://img.shields.io/badge/Testnet-Ready-success?style=flat-square)](TESTNET_DEPLOYMENT.md)
-[![Production Ready](https://img.shields.io/badge/Status-Production%20Ready-success?style=flat-square)]()
+### CI Workflows (main)
+[![Build and Test](https://github.com/rwilliamspbg-ops/Sovereign_Map_Federated_Learning/actions/workflows/build.yml/badge.svg?branch=main)](https://github.com/rwilliamspbg-ops/Sovereign_Map_Federated_Learning/actions/workflows/build.yml)
+[![CodeQL Security Analysis](https://github.com/rwilliamspbg-ops/Sovereign_Map_Federated_Learning/actions/workflows/codeql-analysis.yml/badge.svg?branch=main)](https://github.com/rwilliamspbg-ops/Sovereign_Map_Federated_Learning/actions/workflows/codeql-analysis.yml)
+[![Lint Code Base](https://github.com/rwilliamspbg-ops/Sovereign_Map_Federated_Learning/actions/workflows/lint.yml/badge.svg?branch=main)](https://github.com/rwilliamspbg-ops/Sovereign_Map_Federated_Learning/actions/workflows/lint.yml)
+[![SGP-001 Audit Sync](https://github.com/rwilliamspbg-ops/Sovereign_Map_Federated_Learning/actions/workflows/audit-check.yml/badge.svg?branch=main)](https://github.com/rwilliamspbg-ops/Sovereign_Map_Federated_Learning/actions/workflows/audit-check.yml)
+[![HIL Tests](https://github.com/rwilliamspbg-ops/Sovereign_Map_Federated_Learning/actions/workflows/hil-tests.yml/badge.svg?branch=main)](https://github.com/rwilliamspbg-ops/Sovereign_Map_Federated_Learning/actions/workflows/hil-tests.yml)
+[![Docker Build](https://github.com/rwilliamspbg-ops/Sovereign_Map_Federated_Learning/actions/workflows/docker-build.yml/badge.svg?branch=main)](https://github.com/rwilliamspbg-ops/Sovereign_Map_Federated_Learning/actions/workflows/docker-build.yml)
+[![Build & Deploy to Production](https://github.com/rwilliamspbg-ops/Sovereign_Map_Federated_Learning/actions/workflows/deploy.yml/badge.svg?branch=main)](https://github.com/rwilliamspbg-ops/Sovereign_Map_Federated_Learning/actions/workflows/deploy.yml)
+[![SDK Publish](https://github.com/rwilliamspbg-ops/Sovereign_Map_Federated_Learning/actions/workflows/sdk-publish.yml/badge.svg?branch=main)](https://github.com/rwilliamspbg-ops/Sovereign_Map_Federated_Learning/actions/workflows/sdk-publish.yml)
+
+### Repository Status
+[![GitHub Release](https://img.shields.io/github/v/release/rwilliamspbg-ops/Sovereign_Map_Federated_Learning?label=Release&style=flat-square)](https://github.com/rwilliamspbg-ops/Sovereign_Map_Federated_Learning/releases)
+[![Last Commit](https://img.shields.io/github/last-commit/rwilliamspbg-ops/Sovereign_Map_Federated_Learning?style=flat-square)](https://github.com/rwilliamspbg-ops/Sovereign_Map_Federated_Learning/commits/main)
+[![License](https://img.shields.io/github/license/rwilliamspbg-ops/Sovereign_Map_Federated_Learning?style=flat-square)](LICENSE)
+[![GitHub Issues](https://img.shields.io/github/issues/rwilliamspbg-ops/Sovereign_Map_Federated_Learning?style=flat-square)](https://github.com/rwilliamspbg-ops/Sovereign_Map_Federated_Learning/issues)
+[![GitHub Stars](https://img.shields.io/github/stars/rwilliamspbg-ops/Sovereign_Map_Federated_Learning?style=flat-square)](https://github.com/rwilliamspbg-ops/Sovereign_Map_Federated_Learning)
 
 ### Technology Stack
 [![Python](https://img.shields.io/badge/Python-3.11%2B-3776AB?logo=python&style=flat-square)](https://www.python.org/)
@@ -39,18 +52,17 @@ cd Sovereign_Map_Federated_Learning
 [![PyTorch](https://img.shields.io/badge/PyTorch-2.1.0-EE4C2C?logo=pytorch&style=flat-square)](https://pytorch.org/)
 [![Flower](https://img.shields.io/badge/Flower-1.7.0-FF6A00?style=flat-square)](https://flower.ai/)
 
-### Core Features
-[![BFT Tolerance](https://img.shields.io/badge/BFT%20Tolerance-50%25-ff69b4?style=flat-square)](ARCHITECTURE.md#threat-model)
-[![Accuracy @ Byzantine](https://img.shields.io/badge/Accuracy%20%40%2050%25%20Byzantine-82.2%25-brightgreen?style=flat-square)](TESTNET_READY_SUMMARY.md)
-[![Nodes Supported](https://img.shields.io/badge/Nodes%20Supported-10M%2B-blue?style=flat-square)](ARCHITECTURE.md#performance-characteristics)
-[![Scaling](https://img.shields.io/badge/Scaling-O(n%20log%20n)-informational?style=flat-square)](ARCHITECTURE.md)
+### Core Signals (Claim Scope)
+[![Byzantine Scope](https://img.shields.io/badge/Byzantine-validated%20in%20sim%2Ftests-informational?style=flat-square)](tests/README.md)
+[![Scaling Scope](https://img.shields.io/badge/Scaling-mixed%20empirical%20%2B%20theoretical-informational?style=flat-square)](results/README.md)
+[![TPM Scope](https://img.shields.io/badge/TPM-swtpm%20emulated%20in%20CI-informational?style=flat-square)](HIL_TESTING.md)
+[![NPU Scope](https://img.shields.io/badge/NPU-fallback%20logic%20tested-informational?style=flat-square)](HIL_TESTING.md)
 
-### Security & Compliance
-[![Security Audit](https://img.shields.io/badge/Security%20Audit-Passed-success?logo=security&style=flat-square)](TPM_TRUST_GUIDE.md)
-[![mTLS Enabled](https://img.shields.io/badge/mTLS-Enabled-success?style=flat-square)](TPM_TRUST_GUIDE.md)
-[![Certificate Authority](https://img.shields.io/badge/TPM--Inspired%20Trust-Verified-success?style=flat-square)](TPM_TRUST_GUIDE.md)
-[![NIST Compliant](https://img.shields.io/badge/NIST%20SP%20800--52-Compliant-success?style=flat-square)](TPM_TRUST_GUIDE.md#compliance)
-[![OWASP Top 10](https://img.shields.io/badge/OWASP%20Top%2010-Mitigated-success?style=flat-square)](TPM_TRUST_GUIDE.md#security-best-practices)
+### Security & Trust
+[![CodeQL](https://img.shields.io/badge/CodeQL-enabled-2088FF?style=flat-square)](.github/workflows/codeql-analysis.yml)
+[![mTLS](https://img.shields.io/badge/mTLS-configured-2ea44f?style=flat-square)](TPM_TRUST_GUIDE.md)
+[![TPM-Inspired Trust](https://img.shields.io/badge/Trust-TPM--inspired%20PKI-2ea44f?style=flat-square)](TPM_TRUST_GUIDE.md)
+[![Security Note](https://img.shields.io/badge/Compliance-no%20formal%20certification%20claim-lightgrey?style=flat-square)](CI_STATUS_AND_CLAIMS.md)
 
 ### Deployment & Monitoring
 [![Docker Compose](https://img.shields.io/badge/Docker%20Compose-Multi--Profile-2496ED?style=flat-square)](docker-compose.full.yml)
@@ -65,23 +77,19 @@ cd Sovereign_Map_Federated_Learning
 [![30 Day Retention](https://img.shields.io/badge/Data%20Retention-30%20Days-informational?style=flat-square)](prometheus.yml)
 
 ### Community & Maintenance
-[![License](https://img.shields.io/badge/License-MIT-green?style=flat-square)](LICENSE)
-[![Maintainer](https://img.shields.io/badge/Maintainer-Active-brightgreen?style=flat-square)]()
 [![Contributors](https://img.shields.io/badge/Contributors-Welcome-blue?style=flat-square)](CONTRIBUTING.md)
-[![GitHub Issues](https://img.shields.io/github/issues/rwilliamspbg-ops/Sovereign_Map_Federated_Learning?style=flat-square)](https://github.com/rwilliamspbg-ops/Sovereign_Map_Federated_Learning/issues)
-[![GitHub Stars](https://img.shields.io/github/stars/rwilliamspbg-ops/Sovereign_Map_Federated_Learning?style=flat-square)](https://github.com/rwilliamspbg-ops/Sovereign_Map_Federated_Learning)
 
 ---
 
-> **A production-ready, Byzantine-tolerant federated learning system with Flower aggregation, TPM-inspired trust verification, comprehensive monitoring, and secure node-to-node communication.**
+> **A Byzantine-tolerant federated learning stack with Flower aggregation, TPM-inspired trust verification, observability, and explicit CI validation gates.**
 
-**Proven Performance**: 82.2% accuracy maintained under 50% Byzantine attack | O(n log n) scaling | 10M+ nodes supported | 5-1000+ testnet ready
+**Evidence policy:** CI badges prove build/test/security/lint/audit status on `main`. Large-scale and performance claims are treated as benchmark artifacts (not universal guarantees). See [CI_STATUS_AND_CLAIMS.md](CI_STATUS_AND_CLAIMS.md).
 
 ## ✅ Testnet Status
 
-**Latest Update**: Flower aggregator + Byzantine-robust strategy fully implemented  
-**Status**: ✅ **TESTNET READY** for 5-1000+ node deployments  
-**Live Deployments**: Local (2 min) | Staging (5 min) | Production (10 min)  
+**Latest Update**: Flower aggregator + Byzantine-robust strategy implemented  
+**Status**: ✅ **CI-verified for testnet workflows** (5-1000 node compose configurations available)  
+**Deploy Profiles**: Local (2 min) | Staging (5 min) | Production-like (10 min)  
 **See**: [TESTNET_DEPLOYMENT.md](TESTNET_DEPLOYMENT.md) for complete guide  
 **Summary**: [TESTNET_READY_SUMMARY.md](TESTNET_READY_SUMMARY.md) for quick reference  
 
@@ -109,11 +117,11 @@ cd Sovereign_Map_Federated_Learning
 
 ### Core Federated Learning
 - ✅ **Flower Aggregator** - Distributed federated learning framework
-- ✅ **Byzantine Fault Tolerance** - Proven 50% Byzantine node tolerance (tested with 10M nodes)
+- ✅ **Byzantine Fault Tolerance** - Byzantine-resilient aggregation logic with simulation-based validation suites
 - ✅ **Stake-Weighted Aggregation** - Economic incentive alignment with trimmed mean
 - ✅ **Convergence Tracking** - Real-time accuracy & loss monitoring
-- ✅ **Model Accuracy** - 82.2% @ 50% Byzantine attack
-- ✅ **O(n log n) Scaling** - Empirically validated to 100M+ nodes
+- ✅ **Model Accuracy** - Benchmark reports include ~82.2% at 50% Byzantine in selected runs
+- ✅ **O(n log n) Scaling** - Design target with benchmark support in archived/results artifacts
 - ✅ **Memory Efficiency** - 224x reduction vs batch approaches
 - ✅ **Differential Privacy** - Opacus integration for privacy-preserving learning
 
@@ -138,8 +146,8 @@ cd Sovereign_Map_Federated_Learning
 - ✅ **Docker Compose** - 4 deployment profiles included
 - ✅ **Flower Aggregator** - Port 8080 (gRPC)
 - ✅ **Flask Metrics API** - Port 8000 (HTTP/REST)
-- ✅ **Production Ready** - Health checks, auto-restart, structured logging
-- ✅ **Scalable** - Proven to 1000+ nodes in single deployment
+- ✅ **Operational Baseline** - Health checks, auto-restart, structured logging
+- ✅ **Scalable Configs** - Compose configurations and tests cover small-to-large node counts
 - ✅ **CXL 3.2 Support** - Simulated memory pooling
 - ✅ **DAO Governance** - 1000 university founder signatures
 
@@ -182,11 +190,17 @@ curl http://localhost:8000/convergence | jq '.current_accuracy'
 
 | Service | URL | Credentials |
 |---------|-----|-------------|
-| **Grafana** | http://localhost:3000 | admin / admin |
+| **Grafana** | http://localhost:3000 | `${GRAFANA_USER:-admin}` / `${GRAFANA_ADMIN_PASSWORD}` |
 | **Prometheus** | http://localhost:9090 | (no auth) |
 | **Backend API** | http://localhost:8000 | (no auth) |
 | **Flower Aggregator** | localhost:8080 | (internal gRPC) |
 | **Alertmanager** | http://localhost:9093 | (no auth) |
+
+Before production-like deploys, validate required secrets:
+
+```bash
+bash validate-secrets.sh prod
+```
 
 ### Scale to Production (100 Nodes)
 
@@ -592,13 +606,13 @@ docker compose -f docker-compose.full.yml up -d --scale node-agent=100
 # Result: Production testnet
 ```
 
-### Option 4: Large-Scale (Proven) - 15 Minutes
+### Option 4: Large-Scale (Benchmark-Oriented) - 15 Minutes
 
 ```bash
 docker compose -f docker-compose.full.yml up -d --scale node-agent=1000
 # Deploys: 1 backend + 1000 nodes + monitoring
 # Memory: ~16GB
-# Note: Proven stable with 82.2% accuracy @ 50% Byzantine
+# Note: benchmark artifacts report ~82.2% at 50% Byzantine for selected runs
 ```
 
 ### Option 5: Multi-Machine Cluster (Enterprise)
@@ -779,10 +793,18 @@ receivers:
 
 ## 🔒 Security
 
+### ⚠️ Temporary CI Note (CodeQL)
+
+- Use only the advanced CodeQL workflow: `.github/workflows/codeql-analysis.yml`
+- Do **not** enable GitHub CodeQL **Default Setup** for this repository
+- Enabling Default Setup can trigger Java/Kotlin extraction on `mobile-apps/` and fail with `build-mode: none`
+- If those errors appear, disable Default Setup in **Security → Code scanning** and re-run the workflow
+- See `.github/CODEQL.md` for full troubleshooting details
+
 ### Threat Model
 
 **Protected Against:**
-- Byzantine node attacks (50% tolerance proven)
+- Byzantine node attacks (validated in simulation and integration tests)
 - Man-in-the-middle attacks (mTLS)
 - Message tampering (RSA-PSS signatures)
 - Certificate compromise (CRL revocation)
@@ -825,9 +847,7 @@ receivers:
 
 - ✅ **SGP-001** - Byzantine Fault Tolerance Standard
 - ✅ **TPM 2.0** - Inspired Architecture & Recommendations
-- ✅ **NIST SP 800-52** - TLS Recommendations (TLS 1.3 ready)
-- ✅ **OWASP Top 10** - Mitigations implemented
-- ✅ **CWE/SANS Top 25** - Secured against top vulnerabilities
+- ℹ️ **NIST / OWASP / CWE references** - Design alignment only; no formal certification claim
 
 ---
 
@@ -925,12 +945,12 @@ GET  /api/v1/metrics/live    - WebSocket metrics feed
 
 ## 📈 Performance
 
-### Proven Benchmarks
+### Benchmarks & Capacity Notes
 
 | Metric | Value | Notes |
 |--------|-------|-------|
-| **Accuracy @ 50% Byzantine** | 82.2% | Proven with 10M nodes |
-| **Scaling Factor** | O(n log n) | Up to 100M+ nodes |
+| **Accuracy @ 50% Byzantine** | ~82.2% | Observed in selected benchmark reports |
+| **Scaling Factor** | O(n log n) | Target model; mixed empirical + extrapolated evidence |
 | **Memory Efficiency** | 224x | vs batch learning |
 | **Convergence Time** | 50 rounds | To >95% accuracy |
 | **Trust Verification** | <1ms (P95) | With cache |
@@ -945,8 +965,8 @@ GET  /api/v1/metrics/live    - WebSocket metrics feed
 | 10 | 2GB | 2 | 10GB | ✅ Tested |
 | 50 | 3GB | 4 | 20GB | ✅ Tested |
 | 100 | 4GB | 4 | 20GB | ✅ Tested |
-| 1,000 | 16GB | 8 | 50GB | ✅ Proven |
-| 10,000 | 64GB | 16 | 200GB | ✅ Validated |
+| 1,000 | 16GB | 8 | 50GB | ✅ Available compose profile |
+| 10,000 | 64GB | 16 | 200GB | ⚠️ Benchmark/extrapolation dependent |
 | 100,000 | 256GB | 32 | 500GB | ⚠️ Theoretical |
 
 ### Resource Usage Per Node
@@ -1065,11 +1085,11 @@ docker compose up --scale node-agent=10  # Reduce scale
 
 ---
 
-**Last Updated**: February 2026  
+**Last Updated**: March 2026  
 **Current Version**: 1.0.0  
-**Status**: ✅ Production Ready | ✅ Testnet Ready | ✅ Mobile Ready  
+**Status**: ✅ CI Green on main | ✅ Testnet-oriented | ✅ Mobile components present  
 **Maintenance**: Active  
-**Next Milestone**: Mainnet Alpha (Q3 2024)
+**Next Milestone**: Hardware-in-the-loop expansion + broader testnet hardening
 
 For updates and latest releases, visit: https://github.com/rwilliamspbg-ops/Sovereign_Map_Federated_Learning
 

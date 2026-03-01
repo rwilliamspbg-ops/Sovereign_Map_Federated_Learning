@@ -1,5 +1,7 @@
 # WEEK 1 - FOUNDATION & SCALING
 
+> Historical note: this week summary captures a past development snapshot and should not be treated as current CI-backed status.
+
 **Period:** February 16-17, 2026  
 **Status:** ✅ COMPLETE  
 **Achievement:** Foundation implementation and 100K node baseline

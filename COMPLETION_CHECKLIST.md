@@ -117,7 +117,7 @@ All dashboards use **dynamic queries** (no hardcoded node counts):
 
 ### ✅ Validation & Testing
 
-- [x] `validate-grafana.ps1` (5.1 KB)
+- [x] `tests/scripts/powershell/validate-grafana.ps1` (5.1 KB)
   - Dashboard file validation
   - Config file verification
   - Docker Compose mount checks
@@ -153,7 +153,7 @@ Documentation (4 files):
   Subtotal: 41.1 KB
 
 Scripts (1 file):
-  validate-grafana.ps1                      5.1 KB ✅
+  tests/scripts/powershell/validate-grafana.ps1  5.1 KB ✅
   Subtotal: 5.1 KB
 
 MODIFIED FILES: 1
@@ -296,7 +296,7 @@ Password: sovereignmap
 
 ### Run Test
 ```bash
-./run-5000-round-test.ps1
+./tests/scripts/powershell/run-5000-round-test.ps1
 ```
 
 ### Monitor
@@ -332,7 +332,7 @@ Password: sovereignmap
 1. ✅ Start Docker stack: `docker compose -f docker-compose.production.yml up -d`
 2. ✅ Verify Grafana: http://localhost:3001
 3. ✅ Check datasource: Configuration → Data Sources → Test
-4. ✅ Run test: `./run-5000-round-test.ps1`
+4. ✅ Run test: `./tests/scripts/powershell/run-5000-round-test.ps1`
 5. ✅ Monitor all 6 dashboards
 
 ### Expected Results

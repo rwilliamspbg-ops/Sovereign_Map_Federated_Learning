@@ -2,6 +2,8 @@
 
 Comprehensive test suites for Byzantine-tolerant federated learning validation.
 
+> Evidence note: Historical test artifacts in this folder capture prior runs. Treat them as benchmark evidence, not guaranteed outcomes for every environment. Use current CI and local reruns for present-state validation.
+
 ---
 
 ## Final Summaries
@@ -122,16 +124,16 @@ RESEARCH_FINDINGS.md
 
 | Test Type | Scale | Byzantine % | Duration | Status |
 |-----------|-------|------------|----------|--------|
-| **Scale** | 100K | 0-50% | 50min | ✅ PASS |
-| **Scale** | 500K | 40-55% | 150s | ✅ PASS |
-| **Scale** | 10M | 40-50% | 14min | ✅ PASS |
-| **Byzantine** | 100K | 51-60% | 537s | ✅ PASS |
-| **Byzantine** | 100K | 52-55.5% | 353s | ✅ PASS |
-| **Byzantine** | Varied | MNIST | 86s | ✅ PASS |
-| **Stress** | 500K | 40-55% | 150s | ✅ PASS |
-| **Stress** | 10M | 40-50% | 14min | ✅ PASS |
-| **Failure** | 200N | Various | 35s | ✅ PASS |
-| **Partition** | 200-500N | Various | 30s | ✅ PASS |
+| **Scale** | 100K | 0-50% | 50min | Historical run artifact |
+| **Scale** | 500K | 40-55% | 150s | Historical run artifact |
+| **Scale** | 10M | 40-50% | 14min | Historical run artifact |
+| **Byzantine** | 100K | 51-60% | 537s | Historical run artifact |
+| **Byzantine** | 100K | 52-55.5% | 353s | Historical run artifact |
+| **Byzantine** | Varied | MNIST | 86s | Historical run artifact |
+| **Stress** | 500K | 40-55% | 150s | Historical run artifact |
+| **Stress** | 10M | 40-50% | 14min | Historical run artifact |
+| **Failure** | 200N | Various | 35s | Historical run artifact |
+| **Partition** | 200-500N | Various | 30s | Historical run artifact |
 
 ---
 
@@ -260,10 +262,11 @@ This is expected behavior. Verify failure rate matches test configuration.
 ### Historical Results
 
 ```
-Week 1: 1K-1000 nodes | Scaling proven
+Week 1: 1K-1000 nodes | Historical scaling snapshot
 Week 2: 100K nodes | Byzantine tolerance validated
 Week 3: 500K nodes | Stress tested
-Week 3: 10M nodes | Extreme scale proven
+Week 3: 10M nodes | Extreme scale historical snapshot
+
 ```
 
 ### Regression Detection

@@ -2,6 +2,8 @@
 
 Comprehensive technical documentation of the Sovereign Map Byzantine-tolerant federated learning system.
 
+> Claim scope: This architecture describes intended behavior and implemented components. Validation strength varies by test type (unit/integration/emulation/benchmark). See [CI_STATUS_AND_CLAIMS.md](CI_STATUS_AND_CLAIMS.md).
+
 **Table of Contents**
 - [High-Level Architecture](#high-level-architecture)
 - [Component Details](#component-details)
@@ -350,14 +352,14 @@ Node Trust Metrics (5):
 ### Threat Model
 
 **Protected Against:**
-- Byzantine node attacks: 50% tolerance proven
+- Byzantine node attacks: resilience validated in simulation/integration workflows
 - Message tampering: RSA-PSS signatures
 - Man-in-the-middle: mTLS + certificate pinning
 - Replay attacks: Timestamp validation
 - Compromised nodes: Certificate revocation
 
 **Limitations:**
-- Network partition: Byzantine guarantees don't hold
+- Network partition: Byzantine assumptions may not hold
 - 51% coordinated attack: Use Proof-of-Stake
 - Cryptographic breaks: Use hardware TPM for keys
 - Side-channel attacks: Not in scope (use HSM)
@@ -367,7 +369,7 @@ Node Trust Metrics (5):
 ```
 Layer 1: Cryptographic Signatures
 ├── Every message signed with RSA-PSS
-├── Sender identity proven mathematically
+├── Sender identity cryptographically verifiable
 └── Tampering detected immediately
 
 Layer 2: Trust Chain Validation
@@ -508,7 +510,7 @@ Nodes | Time/Round | Accuracy | Notes
 ------|----------|----------|------------------
 10    | 100ms    | 92%      | Base case
 100   | 150ms    | 90%      | Good scaling
-1K    | 200ms    | 85%      | Proven
+1K    | 200ms    | 85%      | Benchmark-observed
 10K   | 300ms    | 82%      | Theoretical
 100K  | 400ms    | 80%      | Extrapolated
 ```
@@ -550,15 +552,15 @@ Network Requirement: ~2.7 Mbps per 1000 nodes
 - **Removes outliers** naturally without Byzantine detection
 - **Stake weighting** aligns incentives
 - **Computationally efficient** O(n log n)
-- **Proven Byzantine tolerance** 50%
+- **Byzantine resilience target** up to 50% in modeled scenarios
 - **Maintains convergence** even under attack
 
 ### 2. Why RSA-PSS for Message Signing?
 
 - **Standardized & audited** cryptography
 - **Good hardware support** (HSM-ready)
-- **Proven security** for 20+ years
-- **Deterministic signatures** reproducible
+- **Mature security properties** when correctly implemented
+- **Probabilistic signatures** with strong verification properties
 - **Fast verification** <1ms per message
 
 ### 3. Why Certificate-Based Trust?
@@ -583,7 +585,7 @@ Network Requirement: ~2.7 Mbps per 1000 nodes
 - **Single-machine** deployment easy
 - **Scaling** sufficient for <10K nodes
 - **Learning curve** low
-- **Production-ready** with careful config
+- **Production-capable** with careful configuration, hardening, and environment validation
 
 For >10K nodes, Kubernetes recommended:
 ```bash
@@ -597,6 +599,6 @@ For >10K nodes, Kubernetes recommended:
 
 ---
 
-**Last Updated**: February 2024  
+**Last Updated**: March 2026  
 **Architecture Version**: v1.0.0  
-**Status**: Production Ready ✅
+**Status**: Active architecture reference (validate with CI + environment tests)

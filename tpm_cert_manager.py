@@ -30,6 +30,7 @@ class TPMCertificateManager:
     def __init__(self, cert_dir: str = "/etc/sovereign/certs"):
         self.cert_dir = Path(cert_dir)
         self.cert_dir.mkdir(parents=True, exist_ok=True)
+        os.chmod(self.cert_dir, 0o700)
 
         self.ca_cert_path = self.cert_dir / "ca-cert.pem"
         self.ca_key_path = self.cert_dir / "ca-key.pem"
@@ -43,6 +44,26 @@ class TPMCertificateManager:
 
         self._load_or_create_ca()
         self._load_trust_store()
+        self._enforce_permissions()
+
+    def _enforce_permissions(self):
+        """Enforce restrictive permissions on sensitive certificate assets."""
+        try:
+            os.chmod(self.cert_dir, 0o700)
+        except OSError:
+            pass
+
+        for path, mode in (
+            (self.ca_key_path, 0o600),
+            (self.ca_cert_path, 0o644),
+            (self.trust_store_path, 0o600),
+            (self.crl_path, 0o600),
+        ):
+            if path.exists():
+                try:
+                    os.chmod(path, mode)
+                except OSError:
+                    logger.warning(f"Could not update permissions for {path}")
 
     def _load_or_create_ca(self):
         """Load existing CA or create a new one."""
@@ -116,9 +137,11 @@ class TPMCertificateManager:
                     encryption_algorithm=serialization.NoEncryption(),
                 )
             )
+        os.chmod(self.ca_key_path, 0o600)
 
         with open(self.ca_cert_path, "wb") as f:
             f.write(self.ca_cert.public_bytes(serialization.Encoding.PEM))
+        os.chmod(self.ca_cert_path, 0o644)
 
         logger.info(f"CA certificate created and saved to {self.cert_dir}")
 
@@ -185,6 +208,7 @@ class TPMCertificateManager:
 
         with open(cert_path, "wb") as f:
             f.write(cert.public_bytes(serialization.Encoding.PEM))
+        os.chmod(cert_path, 0o644)
 
         with open(key_path, "wb") as f:
             f.write(
@@ -194,6 +218,7 @@ class TPMCertificateManager:
                     encryption_algorithm=serialization.NoEncryption(),
                 )
             )
+        os.chmod(key_path, 0o600)
 
         # Store in trust store
         self.trust_store[f"node-{node_id}"] = {
@@ -296,11 +321,13 @@ class TPMCertificateManager:
         """Save trust store to disk."""
         with open(self.trust_store_path, "w") as f:
             json.dump(self.trust_store, f, indent=2)
+        os.chmod(self.trust_store_path, 0o600)
 
     def _save_crl(self):
         """Save CRL to disk."""
         with open(self.crl_path, "w") as f:
             json.dump(list(self.crl), f, indent=2)
+        os.chmod(self.crl_path, 0o600)
 
     def get_trust_report(self) -> Dict:
         """Get a report of all nodes and their trust status."""

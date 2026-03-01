@@ -264,7 +264,7 @@ mkdir -p /var/sovereign-map/{prometheus,grafana,alertmanager}
 chmod 755 /var/sovereign-map/*
 ```
 
-### Step 2: Update docker-compose for Production
+### Step 2: Update Docker Compose for Production
 
 Create `docker-compose.prod.yml`:
 

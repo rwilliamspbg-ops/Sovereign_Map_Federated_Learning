@@ -149,10 +149,10 @@ docker network create sovereign-network
 docker volume create tpm-certs
 
 # Deploy complete monitoring stack
-docker-compose -f docker-compose.monitoring.tpm.yml up -d
+docker compose -f docker-compose.monitoring.tpm.yml up -d
 
 # Verify services
-docker-compose -f docker-compose.monitoring.tpm.yml ps
+docker compose -f docker-compose.monitoring.tpm.yml ps
 ```
 
 ### Grafana Provisioning Mounts (Required)

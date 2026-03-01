@@ -392,5 +392,5 @@ Contributions welcome! Please submit PRs to main repository.
 ---
 
 **Version**: 1.0.0  
-**Status**: Production Ready  
+**Status**: Development / testnet-oriented module  
 **Last Updated**: February 2026

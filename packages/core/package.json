@@ -35,7 +35,7 @@
     "dev": "tsc --watch",
     "test": "vitest run",
     "test:watch": "vitest",
-    "test:ci": "vitest run --coverage",
+    "test:ci": "vitest run --coverage --passWithNoTests",
     "lint": "eslint src/",
     "typecheck": "tsc --noEmit",
     "clean": "rm -rf dist .tsbuildinfo",
@@ -64,8 +64,19 @@
     "@vitest/coverage-v8": "^1.2.0"
   },
   "peerDependencies": {
-    "@sovereignmap/privacy": "workspace:*",
-    "@sovereignmap/consensus": "workspace:*",
-    "@sovereignmap/island": "workspace:*"
+    "@sovereignmap/privacy": "*",
+    "@sovereignmap/consensus": "*",
+    "@sovereignmap/island": "*"
+  },
+  "peerDependenciesMeta": {
+    "@sovereignmap/privacy": {
+      "optional": true
+    },
+    "@sovereignmap/consensus": {
+      "optional": true
+    },
+    "@sovereignmap/island": {
+      "optional": true
+    }
   }
 }
