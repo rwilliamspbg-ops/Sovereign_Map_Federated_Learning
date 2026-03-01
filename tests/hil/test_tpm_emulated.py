@@ -18,7 +18,9 @@ def _find_free_consecutive_ports() -> tuple[int, int]:
     for _ in range(50):
         base = _find_free_port()
         ctrl = base + 1
-        with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as first, socket.socket(socket.AF_INET, socket.SOCK_STREAM) as second:
+        with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as first, socket.socket(
+            socket.AF_INET, socket.SOCK_STREAM
+        ) as second:
             try:
                 first.bind(("127.0.0.1", base))
                 second.bind(("127.0.0.1", ctrl))
@@ -28,13 +30,29 @@ def _find_free_consecutive_ports() -> tuple[int, int]:
     raise RuntimeError("Unable to allocate consecutive free ports for swtpm")
 
 
-def _run_cmd(command: list[str], env: dict[str, str] | None = None, cwd: Path | None = None) -> subprocess.CompletedProcess:
-    return subprocess.run(command, check=True, capture_output=True, text=True, env=env, cwd=str(cwd) if cwd else None)
+def _run_cmd(
+    command: list[str], env: dict[str, str] | None = None, cwd: Path | None = None
+) -> subprocess.CompletedProcess:
+    return subprocess.run(
+        command,
+        check=True,
+        capture_output=True,
+        text=True,
+        env=env,
+        cwd=str(cwd) if cwd else None,
+    )
 
 
 @pytest.fixture(scope="module")
 def swtpm_env(tmp_path_factory: pytest.TempPathFactory) -> dict[str, str]:
-    required_bins = ["swtpm", "swtpm_setup", "tpm2_getcap", "tpm2_createprimary", "tpm2_pcrread", "tpm2_getrandom"]
+    required_bins = [
+        "swtpm",
+        "swtpm_setup",
+        "tpm2_getcap",
+        "tpm2_createprimary",
+        "tpm2_pcrread",
+        "tpm2_getrandom",
+    ]
     missing = [binary for binary in required_bins if shutil.which(binary) is None]
     if missing:
         pytest.skip(f"Missing required TPM tools: {', '.join(missing)}")
@@ -45,12 +63,14 @@ def swtpm_env(tmp_path_factory: pytest.TempPathFactory) -> dict[str, str]:
 
     command_port, control_port = _find_free_consecutive_ports()
 
-    _run_cmd([
-        "swtpm_setup",
-        "--tpmstate",
-        str(tpm_state_dir),
-        "--tpm2",
-    ])
+    _run_cmd(
+        [
+            "swtpm_setup",
+            "--tpmstate",
+            str(tpm_state_dir),
+            "--tpm2",
+        ]
+    )
 
     process = subprocess.Popen(
         [
@@ -110,7 +130,11 @@ def test_tpm2_can_create_primary_and_read_pcr(swtpm_env: dict[str, str]) -> None
     work_dir = Path(swtpm_env["HIL_SWTPM_WORKDIR"]) / "primary"
     work_dir.mkdir(parents=True, exist_ok=True)
 
-    _run_cmd(["tpm2_createprimary", "-C", "o", "-G", "rsa", "-c", "primary.ctx"], env=swtpm_env, cwd=work_dir)
+    _run_cmd(
+        ["tpm2_createprimary", "-C", "o", "-G", "rsa", "-c", "primary.ctx"],
+        env=swtpm_env,
+        cwd=work_dir,
+    )
     result = _run_cmd(["tpm2_pcrread", "sha256:0"], env=swtpm_env, cwd=work_dir)
 
     assert "sha256:" in result.stdout
@@ -121,7 +145,9 @@ def test_tpm2_can_get_random_bytes(swtpm_env: dict[str, str]) -> None:
     work_dir.mkdir(parents=True, exist_ok=True)
 
     output_file = work_dir / "random.bin"
-    _run_cmd(["tpm2_getrandom", "16", "-o", str(output_file)], env=swtpm_env, cwd=work_dir)
+    _run_cmd(
+        ["tpm2_getrandom", "16", "-o", str(output_file)], env=swtpm_env, cwd=work_dir
+    )
 
     assert output_file.exists()
     assert output_file.stat().st_size == 16

@@ -27,7 +27,9 @@ class _FakeCUDA:
         return self._available
 
 
-def _install_module_stubs(monkeypatch, *, npu_available=False, npu_raises=False, cuda_available=False):
+def _install_module_stubs(
+    monkeypatch, *, npu_available=False, npu_raises=False, cuda_available=False
+):
     fake_torch = types.ModuleType("torch")
     fake_torch.npu = _FakeNPU(available=npu_available, raise_on_check=npu_raises)
     fake_torch.cuda = _FakeCUDA(available=cuda_available)
@@ -50,7 +52,9 @@ def _install_module_stubs(monkeypatch, *, npu_available=False, npu_raises=False,
 
     fake_torchvision = types.ModuleType("torchvision")
     fake_torchvision.datasets = types.SimpleNamespace(MNIST=type("MNIST", (), {}))
-    fake_torchvision.transforms = types.SimpleNamespace(Compose=lambda *args, **kwargs: None)
+    fake_torchvision.transforms = types.SimpleNamespace(
+        Compose=lambda *args, **kwargs: None
+    )
 
     fake_numpy = types.ModuleType("numpy")
     fake_numpy.ndarray = object
@@ -69,7 +73,9 @@ def _install_module_stubs(monkeypatch, *, npu_available=False, npu_raises=False,
     return fake_torch
 
 
-def _load_client_module(monkeypatch, *, npu_available=False, npu_raises=False, cuda_available=False):
+def _load_client_module(
+    monkeypatch, *, npu_available=False, npu_raises=False, cuda_available=False
+):
     fake_torch = _install_module_stubs(
         monkeypatch,
         npu_available=npu_available,
@@ -86,7 +92,9 @@ def _load_client_module(monkeypatch, *, npu_available=False, npu_raises=False, c
 
 
 def test_select_device_force_cpu(monkeypatch):
-    module, _ = _load_client_module(monkeypatch, npu_available=True, cuda_available=True)
+    module, _ = _load_client_module(
+        monkeypatch, npu_available=True, cuda_available=True
+    )
     monkeypatch.setenv("FORCE_CPU", "true")
 
     client = module.SovereignClient.__new__(module.SovereignClient)
@@ -97,7 +105,9 @@ def test_select_device_force_cpu(monkeypatch):
 
 
 def test_select_device_prefers_npu_when_available(monkeypatch):
-    module, fake_torch = _load_client_module(monkeypatch, npu_available=True, cuda_available=True)
+    module, fake_torch = _load_client_module(
+        monkeypatch, npu_available=True, cuda_available=True
+    )
     monkeypatch.setenv("FORCE_CPU", "false")
     monkeypatch.setenv("NPU_ENABLED", "true")
     monkeypatch.setenv("ASCEND_RT_VISIBLE_DEVICES", "1,2")
@@ -111,7 +121,9 @@ def test_select_device_prefers_npu_when_available(monkeypatch):
 
 
 def test_select_device_falls_back_to_cuda_on_npu_error(monkeypatch):
-    module, _ = _load_client_module(monkeypatch, npu_available=False, npu_raises=True, cuda_available=True)
+    module, _ = _load_client_module(
+        monkeypatch, npu_available=False, npu_raises=True, cuda_available=True
+    )
     monkeypatch.setenv("FORCE_CPU", "false")
     monkeypatch.setenv("NPU_ENABLED", "true")
 
@@ -123,7 +135,9 @@ def test_select_device_falls_back_to_cuda_on_npu_error(monkeypatch):
 
 
 def test_select_device_falls_back_to_cpu_when_no_accelerator(monkeypatch):
-    module, _ = _load_client_module(monkeypatch, npu_available=False, cuda_available=False)
+    module, _ = _load_client_module(
+        monkeypatch, npu_available=False, cuda_available=False
+    )
     monkeypatch.setenv("FORCE_CPU", "false")
     monkeypatch.setenv("NPU_ENABLED", "false")
 
