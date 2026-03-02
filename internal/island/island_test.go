@@ -1,258 +1,89 @@
 package island
 
 import (
+	"sync"
 	"testing"
 	"time"
 )
 
-// TestNewIslandManager tests island mode manager creation
-func TestNewIslandManager(t *testing.T) {
-	manager := NewIslandManager()
-	if manager == nil {
-		t.Fatal("Expected non-nil island manager")
+type syncerStub struct {
+	mu      sync.Mutex
+	called  int
+	updates []Update
+	done    chan struct{}
+}
+
+func (s *syncerStub) SyncUpdates(updates []Update) error {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+	s.called++
+	s.updates = append([]Update(nil), updates...)
+	if s.done != nil {
+		close(s.done)
+		s.done = nil
 	}
-	
-	if manager.GetMode() != ModeOnline {
-		t.Error("Expected initial mode to be Online")
+	return nil
+}
+
+func TestNewManagerInitialMode(t *testing.T) {
+	online := true
+	mgr := NewManager(5*time.Millisecond, 10, func() bool { return online })
+
+	if mgr == nil {
+		t.Fatal("expected non-nil manager")
+	}
+	if mgr.GetMode() != ModeOnline {
+		t.Fatalf("expected initial mode online, got %v", mgr.GetMode())
 	}
 }
 
-// TestModeTransition tests mode transitions between online and island
-func TestModeTransition(t *testing.T) {
-	manager := NewIslandManager()
-	
-	// Transition to island mode
-	err := manager.TransitionToIslandMode()
-	if err != nil {
-		t.Fatalf("Failed to transition to island mode: %v", err)
+func TestModeTransitionAndSync(t *testing.T) {
+	online := true
+	mgr := NewManager(5*time.Millisecond, 5, func() bool { return online })
+	stub := &syncerStub{done: make(chan struct{})}
+	mgr.SetSyncer(stub)
+
+	if err := mgr.CacheUpdate(Update{Round: 1, Timestamp: time.Now(), PeerID: "n1"}); err != nil {
+		t.Fatalf("cache update failed: %v", err)
 	}
-	
-	if manager.GetMode() != ModeIsland {
-		t.Error("Expected mode to be Island")
+
+	online = false
+	mgr.updateMode(false)
+	if mgr.GetMode() != ModeIsland {
+		t.Fatalf("expected island mode, got %v", mgr.GetMode())
 	}
-	
-	// Transition back to online mode
-	err = manager.TransitionToOnlineMode()
-	if err != nil {
-		t.Fatalf("Failed to transition to online mode: %v", err)
+
+	online = true
+	mgr.updateMode(true)
+
+	select {
+	case <-stub.done:
+	case <-time.After(300 * time.Millisecond):
+		t.Fatal("expected cached updates to be synced when returning online")
 	}
-	
-	if manager.GetMode() != ModeOnline {
-		t.Error("Expected mode to be Online")
+
+	if mgr.GetMode() != ModeOnline {
+		t.Fatalf("expected online mode, got %v", mgr.GetMode())
+	}
+
+	cached, _ := mgr.GetCachedUpdateStats()
+	if cached != 0 {
+		t.Fatalf("expected cache to be empty after sync, got %d", cached)
 	}
 }
 
-// TestStateSnapshot tests tamper-evident state snapshots
-func TestStateSnapshot(t *testing.T) {
-	manager := NewIslandManager()
-	
-	// Create state snapshot
-	snapshot, err := manager.CreateStateSnapshot()
-	if err != nil {
-		t.Fatalf("Failed to create state snapshot: %v", err)
-	}
-	
-	if snapshot == nil {
-		t.Fatal("Expected non-nil snapshot")
-	}
-	
-	if snapshot.Hash == "" {
-		t.Error("Expected non-empty hash")
-	}
-	
-	if snapshot.Timestamp.IsZero() {
-		t.Error("Expected non-zero timestamp")
-	}
-}
+func TestCacheEvictsOldestWhenFull(t *testing.T) {
+	mgr := NewManager(10*time.Millisecond, 2, func() bool { return true })
 
-// TestCachedUpdateStorage tests offline update caching
-func TestCachedUpdateStorage(t *testing.T) {
-	manager := NewIslandManager()
-	
-	// Transition to island mode
-	err := manager.TransitionToIslandMode()
-	if err != nil {
-		t.Fatalf("Failed to transition: %v", err)
-	}
-	
-	// Store updates while offline
-	for i := 0; i < 5; i++ {
-		update := ModelUpdate{
-			NodeID:    "test-node",
-			Round:     i,
-			Timestamp: time.Now(),
-		}
-		err := manager.CacheUpdate(update)
-		if err != nil {
-			t.Errorf("Failed to cache update %d: %v", i, err)
-		}
-	}
-	
-	cachedCount := manager.GetCachedUpdateCount()
-	if cachedCount != 5 {
-		t.Errorf("Expected 5 cached updates, got %d", cachedCount)
-	}
-}
+	_ = mgr.CacheUpdate(Update{Round: 1, Timestamp: time.Now(), PeerID: "a"})
+	_ = mgr.CacheUpdate(Update{Round: 2, Timestamp: time.Now(), PeerID: "b"})
+	_ = mgr.CacheUpdate(Update{Round: 3, Timestamp: time.Now(), PeerID: "c"})
 
-// TestStateRecovery tests state persistence and recovery
-func TestStateRecovery(t *testing.T) {
-	manager := NewIslandManager()
-	
-	// Transition to island mode and create state
-	err := manager.TransitionToIslandMode()
-	if err != nil {
-		t.Fatalf("Failed to transition: %v", err)
+	updates := mgr.GetCachedUpdates()
+	if len(updates) != 2 {
+		t.Fatalf("expected 2 cached updates, got %d", len(updates))
 	}
-	
-	// Persist state
-	err = manager.PersistState()
-	if err != nil {
-		t.Fatalf("Failed to persist state: %v", err)
-	}
-	
-	// Create new manager and recover
-	newManager := NewIslandManager()
-	err = newManager.RecoverState()
-	if err != nil {
-		t.Fatalf("Failed to recover state: %v", err)
-	}
-	
-	// Verify recovered state
-	if newManager.GetMode() != ModeIsland {
-		t.Error("Expected recovered mode to be Island")
-	}
-}
-
-// TestHashChainIntegrity tests tamper-evident hash chain
-func TestHashChainIntegrity(t *testing.T) {
-	manager := NewIslandManager()
-	
-	// Create multiple snapshots
-	snapshots := make([]StateSnapshot, 3)
-	for i := range snapshots {
-		time.Sleep(10 * time.Millisecond)
-		snapshot, err := manager.CreateStateSnapshot()
-		if err != nil {
-			t.Fatalf("Failed to create snapshot: %v", err)
-		}
-		snapshots[i] = *snapshot
-	}
-	
-	// Verify hash chain
-	for i := 1; i < len(snapshots); i++ {
-		if snapshots[i].PreviousHash != snapshots[i-1].Hash {
-			t.Errorf("Hash chain broken at index %d", i)
-		}
-	}
-}
-
-// TestAutomaticSynchronization tests sync when connectivity restored
-func TestAutomaticSynchronization(t *testing.T) {
-	manager := NewIslandManager()
-	
-	// Transition to island and cache updates
-	err := manager.TransitionToIslandMode()
-	if err != nil {
-		t.Fatalf("Failed to transition: %v", err)
-	}
-	
-	update := ModelUpdate{
-		NodeID:    "test-node",
-		Timestamp: time.Now(),
-	}
-	err = manager.CacheUpdate(update)
-	if err != nil {
-		t.Fatalf("Failed to cache update: %v", err)
-	}
-	
-	// Transition back online (should trigger sync)
-	err = manager.TransitionToOnlineMode()
-	if err != nil {
-		t.Fatalf("Failed to transition online: %v", err)
-	}
-	
-	// Verify cached updates were synced
-	time.Sleep(100 * time.Millisecond) // Allow sync to complete
-	cachedCount := manager.GetCachedUpdateCount()
-	if cachedCount != 0 {
-		t.Errorf("Expected 0 cached updates after sync, got %d", cachedCount)
-	}
-}
-
-// TestConnectivityMonitoring tests connectivity checks
-func TestConnectivityMonitoring(t *testing.T) {
-	manager := NewIslandManager()
-	
-	// Initially should be connected
-	if !manager.IsConnected() {
-		t.Error("Expected initial connection")
-	}
-	
-	// Simulate disconnection
-	manager.SimulateDisconnection()
-	
-	if manager.IsConnected() {
-		t.Error("Expected disconnection")
-	}
-	
-	// Should auto-transition to island mode
-	time.Sleep(200 * time.Millisecond)
-	if manager.GetMode() != ModeIsland {
-		t.Error("Expected automatic transition to island mode")
-	}
-}
-
-// TestCacheSizeLimit tests configurable cache limit
-func TestCacheSizeLimit(t *testing.T) {
-	manager := NewIslandManagerWithConfig(IslandConfig{
-		MaxCachedUpdates: 3,
-	})
-	
-	err := manager.TransitionToIslandMode()
-	if err != nil {
-		t.Fatalf("Failed to transition: %v", err)
-	}
-	
-	// Try to cache more than limit
-	for i := 0; i < 5; i++ {
-		update := ModelUpdate{
-			NodeID:    "test-node",
-			Round:     i,
-			Timestamp: time.Now(),
-		}
-		err := manager.CacheUpdate(update)
-		if i >= 3 && err == nil {
-			t.Error("Expected error when exceeding cache limit")
-		}
-	}
-	
-	cachedCount := manager.GetCachedUpdateCount()
-	if cachedCount > 3 {
-		t.Errorf("Expected max 3 cached updates, got %d", cachedCount)
-	}
-}
-
-// TestStateIntegrityChecks tests integrity verification on recovery
-func TestStateIntegrityChecks(t *testing.T) {
-	manager := NewIslandManager()
-	
-	err := manager.TransitionToIslandMode()
-	if err != nil {
-		t.Fatalf("Failed to transition: %v", err)
-	}
-	
-	err = manager.PersistState()
-	if err != nil {
-		t.Fatalf("Failed to persist: %v", err)
-	}
-	
-	// Verify integrity
-	valid, err := manager.VerifyStateIntegrity()
-	if err != nil {
-		t.Fatalf("Failed to verify integrity: %v", err)
-	}
-	
-	if !valid {
-		t.Error("Expected valid state integrity")
+	if updates[0].Round != 2 || updates[1].Round != 3 {
+		t.Fatalf("expected oldest update to be evicted, got rounds %d and %d", updates[0].Round, updates[1].Round)
 	}
 }
