@@ -1,0 +1,15 @@
+{
+  "cpu_vs_gpu": {
+    "cpu": {
+      "device": "cpu",
+      "avg_epoch_time_sec": 0.8711661100387573,
+      "std_epoch_time_sec": 0.026950955390930176,
+      "samples_per_sec": 918.3093680772416,
+      "batches": 50,
+      "batch_size": 16,
+      "epochs": 2
+    },
+    "gpu": null,
+    "speedup": null
+  }
+}

@@ -1,0 +1,13 @@
+{
+  "comparison": {
+    "cpu": {
+      "device": "cpu",
+      "avg_epoch_time_sec": 0.7640368938446045,
+      "std_epoch_time_sec": 0.003439664840698242,
+      "samples_per_sec": 1047.0698554547942,
+      "batches": 50,
+      "batch_size": 16,
+      "epochs": 2
+    }
+  }
+}

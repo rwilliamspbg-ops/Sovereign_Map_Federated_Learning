@@ -1,0 +1,62 @@
+{
+  "contention": {
+    "num_nodes": 10,
+    "total_time_sec": 3.3303494453430176,
+    "successful_nodes": 10,
+    "failed_nodes": 0,
+    "avg_node_time_sec": 1.316788911819458,
+    "total_throughput_samples_per_sec": 2437.5067847660116,
+    "node_results": {
+      "3": {
+        "status": "completed",
+        "time_sec": 1.1983757019042969,
+        "throughput": 267.02811104355607
+      },
+      "7": {
+        "status": "completed",
+        "time_sec": 1.2012665271759033,
+        "throughput": 266.38551292384585
+      },
+      "9": {
+        "status": "completed",
+        "time_sec": 1.2396414279937744,
+        "throughput": 258.13916248175525
+      },
+      "2": {
+        "status": "completed",
+        "time_sec": 1.3250210285186768,
+        "throughput": 241.50560112826878
+      },
+      "5": {
+        "status": "completed",
+        "time_sec": 1.3514845371246338,
+        "throughput": 236.77666389052413
+      },
+      "1": {
+        "status": "completed",
+        "time_sec": 1.3544540405273438,
+        "throughput": 236.25755501856014
+      },
+      "4": {
+        "status": "completed",
+        "time_sec": 1.3561046123504639,
+        "throughput": 235.96999603545413
+      },
+      "8": {
+        "status": "completed",
+        "time_sec": 1.3639004230499268,
+        "throughput": 234.62123377337358
+      },
+      "0": {
+        "status": "completed",
+        "time_sec": 1.3878443241119385,
+        "throughput": 230.57341118195183
+      },
+      "6": {
+        "status": "completed",
+        "time_sec": 1.389796495437622,
+        "throughput": 230.24953728872205
+      }
+    }
+  }
+}
