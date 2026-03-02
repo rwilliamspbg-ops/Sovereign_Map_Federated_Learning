@@ -89,18 +89,20 @@ cd Sovereign_Map_Federated_Learning
 
 Latest local checks on this branch:
 
-- `make lint` executes but reports `typecheck` failures due to missing Go modules (`github.com/tetratelabs/wazero`, `github.com/tetratelabs/wazero/api`).
-- `go test ./...` fails due to missing modules (`wazero`, `testify/assert`) and mismatched legacy test APIs in multiple packages (`internal/batch`, `internal/island`, `internal/p2p`, `internal/tpm`).
+- `make lint` passes (`golangci-lint`: `0 issues`).
+- `go test ./...` passes for current packages.
+- `gosec ./...` reports `0 issues`.
+- `govulncheck ./...` reports `0 code-reachable vulnerabilities` (and notes additional non-reachable vulnerabilities in imported/required packages).
 
 Interpretation:
 
 - CI badge status remains the source of truth for workflow state on `main`.
-- Historical benchmark/test artifacts in this repository should not be interpreted as proof that the current working tree passes all local Go checks.
+- Historical benchmark/test artifacts in this repository are scenario evidence and should not be interpreted as universal production guarantees.
 
 ## ✅ Testnet Status
 
 **Latest Update**: Flower aggregator + Byzantine-robust strategy implemented  
-**Status**: ⚠️ **CI workflow status is badge-driven; local Go lint/test currently failing as of 2026-03-02** (compose profiles for 5-1000 nodes remain available)  
+**Status**: ✅ **CI workflow status is badge-driven; local lint/test/security checks are currently passing as of 2026-03-02** (compose profiles for 5-1000 nodes remain available)  
 **Deploy Profiles**: Local (2 min) | Staging (5 min) | Production-like (10 min)  
 **See**: [TESTNET_DEPLOYMENT.md](TESTNET_DEPLOYMENT.md) for complete guide  
 **Summary**: [TESTNET_READY_SUMMARY.md](TESTNET_READY_SUMMARY.md) for quick reference  
@@ -980,6 +982,38 @@ GET  /api/v1/metrics/live    - WebSocket metrics feed
 | 1,000 | 16GB | 8 | 50GB | ✅ Available compose profile |
 | 10,000 | 64GB | 16 | 200GB | ⚠️ Benchmark/extrapolation dependent |
 | 100,000 | 256GB | 32 | 500GB | ⚠️ Theoretical |
+
+### Detailed 1000-Node Benchmark Snapshot (Historical Artifact)
+
+The repository includes a historical week-1 scaling artifact that reports a 1000-node sweep across 72 configurations and 1,440 rounds for that scale.
+
+**Execution profile at 1000 nodes (artifact-reported):**
+
+- Nodes: `1000`
+- Configurations: `72`
+- Rounds: `1,440`
+- Runtime: `21.2s`
+- Throughput: `944 rounds/sec`
+- Node-updates throughput: `944,000 node-updates/sec`
+- Convergence in artifact matrix: `100% (72/72)`
+
+**1000-node accuracy by Byzantine level (artifact-reported):**
+
+| Byzantine % | Final Accuracy | Avg(last 3 rounds) | Status |
+|------------|----------------|--------------------|--------|
+| 0% | 95.7% | 93.6% | Converged |
+| 10% | 94.5% | 92.6% | Converged |
+| 20% | 92.2% | 91.0% | Converged |
+| 30% | 91.6% | 90.0% | Converged |
+| 40% | 91.5% | 89.6% | Converged |
+| 50% | 90.7% | 88.6% | Converged |
+
+**Provenance:**
+
+- `archive/week1/docs/WEEK1_AGGRESSIVE_SCALING_REPORT.md`
+- `archive/week1/docs/WEEK1_RESULTS_DASHBOARD.md`
+
+**Scope note:** These values are historical benchmark artifacts from a specific test setup and date, not guaranteed outcomes for every runtime environment.
 
 ### Resource Usage Per Node
 
