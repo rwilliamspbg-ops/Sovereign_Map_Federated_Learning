@@ -14,10 +14,8 @@
 
 module github.com/rwilliamspbg-ops/Sovereign_Map_Federated_Learning
 
-go 1.24
+go 1.24.0
 
-require (
-	// Standard library only for now.
-	// If you integrate gnark or bls12-381 later,
-	// they will be added here via 'go mod tidy'.
-)
+require github.com/tetratelabs/wazero v1.11.0
+
+require golang.org/x/sys v0.38.0 // indirect

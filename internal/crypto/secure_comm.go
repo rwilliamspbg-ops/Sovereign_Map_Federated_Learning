@@ -170,7 +170,7 @@ func (sc *SecureChannel) establishSessionKey(peerID string) ([]byte, error) {
 	}
 
 	// ECDH key agreement
-	x, _ := peerKey.Curve.ScalarMult(peerKey.X, peerKey.Y, sc.privateKey.D.Bytes())
+	x, _ := peerKey.ScalarMult(peerKey.X, peerKey.Y, sc.privateKey.D.Bytes())
 	sharedSecret := x.Bytes()
 
 	// Derive session key using SHA-256

@@ -2,6 +2,22 @@
 
 This document defines what can be claimed from automation results and what still requires additional validation.
 
+## Local Verification Snapshot (2026-03-02)
+
+Latest local command results on this branch:
+
+- `make lint` surfaced `golangci-lint` typecheck failures caused by missing modules:
+	- `github.com/tetratelabs/wazero`
+	- `github.com/tetratelabs/wazero/api`
+- `go test ./...` failed due to:
+	- Missing modules (`wazero`, `wazero/api`, `github.com/stretchr/testify/assert`)
+	- Test/API drift in `internal/batch`, `internal/island`, `internal/p2p`, and `internal/tpm`
+
+Claim constraint from this snapshot:
+
+- Do not claim that the current local working tree has a fully passing Go lint/test state.
+- Keep using CI workflow badges as branch-level evidence for `main`.
+
 ## Workflow Badges (main branch)
 
 [![Build and Test](https://github.com/rwilliamspbg-ops/Sovereign_Map_Federated_Learning/actions/workflows/build.yml/badge.svg?branch=main)](https://github.com/rwilliamspbg-ops/Sovereign_Map_Federated_Learning/actions/workflows/build.yml)

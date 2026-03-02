@@ -50,7 +50,7 @@ func (a *Aggregator) ProcessRound(mode Mode) error {
 
 	// Safety Check (Theorem 1): n > 2f
 	if a.Config.TotalNodes <= 2*a.Config.MaliciousNodes {
-		return fmt.Errorf("Byzantine safety violation: n <= 2f")
+		return fmt.Errorf("byzantine safety violation: n <= 2f")
 	}
 
 	return nil

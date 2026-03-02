@@ -212,11 +212,14 @@ func (vp *VerificationProtocol) generateRequestID(data []byte) string {
 func (vp *VerificationProtocol) broadcastVerificationRequest(ctx context.Context, request *VerificationRequest) {
 	// Simulate broadcasting to all peers
 	// In production, this would use actual P2P networking
+	_ = ctx
+	_ = request
 	for peerID := range vp.peers {
-		if peerID != vp.nodeID {
-			// Send verification request to peer
-			// This is a placeholder for actual network communication
+		if peerID == vp.nodeID {
+			continue
 		}
+		// Send verification request to peer
+		// This is a placeholder for actual network communication
 	}
 }
 
@@ -227,9 +230,7 @@ func (vp *VerificationProtocol) verifySignature(data []byte, signature []byte) b
 		return false
 	}
 
-	// Verify data integrity
-	hash := sha256.Sum256(data)
-	return len(hash) > 0
+	return len(data) > 0
 }
 
 func (vp *VerificationProtocol) generateProof(data []byte) []byte {

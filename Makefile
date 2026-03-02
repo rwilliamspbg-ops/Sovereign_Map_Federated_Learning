@@ -5,6 +5,8 @@
         test-200-bft setup-200-test clean-200-test benchmark-200 \
         chaos-test partition-test generate-data
 
+COMPOSE ?= docker compose
+
 # Default target
 all: build
 
@@ -78,29 +80,29 @@ test-200-bft-verbose: setup-200-test
 
 test-200-bft-quick:
 	@echo "⚡ Quick 200-node test (reduced rounds)"
-	@docker-compose -f docker-compose.200nodes.yml up -d mongo redis backend
+	@$(COMPOSE) -f docker-compose.200nodes.yml up -d mongo redis backend
 	@sleep 30
-	@docker-compose -f docker-compose.200nodes.yml up -d node-agent
+	@$(COMPOSE) -f docker-compose.200nodes.yml up -d node-agent
 	@sleep 60
 	@go test -v ./internal/consensus/... -run "Test200NodeBFT" -timeout 20m -quick-test
-	@docker-compose -f docker-compose.200nodes.yml down
+	@$(COMPOSE) -f docker-compose.200nodes.yml down
 
 benchmark-200:
 	@echo "📊 Running 200-node performance benchmark..."
-	@docker-compose -f docker-compose.200nodes.yml up -d mongo redis backend
+	@$(COMPOSE) -f docker-compose.200nodes.yml up -d mongo redis backend
 	@sleep 30
 	@go test -bench=Benchmark200Nodes -benchtime=10m -memprofile=mem.out -cpuprofile=cpu.out ./internal/consensus/...
 
 chaos-test:
 	@echo "🔥 Running chaos engineering tests..."
-	@docker-compose -f docker-compose.200nodes.yml --profile chaos up -d
+	@$(COMPOSE) -f docker-compose.200nodes.yml --profile chaos up -d
 	@sleep 60
 	@docker exec chaos-200 python3 /app/chaos_injector.py --nodes 200 --faults 111 --duration 300
 	@go test -v ./internal/consensus/... -run "TestChaosRecovery" -timeout 30m
 
 partition-test:
 	@echo "🔀 Running network partition tests..."
-	@docker-compose -f docker-compose.200nodes.yml up -d
+	@$(COMPOSE) -f docker-compose.200nodes.yml up -d
 	@sleep 60
 	@./scripts/network_partition.sh 3 60  # 3 partitions, 60 seconds
 	@go test -v ./internal/consensus/... -run "TestNetworkPartition" -timeout 30m
@@ -115,31 +117,31 @@ generate-data:
 
 deploy:
 	@echo "🚀 Deploying standard stack..."
-	docker-compose up -d
+	$(COMPOSE) up -d
 
 deploy-200:
 	@echo "🚀 Deploying 200-node test stack..."
-	docker-compose -f docker-compose.200nodes.yml up -d mongo redis backend aggregator
+	$(COMPOSE) -f docker-compose.200nodes.yml up -d mongo redis backend aggregator
 	@sleep 30
 	@echo "✅ Infrastructure ready. Deploy nodes with: make deploy-200-nodes"
 
 deploy-200-nodes:
 	@echo "🚀 Deploying 200 node agents..."
-	docker-compose -f docker-compose.200nodes.yml up -d node-agent
+	$(COMPOSE) -f docker-compose.200nodes.yml up -d node-agent
 	@sleep 90
 	@echo "✅ 200 nodes deployed"
 
 deploy-monitoring:
 	@echo "📊 Deploying monitoring stack..."
-	docker-compose -f docker-compose.monitoring.yml up -d
+	$(COMPOSE) -f docker-compose.monitoring.yml up -d
 	@echo "📈 Grafana: http://localhost:3001 (admin/admin)"
 	@echo "📊 Prometheus: http://localhost:9090"
 
 logs:
-	docker-compose logs -f --tail=100
+	$(COMPOSE) logs -f --tail=100
 
 logs-200:
-	docker-compose -f docker-compose.200nodes.yml logs -f --tail=100
+	$(COMPOSE) -f docker-compose.200nodes.yml logs -f --tail=100
 
 logs-backend:
 	docker logs -f backend-200 2>&1 | grep -E "(consensus|byzantine|fault|error)" || true
@@ -150,13 +152,13 @@ logs-backend:
 
 clean:
 	@echo "🧹 Cleaning up..."
-	docker-compose down -v --remove-orphans
+	$(COMPOSE) down -v --remove-orphans
 	rm -rf bin/
 	go clean
 
 clean-200-test:
 	@echo "🧹 Cleaning up 200-node test environment..."
-	docker-compose -f docker-compose.200nodes.yml down -v --remove-orphans
+	$(COMPOSE) -f docker-compose.200nodes.yml down -v --remove-orphans
 	docker system prune -f --volumes 2>/dev/null || true
 	docker network rm sovereign-net-200 2>/dev/null || true
 	rm -rf test-results/200-node-bft/*
@@ -179,6 +181,10 @@ fmt:
 
 lint:
 	@echo "🔍 Running linters..."
+	golangci-lint run ./...
+
+lint-soft:
+	@echo "🔍 Running linters (non-blocking)..."
 	golangci-lint run ./... || true
 
 vet:
@@ -277,56 +283,6 @@ help:
 	@echo "  make tidy    - Tidy Go modules"
 	@echo "  make fmt     - Format Go code"
 	@echo "  make lint    - Run linters"
+	@echo "  make lint-soft - Run linters without failing target"
 	@echo "  make check   - Run all checks"
 	@echo ""
-
-# 200-Node BFT Test Targets (Auto-added)
-.PHONY: test-200-bft setup-200-test clean-200-test
-
-setup-200-test:
-	@mkdir -p test-results/200-node-bft test-data
-	@go run scripts/generate-test-data.go
-	@echo "✅ 200-node test environment ready"
-
-test-200-bft: setup-200-test
-	@chmod +x scripts/run-200-bft-test.sh
-	@./scripts/run-200-bft-test.sh
-
-clean-200-test:
-	@docker-compose -f docker-compose.200nodes.yml down -v 2>/dev/null || true
-	@rm -rf test-results/200-node-bft/* test-data/*
-	@echo "🧹 200-node test environment cleaned"
-
-# 200-Node BFT Test Targets (Auto-added)
-.PHONY: test-200-bft setup-200-test clean-200-test
-
-setup-200-test:
-	@mkdir -p test-results/200-node-bft test-data
-	@go run scripts/generate-test-data.go
-	@echo "✅ 200-node test environment ready"
-
-test-200-bft: setup-200-test
-	@chmod +x scripts/run-200-bft-test.sh
-	@./scripts/run-200-bft-test.sh
-
-clean-200-test:
-	@docker-compose -f docker-compose.200nodes.yml down -v 2>/dev/null || true
-	@rm -rf test-results/200-node-bft/* test-data/*
-	@echo "🧹 200-node test environment cleaned"
-
-# 200-Node BFT Test Targets (Auto-added)
-.PHONY: test-200-bft setup-200-test clean-200-test
-
-setup-200-test:
-	@mkdir -p test-results/200-node-bft test-data
-	@go run scripts/generate-test-data.go
-	@echo "✅ 200-node test environment ready"
-
-test-200-bft: setup-200-test
-	@chmod +x scripts/run-200-bft-test.sh
-	@./scripts/run-200-bft-test.sh
-
-clean-200-test:
-	@docker-compose -f docker-compose.200nodes.yml down -v 2>/dev/null || true
-	@rm -rf test-results/200-node-bft/* test-data/*
-	@echo "🧹 200-node test environment cleaned"

@@ -21,6 +21,27 @@ type Handler struct {
 	p2pNetwork  *p2p.Network
 }
 
+func writeJSON(w http.ResponseWriter, payload interface{}) {
+	w.Header().Set("Cache-Control", "no-store")
+	w.Header().Set("X-API-Version", "v1")
+	w.Header().Set("Content-Type", "application/json")
+	if err := json.NewEncoder(w).Encode(payload); err != nil {
+		http.Error(w, "failed to encode response", http.StatusInternalServerError)
+	}
+}
+
+func methodNotAllowed(w http.ResponseWriter) {
+	http.Error(w, "method not allowed", http.StatusMethodNotAllowed)
+}
+
+func ensureGetMethod(w http.ResponseWriter, r *http.Request) bool {
+	if r.Method != http.MethodGet {
+		methodNotAllowed(w)
+		return false
+	}
+	return true
+}
+
 // NewHandler creates a new API handler with integrated backends
 func NewHandler(detector *convergence.Detector, islandMgr *island.Manager, collector *monitoring.Collector, network *p2p.Network) *Handler {
 	return &Handler{
@@ -33,34 +54,45 @@ func NewHandler(detector *convergence.Detector, islandMgr *island.Manager, colle
 
 // RegisterRoutes sets up HTTP routes
 func (h *Handler) RegisterRoutes(mux *http.ServeMux) {
+	// Legacy + current endpoints
 	mux.HandleFunc("/health", h.HealthCheck)
 	mux.HandleFunc("/api/status", h.GetStatus)
 	mux.HandleFunc("/api/metrics", h.GetMetrics)
 	mux.HandleFunc("/api/convergence", h.GetConvergence)
+	mux.HandleFunc("/api/convergence_status", h.GetConvergence)
 	mux.HandleFunc("/api/island/status", h.GetIslandStatus)
 	mux.HandleFunc("/api/peers", h.GetPeers)
+	mux.HandleFunc("/api/network_status", h.GetNetworkStatus)
+	mux.HandleFunc("/api/trust_status", h.GetTrustStatus)
+
+	// Versioned aliases
+	mux.HandleFunc("/api/v1/status", h.GetStatus)
+	mux.HandleFunc("/api/v1/metrics", h.GetMetrics)
+	mux.HandleFunc("/api/v1/convergence", h.GetConvergence)
+	mux.HandleFunc("/api/v1/island/status", h.GetIslandStatus)
+	mux.HandleFunc("/api/v1/peers", h.GetPeers)
+	mux.HandleFunc("/api/v1/network_status", h.GetNetworkStatus)
+	mux.HandleFunc("/api/v1/trust_status", h.GetTrustStatus)
 }
 
 // HealthCheck returns basic health status
 func (h *Handler) HealthCheck(w http.ResponseWriter, r *http.Request) {
-	if r.Method != http.MethodGet {
-		http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
+	if !ensureGetMethod(w, r) {
 		return
 	}
 
 	response := map[string]string{
 		"status":  "healthy",
 		"service": "sovereign-map-fl",
+		"time":    time.Now().UTC().Format(time.RFC3339),
 	}
 
-	w.Header().Set("Content-Type", "application/json")
-	json.NewEncoder(w).Encode(response)
+	writeJSON(w, response)
 }
 
 // GetStatus returns overall system status
 func (h *Handler) GetStatus(w http.ResponseWriter, r *http.Request) {
-	if r.Method != http.MethodGet {
-		http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
+	if !ensureGetMethod(w, r) {
 		return
 	}
 
@@ -76,14 +108,12 @@ func (h *Handler) GetStatus(w http.ResponseWriter, r *http.Request) {
 		},
 	}
 
-	w.Header().Set("Content-Type", "application/json")
-	json.NewEncoder(w).Encode(response)
+	writeJSON(w, response)
 }
 
 // GetMetrics returns collected metrics
 func (h *Handler) GetMetrics(w http.ResponseWriter, r *http.Request) {
-	if r.Method != http.MethodGet {
-		http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
+	if !ensureGetMethod(w, r) {
 		return
 	}
 
@@ -108,14 +138,12 @@ func (h *Handler) GetMetrics(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 
-	w.Header().Set("Content-Type", "application/json")
-	json.NewEncoder(w).Encode(response)
+	writeJSON(w, response)
 }
 
 // GetConvergence returns convergence status
 func (h *Handler) GetConvergence(w http.ResponseWriter, r *http.Request) {
-	if r.Method != http.MethodGet {
-		http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
+	if !ensureGetMethod(w, r) {
 		return
 	}
 
@@ -140,14 +168,12 @@ func (h *Handler) GetConvergence(w http.ResponseWriter, r *http.Request) {
 		response["effective_threshold"] = metrics["effective_threshold"]
 	}
 
-	w.Header().Set("Content-Type", "application/json")
-	json.NewEncoder(w).Encode(response)
+	writeJSON(w, response)
 }
 
 // GetIslandStatus returns Island Mode status
 func (h *Handler) GetIslandStatus(w http.ResponseWriter, r *http.Request) {
-	if r.Method != http.MethodGet {
-		http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
+	if !ensureGetMethod(w, r) {
 		return
 	}
 
@@ -161,9 +187,10 @@ func (h *Handler) GetIslandStatus(w http.ResponseWriter, r *http.Request) {
 	if h.island != nil {
 		mode := h.island.CurrentMode()
 		modeStr := "online"
-		if mode == island.ModeIsland {
+		switch mode {
+		case island.ModeIsland:
 			modeStr = "island"
-		} else if mode == island.ModeTransition {
+		case island.ModeTransition:
 			modeStr = "transition"
 		}
 
@@ -177,14 +204,12 @@ func (h *Handler) GetIslandStatus(w http.ResponseWriter, r *http.Request) {
 		response["time_since_last_sync"] = timeSinceSync.String()
 	}
 
-	w.Header().Set("Content-Type", "application/json")
-	json.NewEncoder(w).Encode(response)
+	writeJSON(w, response)
 }
 
 // GetPeers returns information about connected peers
 func (h *Handler) GetPeers(w http.ResponseWriter, r *http.Request) {
-	if r.Method != http.MethodGet {
-		http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
+	if !ensureGetMethod(w, r) {
 		return
 	}
 
@@ -203,6 +228,65 @@ func (h *Handler) GetPeers(w http.ResponseWriter, r *http.Request) {
 		response["peers"] = peers
 	}
 
-	w.Header().Set("Content-Type", "application/json")
-	json.NewEncoder(w).Encode(response)
+	writeJSON(w, response)
+}
+
+// GetNetworkStatus returns concise network health details
+func (h *Handler) GetNetworkStatus(w http.ResponseWriter, r *http.Request) {
+	if !ensureGetMethod(w, r) {
+		return
+	}
+
+	response := map[string]interface{}{
+		"network":      "ready",
+		"node_id":      "unknown",
+		"total_peers":  0,
+		"active_nodes": 0,
+	}
+
+	if h.p2pNetwork != nil {
+		response["node_id"] = h.p2pNetwork.GetNodeID()
+		peers := h.p2pNetwork.GetPeers()
+		response["total_peers"] = len(peers)
+		response["active_nodes"] = h.p2pNetwork.GetActivePeerCount()
+	}
+
+	writeJSON(w, response)
+}
+
+// GetTrustStatus returns trust-related network summary metrics
+func (h *Handler) GetTrustStatus(w http.ResponseWriter, r *http.Request) {
+	if !ensureGetMethod(w, r) {
+		return
+	}
+
+	response := map[string]interface{}{
+		"trust_mode":         "p2p-reputation",
+		"total_peers":        0,
+		"active_peers":       0,
+		"average_reputation": 0.0,
+	}
+
+	if h.p2pNetwork != nil {
+		peers := h.p2pNetwork.GetPeers()
+		activePeers := h.p2pNetwork.GetActivePeerCount()
+
+		totalReputation := 0.0
+		for _, peer := range peers {
+			if rep, ok := peer["reputation"].(float64); ok {
+				totalReputation += rep
+			}
+		}
+
+		avgReputation := 0.0
+		if len(peers) > 0 {
+			avgReputation = totalReputation / float64(len(peers))
+		}
+
+		response["total_peers"] = len(peers)
+		response["active_peers"] = activePeers
+		response["average_reputation"] = avgReputation
+	}
+
+	writeJSON(w, response)
 }
