@@ -1,0 +1,32 @@
+# Iteration 4 at 2026-03-02T07:20:57.964481
+
+## Docker Container Statistics
+sovereignmap-backend,46.2%,42.2%
+sovereignmap-prometheus,15.2%,28.5%
+sovereignmap-grafana,8.1%,18.3%
+sovereignmap-mongo,22.4%,42.1%
+sovereignmap-redis,12.1%,24.3%
+node-agents,46.2%,42.2%
+
+## Container Status
+Running: 334, Total: 1000
+
+## Prometheus Status
+Available metrics: 2168
+
+## Performance Metrics
+Throughput: 93520.0 samples/sec (NPU)
+Round Latency: 0.186 seconds
+Accuracy: 0.9440
+Loss: 0.1900
+
+## Byzantine Resilience
+Honest Nodes: 183
+Byzantine Nodes: 151
+Consensus Success Rate: 85.00%
+TPM Verified: 179/183
+
+## Network Metrics
+Network Latency: 2.79ms
+CPU Usage: 46.2%
+Memory Usage: 42.2%

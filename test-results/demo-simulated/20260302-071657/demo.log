@@ -1,0 +1,18 @@
+[2026-03-02 07:16:57] [INFO] ============================================================
+[2026-03-02 07:16:57] [INFO] Sovereign Map 1000-Node Federated Learning Demo
+[2026-03-02 07:16:57] [INFO] ============================================================
+[2026-03-02 07:16:57] [INFO] Nodes: 1000, Duration: 10m
+[2026-03-02 07:16:57] [INFO] Output: test-results\demo-simulated\20260302-071657
+[2026-03-02 07:16:57] [INFO] ============================================================
+[2026-03-02 07:16:57] [INFO] Generating performance metrics for 1000-node network...
+[2026-03-02 07:16:57] [INFO] Iteration 1/10: 78/1000 nodes active, 5444.0 samples/sec (CPU), Latency: 0.286s
+[2026-03-02 07:16:57] [INFO] Iteration 3/10: 219/1000 nodes active, 15286.0 samples/sec (CPU), Latency: 0.220s
+[2026-03-02 07:16:57] [INFO] Iteration 6/10: 608/1000 nodes active, 42438.0 samples/sec (CPU), Latency: 0.229s
+[2026-03-02 07:16:57] [INFO] Iteration 9/10: 867/1000 nodes active, 144500.0 samples/sec (GPU), Latency: 0.230s
+[2026-03-02 07:16:57] [INFO] [OK] Metrics generation complete
+[2026-03-02 07:16:57] [INFO] Saving metrics iteration files...
+[2026-03-02 07:16:57] [INFO] [OK] Saved 10 metrics iteration files
+[2026-03-02 07:16:57] [INFO] Generating JSON reports...
+[2026-03-02 07:16:57] [INFO] [OK] JSON reports saved
+[2026-03-02 07:16:57] [INFO] Generating comprehensive report...
+[2026-03-02 07:16:57] [INFO] [OK] Comprehensive report generated
