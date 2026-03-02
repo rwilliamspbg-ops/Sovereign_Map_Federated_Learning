@@ -9,7 +9,6 @@ import json
 import time
 import sys
 from datetime import datetime
-from pathlib import Path
 
 def check_services():
     """Check all monitoring services are running"""

@@ -5,13 +5,10 @@ Generates charts and reports from demo execution results
 """
 
 import json
-import os
 import sys
 import re
 from datetime import datetime
 from pathlib import Path
-from collections import defaultdict
-import statistics
 
 def analyze_demo_results(results_dir):
     """Parse and analyze all results from a demo run"""

@@ -5,12 +5,9 @@ Creates charts, statistics, and summary documents
 """
 
 import json
-import csv
-import os
 import re
 from datetime import datetime
 from pathlib import Path
-from collections import defaultdict
 import statistics as stats
 
 class DemoResultsReporter:

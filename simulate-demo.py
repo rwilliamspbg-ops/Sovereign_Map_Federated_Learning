@@ -6,7 +6,6 @@ Creates comprehensive metrics and reports for visualization
 """
 
 import json
-import csv
 import math
 import random
 from datetime import datetime, timedelta
