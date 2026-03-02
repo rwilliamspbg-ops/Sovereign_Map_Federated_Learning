@@ -21,6 +21,13 @@ type Handler struct {
 	p2pNetwork  *p2p.Network
 }
 
+func writeJSON(w http.ResponseWriter, payload interface{}) {
+	w.Header().Set("Content-Type", "application/json")
+	if err := json.NewEncoder(w).Encode(payload); err != nil {
+		http.Error(w, "failed to encode response", http.StatusInternalServerError)
+	}
+}
+
 // NewHandler creates a new API handler with integrated backends
 func NewHandler(detector *convergence.Detector, islandMgr *island.Manager, collector *monitoring.Collector, network *p2p.Network) *Handler {
 	return &Handler{
@@ -53,8 +60,7 @@ func (h *Handler) HealthCheck(w http.ResponseWriter, r *http.Request) {
 		"service": "sovereign-map-fl",
 	}
 
-	w.Header().Set("Content-Type", "application/json")
-	json.NewEncoder(w).Encode(response)
+	writeJSON(w, response)
 }
 
 // GetStatus returns overall system status
@@ -76,8 +82,7 @@ func (h *Handler) GetStatus(w http.ResponseWriter, r *http.Request) {
 		},
 	}
 
-	w.Header().Set("Content-Type", "application/json")
-	json.NewEncoder(w).Encode(response)
+	writeJSON(w, response)
 }
 
 // GetMetrics returns collected metrics
@@ -108,8 +113,7 @@ func (h *Handler) GetMetrics(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 
-	w.Header().Set("Content-Type", "application/json")
-	json.NewEncoder(w).Encode(response)
+	writeJSON(w, response)
 }
 
 // GetConvergence returns convergence status
@@ -140,8 +144,7 @@ func (h *Handler) GetConvergence(w http.ResponseWriter, r *http.Request) {
 		response["effective_threshold"] = metrics["effective_threshold"]
 	}
 
-	w.Header().Set("Content-Type", "application/json")
-	json.NewEncoder(w).Encode(response)
+	writeJSON(w, response)
 }
 
 // GetIslandStatus returns Island Mode status
@@ -161,9 +164,10 @@ func (h *Handler) GetIslandStatus(w http.ResponseWriter, r *http.Request) {
 	if h.island != nil {
 		mode := h.island.CurrentMode()
 		modeStr := "online"
-		if mode == island.ModeIsland {
+		switch mode {
+		case island.ModeIsland:
 			modeStr = "island"
-		} else if mode == island.ModeTransition {
+		case island.ModeTransition:
 			modeStr = "transition"
 		}
 
@@ -177,8 +181,7 @@ func (h *Handler) GetIslandStatus(w http.ResponseWriter, r *http.Request) {
 		response["time_since_last_sync"] = timeSinceSync.String()
 	}
 
-	w.Header().Set("Content-Type", "application/json")
-	json.NewEncoder(w).Encode(response)
+	writeJSON(w, response)
 }
 
 // GetPeers returns information about connected peers
@@ -203,6 +206,5 @@ func (h *Handler) GetPeers(w http.ResponseWriter, r *http.Request) {
 		response["peers"] = peers
 	}
 
-	w.Header().Set("Content-Type", "application/json")
-	json.NewEncoder(w).Encode(response)
+	writeJSON(w, response)
 }

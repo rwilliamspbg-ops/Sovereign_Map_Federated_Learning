@@ -40,7 +40,9 @@ func NewHost(ctx context.Context, wasmBin []byte) (*Host, error) {
 	// Instantiate the module with hardware acceleration where available
 	mod, err := r.Instantiate(ctx, wasmBin)
 	if err != nil {
-		r.Close(ctx)
+		if closeErr := r.Close(ctx); closeErr != nil {
+			return nil, fmt.Errorf("failed to instantiate wasm: %w (additionally failed to close runtime: %v)", err, closeErr)
+		}
 		return nil, fmt.Errorf("failed to instantiate wasm: %w", err)
 	}
 

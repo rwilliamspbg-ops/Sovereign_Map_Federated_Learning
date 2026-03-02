@@ -75,7 +75,10 @@ func TestVoting(t *testing.T) {
 		Timestamp:  time.Now(),
 	}
 	
-	proposalID, _ := coord.ProposeModel(ctx, proposal)
+	proposalID, err := coord.ProposeModel(ctx, proposal)
+	if err != nil {
+		t.Fatalf("Failed to propose model: %v", err)
+	}
 	
 	// Cast votes from multiple nodes
 	for i := 1; i <= 7; i++ {
@@ -151,16 +154,21 @@ func TestConsensusFailure(t *testing.T) {
 			Signature:  []byte("sig"),
 			Timestamp:  time.Now(),
 		}
-		coord.CastVote(ctx, vote)
+		if err := coord.CastVote(ctx, vote); err != nil {
+			t.Fatalf("Failed to cast vote: %v", err)
+		}
 	}
 	
-	consensus, _ := coord.CheckConsensus(proposalID)
+	consensus, err := coord.CheckConsensus(proposalID)
+	if err != nil {
+		t.Fatalf("Failed to check consensus: %v", err)
+	}
 	if consensus {
 		t.Error("Expected consensus to fail with only 5 votes out of required 7")
 	}
 	
 	// Try to commit without consensus
-	err := coord.CommitModel(ctx, proposalID)
+	err = coord.CommitModel(ctx, proposalID)
 	if err == nil {
 		t.Error("Expected error when committing without consensus")
 	}
@@ -183,7 +191,10 @@ func TestCommitModel(t *testing.T) {
 		Timestamp:  time.Now(),
 	}
 	
-	proposalID, _ := coord.ProposeModel(ctx, proposal)
+	proposalID, err := coord.ProposeModel(ctx, proposal)
+	if err != nil {
+		t.Fatalf("Failed to propose model: %v", err)
+	}
 	
 	// Cast sufficient votes
 	for i := 1; i <= 8; i++ {
@@ -194,10 +205,12 @@ func TestCommitModel(t *testing.T) {
 			Signature:  []byte("sig"),
 			Timestamp:  time.Now(),
 		}
-		coord.CastVote(ctx, vote)
+		if err := coord.CastVote(ctx, vote); err != nil {
+			t.Fatalf("Failed to cast vote: %v", err)
+		}
 	}
 	
-	err := coord.CommitModel(ctx, proposalID)
+	err = coord.CommitModel(ctx, proposalID)
 	if err != nil {
 		t.Errorf("Failed to commit model: %v", err)
 	}
@@ -220,7 +233,9 @@ func TestCoordinatorReset(t *testing.T) {
 		Timestamp:  time.Now(),
 	}
 	
-	coord.ProposeModel(ctx, proposal)
+	if _, err := coord.ProposeModel(ctx, proposal); err != nil {
+		t.Fatalf("Failed to propose model: %v", err)
+	}
 	
 	// Reset coordinator
 	coord.Reset()

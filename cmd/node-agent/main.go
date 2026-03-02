@@ -57,7 +57,11 @@ func main() {
 	if err != nil {
 		log.Fatalf("Critical Failure: Could not initialize Wasm Runner: %v", err)
 	}
-	defer runner.Close(ctx)
+	defer func() {
+		if closeErr := runner.Close(ctx); closeErr != nil {
+			log.Printf("warning: failed to close runner: %v", closeErr)
+		}
+	}()
 
 	log.Printf("Node %s successfully initialized with zk-SNARK verifier", conf.NodeID)
 

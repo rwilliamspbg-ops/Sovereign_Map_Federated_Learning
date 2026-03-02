@@ -4,6 +4,7 @@ package island
 
 import (
 	"context"
+	"log"
 	"sync"
 	"time"
 )
@@ -167,8 +168,7 @@ func (m *Manager) syncCachedUpdates() {
 	// Send updates to aggregation server if syncer is configured
 	if syncer != nil && len(updates) > 0 {
 		if err := syncer.SyncUpdates(updates); err != nil {
-			// Log error but don't re-cache updates
-			// In production, implement exponential backoff and retry logic
+			log.Printf("island sync failed: %v", err)
 		}
 	}
 }
