@@ -85,10 +85,22 @@ cd Sovereign_Map_Federated_Learning
 
 **Evidence policy:** CI badges prove build/test/security/lint/audit status on `main`. Large-scale and performance claims are treated as benchmark artifacts (not universal guarantees). See [CI_STATUS_AND_CLAIMS.md](CI_STATUS_AND_CLAIMS.md).
 
+## 🔎 Local Verification Snapshot (2026-03-02)
+
+Latest local checks on this branch:
+
+- `make lint` executes but reports `typecheck` failures due to missing Go modules (`github.com/tetratelabs/wazero`, `github.com/tetratelabs/wazero/api`).
+- `go test ./...` fails due to missing modules (`wazero`, `testify/assert`) and mismatched legacy test APIs in multiple packages (`internal/batch`, `internal/island`, `internal/p2p`, `internal/tpm`).
+
+Interpretation:
+
+- CI badge status remains the source of truth for workflow state on `main`.
+- Historical benchmark/test artifacts in this repository should not be interpreted as proof that the current working tree passes all local Go checks.
+
 ## ✅ Testnet Status
 
 **Latest Update**: Flower aggregator + Byzantine-robust strategy implemented  
-**Status**: ✅ **CI-verified for testnet workflows** (5-1000 node compose configurations available)  
+**Status**: ⚠️ **CI workflow status is badge-driven; local Go lint/test currently failing as of 2026-03-02** (compose profiles for 5-1000 nodes remain available)  
 **Deploy Profiles**: Local (2 min) | Staging (5 min) | Production-like (10 min)  
 **See**: [TESTNET_DEPLOYMENT.md](TESTNET_DEPLOYMENT.md) for complete guide  
 **Summary**: [TESTNET_READY_SUMMARY.md](TESTNET_READY_SUMMARY.md) for quick reference  

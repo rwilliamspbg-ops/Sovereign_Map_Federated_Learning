@@ -1,5 +1,7 @@
 # 🎉 COMPLETE TEST EXECUTION & DATA COLLECTION FINAL REPORT
 
+> Status note (2026-03-02): This report documents historical test executions captured on 2026-02-28. It is benchmark evidence, not a guarantee that current branch code/lint/tests pass today. For current claim boundaries and local verification status, see `CI_STATUS_AND_CLAIMS.md`.
+
 ## Executive Summary
 
 Two comprehensive federated learning tests have been executed successfully, collecting 2,500+ data points with full instrumentation of convergence metrics, system performance, TPM attestation, and NPU acceleration.
