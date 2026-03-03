@@ -104,6 +104,12 @@ class SovereignClient(fl.client.NumPyClient):
 
     def _probe_device(self, device: torch.device) -> bool:
         """Verify device is actually usable by running a tiny allocation/op."""
+        if not hasattr(torch, "zeros"):
+            logger.debug(
+                f"Node {self.node_id}: Skipping device probe for {device} (torch.zeros unavailable)"
+            )
+            return True
+
         try:
             probe = torch.zeros((1, 1), device=device)
             _ = probe + 1
