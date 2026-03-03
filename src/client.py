@@ -31,9 +31,10 @@ logger = logging.getLogger(__name__)
 # NEURAL NETWORK MODEL
 # ============================================================================
 
+
 class MNISTNet(nn.Module):
     """Simple CNN for MNIST classification."""
-    
+
     def __init__(self):
         super(MNISTNet, self).__init__()
         self.conv1 = nn.Conv2d(1, 32, 3, 1)
@@ -50,14 +51,21 @@ class MNISTNet(nn.Module):
         x = self.fc2(x)
         return F.log_softmax(x, dim=1)
 
+
 # ============================================================================
 # SOVEREIGN FL CLIENT
 # ============================================================================
 
+
 class SovereignClient(fl.client.NumPyClient):
     """Federated learning client with Byzantine and privacy support."""
-    
-    def __init__(self, node_id: int, byzantine: bool = False, server_address: str = "localhost:8080"):
+
+    def __init__(
+        self,
+        node_id: int,
+        byzantine: bool = False,
+        server_address: str = "localhost:8080",
+    ):
         self.node_id = node_id
         self.byzantine = byzantine
         self.server_address = server_address
@@ -69,27 +77,33 @@ class SovereignClient(fl.client.NumPyClient):
         self.max_samples_per_node = int(os.getenv("MAX_SAMPLES_PER_NODE", "120"))
         self.trainloader = self._load_data(node_id)
         self.optimizer = torch.optim.SGD(self.model.parameters(), lr=0.01)
-        
+
         # Differential privacy setup
         self.privacy_engine = None
         if self.enable_dp:
             self.privacy_engine = PrivacyEngine()
             try:
-                self.model, self.optimizer, self.trainloader = self.privacy_engine.make_private(
-                    module=self.model,
-                    optimizer=self.optimizer,
-                    data_loader=self.trainloader,
-                    noise_multiplier=1.1,
-                    max_grad_norm=1.0,
+                self.model, self.optimizer, self.trainloader = (
+                    self.privacy_engine.make_private(
+                        module=self.model,
+                        optimizer=self.optimizer,
+                        data_loader=self.trainloader,
+                        noise_multiplier=1.1,
+                        max_grad_norm=1.0,
+                    )
                 )
                 logger.info(f"Node {self.node_id}: Differential privacy enabled")
             except Exception as e:
-                logger.warning(f"Node {self.node_id}: Could not enable DP: {e}, continuing without privacy")
+                logger.warning(
+                    f"Node {self.node_id}: Could not enable DP: {e}, continuing without privacy"
+                )
                 self.privacy_engine = None
         else:
             logger.info(f"Node {self.node_id}: Differential privacy disabled")
-        
-        logger.info(f"Node {self.node_id}: Initialized (Byzantine={byzantine}, Device={self.device})")
+
+        logger.info(
+            f"Node {self.node_id}: Initialized (Byzantine={byzantine}, Device={self.device})"
+        )
 
     def _initialize_model_on_device(self) -> nn.Module:
         """Initialize model on selected device with safe CPU fallback."""
@@ -97,7 +111,9 @@ class SovereignClient(fl.client.NumPyClient):
         try:
             model = model.to(self.device)
         except Exception as e:
-            logger.warning(f"Node {self.node_id}: Could not initialize model on {self.device} ({e}), falling back to CPU")
+            logger.warning(
+                f"Node {self.node_id}: Could not initialize model on {self.device} ({e}), falling back to CPU"
+            )
             self.device = torch.device("cpu")
             model = model.to(self.device)
         return model
@@ -115,11 +131,17 @@ class SovereignClient(fl.client.NumPyClient):
             _ = probe + 1
             if device.type == "cuda":
                 torch.cuda.synchronize()
-            elif device.type == "npu" and hasattr(torch, "npu") and hasattr(torch.npu, "synchronize"):
+            elif (
+                device.type == "npu"
+                and hasattr(torch, "npu")
+                and hasattr(torch.npu, "synchronize")
+            ):
                 torch.npu.synchronize()
             return True
         except Exception as e:
-            logger.warning(f"Node {self.node_id}: Device probe failed for {device} ({e})")
+            logger.warning(
+                f"Node {self.node_id}: Device probe failed for {device} ({e})"
+            )
             return False
 
     def _fallback_to_cpu(self, reason: str) -> None:
@@ -147,10 +169,14 @@ class SovereignClient(fl.client.NumPyClient):
                     selected_device = torch.device(f"npu:{device_index}")
                     torch.npu.set_device(selected_device)
                     if self._probe_device(selected_device):
-                        logger.info(f"Node {self.node_id}: Using NPU device {selected_device}")
+                        logger.info(
+                            f"Node {self.node_id}: Using NPU device {selected_device}"
+                        )
                         return selected_device
             except Exception as e:
-                logger.warning(f"Node {self.node_id}: NPU requested but unavailable ({e}), falling back")
+                logger.warning(
+                    f"Node {self.node_id}: NPU requested but unavailable ({e}), falling back"
+                )
 
         if torch.cuda.is_available():
             cuda_device = torch.device("cuda:0")
@@ -163,13 +189,14 @@ class SovereignClient(fl.client.NumPyClient):
 
     def _load_data(self, node_id: int) -> DataLoader:
         """Load MNIST data with node-specific subset."""
-        transform = transforms.Compose([
-            transforms.ToTensor(),
-            transforms.Normalize((0.1307,), (0.3081,))
-        ])
+        transform = transforms.Compose(
+            [transforms.ToTensor(), transforms.Normalize((0.1307,), (0.3081,))]
+        )
 
         try:
-            dataset = datasets.MNIST('./data', train=True, download=True, transform=transform)
+            dataset = datasets.MNIST(
+                "./data", train=True, download=True, transform=transform
+            )
         except Exception as e:
             logger.warning(f"Could not download MNIST, using random data: {e}")
             # Fallback: generate random data
@@ -187,7 +214,7 @@ class SovereignClient(fl.client.NumPyClient):
     def _create_random_dataloader(self) -> DataLoader:
         """Create random data for testing."""
         from torch.utils.data import TensorDataset
-        
+
         X = torch.randn(100, 1, 28, 28)
         y = torch.randint(0, 10, (100,))
         dataset = TensorDataset(X, y)
@@ -203,7 +230,9 @@ class SovereignClient(fl.client.NumPyClient):
         state_dict = {k: torch.tensor(v) for k, v in params_dict}
         self.model.load_state_dict(state_dict, strict=False)
 
-    def fit(self, parameters: List[np.ndarray], config: Dict) -> Tuple[List[np.ndarray], int, Dict]:
+    def fit(
+        self, parameters: List[np.ndarray], config: Dict
+    ) -> Tuple[List[np.ndarray], int, Dict]:
         """Train local model."""
         self.set_parameters(parameters)
         self.model.train()
@@ -214,7 +243,7 @@ class SovereignClient(fl.client.NumPyClient):
         for epoch in range(epochs):
             epoch_loss = 0.0
             batch_count = 0
-            
+
             try:
                 for data, target in self.trainloader:
                     try:
@@ -228,7 +257,7 @@ class SovereignClient(fl.client.NumPyClient):
                     loss = F.nll_loss(output, target)
                     loss.backward()
                     self.optimizer.step()
-                    
+
                     epoch_loss += loss.item()
                     batch_count += 1
             except Exception as e:
@@ -262,28 +291,40 @@ class SovereignClient(fl.client.NumPyClient):
         if epsilon is not None:
             metrics["epsilon"] = float(epsilon)
 
-        logger.info(f"Node {self.node_id}: Training complete | Loss={metrics['avg_loss']:.4f} | Samples={num_samples}")
+        logger.info(
+            f"Node {self.node_id}: Training complete | Loss={metrics['avg_loss']:.4f} | Samples={num_samples}"
+        )
         return updated_params, num_samples, metrics
 
-    def evaluate(self, parameters: List[np.ndarray], config: Dict) -> Tuple[float, int, Dict]:
+    def evaluate(
+        self, parameters: List[np.ndarray], config: Dict
+    ) -> Tuple[float, int, Dict]:
         """Evaluate local model (optional)."""
         # For testnet, we skip local evaluation
         return 0.0, len(self.trainloader.dataset), {}
+
 
 # ============================================================================
 # MAIN
 # ============================================================================
 
+
 def main():
-    parser = argparse.ArgumentParser(description="Sovereign Map Federated Learning Client")
-    parser.add_argument('--node-id', type=int, required=True, help='Unique node ID')
-    parser.add_argument('--aggregator', type=str, required=True, help='Aggregator address (host:port)')
-    parser.add_argument('--byzantine', action='store_true', help='Run as Byzantine node')
-    
+    parser = argparse.ArgumentParser(
+        description="Sovereign Map Federated Learning Client"
+    )
+    parser.add_argument("--node-id", type=int, required=True, help="Unique node ID")
+    parser.add_argument(
+        "--aggregator", type=str, required=True, help="Aggregator address (host:port)"
+    )
+    parser.add_argument(
+        "--byzantine", action="store_true", help="Run as Byzantine node"
+    )
+
     args = parser.parse_args()
 
     # Validate aggregator address
-    if ':' not in args.aggregator:
+    if ":" not in args.aggregator:
         logger.error("Aggregator address must be in format 'host:port'")
         sys.exit(1)
 
@@ -292,9 +333,7 @@ def main():
     logger.info(f"Byzantine: {args.byzantine}")
 
     client = SovereignClient(
-        node_id=args.node_id,
-        byzantine=args.byzantine,
-        server_address=args.aggregator
+        node_id=args.node_id, byzantine=args.byzantine, server_address=args.aggregator
     )
 
     # Connect to Flower server
@@ -307,6 +346,7 @@ def main():
     except Exception as e:
         logger.error(f"Failed to connect to aggregator: {e}")
         sys.exit(1)
+
 
 if __name__ == "__main__":
     main()
