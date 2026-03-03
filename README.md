@@ -1132,6 +1132,7 @@ If you use Sovereign Map in your research, please cite:
 ### Quick Links
 
 - 📖 **Documentation**: [TESTNET_DEPLOYMENT.md](TESTNET_DEPLOYMENT.md)
+- ✅ **Integration Sign-off**: [TPM_NPU_GPU_SIGNOFF_CHECKLIST.md](TPM_NPU_GPU_SIGNOFF_CHECKLIST.md)
 - 🏗️ **Architecture**: [ARCHITECTURE.md](ARCHITECTURE.md)
 - 🔒 **Security**: [TPM_TRUST_GUIDE.md](TPM_TRUST_GUIDE.md)
 - 📊 **Monitoring**: [TPM_MONITORING_GUIDE.md](TPM_MONITORING_GUIDE.md)
