@@ -1,0 +1,11 @@
+{
+  "round_latency": {
+    "num_rounds": 3,
+    "num_nodes": 10,
+    "avg_round_latency_sec": 3.0017550786336265,
+    "std_round_latency_sec": 0.6214369829885292,
+    "min_round_latency_sec": 2.47767972946167,
+    "max_round_latency_sec": 3.874763011932373,
+    "updates_per_sec": 3.331384386147825
+  }
+}

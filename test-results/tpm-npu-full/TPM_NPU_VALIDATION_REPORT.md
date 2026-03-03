@@ -31,3 +31,12 @@
 - scenario-1-1000node.png
 - scenario-2-threshold.png
 - scenario-3-intensity.png
+
+## Throughput Test Update (20260303-195357)
+- Contention throughput: 746.9667241893808
+- Contention successful nodes: 10
+- Round avg latency (s): 3.0017550786336265
+- Round updates/sec: 3.331384386147825
+- Source files:
+  - test-results/tpm-npu-full/throughput-contention-20260303-195357.json
+  - test-results/tpm-npu-full/throughput-round-latency-20260303-195357.json

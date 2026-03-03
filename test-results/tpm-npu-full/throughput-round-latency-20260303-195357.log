@@ -1,0 +1,16 @@
+
+================================================================================
+SOVEREIGN MAP GPU ACCELERATION TEST REPORT
+================================================================================
+Timestamp: 2026-03-03T19:54:23.072452
+
+GPU/Accelerator Information:
+  CUDA Available: False
+  NPU Available: False
+
+Round Latency Benchmark (10 nodes):
+  Avg round latency: 3.002s
+  Min/Max: 2.478s / 3.875s
+  Updates/sec: 3.3
+
+================================================================================
