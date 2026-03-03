@@ -179,6 +179,11 @@ tidy:
 fmt:
 	go fmt ./...
 
+contributors-rankings:
+	@echo "🏆 Generating contributor rankings and reward points..."
+	python3 scripts/contributor_rankings.py
+	@echo "✅ Rankings generated in test-results/contributor-rankings/"
+
 lint:
 	@echo "🔍 Running linters..."
 	golangci-lint run ./...

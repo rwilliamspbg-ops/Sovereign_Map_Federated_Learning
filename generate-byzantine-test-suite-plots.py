@@ -97,8 +97,10 @@ def create_scenario_1_plots(results):
 
 def create_scenario_2_plots(results):
     """Scenario 2: Byzantine Tolerance Threshold Test"""
+    min_ratio = min(float(t['byzantine_ratio']) for t in results['scenario_2']['threshold_tests']) * 100
+    max_ratio = max(float(t['byzantine_ratio']) for t in results['scenario_2']['threshold_tests']) * 100
     fig, axes = plt.subplots(1, 2, figsize=(15, 6))
-    fig.suptitle('Scenario 2: Byzantine Tolerance Threshold Test (10%-70%)', fontsize=14, fontweight='bold')
+    fig.suptitle(f'Scenario 2: Byzantine Tolerance Threshold Test ({min_ratio:.0f}%-{max_ratio:.0f}%)', fontsize=14, fontweight='bold')
     
     ratios = [t['byzantine_ratio_pct'] for t in results['scenario_2']['threshold_tests']]
     accuracies = [t['accuracy_avg'] for t in results['scenario_2']['threshold_tests']]
@@ -116,7 +118,10 @@ def create_scenario_2_plots(results):
     ax1.set_title('Accuracy vs Byzantine Ratio', fontweight='bold')
     ax1.legend()
     ax1.grid(True, alpha=0.3, axis='y')
-    ax1.set_ylim([84, 87])
+    min_acc = min(accuracies)
+    max_acc = max(accuracies)
+    pad = max(0.5, (max_acc - min_acc) * 0.25)
+    ax1.set_ylim([max(0, min_acc - pad), min(100, max_acc + pad)])
     for i, (bar, acc) in enumerate(zip(bars1, accuracies)):
         ax1.text(bar.get_x() + bar.get_width()/2., acc, f'{acc:.2f}%', ha='center', va='bottom', fontsize=9, fontweight='bold')
     
@@ -223,7 +228,14 @@ def create_combined_summary_plot(results):
     # Scenario 2 stats box
     ax2b = fig.add_subplot(gs[1, 2])
     ax2b.axis('off')
-    s2_stats = f"S2 Results\n{'-'*20}\nRatios: 10%-70%\nTests: 7/7 PASS\nBreaking: >70%\nVERDICT: PASS"
+    ratios_s2_raw = [float(t['byzantine_ratio']) * 100 for t in results['scenario_2']['threshold_tests']]
+    s2_min = min(ratios_s2_raw)
+    s2_max = max(ratios_s2_raw)
+    s2_passed = sum(1 for t in results['scenario_2']['threshold_tests'] if t['verdict'] == 'PASS')
+    s2_total = len(results['scenario_2']['threshold_tests'])
+    s2_breaking = results['scenario_2'].get('breaking_point_pct', 'Not found in range')
+    s2_verdict = 'PASS' if s2_passed == s2_total else 'MIXED'
+    s2_stats = f"S2 Results\n{'-'*20}\nRatios: {s2_min:.0f}%-{s2_max:.0f}%\nTests: {s2_passed}/{s2_total} PASS\nBreaking: {s2_breaking}\nVERDICT: {s2_verdict}"
     ax2b.text(0.1, 0.5, s2_stats, fontsize=11, fontweight='bold', verticalalignment='center', fontfamily='monospace',
              bbox=dict(boxstyle='round', facecolor='#06A77D', alpha=0.3))
     

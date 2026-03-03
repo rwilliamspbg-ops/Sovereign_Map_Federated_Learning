@@ -32,7 +32,6 @@ def start_bft_tpm_test():
     current_test = BFTTestWithAttestations()
     
     def run_test():
-        global test_results
         try:
             results = current_test.run_full_test()
             test_results['results'] = [

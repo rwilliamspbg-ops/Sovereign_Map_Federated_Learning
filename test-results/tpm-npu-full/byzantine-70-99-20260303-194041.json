@@ -1,0 +1,320 @@
+{
+  "metadata": {
+    "timestamp": "2026-03-03T19:40:41.896364",
+    "test_suite": "Byzantine Stress Test Suite",
+    "scenarios": [
+      "1000-node 50% Byzantine",
+      "Tolerance Threshold",
+      "Attack Intensity"
+    ],
+    "total_tests": 0,
+    "threshold_ratios": [
+      0.7,
+      0.75,
+      0.8,
+      0.85,
+      0.9,
+      0.95,
+      0.99
+    ]
+  },
+  "scenario_1": {
+    "config": {
+      "total_nodes": 1000,
+      "malicious_nodes": 500,
+      "malicious_ratio": 0.5,
+      "rounds": 5,
+      "attack_type": "gradient_inversion"
+    },
+    "rounds": [
+      {
+        "round": 1,
+        "timestamp": "2026-03-03T19:40:42.109974",
+        "accuracy": {
+          "global_model": 85.99072120917603,
+          "honest_avg": 94.96834116389026,
+          "malicious_avg": 30.154288783767733
+        },
+        "detection": {
+          "byzantine_detected": 800,
+          "detection_rate": 160.0,
+          "trim_count": 100
+        },
+        "performance": {
+          "aggregation_latency_ms": 126.8157958984375,
+          "model_norm": 0.009365693131451682
+        }
+      },
+      {
+        "round": 2,
+        "timestamp": "2026-03-03T19:40:42.198739",
+        "accuracy": {
+          "global_model": 85.99068167462526,
+          "honest_avg": 95.01990886535492,
+          "malicious_avg": 29.9513060914077
+        },
+        "detection": {
+          "byzantine_detected": 800,
+          "detection_rate": 160.0,
+          "trim_count": 100
+        },
+        "performance": {
+          "aggregation_latency_ms": 81.30621910095215,
+          "model_norm": 0.009405973294352145
+        }
+      },
+      {
+        "round": 3,
+        "timestamp": "2026-03-03T19:40:42.287401",
+        "accuracy": {
+          "global_model": 85.99108800052105,
+          "honest_avg": 95.02726246899168,
+          "malicious_avg": 30.02095917220978
+        },
+        "detection": {
+          "byzantine_detected": 800,
+          "detection_rate": 160.0,
+          "trim_count": 100
+        },
+        "performance": {
+          "aggregation_latency_ms": 79.60176467895508,
+          "model_norm": 0.008992137402804192
+        }
+      },
+      {
+        "round": 4,
+        "timestamp": "2026-03-03T19:40:42.405217",
+        "accuracy": {
+          "global_model": 85.99068878567745,
+          "honest_avg": 95.05123242585744,
+          "malicious_avg": 29.8896336150999
+        },
+        "detection": {
+          "byzantine_detected": 800,
+          "detection_rate": 160.0,
+          "trim_count": 100
+        },
+        "performance": {
+          "aggregation_latency_ms": 111.00935935974121,
+          "model_norm": 0.0093987278923097
+        }
+      },
+      {
+        "round": 5,
+        "timestamp": "2026-03-03T19:40:42.511177",
+        "accuracy": {
+          "global_model": 85.99091729963378,
+          "honest_avg": 94.95813941810626,
+          "malicious_avg": 30.17099817962193
+        },
+        "detection": {
+          "byzantine_detected": 800,
+          "detection_rate": 160.0,
+          "trim_count": 100
+        },
+        "performance": {
+          "aggregation_latency_ms": 95.82138061523438,
+          "model_norm": 0.009165951961453363
+        }
+      }
+    ],
+    "passed_rounds": 5,
+    "success_rate": 100.0,
+    "summary": {
+      "avg_accuracy": 85.99081939392673,
+      "min_accuracy": 85.99068167462526,
+      "max_accuracy": 85.99108800052105,
+      "std_accuracy": 0.00015962480761405227,
+      "verdict": "PASS"
+    },
+    "execution_time_seconds": 0.6349842548370361
+  },
+  "scenario_2": {
+    "config": {
+      "total_nodes": 100,
+      "test_ratios": [
+        0.7,
+        0.75,
+        0.8,
+        0.85,
+        0.9,
+        0.95,
+        0.99
+      ],
+      "rounds_per_ratio": 3,
+      "attack_type": "gradient_inversion"
+    },
+    "threshold_tests": [
+      {
+        "byzantine_ratio": 0.7,
+        "byzantine_ratio_pct": "70%",
+        "nodes_malicious": 70,
+        "accuracy_avg": 85.97056260237618,
+        "accuracy_min": 85.96975335884656,
+        "accuracy_max": 85.97159232127446,
+        "success_rate": 100.0,
+        "passed_rounds": 3,
+        "total_rounds": 3,
+        "verdict": "PASS"
+      },
+      {
+        "byzantine_ratio": 0.75,
+        "byzantine_ratio_pct": "75%",
+        "nodes_malicious": 75,
+        "accuracy_avg": 85.96905946245367,
+        "accuracy_min": 85.968650895366,
+        "accuracy_max": 85.969496283401,
+        "success_rate": 100.0,
+        "passed_rounds": 3,
+        "total_rounds": 3,
+        "verdict": "PASS"
+      },
+      {
+        "byzantine_ratio": 0.8,
+        "byzantine_ratio_pct": "80%",
+        "nodes_malicious": 80,
+        "accuracy_avg": 85.96774674011878,
+        "accuracy_min": 85.96730655732755,
+        "accuracy_max": 85.96828447138834,
+        "success_rate": 100.0,
+        "passed_rounds": 3,
+        "total_rounds": 3,
+        "verdict": "PASS"
+      },
+      {
+        "byzantine_ratio": 0.85,
+        "byzantine_ratio_pct": "85%",
+        "nodes_malicious": 85,
+        "accuracy_avg": 85.966408624535,
+        "accuracy_min": 85.96546154385639,
+        "accuracy_max": 85.96706825991937,
+        "success_rate": 100.0,
+        "passed_rounds": 3,
+        "total_rounds": 3,
+        "verdict": "PASS"
+      },
+      {
+        "byzantine_ratio": 0.9,
+        "byzantine_ratio_pct": "90%",
+        "nodes_malicious": 90,
+        "accuracy_avg": 85.9650593069094,
+        "accuracy_min": 85.9644622876763,
+        "accuracy_max": 85.96603192921742,
+        "success_rate": 100.0,
+        "passed_rounds": 3,
+        "total_rounds": 3,
+        "verdict": "PASS"
+      },
+      {
+        "byzantine_ratio": 0.95,
+        "byzantine_ratio_pct": "95%",
+        "nodes_malicious": 95,
+        "accuracy_avg": 85.96348711576688,
+        "accuracy_min": 85.96294570633694,
+        "accuracy_max": 85.96424209414808,
+        "success_rate": 100.0,
+        "passed_rounds": 3,
+        "total_rounds": 3,
+        "verdict": "PASS"
+      },
+      {
+        "byzantine_ratio": 0.99,
+        "byzantine_ratio_pct": "99%",
+        "nodes_malicious": 99,
+        "accuracy_avg": 85.96184308901415,
+        "accuracy_min": 85.96132601240419,
+        "accuracy_max": 85.96249353382034,
+        "success_rate": 100.0,
+        "passed_rounds": 3,
+        "total_rounds": 3,
+        "verdict": "PASS"
+      }
+    ],
+    "breaking_point": null,
+    "breaking_point_pct": "Not found in range",
+    "execution_time_seconds": 0.3692762851715088
+  },
+  "scenario_3": {
+    "config": {
+      "total_nodes": 100,
+      "byzantine_ratio": 0.5,
+      "attack_strengths": [
+        0.1,
+        0.5,
+        1.0
+      ],
+      "rounds_per_strength": 5
+    },
+    "intensity_tests": [
+      {
+        "attack_strength": 0.1,
+        "attack_strength_pct": "10%",
+        "accuracy_avg": 85.96568770022535,
+        "accuracy_min": 85.96544360484687,
+        "accuracy_max": 85.96643987408454,
+        "accuracy_std": 0.0003837247886790985,
+        "degradation_from_clean": 12.034312299774655
+      },
+      {
+        "attack_strength": 0.5,
+        "attack_strength_pct": "50%",
+        "accuracy_avg": 85.9816785453738,
+        "accuracy_min": 85.98123652104069,
+        "accuracy_max": 85.98188388131581,
+        "accuracy_std": 0.00023701691729414022,
+        "degradation_from_clean": 12.018321454626204
+      },
+      {
+        "attack_strength": 1.0,
+        "attack_strength_pct": "100%",
+        "accuracy_avg": 85.97164953789613,
+        "accuracy_min": 85.97070806773608,
+        "accuracy_max": 85.97235490155026,
+        "accuracy_std": 0.000584815134148115,
+        "degradation_from_clean": 12.028350462103873
+      }
+    ],
+    "degradation_curve": [
+      {
+        "intensity": "10%",
+        "accuracy": 85.96568770022535,
+        "degradation": 12.034312299774655
+      },
+      {
+        "intensity": "50%",
+        "accuracy": 85.9816785453738,
+        "degradation": 12.018321454626204
+      },
+      {
+        "intensity": "100%",
+        "accuracy": 85.97164953789613,
+        "degradation": 12.028350462103873
+      }
+    ],
+    "execution_time_seconds": 0.1985785961151123
+  },
+  "summary": {
+    "total_test_time_seconds": 1.202864646911621,
+    "scenarios_completed": 3,
+    "scenario_1": {
+      "name": "1000-node 50% Byzantine",
+      "time_seconds": 0.6349842548370361,
+      "verdict": "PASS",
+      "accuracy": "85.99%",
+      "success_rate": "100%"
+    },
+    "scenario_2": {
+      "name": "Tolerance Threshold",
+      "time_seconds": 0.3692762851715088,
+      "breaking_point": "Not found in range",
+      "tests_passed": 7,
+      "tests_total": 7
+    },
+    "scenario_3": {
+      "name": "Attack Intensity Variation",
+      "time_seconds": 0.1985785961151123,
+      "intensity_levels": 3,
+      "accuracy_range": "85.97%-85.98%"
+    }
+  }
+}

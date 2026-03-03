@@ -36,7 +36,7 @@
     "test": "vitest run",
     "test:watch": "vitest",
     "test:ci": "vitest run --coverage --passWithNoTests",
-    "lint": "eslint src/",
+    "lint": "eslint src --ext .ts",
     "typecheck": "tsc --noEmit",
     "clean": "rm -rf dist .tsbuildinfo",
     "wasm:copy": "cp -r wasm dist/ 2>/dev/null || true"

@@ -1,0 +1,45 @@
+name: Contributor Rankings
+
+on:
+  push:
+    branches:
+      - main
+    paths-ignore:
+      - test-results/contributor-rankings/**
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  generate-rankings:
+    name: Generate Contributor Leaderboard
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Generate rankings and points
+        run: make contributors-rankings
+
+      - name: Commit updated rankings
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+
+          if git diff --quiet -- test-results/contributor-rankings; then
+            echo "No contributor ranking changes to commit"
+            exit 0
+          fi
+
+          git add test-results/contributor-rankings
+          git commit -m "chore: update contributor rankings"
+          git push

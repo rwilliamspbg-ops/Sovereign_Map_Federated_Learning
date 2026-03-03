@@ -14,7 +14,7 @@ services:
       - FLASK_DEBUG=1
       - NODE_ID=0
       - NUM_NODES=${NUM_NODES:-5}
-      - NUM_ROUNDS=${NUM_ROUNDS:-100}
+      - NUM_ROUNDS=${NUM_ROUNDS:-100000}
       - FLASK_PORT=8000
       - DATABASE_URI=mongodb://mongo:27017/sovereignmap
       - REDIS_URL=redis://redis:6379/0
@@ -107,9 +107,14 @@ services:
       - NODE_AGENT_MODE=true
       - BACKEND_URL=http://backend:8000
       - NODE_PEER_ID=dev_node_1
+      - NODE_ID=${NODE_ID:-1}
       - NPU_ENABLED=${NPU_ENABLED:-true}
+      - FORCE_CPU=true
+      - ENABLE_DP=false
+      - MAX_SAMPLES_PER_NODE=64
       - ASCEND_RT_VISIBLE_DEVICES=${ASCEND_RT_VISIBLE_DEVICES:-0}
       - ASCEND_DEVICE_ID=${ASCEND_DEVICE_ID:-0}
+    command: ["python", "-u", "src/client.py", "--node-id", "${NODE_ID:-1}", "--aggregator", "backend:8080"]
     depends_on:
       - backend
       - mongo

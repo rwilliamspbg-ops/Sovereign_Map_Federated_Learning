@@ -4,11 +4,18 @@
 package tpm
 
 import (
+	"crypto/ed25519"
 	"crypto/sha256"
 	"encoding/hex"
 	"fmt"
 	"sync"
 	"time"
+)
+
+var (
+	simulatorKeyOnce sync.Once
+	simulatorPrivKey ed25519.PrivateKey
+	simulatorPubKey  ed25519.PublicKey
 )
 
 // AttestationReport represents a complete TPM attestation
@@ -83,9 +90,12 @@ func (am *AttestationManager) GenerateAttestation(nodeID string, nonce []byte) (
 		Quote:     quote,
 		PCRValues: pcrValues,
 		Nonce:     nonce,
-		Signature: []byte("signature-stub"),  // Would be actual TPM signature
-		PublicKey: []byte("public-key-stub"), // Would be actual TPM public key
 	}
+
+	ensureSimulatorKeypair()
+	payload := buildAttestationPayload(report)
+	report.Signature = ed25519.Sign(simulatorPrivKey, payload)
+	report.PublicKey = append([]byte(nil), simulatorPubKey...)
 
 	// Generate attestation ID
 	report.AttestationID = am.generateAttestationID(report)
@@ -201,20 +211,82 @@ func (ac *AttestationCache) Set(attestationID string, report *AttestationReport,
 // Helper functions (stubs for actual TPM operations)
 
 func readPCRValues() (map[int][]byte, error) {
-	// Would read actual PCR values from TPM
+	nowBucket := time.Now().UTC().Format("2006-01-02T15")
+	pcr0 := sha256.Sum256([]byte("boot-sequence:" + nowBucket))
+	pcr1 := sha256.Sum256([]byte("kernel-state:" + nowBucket))
+	pcr7 := sha256.Sum256([]byte("secure-boot:" + nowBucket))
+
 	return map[int][]byte{
-		0: []byte("pcr0-value"),
-		1: []byte("pcr1-value"),
-		7: []byte("pcr7-value"),
+		0: pcr0[:],
+		1: pcr1[:],
+		7: pcr7[:],
 	}, nil
 }
 
 func verifyQuoteSignature(report *AttestationReport) error {
-	// Would verify actual TPM signature
+	if len(report.Signature) == 0 {
+		return fmt.Errorf("missing attestation signature")
+	}
+	if len(report.PublicKey) != ed25519.PublicKeySize {
+		return fmt.Errorf("invalid public key size: %d", len(report.PublicKey))
+	}
+	if err := Verify(report.NodeID, report.Quote); err != nil {
+		return fmt.Errorf("invalid quote: %w", err)
+	}
+
+	payload := buildAttestationPayload(report)
+	if !ed25519.Verify(ed25519.PublicKey(report.PublicKey), payload, report.Signature) {
+		return fmt.Errorf("invalid attestation signature")
+	}
 	return nil
 }
 
 func verifyPCRValues(pcrValues map[int][]byte) error {
-	// Would verify PCR values match expected state
+	if len(pcrValues) == 0 {
+		return fmt.Errorf("empty PCR values")
+	}
+
+	requiredPCRs := []int{0, 1, 7}
+	for _, pcr := range requiredPCRs {
+		value, exists := pcrValues[pcr]
+		if !exists {
+			return fmt.Errorf("missing required PCR index: %d", pcr)
+		}
+		if len(value) == 0 {
+			return fmt.Errorf("PCR %d value is empty", pcr)
+		}
+	}
+
 	return nil
+}
+
+func ensureSimulatorKeypair() {
+	simulatorKeyOnce.Do(func() {
+		seed := sha256.Sum256([]byte("sovereign-map-attestation-simulator-key-v1"))
+		simulatorPrivKey = ed25519.NewKeyFromSeed(seed[:])
+		simulatorPubKey = simulatorPrivKey.Public().(ed25519.PublicKey)
+	})
+}
+
+func buildAttestationPayload(report *AttestationReport) []byte {
+	pcrDigest := hashPCRValues(report.PCRValues)
+	payload := fmt.Sprintf(
+		"%s|%d|%x|%x|%x",
+		report.NodeID,
+		report.Timestamp.UnixNano(),
+		report.Quote,
+		report.Nonce,
+		pcrDigest,
+	)
+	return []byte(payload)
+}
+
+func hashPCRValues(pcrValues map[int][]byte) []byte {
+	hasher := sha256.New()
+	ordered := []int{0, 1, 7}
+	for _, pcr := range ordered {
+		_, _ = fmt.Fprintf(hasher, "%d", pcr)
+		hasher.Write(pcrValues[pcr])
+	}
+	return hasher.Sum(nil)
 }

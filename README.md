@@ -883,6 +883,34 @@ python generate_test_data.py --nodes 10 --rounds 100
 pytest tests/ -v --tb=short
 ```
 
+### TPM + NPU Validation (Testing Artifact Bundle)
+
+```bash
+# 1) TPM unit tests
+go test -v ./internal/tpm/...
+
+# 2) Extended Byzantine threshold sweep (70%-99%)
+python byzantine-stress-test-suite.py --threshold-ratios 70,75,80,85,90,95,99
+
+# 3) Generate visualization artifacts from latest suite JSON
+python generate-byzantine-test-suite-plots.py
+
+# 4) Run device benchmark pipeline (NPU/GPU/CPU fallback aware)
+python npu-gpu-cpu-benchmark.py --all --contention --nodes 20 --json test-results/tpm-npu-full/npu-benchmark-$(date +%Y%m%d-%H%M%S).json
+
+# 5) Package commit-ready artifacts
+tar -czf test-results/tpm-npu-full-artifacts.tar.gz -C test-results tpm-npu-full
+```
+
+Latest validation outputs are collected in:
+
+- `test-results/tpm-npu-full/TPM_NPU_VALIDATION_REPORT.md`
+- `test-results/tpm-npu-full/artifact-manifest.json`
+- `test-results/tpm-npu-full-artifacts.tar.gz`
+
+Break-point result for the 70%-99% sweep is recorded from the suite JSON under
+`scenario_2.breaking_point_pct` (`"Not found in range"` when no break occurs in tested range).
+
 ### Manual Testing
 
 ```bash

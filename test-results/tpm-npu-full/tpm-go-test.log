@@ -1,0 +1,26 @@
+=== RUN   TestNewAttestationManager
+--- PASS: TestNewAttestationManager (0.00s)
+=== RUN   TestGenerateAttestation
+--- PASS: TestGenerateAttestation (0.00s)
+=== RUN   TestVerifyAttestation
+--- PASS: TestVerifyAttestation (0.00s)
+=== RUN   TestGetVerifiedQuoteCache
+--- PASS: TestGetVerifiedQuoteCache (0.00s)
+=== RUN   TestByzantineVerification
+=== RUN   TestByzantineVerification/No_faulty_nodes
+=== RUN   TestByzantineVerification/Within_tolerance
+=== RUN   TestByzantineVerification/At_boundary
+=== RUN   TestByzantineVerification/Exceeds_tolerance
+--- PASS: TestByzantineVerification (0.00s)
+    --- PASS: TestByzantineVerification/No_faulty_nodes (0.00s)
+    --- PASS: TestByzantineVerification/Within_tolerance (0.00s)
+    --- PASS: TestByzantineVerification/At_boundary (0.00s)
+    --- PASS: TestByzantineVerification/Exceeds_tolerance (0.00s)
+=== RUN   TestPCRIntegrityChecks
+--- PASS: TestPCRIntegrityChecks (0.00s)
+=== RUN   TestConcurrentAttestations
+--- PASS: TestConcurrentAttestations (0.00s)
+=== RUN   TestAttestationReportStructure
+--- PASS: TestAttestationReportStructure (0.00s)
+PASS
+ok  	github.com/rwilliamspbg-ops/Sovereign_Map_Federated_Learning/internal/tpm	0.007s

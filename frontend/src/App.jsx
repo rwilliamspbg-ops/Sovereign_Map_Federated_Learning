@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react'
 import HUD from './HUD'
 import './App.css'
 
-const API_BASE = 'http://localhost:5000'
+const API_BASE = 'http://localhost:8000'
 
 function App() {
   const [hudData, setHudData] = useState(null)
@@ -62,6 +62,7 @@ function App() {
         fetchData(); 
       }
     } catch (err) {
+      console.error("Trigger FL round error:", err);
       setError("Failed to trigger FL round");
     }
   };
@@ -75,7 +76,27 @@ function App() {
         fetchData();
       }
     } catch (err) {
+      console.error("Enclave creation error:", err);
       setError("Enclave creation failed");
+    }
+  };
+
+  const submitVoiceQuery = async () => {
+    if (!voiceQuery.trim()) {
+      return;
+    }
+
+    try {
+      const response = await fetch(`${API_BASE}/status`);
+      if (response.ok) {
+        const status = await response.json();
+        setVoiceResponse(`System ${status.status}. Flower on ${status.flower_server_port}, Metrics API on ${status.metrics_api_port}.`);
+      } else {
+        setVoiceResponse("Unable to retrieve system status");
+      }
+    } catch (err) {
+      console.error("Voice query error:", err);
+      setVoiceResponse("Voice query failed: backend unreachable");
     }
   };
 
@@ -103,7 +124,9 @@ function App() {
         loading={loading} 
         error={error} 
         onTriggerFLRound={triggerFLRound} 
-        onCreateEnclave={createEnclave} 
+        onCreateEnclave={createEnclave}
+        onSubmitVoiceQuery={submitVoiceQuery}
+        setVoiceQuery={setVoiceQuery}
       />
 
       {metricsSummary && (

@@ -8,6 +8,7 @@ Combines 3 critical test scenarios in one session:
 """
 
 import json
+import argparse
 import numpy as np
 import time
 from datetime import datetime
@@ -76,13 +77,18 @@ class MohawkAggregator:
 
 class ByzantineStressTestSuite:
     """Comprehensive Byzantine Test Suite with 3 scenarios"""
-    def __init__(self):
+    def __init__(self, threshold_ratios: List[float] | None = None):
+        if threshold_ratios is None:
+            threshold_ratios = [0.10, 0.20, 0.30, 0.40, 0.50, 0.60, 0.70]
+
+        self.threshold_ratios = sorted(threshold_ratios)
         self.results = {
             'metadata': {
                 'timestamp': datetime.now().isoformat(),
                 'test_suite': 'Byzantine Stress Test Suite',
                 'scenarios': ['1000-node 50% Byzantine', 'Tolerance Threshold', 'Attack Intensity'],
                 'total_tests': 0,
+                'threshold_ratios': self.threshold_ratios,
             },
             'scenario_1': None,  # 1000-node 50% Byzantine
             'scenario_2': None,  # Tolerance Threshold (10%-70%)
@@ -215,14 +221,16 @@ class ByzantineStressTestSuite:
     def run_scenario_2_tolerance_threshold(self):
         """Scenario 2: Find breaking point by testing Byzantine ratios 10%-70%"""
         print("\n" + "="*90)
-        print("SCENARIO 2: BYZANTINE TOLERANCE THRESHOLD TEST (10%-70%)")
+        min_ratio = int(min(self.threshold_ratios) * 100)
+        max_ratio = int(max(self.threshold_ratios) * 100)
+        print(f"SCENARIO 2: BYZANTINE TOLERANCE THRESHOLD TEST ({min_ratio}%-{max_ratio}%)")
         print("="*90)
         print("Finding system breaking point by varying Byzantine node ratios")
-        print("Testing: 10%, 20%, 30%, 40%, 50%, 60%, 70% Byzantine nodes")
+        print("Testing:", ", ".join([f"{int(r*100)}%" for r in self.threshold_ratios]), "Byzantine nodes")
         print("="*90)
         
         total_nodes = 100  # Smaller scale for threshold testing
-        ratios = [0.10, 0.20, 0.30, 0.40, 0.50, 0.60, 0.70]
+        ratios = self.threshold_ratios
         rounds_per_ratio = 3
         
         results = {
@@ -511,8 +519,29 @@ class ByzantineStressTestSuite:
 
 def main():
     """Main execution"""
+    parser = argparse.ArgumentParser(description="Byzantine Stress Test Suite")
+    parser.add_argument(
+        "--threshold-ratios",
+        type=str,
+        default="10,20,30,40,50,60,70",
+        help="Comma-separated Byzantine ratios (percent values), e.g. 70,75,80,85,90,95,99",
+    )
+    args = parser.parse_args()
+
+    try:
+        threshold_ratios = [float(value.strip()) / 100.0 for value in args.threshold_ratios.split(",") if value.strip()]
+    except ValueError as err:
+        raise ValueError("Invalid --threshold-ratios. Use comma-separated numeric percents, e.g. 70,80,90") from err
+
+    if not threshold_ratios:
+        raise ValueError("At least one threshold ratio is required")
+
+    for ratio in threshold_ratios:
+        if ratio <= 0.0 or ratio >= 1.0:
+            raise ValueError("Each threshold ratio must be between 0 and 100 (exclusive)")
+
     # Create and run test suite
-    suite = ByzantineStressTestSuite()
+    suite = ByzantineStressTestSuite(threshold_ratios=threshold_ratios)
     results = suite.run_all_scenarios()
     
     # Save results to JSON
