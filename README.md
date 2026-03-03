@@ -1,10 +1,10 @@
 # Sovereign Map v1.0.0 - Byzantine-Tolerant Federated Learning
 
-## 🚀 Genesis Block Launch - CI-Verified Testnet Stack
+## Genesis Block Launch - CI-Verified Testnet Stack
 
-**Sovereign Map provides a CI-verified federated learning + trust/monitoring stack for testnet and research workloads.**
+**Sovereign Map provides a CI-verified federated learning and trust-monitoring stack for testnet and research workloads.**
 
-### Quick Start → Genesis Launch in 5 Minutes
+### Quick Start (5 Minutes)
 
 ```bash
 git clone https://github.com/rwilliamspbg-ops/Sovereign_Map_Federated_Learning.git
@@ -12,27 +12,28 @@ cd Sovereign_Map_Federated_Learning
 ./genesis-launch.sh
 ```
 
-**Access Professional Dashboards:**
-- 🎯 **Genesis Launch Overview**: [http://localhost:3000/d/genesis-launch-overview](http://localhost:3000/d/genesis-launch-overview)
-- 🌐 **Network Performance**: [http://localhost:3000/d/network-performance-health](http://localhost:3000/d/network-performance-health)
-- 🔒 **Consensus & Trust**: [http://localhost:3000/d/consensus-trust-monitoring](http://localhost:3000/d/consensus-trust-monitoring)
+**Access Dashboards:**
+- **Genesis Launch Overview**: [http://localhost:3000/d/genesis-launch-overview](http://localhost:3000/d/genesis-launch-overview)
+- **Network Performance**: [http://localhost:3000/d/network-performance-health](http://localhost:3000/d/network-performance-health)
+- **Consensus & Trust**: [http://localhost:3000/d/consensus-trust-monitoring](http://localhost:3000/d/consensus-trust-monitoring)
 
-**📖 Documentation:**
+**Documentation:**
 - **Quick Start**: [GENESIS_QUICK_START.md](GENESIS_QUICK_START.md) (5-minute guide)
 - **Full Guide**: [GENESIS_LAUNCH_GUIDE.md](GENESIS_LAUNCH_GUIDE.md) (comprehensive documentation)
 - **Architecture**: [ARCHITECTURE.md](ARCHITECTURE.md) (system design)
 
-**🤝 Contributing:** See [CONTRIBUTING.md](CONTRIBUTING.md) for PR checklist, CodeQL guardrails, and branch protection recommendations.
+**Contributing:** See [CONTRIBUTING.md](CONTRIBUTING.md) for PR checklist, CodeQL guardrails, and branch protection recommendations.
 
 ---
 
-## 🎖️ Status Badges
+## Status Badges
 
 ### CI Workflows (main)
 [![Build and Test](https://github.com/rwilliamspbg-ops/Sovereign_Map_Federated_Learning/actions/workflows/build.yml/badge.svg?branch=main)](https://github.com/rwilliamspbg-ops/Sovereign_Map_Federated_Learning/actions/workflows/build.yml)
 [![CodeQL Security Analysis](https://github.com/rwilliamspbg-ops/Sovereign_Map_Federated_Learning/actions/workflows/codeql-analysis.yml/badge.svg?branch=main)](https://github.com/rwilliamspbg-ops/Sovereign_Map_Federated_Learning/actions/workflows/codeql-analysis.yml)
 [![Lint Code Base](https://github.com/rwilliamspbg-ops/Sovereign_Map_Federated_Learning/actions/workflows/lint.yml/badge.svg?branch=main)](https://github.com/rwilliamspbg-ops/Sovereign_Map_Federated_Learning/actions/workflows/lint.yml)
 [![SGP-001 Audit Sync](https://github.com/rwilliamspbg-ops/Sovereign_Map_Federated_Learning/actions/workflows/audit-check.yml/badge.svg?branch=main)](https://github.com/rwilliamspbg-ops/Sovereign_Map_Federated_Learning/actions/workflows/audit-check.yml)
+[![Contributor Rankings](https://github.com/rwilliamspbg-ops/Sovereign_Map_Federated_Learning/actions/workflows/contributor-rankings.yml/badge.svg?branch=main)](https://github.com/rwilliamspbg-ops/Sovereign_Map_Federated_Learning/actions/workflows/contributor-rankings.yml)
 [![HIL Tests](https://github.com/rwilliamspbg-ops/Sovereign_Map_Federated_Learning/actions/workflows/hil-tests.yml/badge.svg?branch=main)](https://github.com/rwilliamspbg-ops/Sovereign_Map_Federated_Learning/actions/workflows/hil-tests.yml)
 [![Docker Build](https://github.com/rwilliamspbg-ops/Sovereign_Map_Federated_Learning/actions/workflows/docker-build.yml/badge.svg?branch=main)](https://github.com/rwilliamspbg-ops/Sovereign_Map_Federated_Learning/actions/workflows/docker-build.yml)
 [![Build & Deploy to Production](https://github.com/rwilliamspbg-ops/Sovereign_Map_Federated_Learning/actions/workflows/deploy.yml/badge.svg?branch=main)](https://github.com/rwilliamspbg-ops/Sovereign_Map_Federated_Learning/actions/workflows/deploy.yml)
