@@ -149,6 +149,15 @@ Blocking run:
 - Maintainer recovery steps: `CI_LINT_RECOVERY_PLAYBOOK.md`
 - Workflow hardening applied in repo: `.github/workflows/lint.yml` supports `workflow_dispatch`; default lint scope remains changed-file mode (`VALIDATE_ALL_CODEBASE: false`)
 
+Resolution status (follow-up commit):
+- Follow-up SHA: `900d663b4dc82d8f560db6fd35f107be562e5ed5`
+- Required workflow set on this SHA is ✅ green:
+  - Build and Test: https://github.com/rwilliamspbg-ops/Sovereign_Map_Federated_Learning/actions/runs/22642514627
+  - Lint Code Base: https://github.com/rwilliamspbg-ops/Sovereign_Map_Federated_Learning/actions/runs/22642514639
+  - HIL Tests: https://github.com/rwilliamspbg-ops/Sovereign_Map_Federated_Learning/actions/runs/22642514633
+  - CodeQL Security Analysis: https://github.com/rwilliamspbg-ops/Sovereign_Map_Federated_Learning/actions/runs/22642514667
+  - 🚀 Build & Deploy to Production: https://github.com/rwilliamspbg-ops/Sovereign_Map_Federated_Learning/actions/runs/22642514650
+
 ---
 
 ## Sign-off Record
