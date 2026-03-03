@@ -62,7 +62,7 @@ class SovereignClient(fl.client.NumPyClient):
         self.byzantine = byzantine
         self.server_address = server_address
         self.device = self._select_device()
-        self.model = MNISTNet().to(self.device)
+        self.model = self._initialize_model_on_device()
         self.batch_size = int(os.getenv("BATCH_SIZE", "16"))
         self.local_epochs = int(os.getenv("LOCAL_EPOCHS", "1"))
         self.enable_dp = os.getenv("ENABLE_DP", "false").lower() in ("1", "true", "yes")
@@ -91,10 +91,44 @@ class SovereignClient(fl.client.NumPyClient):
         
         logger.info(f"Node {self.node_id}: Initialized (Byzantine={byzantine}, Device={self.device})")
 
+    def _initialize_model_on_device(self) -> nn.Module:
+        """Initialize model on selected device with safe CPU fallback."""
+        model = MNISTNet()
+        try:
+            model = model.to(self.device)
+        except Exception as e:
+            logger.warning(f"Node {self.node_id}: Could not initialize model on {self.device} ({e}), falling back to CPU")
+            self.device = torch.device("cpu")
+            model = model.to(self.device)
+        return model
+
+    def _probe_device(self, device: torch.device) -> bool:
+        """Verify device is actually usable by running a tiny allocation/op."""
+        try:
+            probe = torch.zeros((1, 1), device=device)
+            _ = probe + 1
+            if device.type == "cuda":
+                torch.cuda.synchronize()
+            elif device.type == "npu" and hasattr(torch, "npu") and hasattr(torch.npu, "synchronize"):
+                torch.npu.synchronize()
+            return True
+        except Exception as e:
+            logger.warning(f"Node {self.node_id}: Device probe failed for {device} ({e})")
+            return False
+
+    def _fallback_to_cpu(self, reason: str) -> None:
+        """Move model to CPU after runtime accelerator failures."""
+        if str(self.device) == "cpu":
+            return
+        logger.warning(f"Node {self.node_id}: Falling back to CPU ({reason})")
+        self.device = torch.device("cpu")
+        self.model = self.model.to(self.device)
+
     def _select_device(self) -> torch.device:
         """Select training device with NPU/CUDA/CPU fallback."""
         force_cpu = os.getenv("FORCE_CPU", "false").lower() in ("1", "true", "yes")
         if force_cpu:
+            logger.info(f"Node {self.node_id}: FORCE_CPU enabled")
             return torch.device("cpu")
 
         npu_enabled = os.getenv("NPU_ENABLED", "true").lower() in ("1", "true", "yes")
@@ -102,17 +136,23 @@ class SovereignClient(fl.client.NumPyClient):
             try:
                 if torch.npu.is_available():
                     visible = os.getenv("ASCEND_RT_VISIBLE_DEVICES", "0")
-                    device_index = str(visible).split(",")[0].strip() or "0"
+                    device_index_raw = str(visible).split(",")[0].strip() or "0"
+                    device_index = int(device_index_raw)
                     selected_device = torch.device(f"npu:{device_index}")
                     torch.npu.set_device(selected_device)
-                    logger.info(f"Node {self.node_id}: Using NPU device {selected_device}")
-                    return selected_device
+                    if self._probe_device(selected_device):
+                        logger.info(f"Node {self.node_id}: Using NPU device {selected_device}")
+                        return selected_device
             except Exception as e:
                 logger.warning(f"Node {self.node_id}: NPU requested but unavailable ({e}), falling back")
 
         if torch.cuda.is_available():
-            return torch.device("cuda:0")
+            cuda_device = torch.device("cuda:0")
+            if self._probe_device(cuda_device):
+                logger.info(f"Node {self.node_id}: Using CUDA device {cuda_device}")
+                return cuda_device
 
+        logger.info(f"Node {self.node_id}: Using CPU device")
         return torch.device("cpu")
 
     def _load_data(self, node_id: int) -> DataLoader:
@@ -171,7 +211,12 @@ class SovereignClient(fl.client.NumPyClient):
             
             try:
                 for data, target in self.trainloader:
-                    data, target = data.to(self.device), target.to(self.device)
+                    try:
+                        data, target = data.to(self.device), target.to(self.device)
+                    except Exception as e:
+                        self._fallback_to_cpu(f"batch transfer failed: {e}")
+                        data, target = data.to(self.device), target.to(self.device)
+
                     self.optimizer.zero_grad()
                     output = self.model(data)
                     loss = F.nll_loss(output, target)
@@ -248,9 +293,9 @@ def main():
 
     # Connect to Flower server
     try:
-        fl.client.start_numpy_client(
+        fl.client.start_client(
             server_address=args.aggregator,
-            client=client,
+            client=client.to_client(),
             grpc_max_message_length=1024 * 1024 * 1024,
         )
     except Exception as e:

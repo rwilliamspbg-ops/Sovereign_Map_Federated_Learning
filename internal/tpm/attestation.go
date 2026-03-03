@@ -4,10 +4,12 @@
 package tpm
 
 import (
+	"crypto/rand"
 	"crypto/ed25519"
 	"crypto/sha256"
 	"encoding/hex"
 	"fmt"
+	"strings"
 	"sync"
 	"time"
 )
@@ -70,9 +72,18 @@ func (am *AttestationManager) GenerateAttestation(nodeID string, nonce []byte) (
 	if !am.enabled {
 		return nil, fmt.Errorf("TPM attestation is disabled")
 	}
+	if strings.TrimSpace(nodeID) == "" {
+		return nil, fmt.Errorf("node id is required")
+	}
+	if len(nonce) == 0 {
+		nonce = make([]byte, 16)
+		if _, err := rand.Read(nonce); err != nil {
+			return nil, fmt.Errorf("failed to generate fallback nonce: %w", err)
+		}
+	}
 
 	// Generate TPM quote (this would interface with actual TPM hardware)
-	quote, err := GenerateTPMQuote()
+	quote, err := generateTPMQuoteForNode(nodeID)
 	if err != nil {
 		return nil, fmt.Errorf("failed to generate TPM quote: %w", err)
 	}
@@ -116,6 +127,21 @@ func (am *AttestationManager) GenerateAttestation(nodeID string, nonce []byte) (
 func (am *AttestationManager) VerifyAttestation(report *AttestationReport) (bool, error) {
 	if !am.enabled {
 		return true, nil // Skip verification if TPM is disabled
+	}
+	if report == nil {
+		return false, fmt.Errorf("attestation report is nil")
+	}
+	if strings.TrimSpace(report.NodeID) == "" {
+		return false, fmt.Errorf("attestation node id is missing")
+	}
+	if len(report.Quote) == 0 {
+		return false, fmt.Errorf("attestation quote is missing")
+	}
+	if len(report.Nonce) == 0 {
+		return false, fmt.Errorf("attestation nonce is missing")
+	}
+	if strings.TrimSpace(report.AttestationID) == "" {
+		return false, fmt.Errorf("attestation id is missing")
 	}
 
 	// Check cache first

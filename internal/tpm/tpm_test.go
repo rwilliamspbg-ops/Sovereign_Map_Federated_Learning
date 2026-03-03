@@ -158,3 +158,33 @@ func TestAttestationReportStructure(t *testing.T) {
 		t.Error("Expected non-nil signature")
 	}
 }
+
+func TestVerifyRejectsReplay(t *testing.T) {
+	nodeID := "replay-node"
+	quote, err := generateTPMQuoteForNode(nodeID)
+	if err != nil {
+		t.Fatalf("failed to generate quote: %v", err)
+	}
+
+	if err := Verify(nodeID, quote); err != nil {
+		t.Fatalf("first verify failed unexpectedly: %v", err)
+	}
+
+	if err := Verify(nodeID, quote); err == nil {
+		t.Fatal("expected replay verify to fail")
+	}
+}
+
+func TestGenerateAttestationRejectsEmptyNodeID(t *testing.T) {
+	manager := NewAttestationManager(10, time.Minute, true)
+	if _, err := manager.GenerateAttestation("", []byte("nonce")); err == nil {
+		t.Fatal("expected empty node ID to fail")
+	}
+}
+
+func TestVerifyAttestationRejectsNil(t *testing.T) {
+	manager := NewAttestationManager(10, time.Minute, true)
+	if _, err := manager.VerifyAttestation(nil); err == nil {
+		t.Fatal("expected nil attestation to fail")
+	}
+}
