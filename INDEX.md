@@ -271,6 +271,29 @@ docker compose -f docker-compose.large-scale.yml up -d --scale node-agent=500
 docker exec sovereignmap-backend curl http://localhost:8000/convergence
 ```
 
+## 🧪 Latest Testing Snapshot (2026-03-03)
+
+### Heatmapping (Byzantine Sweep)
+
+- Ratios tested: 70%, 75%, 80%, 85%, 90%, 95%, 99%
+- Breaking point in tested range: **Not found in range**
+
+### Throughput (CPU Runtime in Current Environment)
+
+- Contention throughput (10 nodes): **746.97 samples/sec**
+- Round-latency throughput (10 nodes, 3 rounds): **3.331 updates/sec**
+- Average round latency: **3.002 sec**
+
+### Artifacts
+
+- [Validation report](test-results/tpm-npu-full/TPM_NPU_VALIDATION_REPORT.md)
+- [Artifact manifest](test-results/tpm-npu-full/artifact-manifest.json)
+- [Contention throughput JSON](test-results/tpm-npu-full/throughput-contention-20260303-195357.json)
+- [Round latency JSON](test-results/tpm-npu-full/throughput-round-latency-20260303-195357.json)
+- [Heatmapping suite log](test-results/tpm-npu-full/heatmapping-suite-20260303-195357.log)
+- [Heatmapping plot log](test-results/tpm-npu-full/heatmapping-plots-20260303-195357.log)
+- [Bundle archive](test-results/tpm-npu-full-artifacts.tar.gz)
+
 ---
 
 ## 🔍 Key Features by Profile
