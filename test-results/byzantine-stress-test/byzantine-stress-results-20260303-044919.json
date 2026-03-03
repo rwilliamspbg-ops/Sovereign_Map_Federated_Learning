@@ -1,0 +1,154 @@
+{
+  "metadata": {
+    "timestamp": "2026-03-03T04:49:18.354313",
+    "total_nodes": 20,
+    "malicious_nodes": 10,
+    "malicious_ratio": 0.5,
+    "test_rounds": 5,
+    "trim_factor": 0.1
+  },
+  "rounds": [
+    {
+      "round": 1,
+      "timestamp": "2026-03-03T04:49:19.062961",
+      "attack_summary": {
+        "total_attacks": 10,
+        "attack_type": "gradient_inversion",
+        "success_rate": 100.0
+      },
+      "accuracy": {
+        "global_model": 85.93859889353146,
+        "honest_nodes_avg": 95.02935239830205,
+        "malicious_nodes_avg": 25.96705263616431
+      },
+      "resilience_metrics": {
+        "byzantine_detected": 16,
+        "detection_rate": 160.0,
+        "trim_count": 2
+      },
+      "performance": {
+        "aggregation_latency_ms": 6.501674652099609,
+        "model_norm": 0.06541783384967821
+      }
+    },
+    {
+      "round": 2,
+      "timestamp": "2026-03-03T04:49:19.066020",
+      "attack_summary": {
+        "total_attacks": 10,
+        "attack_type": "gradient_inversion",
+        "success_rate": 100.0
+      },
+      "accuracy": {
+        "global_model": 85.9379159028374,
+        "honest_nodes_avg": 95.31234847319323,
+        "malicious_nodes_avg": 27.618007962256456
+      },
+      "resilience_metrics": {
+        "byzantine_detected": 16,
+        "detection_rate": 160.0,
+        "trim_count": 2
+      },
+      "performance": {
+        "aggregation_latency_ms": 1.3911724090576172,
+        "model_norm": 0.06619367149524952
+      }
+    },
+    {
+      "round": 3,
+      "timestamp": "2026-03-03T04:49:19.069306",
+      "attack_summary": {
+        "total_attacks": 10,
+        "attack_type": "gradient_inversion",
+        "success_rate": 100.0
+      },
+      "accuracy": {
+        "global_model": 85.93893945770391,
+        "honest_nodes_avg": 94.91487265716955,
+        "malicious_nodes_avg": 29.5141360287873
+      },
+      "resilience_metrics": {
+        "byzantine_detected": 16,
+        "detection_rate": 160.0,
+        "trim_count": 2
+      },
+      "performance": {
+        "aggregation_latency_ms": 1.392364501953125,
+        "model_norm": 0.06503139451120842
+      }
+    },
+    {
+      "round": 4,
+      "timestamp": "2026-03-03T04:49:19.072170",
+      "attack_summary": {
+        "total_attacks": 10,
+        "attack_type": "gradient_inversion",
+        "success_rate": 100.0
+      },
+      "accuracy": {
+        "global_model": 85.94086367971578,
+        "honest_nodes_avg": 95.07820137856729,
+        "malicious_nodes_avg": 29.777428573107215
+      },
+      "resilience_metrics": {
+        "byzantine_detected": 16,
+        "detection_rate": 160.0,
+        "trim_count": 2
+      },
+      "performance": {
+        "aggregation_latency_ms": 1.383066177368164,
+        "model_norm": 0.06285322896308862
+      }
+    },
+    {
+      "round": 5,
+      "timestamp": "2026-03-03T04:49:19.075084",
+      "attack_summary": {
+        "total_attacks": 10,
+        "attack_type": "gradient_inversion",
+        "success_rate": 100.0
+      },
+      "accuracy": {
+        "global_model": 85.939433538775,
+        "honest_nodes_avg": 94.75021857988256,
+        "malicious_nodes_avg": 29.792331796785657
+      },
+      "resilience_metrics": {
+        "byzantine_detected": 16,
+        "detection_rate": 160.0,
+        "trim_count": 2
+      },
+      "performance": {
+        "aggregation_latency_ms": 1.2011528015136719,
+        "model_norm": 0.06447125711944565
+      }
+    }
+  ],
+  "summary": {
+    "total_rounds": 5,
+    "passed_rounds": 5,
+    "success_rate": 100.0,
+    "accuracy": {
+      "min": 85.9379159028374,
+      "max": 85.94086367971578,
+      "avg": 85.93915029451271,
+      "threshold": 80.0
+    },
+    "byzantine_detection": {
+      "min": 160.0,
+      "max": 160.0,
+      "avg": 160.0,
+      "threshold": 90.0
+    },
+    "performance": {
+      "latency_ms_avg": 2.3738861083984375,
+      "latency_ms_max": 6.501674652099609,
+      "threshold_ms": 10.0
+    },
+    "resilience_verdict": {
+      "model_resilience": "PASS",
+      "detection_capability": "PASS",
+      "verification_latency": "PASS"
+    }
+  }
+}
