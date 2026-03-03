@@ -83,14 +83,16 @@ class SovereignClient(fl.client.NumPyClient):
         if self.enable_dp:
             self.privacy_engine = PrivacyEngine()
             try:
-                self.model, self.optimizer, self.trainloader = (
-                    self.privacy_engine.make_private(
-                        module=self.model,
-                        optimizer=self.optimizer,
-                        data_loader=self.trainloader,
-                        noise_multiplier=1.1,
-                        max_grad_norm=1.0,
-                    )
+                (
+                    self.model,
+                    self.optimizer,
+                    self.trainloader,
+                ) = self.privacy_engine.make_private(
+                    module=self.model,
+                    optimizer=self.optimizer,
+                    data_loader=self.trainloader,
+                    noise_multiplier=1.1,
+                    max_grad_norm=1.0,
                 )
                 logger.info(f"Node {self.node_id}: Differential privacy enabled")
             except Exception as e:
