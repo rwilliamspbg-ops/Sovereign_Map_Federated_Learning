@@ -32,3 +32,10 @@ This release consolidates TPM hardening, GPU/NPU/CPU auto-detection improvements
 - `1769301` — docs: add latest heatmapping and throughput test snapshot
 - `7b490c5` — docs: add heatmapping and throughput snapshot to index
 - `c7107d6` — docs: append TPM NPU testing changelog addendum
+
+## External Commit Validation (K8s 5000-node sweep)
+- Reviewed commit: `986c69bf75caa581b2db9254a6c52d108e3b064d`
+- Validation report: `COMMIT_986c69b_VALIDATION.md`
+- Evidence status:
+	- Commit, tests, results JSON, and plot artifacts are visible on GitHub for the reviewed SHA.
+	- Required workflow set is mostly green for the reviewed SHA, but not fully green due to a failed `Lint Code Base` run.

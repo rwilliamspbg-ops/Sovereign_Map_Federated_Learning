@@ -1,6 +1,7 @@
 name: Lint Code Base
 
 on:
+  workflow_dispatch:
   push:
     branches: [ main ]
   pull_request:
@@ -24,7 +25,7 @@ jobs:
       - name: Lint Code Base
         uses: super-linter/super-linter@v5
         env:
-          VALIDATE_ALL_CODEBASE: false
+          VALIDATE_ALL_CODEBASE: true
           DEFAULT_BRANCH: main
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           # Tailored to your specific repo stack

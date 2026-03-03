@@ -133,6 +133,24 @@ tar -czf test-results/tpm-npu-full-artifacts.tar.gz -C test-results tpm-npu-full
 
 ---
 
+## 8) Commit Review Snapshot (2026-03-03)
+
+Target commit reviewed:
+- `986c69bf75caa581b2db9254a6c52d108e3b064d`
+
+Validation references:
+- [x] Commit reviewed on GitHub: https://github.com/rwilliamspbg-ops/Sovereign_Map_Federated_Learning/commit/986c69bf75caa581b2db9254a6c52d108e3b064d
+- [x] Test/results/artifacts in commit are visible
+- [x] Summary report added: `COMMIT_986c69b_VALIDATION.md`
+- [ ] All workflow actions green for this SHA (blocked by failed `Lint Code Base` run)
+
+Blocking run:
+- `Lint Code Base`: https://github.com/rwilliamspbg-ops/Sovereign_Map_Federated_Learning/actions/runs/22641864585
+- Maintainer recovery steps: `CI_LINT_RECOVERY_PLAYBOOK.md`
+- Workflow hardening applied in repo: `.github/workflows/lint.yml` now uses `VALIDATE_ALL_CODEBASE: true` and supports `workflow_dispatch`
+
+---
+
 ## Sign-off Record
 
 - Release date: __________
