@@ -51,14 +51,18 @@ def assert_backend_contract(backend_source: str) -> None:
         '"metrics_api_port": 8000',
     ]
     for fragment in required_status_contract:
-        assert fragment in backend_source, f"Missing backend status contract: {fragment}"
+        assert (
+            fragment in backend_source
+        ), f"Missing backend status contract: {fragment}"
 
     required_health_contract = [
         '"tpm_verified": True',
         '"enclave_status": enclave_status',
     ]
     for fragment in required_health_contract:
-        assert fragment in backend_source, f"Missing backend health contract: {fragment}"
+        assert (
+            fragment in backend_source
+        ), f"Missing backend health contract: {fragment}"
 
 
 def main() -> int:
@@ -71,7 +75,9 @@ def main() -> int:
     node_source = NODE_CLIENT_FILE.read_text(encoding="utf-8")
     assert 'server_address: str = "localhost:8080"' in node_source
 
-    print("✅ Communication contracts validated: frontend/backend/node alignment is healthy")
+    print(
+        "✅ Communication contracts validated: frontend/backend/node alignment is healthy"
+    )
     return 0
 
 

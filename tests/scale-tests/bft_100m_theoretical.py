@@ -27,17 +27,13 @@ class UltraExtremeAggregator:
     def robust_mean_ultra(self, updates, trim_pct=0.15):
         """Minimal memory trimmed mean"""
         if len(updates) < 2:
-            return (
-                np.mean(updates, axis=0)
-                if len(updates) > 0
-                else np.zeros(16)
-            )
+            return np.mean(updates, axis=0) if len(updates) > 0 else np.zeros(16)
 
         trim_count = max(2, int(len(updates) * trim_pct))
         norms = np.linalg.norm(updates, axis=1)
         indices = np.argsort(norms)
 
-        kept_idx = indices[trim_count : -trim_count]
+        kept_idx = indices[trim_count:-trim_count]
         if len(kept_idx) == 0:
             return np.mean(updates, axis=0)
 
@@ -160,7 +156,7 @@ class TheoreticalTest100M:
         if self.bft_pct > 50:
             byzantine_excess = (self.bft_pct - 50.0) / 50.0
             linear_impact = (1.0 - honest_ratio) * 15.0
-            exponential_penalty = (byzantine_excess ** 1.5) * 8.0
+            exponential_penalty = (byzantine_excess**1.5) * 8.0
             total_impact = linear_impact + exponential_penalty
         else:
             total_impact = (1.0 - honest_ratio) * 10.0
@@ -194,9 +190,7 @@ class TheoreticalTest100M:
         for r in range(1, self.R + 1):
             acc, elapsed = self.run_round(r)
 
-            print(
-                f"  Round {r}: Accuracy {acc:5.1f}% | Time {elapsed:8.1f}s"
-            )
+            print(f"  Round {r}: Accuracy {acc:5.1f}% | Time {elapsed:8.1f}s")
 
             gc.collect()
 
@@ -286,7 +280,9 @@ def run_100m_theoretical_test():
             f"{per_round:9.1f}s    | {status}"
         )
 
-    avg_per_round = np.mean([all_results[b]["per_round_time"] for b in byzantine_levels])
+    avg_per_round = np.mean(
+        [all_results[b]["per_round_time"] for b in byzantine_levels]
+    )
 
     print(f"\n  Average Per-Round Time: {avg_per_round:.1f}s")
     print(f"  Total Suite Time: {total_suite_time:.1f}s")

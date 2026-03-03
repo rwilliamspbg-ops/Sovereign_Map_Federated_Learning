@@ -147,7 +147,7 @@ Validation references:
 Blocking run:
 - `Lint Code Base`: https://github.com/rwilliamspbg-ops/Sovereign_Map_Federated_Learning/actions/runs/22641864585
 - Maintainer recovery steps: `CI_LINT_RECOVERY_PLAYBOOK.md`
-- Workflow hardening applied in repo: `.github/workflows/lint.yml` now uses `VALIDATE_ALL_CODEBASE: true` and supports `workflow_dispatch`
+- Workflow hardening applied in repo: `.github/workflows/lint.yml` supports `workflow_dispatch`; default lint scope remains changed-file mode (`VALIDATE_ALL_CODEBASE: false`)
 
 ---
 

@@ -69,12 +69,11 @@ gh run list --branch main --workflow "Lint Code Base" --limit 5
 
 ## 4) Deterministic fallback status
 
-Status: applied in repository.
+Status: available, not default.
 
-- `.github/workflows/lint.yml` now sets `VALIDATE_ALL_CODEBASE: true`
-- Workflow now supports `workflow_dispatch` for manual maintainer reruns
-
-Effect: removes changed-file git dependency in super-linter, reducing risk of git-exit-128 failures at the cost of longer lint runtime.
+- `.github/workflows/lint.yml` keeps `VALIDATE_ALL_CODEBASE: false` for practical runtime and existing codebase compatibility.
+- Workflow supports `workflow_dispatch` for manual maintainer reruns.
+- If git-exit-128 recurs and maintainers choose strict mode, temporarily set `VALIDATE_ALL_CODEBASE: true` and address resulting formatting debt before restoring default mode.
 
 ---
 
