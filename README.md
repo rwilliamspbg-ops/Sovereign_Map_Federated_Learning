@@ -911,6 +911,22 @@ Latest validation outputs are collected in:
 Break-point result for the 70%-99% sweep is recorded from the suite JSON under
 `scenario_2.breaking_point_pct` (`"Not found in range"` when no break occurs in tested range).
 
+### Latest Heatmapping & Throughput Snapshot (2026-03-03)
+
+- Heatmapping sweep: 70%, 75%, 80%, 85%, 90%, 95%, 99% Byzantine ratios
+- Break point in tested range: `Not found in range`
+- Throughput (contention test, 10 nodes, CPU): `746.97 samples/sec`
+- Throughput (round-latency test, 10 nodes, CPU): `3.331 updates/sec`
+- Average round latency (3 rounds, 10 nodes, CPU): `3.002 sec`
+
+Reference artifacts:
+
+- `test-results/tpm-npu-full/TPM_NPU_VALIDATION_REPORT.md`
+- `test-results/tpm-npu-full/throughput-contention-20260303-195357.json`
+- `test-results/tpm-npu-full/throughput-round-latency-20260303-195357.json`
+- `test-results/tpm-npu-full/heatmapping-suite-20260303-195357.log`
+- `test-results/tpm-npu-full/heatmapping-plots-20260303-195357.log`
+
 ### Manual Testing
 
 ```bash
