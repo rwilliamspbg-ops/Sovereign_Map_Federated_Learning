@@ -1,5 +1,35 @@
 # 🎉 README & Mobile Support Complete - Session Summary
 
+## Changelog Addendum (2026-03-03)
+
+### TPM/NPU + Testing Completion
+
+- Completed TPM hardening updates in core paths:
+   - replay-aware quote verification
+   - stricter attestation input validation
+   - improved TPM error handling and guardrails
+- Migrated Flower client startup to non-deprecated API (`start_client`) in `src/client.py`.
+- Executed and captured latest test runs for:
+   - Byzantine heatmapping sweep (70%-99%)
+   - Throughput contention test
+   - Throughput round-latency test
+- Refreshed artifact bundle and manifests:
+   - `test-results/tpm-npu-full/`
+   - `test-results/tpm-npu-full-artifacts.tar.gz`
+
+### Documentation Sync
+
+- Added latest heatmapping/throughput snapshot and artifact links to:
+   - `README.md` (Testing section)
+   - `INDEX.md` (documentation hub)
+
+### Commits Pushed
+
+- `a32752f` — feat: harden TPM validation and migrate Flower client startup
+- `a7fb3d3` — test: add heatmapping and throughput artifact refresh
+- `1769301` — docs: add latest heatmapping and throughput test snapshot
+- `7b490c5` — docs: add heatmapping and throughput snapshot to index
+
 ## What Was Added
 
 ### 1. ✅ Comprehensive README Overhaul (35.8KB)
