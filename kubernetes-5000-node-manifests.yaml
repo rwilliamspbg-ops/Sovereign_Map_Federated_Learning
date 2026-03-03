@@ -1,0 +1,328 @@
+# Kubernetes 5000-Node Byzantine Test - Deployment Manifests
+
+---
+# Namespace for Byzantine Test
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: byzantine-test-5000
+  labels:
+    test: byzantine-5000-node
+    environment: test
+
+---
+# ConfigMap for test configuration
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: byzantine-config
+  namespace: byzantine-test-5000
+data:
+  byzantine_ratio: "0.5"
+  attack_type: "gradient_inversion"
+  test_rounds: "10"
+  trim_factor: "0.1"
+  model_dim: "784"
+
+---
+# Service for Byzantine Aggregator
+apiVersion: v1
+kind: Service
+metadata:
+  name: byzantine-aggregator
+  namespace: byzantine-test-5000
+  labels:
+    app: byzantine-aggregator
+spec:
+  type: ClusterIP
+  ports:
+  - name: http
+    port: 8000
+    targetPort: 8000
+  selector:
+    app: byzantine-aggregator
+
+---
+# Byzantine Aggregator Deployment
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: byzantine-aggregator
+  namespace: byzantine-test-5000
+  labels:
+    app: byzantine-aggregator
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: byzantine-aggregator
+  template:
+    metadata:
+      labels:
+        app: byzantine-aggregator
+    spec:
+      containers:
+      - name: aggregator
+        image: python:3.11-slim
+        command:
+        - /bin/bash
+        - -c
+        - |
+          pip install flask numpy -q
+          cat > /app/aggregator.py << 'PYEOF'
+          import numpy as np
+          from flask import Flask, request, jsonify
+          import json
+          from datetime import datetime
+
+          app = Flask(__name__)
+          aggregation_history = []
+
+          @app.route('/health', methods=['GET'])
+          def health():
+              return jsonify({'status': 'healthy', 'timestamp': datetime.now().isoformat()})
+
+          @app.route('/aggregate', methods=['POST'])
+          def aggregate():
+              data = request.json
+              updates = data.get('updates', [])
+              
+              if not updates:
+                  return jsonify({'error': 'No updates provided'}), 400
+              
+              weights = np.array([u['weights'] for u in updates])
+              n = len(weights)
+              trim_count = int(np.ceil(n * 0.1))
+              
+              sorted_vals = np.sort(weights, axis=0)
+              trimmed = sorted_vals[trim_count:-trim_count] if trim_count > 0 else sorted_vals
+              aggregated = np.mean(trimmed, axis=0)
+              
+              result = {
+                  'aggregated_model': aggregated.tolist(),
+                  'trim_count': int(trim_count),
+                  'total_updates': len(updates),
+                  'timestamp': datetime.now().isoformat()
+              }
+              
+              aggregation_history.append(result)
+              return jsonify(result)
+
+          @app.route('/metrics', methods=['GET'])
+          def metrics():
+              return jsonify({'total_aggregations': len(aggregation_history)})
+
+          if __name__ == '__main__':
+              app.run(host='0.0.0.0', port=8000, debug=False)
+          PYEOF
+          python /app/aggregator.py
+        ports:
+        - containerPort: 8000
+        resources:
+          requests:
+            memory: "512Mi"
+            cpu: "500m"
+          limits:
+            memory: "1Gi"
+            cpu: "1000m"
+        livenessProbe:
+          httpGet:
+            path: /health
+            port: 8000
+          initialDelaySeconds: 30
+          periodSeconds: 10
+        readinessProbe:
+          httpGet:
+            path: /health
+            port: 8000
+          initialDelaySeconds: 10
+          periodSeconds: 5
+
+---
+# Headless Service for StatefulSet
+apiVersion: v1
+kind: Service
+metadata:
+  name: byzantine-nodes
+  namespace: byzantine-test-5000
+  labels:
+    app: byzantine-node
+spec:
+  clusterIP: None
+  ports:
+  - name: metrics
+    port: 8000
+    targetPort: 8000
+  selector:
+    app: byzantine-node
+
+---
+# Byzantine Nodes StatefulSet (5000 replicas)
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: byzantine-nodes
+  namespace: byzantine-test-5000
+  labels:
+    app: byzantine-node
+spec:
+  serviceName: byzantine-nodes
+  replicas: 5000
+  selector:
+    matchLabels:
+      app: byzantine-node
+  template:
+    metadata:
+      labels:
+        app: byzantine-node
+        test: byzantine-5000-node
+    spec:
+      affinity:
+        podAntiAffinity:
+          preferredDuringSchedulingIgnoredDuringExecution:
+          - weight: 100
+            podAffinityTerm:
+              labelSelector:
+                matchExpressions:
+                - key: app
+                  operator: In
+                  values:
+                  - byzantine-node
+              topologyKey: kubernetes.io/hostname
+      containers:
+      - name: node
+        image: python:3.11-slim
+        command:
+        - /bin/bash
+        - -c
+        - |
+          pip install requests numpy -q
+          cat > /node/train.py << 'PYEOF'
+          import os
+          import json
+          import numpy as np
+          import requests
+          from datetime import datetime
+          import time
+
+          node_id = os.getenv('POD_NAME', 'unknown')
+          pod_ordinal = int(node_id.split('-')[-1]) if '-' in node_id else 0
+          
+          is_malicious = pod_ordinal < 2500  # 50% Byzantine
+          aggregator_url = 'http://byzantine-aggregator:8000'
+          
+          print(f'[NODE] {node_id} started - Malicious: {is_malicious}')
+          
+          try:
+              for round_num in range(10):
+                  honest_gradient = (np.random.randn(100) * 0.01 + 0.001).tolist()
+                  
+                  if is_malicious:
+                      gradient = [-1.0 * g for g in honest_gradient]
+                  else:
+                      gradient = honest_gradient
+                  
+                  if round_num % 5 == 0:
+                      print(f'[NODE] {node_id} round {round_num} complete')
+                  
+                  time.sleep(0.1)
+              
+              print(f'[NODE] {node_id} completed all rounds')
+          except Exception as e:
+              print(f'[ERROR] {node_id}: {e}')
+          PYEOF
+          python /node/train.py
+        env:
+        - name: POD_NAME
+          valueFrom:
+            fieldRef:
+              fieldPath: metadata.name
+        - name: NODE_NAMESPACE
+          valueFrom:
+            fieldRef:
+              fieldPath: metadata.namespace
+        resources:
+          requests:
+            memory: "128Mi"
+            cpu: "100m"
+          limits:
+            memory: "256Mi"
+            cpu: "500m"
+        livenessProbe:
+          exec:
+            command:
+            - /bin/sh
+            - -c
+            - ps aux | grep train.py | grep -v grep
+          initialDelaySeconds: 10
+          periodSeconds: 30
+      terminationGracePeriodSeconds: 10
+
+---
+# HorizontalPodAutoscaler for Byzantine Nodes
+apiVersion: autoscaling/v2
+kind: HorizontalPodAutoscaler
+metadata:
+  name: byzantine-nodes-hpa
+  namespace: byzantine-test-5000
+spec:
+  scaleTargetRef:
+    apiVersion: apps/v1
+    kind: StatefulSet
+    name: byzantine-nodes
+  minReplicas: 100
+  maxReplicas: 5000
+  metrics:
+  - type: Resource
+    resource:
+      name: cpu
+      target:
+        type: Utilization
+        averageUtilization: 80
+  - type: Resource
+    resource:
+      name: memory
+      target:
+        type: Utilization
+        averageUtilization: 80
+
+---
+# NetworkPolicy for test isolation
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: byzantine-test-network-policy
+  namespace: byzantine-test-5000
+spec:
+  podSelector: {}
+  policyTypes:
+  - Ingress
+  - Egress
+  ingress:
+  - from:
+    - namespaceSelector:
+        matchLabels:
+          test: byzantine-5000-node
+  egress:
+  - to:
+    - namespaceSelector:
+        matchLabels:
+          test: byzantine-5000-node
+
+---
+# ServiceMonitor for Prometheus (if Prometheus operator is installed)
+apiVersion: monitoring.coreos.com/v1
+kind: ServiceMonitor
+metadata:
+  name: byzantine-aggregator
+  namespace: byzantine-test-5000
+  labels:
+    app: byzantine-aggregator
+spec:
+  selector:
+    matchLabels:
+      app: byzantine-aggregator
+  endpoints:
+  - port: http
+    interval: 30s
+    path: /metrics
