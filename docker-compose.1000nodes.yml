@@ -1,0 +1,328 @@
+version: '3.9'
+
+# 1000-Node NPU Performance Test Deployment
+# Comprehensive testing for NPU effectiveness across spectrum
+
+services:
+  mongo:
+    image: mongo:7.0
+    container_name: mongo-1000
+    volumes:
+      - mongo_data_1000:/data/db
+    ports:
+      - "127.0.0.1:27017:27017"
+    environment:
+      MONGO_INITDB_ROOT_USERNAME: admin
+      MONGO_INITDB_ROOT_PASSWORD: ${MONGO_PASSWORD:-sovereignmap2026}
+      MONGO_INITDB_DATABASE: sovereignmap_1000
+    restart: always
+    healthcheck:
+      test: ["CMD", "mongosh", "--eval", "db.adminCommand('ping')"]
+      interval: 20s
+      timeout: 10s
+      retries: 3
+      start_period: 30s
+    networks:
+      - sovereignmap-1000
+    logging:
+      driver: json-file
+      options:
+        max-size: "100m"
+        max-file: "10"
+    deploy:
+      resources:
+        limits:
+          cpus: '4'
+          memory: 8G
+        reservations:
+          cpus: '2'
+          memory: 4G
+
+  redis:
+    image: redis:7-alpine
+    container_name: redis-1000
+    ports:
+      - "127.0.0.1:6379:6379"
+    restart: always
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 20s
+      timeout: 5s
+      retries: 3
+    networks:
+      - sovereignmap-1000
+    volumes:
+      - redis_data_1000:/data
+    command: redis-server --appendonly yes --maxmemory 4gb --maxmemory-policy allkeys-lru
+    logging:
+      driver: json-file
+      options:
+        max-size: "100m"
+        max-file: "10"
+    deploy:
+      resources:
+        limits:
+          cpus: '4'
+          memory: 4G
+        reservations:
+          cpus: '2'
+          memory: 2G
+
+  backend:
+    build:
+      context: .
+      dockerfile: Dockerfile.backend.optimized
+    image: sovereignmap/backend:1000-test
+    container_name: sovereignmap-backend-1000
+    ports:
+      - "8000:8000"
+      - "8080:8080"
+    environment:
+      - FLASK_ENV=production
+      - NODE_ID=backend-1000
+      - NUM_NODES=1000
+      - NUM_ROUNDS=50
+      - FLASK_PORT=8000
+      - DATABASE_URI=mongodb://admin:sovereignmap2026@mongo:27017/sovereignmap_1000?authSource=admin
+      - REDIS_URL=redis://redis:6379/0
+      - WORKERS=8
+      - NPU_ENABLED=true
+      - NPU_DEVICE_ID=0
+      - PYTHONUNBUFFERED=1
+    depends_on:
+      mongo:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    restart: always
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 60s
+    networks:
+      - sovereignmap-1000
+    volumes:
+      - backend_data_1000:/app/data
+      - ./test-results/1000-node-npu:/app/results
+    logging:
+      driver: json-file
+      options:
+        max-size: "100m"
+        max-file: "10"
+    deploy:
+      resources:
+        limits:
+          cpus: '8'
+          memory: 8G
+        reservations:
+          cpus: '4'
+          memory: 4G
+
+  frontend:
+    build:
+      context: .
+      dockerfile: Dockerfile.frontend.optimized
+    image: sovereignmap/frontend:1000-test
+    container_name: sovereignmap-frontend-1000
+    ports:
+      - "3000:80"
+    environment:
+      - NODE_ENV=production
+      - VITE_API_URL=http://localhost:8000
+      - VITE_WS_URL=ws://localhost:8000
+      - VITE_PROMETHEUS_URL=http://localhost:9090
+      - VITE_3D_QUALITY=high
+      - VITE_REAL_TIME_UPDATE_INTERVAL=1000
+    depends_on:
+      backend:
+        condition: service_healthy
+    restart: always
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost/health"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 30s
+    networks:
+      - sovereignmap-1000
+    logging:
+      driver: json-file
+      options:
+        max-size: "50m"
+        max-file: "5"
+    deploy:
+      resources:
+        limits:
+          cpus: '2'
+          memory: 2G
+        reservations:
+          cpus: '1'
+          memory: 1G
+
+  # Node Agents (1000 replicas)
+  node-agent:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    image: sovereignmap/node-agent:1000-test
+    environment:
+      - FL_SERVER_MODE=false
+      - NODE_AGENT_MODE=true
+      - BACKEND_URL=http://backend:8000
+      - PYTHONUNBUFFERED=1
+      - NPU_ENABLED=true
+      - NODE_PEER_ID={{.Node.ID}}
+      - REDIS_URL=redis://redis:6379/0
+      - DATABASE_URI=mongodb://admin:sovereignmap2026@mongo:27017/sovereignmap_1000?authSource=admin
+    depends_on:
+      backend:
+        condition: service_healthy
+      mongo:
+        condition: service_healthy
+    restart: on-failure:5
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:6000/health"]
+      interval: 60s
+      timeout: 10s
+      retries: 2
+      start_period: 60s
+    networks:
+      - sovereignmap-1000
+    logging:
+      driver: json-file
+      options:
+        max-size: "20m"
+        max-file: "3"
+    deploy:
+      replicas: 1000
+      resources:
+        limits:
+          cpus: '0.5'
+          memory: 512M
+        reservations:
+          cpus: '0.25'
+          memory: 256M
+
+  # Prometheus: Metrics collection for 1000 nodes
+  prometheus:
+    image: prom/prometheus:v2.48.0
+    container_name: prometheus-1000
+    ports:
+      - "9090:9090"
+    volumes:
+      - ./monitoring/prometheus.1000.yml:/etc/prometheus/prometheus.yml:ro
+      - prometheus_data_1000:/prometheus
+    command:
+      - '--config.file=/etc/prometheus/prometheus.yml'
+      - '--storage.tsdb.path=/prometheus'
+      - '--storage.tsdb.retention.time=90d'
+      - '--storage.tsdb.max-block-duration=4h'
+      - '--query.max-concurrency=20'
+      - '--query.timeout=5m'
+    restart: always
+    healthcheck:
+      test: ["CMD", "wget", "--quiet", "--tries=1", "--spider", "http://localhost:9090/-/healthy"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+    networks:
+      - sovereignmap-1000
+    logging:
+      driver: json-file
+      options:
+        max-size: "200m"
+        max-file: "10"
+    deploy:
+      resources:
+        limits:
+          cpus: '4'
+          memory: 8G
+        reservations:
+          cpus: '2'
+          memory: 4G
+
+  # Grafana: Visualization and dashboards
+  grafana:
+    image: grafana/grafana:10.2
+    container_name: grafana-1000
+    ports:
+      - "3001:3000"
+    environment:
+      - GF_SECURITY_ADMIN_PASSWORD=${GRAFANA_ADMIN_PASSWORD:-sovereignmap2026}
+      - GF_SECURITY_ADMIN_USER=admin
+      - GF_USERS_ALLOW_SIGN_UP=false
+      - GF_PANELS_PLUGIN_SUPPORT=enable
+      - GF_INSTALL_PLUGINS=grafana-piechart-panel,grafana-worldmap-panel-panel
+    volumes:
+      - grafana_data_1000:/var/lib/grafana
+      - ./monitoring/grafana/dashboards:/etc/grafana/provisioning/dashboards:ro
+      - ./monitoring/grafana/datasources:/etc/grafana/provisioning/datasources:ro
+    depends_on:
+      - prometheus
+    restart: always
+    healthcheck:
+      test: ["CMD", "wget", "--quiet", "--tries=1", "--spider", "http://localhost:3000/api/health"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+    networks:
+      - sovereignmap-1000
+    logging:
+      driver: json-file
+      options:
+        max-size: "100m"
+        max-file: "5"
+    deploy:
+      resources:
+        limits:
+          cpus: '2'
+          memory: 2G
+        reservations:
+          cpus: '1'
+          memory: 1G
+
+  # Alertmanager: Alert handling
+  alertmanager:
+    image: prom/alertmanager:v0.26.0
+    container_name: alertmanager-1000
+    ports:
+      - "9093:9093"
+    volumes:
+      - ./alertmanager.yml:/etc/alertmanager/alertmanager.yml:ro
+      - alertmanager_data_1000:/alertmanager
+    command:
+      - '--config.file=/etc/alertmanager/alertmanager.yml'
+      - '--storage.path=/alertmanager'
+      - '--web.external-url=http://localhost:9093'
+    restart: always
+    healthcheck:
+      test: ["CMD", "wget", "--quiet", "--tries=1", "--spider", "http://localhost:9093/-/healthy"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+    networks:
+      - sovereignmap-1000
+    logging:
+      driver: json-file
+      options:
+        max-size: "50m"
+        max-file: "5"
+
+networks:
+  sovereignmap-1000:
+    driver: bridge
+    driver_opts:
+      com.docker.network.driver.mtu: 1500
+    ipam:
+      config:
+        - subnet: 172.28.0.0/16
+
+volumes:
+  mongo_data_1000:
+  redis_data_1000:
+  backend_data_1000:
+  prometheus_data_1000:
+  grafana_data_1000:
+  alertmanager_data_1000:
