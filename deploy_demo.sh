@@ -322,7 +322,7 @@ cat > "$OUT_DIR/DEMO_REPORT.md" <<REPORT_EOF
 4. Review NPU/GPU device mapping in container
 
 ### High Memory Usage
-1. Reduce node count: `--nodes 500`
+1. Reduce node count: '--nodes 500'
 2. Check for memory leaks: `docker stats --no-stream`
 3. Cleanup old containers: `docker system prune`
 

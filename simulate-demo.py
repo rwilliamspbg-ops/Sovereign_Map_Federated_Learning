@@ -12,43 +12,44 @@ from datetime import datetime, timedelta
 from pathlib import Path
 import sys
 
+
 class SimulatedDemoGenerator:
     def __init__(self, nodes=1000, duration_minutes=10, output_dir=None):
         self.nodes = nodes
         self.duration_minutes = duration_minutes
         self.duration_seconds = duration_minutes * 60
         self.iterations = max(10, duration_minutes)
-        
+
         if output_dir is None:
-            timestamp = datetime.now().strftime('%Y%m%d-%H%M%S')
+            timestamp = datetime.now().strftime("%Y%m%d-%H%M%S")
             output_dir = f"test-results/demo-simulated/{timestamp}"
-        
+
         self.output_dir = Path(output_dir)
         self.output_dir.mkdir(parents=True, exist_ok=True)
-        
+
         # Baseline performance metrics (from documented benchmarks)
         self.baseline_metrics = {
-            'cpu_throughput': 1047,  # samples/sec
-            'gpu_throughput': 2500,  # samples/sec (2.5x speedup)
-            'npu_throughput': 4200,  # samples/sec (4.0x speedup)
-            'cpu_latency': 0.764,    # seconds per epoch
-            'training_time': 0.05,   # seconds
+            "cpu_throughput": 1047,  # samples/sec
+            "gpu_throughput": 2500,  # samples/sec (2.5x speedup)
+            "npu_throughput": 4200,  # samples/sec (4.0x speedup)
+            "cpu_latency": 0.764,  # seconds per epoch
+            "training_time": 0.05,  # seconds
         }
-        
+
         self.iteration_data = []
         self.log_entries = []
-    
-    def log(self, message, level='INFO'):
+
+    def log(self, message, level="INFO"):
         """Add log entry"""
-        timestamp = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
+        timestamp = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
         entry = f"[{timestamp}] [{level}] {message}"
         self.log_entries.append(entry)
         print(entry)
-    
+
     def generate_metrics(self):
         """Generate realistic metrics for each iteration"""
         self.log("Generating performance metrics for 1000-node network...")
-        
+
         # Simulate node startup curve (S-curve)
         def node_startup_curve(t, total_time, max_nodes):
             # Logistic function for realistic startup
@@ -56,72 +57,80 @@ class SimulatedDemoGenerator:
                 return max_nodes
             x = (t / total_time) * 6 - 3  # Map to [-3, 3]
             return int(max_nodes / (1 + math.exp(-x)))
-        
+
         # Simulate training rounds
         for iteration in range(1, self.iterations + 1):
             time_elapsed = (iteration / self.iterations) * self.duration_seconds
-            
+
             # Node availability over time (ramps up, plateaus, slight degradation)
             running_nodes = min(
                 self.nodes,
-                int(node_startup_curve(iteration, self.iterations, self.nodes) * 0.95)  # 95% peak
+                int(
+                    node_startup_curve(iteration, self.iterations, self.nodes) * 0.95
+                ),  # 95% peak
             )
-            
+
             # Add some realistic churn
             if iteration > 3:
                 running_nodes = int(running_nodes * (1 - 0.01 * random.random()))
-            
+
             # Performance metrics
-            throughput_mode = random.choice(['cpu', 'gpu', 'npu'])
-            if throughput_mode == 'gpu':
-                avg_throughput = self.baseline_metrics['gpu_throughput']
-                device_label = 'GPU'
-            elif throughput_mode == 'npu':
-                avg_throughput = self.baseline_metrics['npu_throughput']
-                device_label = 'NPU'
+            throughput_mode = random.choice(["cpu", "gpu", "npu"])
+            if throughput_mode == "gpu":
+                avg_throughput = self.baseline_metrics["gpu_throughput"]
+                device_label = "GPU"
+            elif throughput_mode == "npu":
+                avg_throughput = self.baseline_metrics["npu_throughput"]
+                device_label = "NPU"
             else:
-                avg_throughput = self.baseline_metrics['cpu_throughput']
-                device_label = 'CPU'
-            
+                avg_throughput = self.baseline_metrics["cpu_throughput"]
+                device_label = "CPU"
+
             # Scale throughput by number of active nodes (sublinear due to GIL)
             scaling_factor = math.sqrt(min(running_nodes / 10, 1.0)) + 0.5
             node_throughput = (avg_throughput / scaling_factor) * (running_nodes / 10)
-            
+
             # Latency calculations
-            round_latency = (1000 / node_throughput) + (0.05 * math.log(running_nodes / 10))
-            
+            round_latency = (1000 / node_throughput) + (
+                0.05 * math.log(running_nodes / 10)
+            )
+
             # Byzantine resilience metrics
             honest_nodes = int(running_nodes * 0.55)  # ~55% honest (45% Byzantine)
             byzantine_nodes = running_nodes - honest_nodes
-            consensus_success_rate = max(0.85, 1.0 - (byzantine_nodes / running_nodes) * 0.5)
-            
+            consensus_success_rate = max(
+                0.85, 1.0 - (byzantine_nodes / running_nodes) * 0.5
+            )
+
             # TPM attestation
             tpm_verified = int(honest_nodes * 0.98)
-            
+
             iteration_metrics = {
-                'iteration': iteration,
-                'timestamp': (datetime.now() + timedelta(seconds=time_elapsed)).isoformat(),
-                'running_nodes': running_nodes,
-                'total_nodes': self.nodes,
-                'active_percentage': (running_nodes / self.nodes) * 100,
-                'device_mode': device_label,
-                'throughput_samples_sec': round(node_throughput, 1),
-                'round_latency_sec': round(round_latency, 3),
-                'accuracy': 0.92 + (0.06 * iteration / self.iterations),  # Improving
-                'loss': 0.25 - (0.15 * iteration / self.iterations),      # Decreasing
-                'honest_nodes': honest_nodes,
-                'byzantine_nodes': byzantine_nodes,
-                'consensus_success_rate': round(consensus_success_rate, 4),
-                'tpm_verified_nodes': tpm_verified,
-                'cpu_usage_percent': 45 + (10 * random.random()),
-                'memory_usage_percent': 35 + (8 * random.random()),
-                'network_latency_ms': 2 + (1 * random.random()),
-                'container_health': 'healthy',
-                'prometheus_metrics_count': 1500 + (running_nodes * 2),
+                "iteration": iteration,
+                "timestamp": (
+                    datetime.now() + timedelta(seconds=time_elapsed)
+                ).isoformat(),
+                "running_nodes": running_nodes,
+                "total_nodes": self.nodes,
+                "active_percentage": (running_nodes / self.nodes) * 100,
+                "device_mode": device_label,
+                "throughput_samples_sec": round(node_throughput, 1),
+                "round_latency_sec": round(round_latency, 3),
+                "accuracy": 0.92 + (0.06 * iteration / self.iterations),  # Improving
+                "loss": 0.25 - (0.15 * iteration / self.iterations),  # Decreasing
+                "honest_nodes": honest_nodes,
+                "byzantine_nodes": byzantine_nodes,
+                "consensus_success_rate": round(consensus_success_rate, 4),
+                "tpm_verified_nodes": tpm_verified,
+                "cpu_usage_percent": 45 + (10 * random.random()),
+                "memory_usage_percent": 35 + (8 * random.random()),
+                "network_latency_ms": 2 + (1 * random.random()),
+                "container_health": "healthy",
+                "prometheus_metrics_count": 1500 + (running_nodes * 2),
             }
-            
+
             self.iteration_data.append(iteration_metrics)
-            
+
             # Log progress
             if iteration % 3 == 0 or iteration == 1:
                 self.log(
@@ -130,17 +139,17 @@ class SimulatedDemoGenerator:
                     f"{round(node_throughput, 0)} samples/sec ({device_label}), "
                     f"Latency: {round_latency:.3f}s"
                 )
-        
+
         self.log("[OK] Metrics generation complete")
-    
+
     def save_metrics_files(self):
         """Save metrics in iteration file format"""
         self.log("Saving metrics iteration files...")
-        
+
         for iteration_data in self.iteration_data:
-            iteration_num = iteration_data['iteration']
+            iteration_num = iteration_data["iteration"]
             filepath = self.output_dir / f"metrics-iteration-{iteration_num}.txt"
-            
+
             content = f"""# Iteration {iteration_num} at {iteration_data['timestamp']}
 
 ## Docker Container Statistics
@@ -174,96 +183,115 @@ Network Latency: {iteration_data['network_latency_ms']:.2f}ms
 CPU Usage: {iteration_data['cpu_usage_percent']:.1f}%
 Memory Usage: {iteration_data['memory_usage_percent']:.1f}%
 """
-            
-            with open(filepath, 'w') as f:
+
+            with open(filepath, "w") as f:
                 f.write(content)
-        
+
         self.log(f"[OK] Saved {len(self.iteration_data)} metrics iteration files")
-    
+
     def save_json_reports(self):
         """Save comprehensive JSON reports"""
         self.log("Generating JSON reports...")
-        
+
         # Full metrics report
         json_path = self.output_dir / "metrics-full.json"
-        with open(json_path, 'w') as f:
-            json.dump({
-                'metadata': {
-                    'nodes': self.nodes,
-                    'duration_minutes': self.duration_minutes,
-                    'iterations': self.iterations,
-                    'generated': datetime.now().isoformat(),
-                    'npu_acceleration': True,
-                    'tpm_testing': True,
+        with open(json_path, "w") as f:
+            json.dump(
+                {
+                    "metadata": {
+                        "nodes": self.nodes,
+                        "duration_minutes": self.duration_minutes,
+                        "iterations": self.iterations,
+                        "generated": datetime.now().isoformat(),
+                        "npu_acceleration": True,
+                        "tpm_testing": True,
+                    },
+                    "iterations": self.iteration_data,
                 },
-                'iterations': self.iteration_data
-            }, f, indent=2)
-        
+                f,
+                indent=2,
+            )
+
         # Summary statistics
         summary_path = self.output_dir / "summary-statistics.json"
-        
-        throughputs = [it['throughput_samples_sec'] for it in self.iteration_data]
-        latencies = [it['round_latency_sec'] for it in self.iteration_data]
-        accuracies = [it['accuracy'] for it in self.iteration_data]
-        
+
+        throughputs = [it["throughput_samples_sec"] for it in self.iteration_data]
+        latencies = [it["round_latency_sec"] for it in self.iteration_data]
+        accuracies = [it["accuracy"] for it in self.iteration_data]
+
         summary = {
-            'performance': {
-                'throughput_samples_sec': {
-                    'min': min(throughputs),
-                    'max': max(throughputs),
-                    'avg': sum(throughputs) / len(throughputs),
+            "performance": {
+                "throughput_samples_sec": {
+                    "min": min(throughputs),
+                    "max": max(throughputs),
+                    "avg": sum(throughputs) / len(throughputs),
                 },
-                'latency_sec': {
-                    'min': min(latencies),
-                    'max': max(latencies),
-                    'avg': sum(latencies) / len(latencies),
+                "latency_sec": {
+                    "min": min(latencies),
+                    "max": max(latencies),
+                    "avg": sum(latencies) / len(latencies),
                 },
-                'accuracy': {
-                    'initial': accuracies[0],
-                    'final': accuracies[-1],
-                    'improvement': accuracies[-1] - accuracies[0],
+                "accuracy": {
+                    "initial": accuracies[0],
+                    "final": accuracies[-1],
+                    "improvement": accuracies[-1] - accuracies[0],
                 },
             },
-            'scaling': {
-                'final_active_nodes': self.iteration_data[-1]['running_nodes'],
-                'total_nodes': self.nodes,
-                'utilization_percentage': (self.iteration_data[-1]['running_nodes'] / self.nodes) * 100,
+            "scaling": {
+                "final_active_nodes": self.iteration_data[-1]["running_nodes"],
+                "total_nodes": self.nodes,
+                "utilization_percentage": (
+                    self.iteration_data[-1]["running_nodes"] / self.nodes
+                )
+                * 100,
             },
-            'byzantine_resilience': {
-                'avg_consensus_success_rate': sum(it['consensus_success_rate'] for it in self.iteration_data) / len(self.iteration_data),
-                'avg_honest_nodes': sum(it['honest_nodes'] for it in self.iteration_data) / len(self.iteration_data),
-                'avg_byzantine_nodes': sum(it['byzantine_nodes'] for it in self.iteration_data) / len(self.iteration_data),
-                'avg_tpm_verified': sum(it['tpm_verified_nodes'] for it in self.iteration_data) / len(self.iteration_data),
-            }
+            "byzantine_resilience": {
+                "avg_consensus_success_rate": sum(
+                    it["consensus_success_rate"] for it in self.iteration_data
+                )
+                / len(self.iteration_data),
+                "avg_honest_nodes": sum(
+                    it["honest_nodes"] for it in self.iteration_data
+                )
+                / len(self.iteration_data),
+                "avg_byzantine_nodes": sum(
+                    it["byzantine_nodes"] for it in self.iteration_data
+                )
+                / len(self.iteration_data),
+                "avg_tpm_verified": sum(
+                    it["tpm_verified_nodes"] for it in self.iteration_data
+                )
+                / len(self.iteration_data),
+            },
         }
-        
-        with open(summary_path, 'w') as f:
+
+        with open(summary_path, "w") as f:
             json.dump(summary, f, indent=2)
-        
+
         self.log(f"[OK] JSON reports saved")
-    
+
     def save_log(self):
         """Save execution log"""
         log_path = self.output_dir / "demo.log"
-        with open(log_path, 'w') as f:
-            f.write('\n'.join(self.log_entries))
-        
+        with open(log_path, "w") as f:
+            f.write("\n".join(self.log_entries))
+
         self.log(f"[OK] Log saved to {log_path}")
-    
+
     def generate_comprehensive_report(self):
         """Generate comprehensive markdown report"""
         self.log("Generating comprehensive report...")
-        
+
         # Calculate statistics
-        throughputs = [it['throughput_samples_sec'] for it in self.iteration_data]
-        latencies = [it['round_latency_sec'] for it in self.iteration_data]
-        accuracies = [it['accuracy'] for it in self.iteration_data]
-        
+        throughputs = [it["throughput_samples_sec"] for it in self.iteration_data]
+        latencies = [it["round_latency_sec"] for it in self.iteration_data]
+        accuracies = [it["accuracy"] for it in self.iteration_data]
+
         avg_throughput = sum(throughputs) / len(throughputs)
         peak_throughput = max(throughputs)
         final_latency = latencies[-1]
         accuracy_improvement = accuracies[-1] - accuracies[0]
-        
+
         report = f"""# Sovereign Map 1000-Node Federated Learning Demo Results Report
 
 ## Executive Summary
@@ -413,60 +441,61 @@ Successfully demonstrated a production-ready 1000-node federated learning system
 Generated: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}
 Nodes: {self.nodes} | Duration: {self.duration_minutes}m | NPU: OK | TPM: OK
 """
-        
+
         report_path = self.output_dir / "COMPREHENSIVE_REPORT.md"
-        with open(report_path, 'w', encoding='utf-8') as f:
+        with open(report_path, "w", encoding="utf-8") as f:
             f.write(report)
-        
+
         self.log(f"[OK] Comprehensive report generated")
         return report
-    
+
     def run(self):
         """Run the entire simulation"""
-        self.log("="*60)
+        self.log("=" * 60)
         self.log("Sovereign Map 1000-Node Federated Learning Demo")
-        self.log("="*60)
+        self.log("=" * 60)
         self.log(f"Nodes: {self.nodes}, Duration: {self.duration_minutes}m")
         self.log(f"Output: {self.output_dir}")
-        self.log("="*60)
-        
+        self.log("=" * 60)
+
         self.generate_metrics()
         self.save_metrics_files()
         self.save_json_reports()
         report = self.generate_comprehensive_report()
         self.save_log()
-        
+
         # Print sample of report
-        print("\n" + "="*60)
+        print("\n" + "=" * 60)
         print("REPORT PREVIEW")
-        print("="*60 + "\n")
+        print("=" * 60 + "\n")
         try:
             print(report[:1500])
         except UnicodeEncodeError:
-            print(report[:1500].encode('utf-8', errors='replace').decode('utf-8'))
+            print(report[:1500].encode("utf-8", errors="replace").decode("utf-8"))
         print("\n... (see full report in output directory)")
-        
-        self.log("="*60)
+
+        self.log("=" * 60)
         self.log(f"[OK] Demo simulation complete!")
         self.log(f"[RESULTS] Output: {self.output_dir}")
-        self.log("="*60)
+        self.log("=" * 60)
+
 
 if __name__ == "__main__":
     # Parse arguments
     nodes = 1000
     duration = 10
-    
+
     if len(sys.argv) > 1:
         try:
             nodes = int(sys.argv[1])
         except ValueError:
             pass
-    
+
     if len(sys.argv) > 2:
         try:
             duration = int(sys.argv[2])
         except ValueError:
             pass
-    
+
     generator = SimulatedDemoGenerator(nodes=nodes, duration_minutes=duration)
     generator.run()

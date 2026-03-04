@@ -587,7 +587,7 @@ EOF
 
 update_makefile() {
     # Backup existing Makefile
-    cp Makefile Makefile.backup.$(date +%s) 2>/dev/null || true
+    cp Makefile "Makefile.backup.$(date +%s)" 2>/dev/null || true
     
     cat >> Makefile << 'EOF'
 

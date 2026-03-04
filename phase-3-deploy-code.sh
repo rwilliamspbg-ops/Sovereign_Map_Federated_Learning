@@ -37,6 +37,7 @@ echo "✓ Aggregator is online. Starting parallel node launch across cluster..."
 for IP in $CLIENT_IPS; do
     (
         echo "📲 [Host $IP] Deploying 25 nodes..."
+        # shellcheck disable=SC2087
         ssh -i "$KEY_PATH" -o StrictHostKeyChecking=no -J ubuntu@"$AGGREGATOR_IP" ubuntu@"$IP" << EOF
             sudo apt-get update && sudo apt-get install -y docker.io docker-compose
             

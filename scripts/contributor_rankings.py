@@ -41,10 +41,14 @@ def parse_args() -> argparse.Namespace:
         description="Generate contributor rankings and reward points from git history"
     )
     parser.add_argument("--repo", default=".", help="Path to git repository")
-    parser.add_argument("--branch", default="HEAD", help="Branch or revision range root")
+    parser.add_argument(
+        "--branch", default="HEAD", help="Branch or revision range root"
+    )
     parser.add_argument("--since", default="30 days ago", help="Git --since value")
     parser.add_argument("--until", default="now", help="Git --until value")
-    parser.add_argument("--top", type=int, default=25, help="Top N contributors to include")
+    parser.add_argument(
+        "--top", type=int, default=25, help="Top N contributors to include"
+    )
     parser.add_argument(
         "--output-json",
         default="test-results/contributor-rankings/contributor_rankings.json",
@@ -137,7 +141,9 @@ def build_rankings(log_output: str, top_n: int) -> list[ContributorStats]:
     return ranking[:top_n]
 
 
-def write_json(path: Path, rankings: list[ContributorStats], since: str, until: str) -> None:
+def write_json(
+    path: Path, rankings: list[ContributorStats], since: str, until: str
+) -> None:
     payload = {
         "generated_on": date.today().isoformat(),
         "window": {"since": since, "until": until},
@@ -166,7 +172,9 @@ def write_json(path: Path, rankings: list[ContributorStats], since: str, until: 
     path.write_text(json.dumps(payload, indent=2), encoding="utf-8")
 
 
-def write_markdown(path: Path, rankings: list[ContributorStats], since: str, until: str) -> None:
+def write_markdown(
+    path: Path, rankings: list[ContributorStats], since: str, until: str
+) -> None:
     lines = [
         "# Contributor Rankings & Reward Points",
         "",

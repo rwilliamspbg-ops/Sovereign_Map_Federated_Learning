@@ -110,6 +110,6 @@ log "Certificates available at: $CERT_DIR"
 
 # If a command is provided, run it
 if [ $# -gt 0 ]; then
-    log "Running command: $@"
+    log "Running command: $*"
     exec "$@"
 fi

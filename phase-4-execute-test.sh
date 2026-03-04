@@ -153,6 +153,7 @@ for CLIENT_IP in ${CLIENT_IPS}; do
     fi
 
     # Start client
+    # shellcheck disable=SC2087
     ssh -i ~/.ssh/${KEY_NAME}.pem -o StrictHostKeyChecking=no -o ConnectTimeout=10 ubuntu@${CLIENT_IP} << CLIENTCMD &
         cd /opt/sovereign-fl
         aws s3 cp s3://${S3_BUCKET}/code/client.py .

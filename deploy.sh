@@ -5,7 +5,6 @@
 set -e
 
 PROFILE="${1:-dev}"
-PROJECT_NAME="sovereignmap"
 
 # Color output
 GREEN='\033[0;32m'

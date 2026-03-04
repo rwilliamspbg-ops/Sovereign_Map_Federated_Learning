@@ -240,7 +240,8 @@ monitor_health() {
     fi
     
     # Check node count
-    local active_nodes=$(docker ps --filter "name=node" --format "{{.Names}}" | wc -l)
+    local active_nodes
+    active_nodes=$(docker ps --filter "name=node" --format "{{.Names}}" | wc -l)
     log_info "Active nodes: $active_nodes / $MIN_NODES"
     
     if [ "$active_nodes" -ge "$MIN_NODES" ]; then
@@ -319,10 +320,14 @@ start_monitoring() {
         
         # Get metrics from backend
         if curl -s http://localhost:8000/api/metrics > /tmp/metrics.json 2>/dev/null; then
-            local accuracy=$(jq -r '.accuracy // "N/A"' /tmp/metrics.json 2>/dev/null || echo "N/A")
-            local loss=$(jq -r '.loss // "N/A"' /tmp/metrics.json 2>/dev/null || echo "N/A")
-            local round=$(jq -r '.round // "N/A"' /tmp/metrics.json 2>/dev/null || echo "N/A")
-            local nodes=$(jq -r '.active_nodes // "N/A"' /tmp/metrics.json 2>/dev/null || echo "N/A")
+            local accuracy
+            local loss
+            local round
+            local nodes
+            accuracy=$(jq -r '.accuracy // "N/A"' /tmp/metrics.json 2>/dev/null || echo "N/A")
+            loss=$(jq -r '.loss // "N/A"' /tmp/metrics.json 2>/dev/null || echo "N/A")
+            round=$(jq -r '.round // "N/A"' /tmp/metrics.json 2>/dev/null || echo "N/A")
+            nodes=$(jq -r '.active_nodes // "N/A"' /tmp/metrics.json 2>/dev/null || echo "N/A")
             
             echo -e "  ${CYAN}Round:${NC}          $round"
             echo -e "  ${CYAN}Accuracy:${NC}       $accuracy"

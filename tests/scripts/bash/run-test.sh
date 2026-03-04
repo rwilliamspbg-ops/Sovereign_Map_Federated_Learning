@@ -71,7 +71,7 @@ run_phase_4() {
 
 run_phase_5() {
     echo "Running Phase 5: Results Capture"
-    RESULTS_DIR=$(ls -td results-* 2>/dev/null | head -1)
+    RESULTS_DIR=$(find . -maxdepth 1 -type d -name 'results-*' -printf '%T@ %f\n' 2>/dev/null | sort -nr | head -1 | awk '{print $2}')
     if [[ -z "$RESULTS_DIR" ]]; then
         echo "Error: No results directory found"
         exit 1

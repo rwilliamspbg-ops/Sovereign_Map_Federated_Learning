@@ -14,59 +14,60 @@ from pathlib import Path
 import numpy as np
 from typing import Dict, List, Tuple
 
+
 class KubernetesByzantineTestSuite:
     """Orchestrates 5000-node Byzantine test on Kubernetes"""
-    
+
     def __init__(self, namespace="byzantine-test", nodes_count=5000):
         self.namespace = namespace
         self.nodes_count = nodes_count
         self.results = {
-            'metadata': {
-                'timestamp': datetime.now().isoformat(),
-                'test_suite': 'Kubernetes 5000-Node Byzantine Test',
-                'namespace': namespace,
-                'total_nodes': nodes_count,
-                'platform': 'Kubernetes',
+            "metadata": {
+                "timestamp": datetime.now().isoformat(),
+                "test_suite": "Kubernetes 5000-Node Byzantine Test",
+                "namespace": namespace,
+                "total_nodes": nodes_count,
+                "platform": "Kubernetes",
             },
-            'deployment': {},
-            'scaling': {},
-            'resilience': {},
-            'summary': {}
+            "deployment": {},
+            "scaling": {},
+            "resilience": {},
+            "summary": {},
         }
-    
+
     def create_namespace(self):
         """Create Kubernetes namespace for tests"""
         print(f"\n[SETUP] Creating namespace: {self.namespace}")
-        
+
         namespace_yaml = {
-            'apiVersion': 'v1',
-            'kind': 'Namespace',
-            'metadata': {
-                'name': self.namespace,
-                'labels': {'test': 'byzantine-5000-node'}
-            }
+            "apiVersion": "v1",
+            "kind": "Namespace",
+            "metadata": {
+                "name": self.namespace,
+                "labels": {"test": "byzantine-5000-node"},
+            },
         }
-        
+
         cmd = f"kubectl create namespace {self.namespace} --dry-run=client -o yaml | kubectl apply -f -"
         subprocess.run(cmd, shell=True, capture_output=True)
-        
+
         time.sleep(2)
         print(f"[OK] Namespace created: {self.namespace}")
-        
+
         return True
-    
+
     def create_configmap(self):
         """Create ConfigMap with test configuration"""
         print(f"\n[SETUP] Creating ConfigMap with test configuration")
-        
+
         config = {
-            'byzantine_ratio': 0.5,
-            'attack_type': 'gradient_inversion',
-            'test_rounds': 10,
-            'trim_factor': 0.1,
-            'model_dim': 784,
+            "byzantine_ratio": 0.5,
+            "attack_type": "gradient_inversion",
+            "test_rounds": 10,
+            "trim_factor": 0.1,
+            "model_dim": 784,
         }
-        
+
         # Create ConfigMap using kubectl
         cmd = f"""
 kubectl create configmap byzantine-config \
@@ -79,13 +80,13 @@ kubectl create configmap byzantine-config \
 """
         subprocess.run(cmd, shell=True, capture_output=True)
         print(f"[OK] ConfigMap created")
-        
+
         return True
-    
+
     def create_aggregator_service(self):
         """Create aggregator service for Byzantine nodes"""
         print(f"\n[SETUP] Creating aggregator service")
-        
+
         # Create a simple aggregator service
         aggregator_yaml = f"""
 apiVersion: v1
@@ -197,42 +198,44 @@ if __name__ == '__main__':
           initialDelaySeconds: 10
           periodSeconds: 5
 """
-        
+
         # Apply aggregator deployment
         result = subprocess.run(
             f"kubectl apply -f - --namespace={self.namespace}",
             input=aggregator_yaml,
             shell=True,
             text=True,
-            capture_output=True
+            capture_output=True,
         )
-        
+
         # Wait for aggregator to be ready
         print("[SETUP] Waiting for aggregator to be ready...")
         time.sleep(5)
-        
+
         for i in range(30):
             result = subprocess.run(
                 f"kubectl get deployment byzantine-aggregator -n {self.namespace} -o jsonpath='{{.status.readyReplicas}}'",
                 shell=True,
                 capture_output=True,
-                text=True
+                text=True,
             )
             if result.stdout == "1":
                 print(f"[OK] Aggregator service ready")
                 return True
             time.sleep(1)
-        
+
         print(f"[WARNING] Aggregator not ready after 30s, proceeding anyway")
         return True
-    
+
     def scale_byzantine_nodes(self, node_count: int, byzantine_ratio: float):
         """Deploy Byzantine nodes as Kubernetes StatefulSet"""
-        print(f"\n[DEPLOYMENT] Scaling to {node_count} nodes ({int(node_count * byzantine_ratio)} malicious)")
-        
+        print(
+            f"\n[DEPLOYMENT] Scaling to {node_count} nodes ({int(node_count * byzantine_ratio)} malicious)"
+        )
+
         num_malicious = int(node_count * byzantine_ratio)
         num_honest = node_count - num_malicious
-        
+
         deployment_yaml = f"""
 apiVersion: apps/v1
 kind: StatefulSet
@@ -314,263 +317,280 @@ print(f'[NODE] {{node_id}} completed all rounds')
             memory: "256Mi"
             cpu: "500m"
 """
-        
+
         # Apply StatefulSet
         result = subprocess.run(
             f"kubectl apply -f - --namespace={self.namespace}",
             input=deployment_yaml,
             shell=True,
             text=True,
-            capture_output=True
+            capture_output=True,
         )
-        
+
         if result.returncode != 0:
             print(f"[ERROR] Failed to deploy StatefulSet: {result.stderr}")
             return False
-        
+
         print(f"[OK] StatefulSet deployed with {node_count} replicas")
-        
+
         # Wait for nodes to be ready
         print(f"[DEPLOYMENT] Waiting for {node_count} nodes to be ready...")
-        
+
         start_time = time.time()
         for i in range(300):  # 5 minute timeout
             result = subprocess.run(
                 f"kubectl get statefulset byzantine-nodes -n {self.namespace} -o jsonpath='{{.status.readyReplicas}}'",
                 shell=True,
                 capture_output=True,
-                text=True
+                text=True,
             )
-            
+
             try:
                 ready = int(result.stdout) if result.stdout else 0
                 if i % 10 == 0:
                     print(f"  [{i}s] Ready: {ready}/{node_count}")
-                
+
                 if ready == node_count:
                     elapsed = time.time() - start_time
                     print(f"[OK] All {node_count} nodes ready in {elapsed:.1f}s")
-                    self.results['deployment']['nodes_deployed'] = node_count
-                    self.results['deployment']['deployment_time'] = elapsed
+                    self.results["deployment"]["nodes_deployed"] = node_count
+                    self.results["deployment"]["deployment_time"] = elapsed
                     return True
             except:
                 pass
-            
+
             time.sleep(1)
-        
-        print(f"[WARNING] Timeout waiting for all nodes, proceeding with available nodes")
+
+        print(
+            f"[WARNING] Timeout waiting for all nodes, proceeding with available nodes"
+        )
         return True
-    
+
     def run_byzantine_resilience_test(self):
         """Execute Byzantine resilience test on deployed nodes"""
         print(f"\n[TEST] Running Byzantine resilience test")
-        
+
         # Get pod information
         result = subprocess.run(
             f"kubectl get pods -n {self.namespace} -l app=byzantine-node -o json",
             shell=True,
             capture_output=True,
-            text=True
+            text=True,
         )
-        
-        pods = json.loads(result.stdout).get('items', [])
-        ready_pods = [p for p in pods if p['status']['containerStatuses'][0]['ready']]
-        
+
+        pods = json.loads(result.stdout).get("items", [])
+        ready_pods = [p for p in pods if p["status"]["containerStatuses"][0]["ready"]]
+
         print(f"[TEST] Found {len(ready_pods)} ready pods")
-        
+
         # Simulate aggregation rounds
         test_results = {
-            'rounds': [],
-            'nodes_tested': len(ready_pods),
+            "rounds": [],
+            "nodes_tested": len(ready_pods),
         }
-        
+
         for round_num in range(5):
-            print(f"\n[ROUND {round_num + 1}] Collecting gradients from {len(ready_pods)} nodes")
-            
+            print(
+                f"\n[ROUND {round_num + 1}] Collecting gradients from {len(ready_pods)} nodes"
+            )
+
             # Simulate gradient collection and aggregation
             collected_updates = []
             for i, pod in enumerate(ready_pods):
                 is_malicious = i < int(self.nodes_count * 0.5)
-                
+
                 # Generate gradient
                 honest_gradient = np.random.randn(100) * 0.01 + 0.001
                 if is_malicious:
                     gradient = -1.0 * honest_gradient
                 else:
                     gradient = honest_gradient
-                
-                collected_updates.append({
-                    'pod': pod['metadata']['name'],
-                    'weights': gradient.tolist(),
-                    'malicious': is_malicious
-                })
-            
+
+                collected_updates.append(
+                    {
+                        "pod": pod["metadata"]["name"],
+                        "weights": gradient.tolist(),
+                        "malicious": is_malicious,
+                    }
+                )
+
             # Perform trimmed mean aggregation
-            weights_array = np.array([u['weights'] for u in collected_updates])
+            weights_array = np.array([u["weights"] for u in collected_updates])
             n = len(weights_array)
             trim_count = int(np.ceil(n * 0.1))
-            
+
             sorted_vals = np.sort(weights_array, axis=0)
-            trimmed = sorted_vals[trim_count:-trim_count] if trim_count > 0 else sorted_vals
+            trimmed = (
+                sorted_vals[trim_count:-trim_count] if trim_count > 0 else sorted_vals
+            )
             aggregated_model = np.mean(trimmed, axis=0)
-            
+
             # Calculate metrics
             model_norm = np.linalg.norm(aggregated_model)
             if model_norm > 5.0:
                 accuracy = max(20.0, 98.0 - (model_norm * 10))
             else:
                 accuracy = min(98.0, 85.0 + (1.0 / (1.0 + model_norm)))
-            
-            num_malicious = sum(1 for u in collected_updates if u['malicious'])
+
+            num_malicious = sum(1 for u in collected_updates if u["malicious"])
             detected = len(collected_updates) - 2 * trim_count if trim_count > 0 else 0
-            detection_rate = (detected / num_malicious * 100) if num_malicious > 0 else 0
-            
+            detection_rate = (
+                (detected / num_malicious * 100) if num_malicious > 0 else 0
+            )
+
             round_result = {
-                'round': round_num + 1,
-                'nodes_contributed': len(collected_updates),
-                'accuracy': float(accuracy),
-                'detection_rate': float(detection_rate),
-                'trim_count': int(trim_count),
-                'model_norm': float(model_norm),
+                "round": round_num + 1,
+                "nodes_contributed": len(collected_updates),
+                "accuracy": float(accuracy),
+                "detection_rate": float(detection_rate),
+                "trim_count": int(trim_count),
+                "model_norm": float(model_norm),
             }
-            
-            test_results['rounds'].append(round_result)
-            
-            print(f"  Accuracy: {accuracy:.2f}% | Detection: {detection_rate:.1f}% | Nodes: {len(collected_updates)}")
-        
-        self.results['resilience'] = test_results
+
+            test_results["rounds"].append(round_result)
+
+            print(
+                f"  Accuracy: {accuracy:.2f}% | Detection: {detection_rate:.1f}% | Nodes: {len(collected_updates)}"
+            )
+
+        self.results["resilience"] = test_results
         return test_results
-    
+
     def collect_metrics(self):
         """Collect Kubernetes metrics"""
         print(f"\n[METRICS] Collecting Kubernetes resource metrics")
-        
+
         # Get node metrics
         node_result = subprocess.run(
-            f"kubectl get nodes -o json",
-            shell=True,
-            capture_output=True,
-            text=True
+            f"kubectl get nodes -o json", shell=True, capture_output=True, text=True
         )
-        nodes = json.loads(node_result.stdout).get('items', [])
-        
+        nodes = json.loads(node_result.stdout).get("items", [])
+
         metrics = {
-            'kubernetes_nodes': len(nodes),
-            'deployment_namespace': self.namespace,
+            "kubernetes_nodes": len(nodes),
+            "deployment_namespace": self.namespace,
         }
-        
+
         # Get pod metrics
         pod_result = subprocess.run(
             f"kubectl get pods -n {self.namespace} -o json",
             shell=True,
             capture_output=True,
-            text=True
+            text=True,
         )
-        pods = json.loads(pod_result.stdout).get('items', [])
-        
-        running_pods = len([p for p in pods if p['status']['phase'] == 'Running'])
-        ready_pods = len([p for p in pods if all(c['ready'] for c in p['status']['containerStatuses'])])
-        
-        metrics['deployed_pods'] = len(pods)
-        metrics['running_pods'] = running_pods
-        metrics['ready_pods'] = ready_pods
-        
-        self.results['scaling'] = metrics
+        pods = json.loads(pod_result.stdout).get("items", [])
+
+        running_pods = len([p for p in pods if p["status"]["phase"] == "Running"])
+        ready_pods = len(
+            [
+                p
+                for p in pods
+                if all(c["ready"] for c in p["status"]["containerStatuses"])
+            ]
+        )
+
+        metrics["deployed_pods"] = len(pods)
+        metrics["running_pods"] = running_pods
+        metrics["ready_pods"] = ready_pods
+
+        self.results["scaling"] = metrics
         print(f"[OK] Metrics collected: {len(pods)} pods deployed, {ready_pods} ready")
-        
+
         return metrics
-    
+
     def cleanup(self):
         """Clean up Kubernetes resources"""
         print(f"\n[CLEANUP] Removing namespace {self.namespace}")
-        
+
         subprocess.run(
             f"kubectl delete namespace {self.namespace}",
             shell=True,
-            capture_output=True
+            capture_output=True,
         )
-        
+
         print(f"[OK] Namespace deleted")
-    
+
     def run_full_test(self, cleanup_after=False):
         """Execute full test suite"""
-        print("\n" + "="*90)
+        print("\n" + "=" * 90)
         print("KUBERNETES 5000-NODE BYZANTINE STRESS TEST")
-        print("="*90)
-        
+        print("=" * 90)
+
         try:
             # Setup
             self.create_namespace()
             self.create_configmap()
             self.create_aggregator_service()
-            
+
             # Deployment
             self.scale_byzantine_nodes(self.nodes_count, byzantine_ratio=0.5)
-            
+
             # Test
             self.collect_metrics()
             test_results = self.run_byzantine_resilience_test()
-            
+
             # Summary
             self._generate_summary()
-            
-            print("\n" + "="*90)
+
+            print("\n" + "=" * 90)
             print("TEST COMPLETE")
-            print("="*90)
-            
+            print("=" * 90)
+
         finally:
             if cleanup_after:
                 self.cleanup()
-    
+
     def _generate_summary(self):
         """Generate test summary"""
         summary = {
-            'status': 'COMPLETE',
-            'total_time': datetime.now().isoformat(),
-            'nodes_deployed': self.results['deployment'].get('nodes_deployed', 0),
-            'nodes_ready': self.results['scaling'].get('ready_pods', 0),
-            'test_rounds': len(self.results['resilience'].get('rounds', [])),
+            "status": "COMPLETE",
+            "total_time": datetime.now().isoformat(),
+            "nodes_deployed": self.results["deployment"].get("nodes_deployed", 0),
+            "nodes_ready": self.results["scaling"].get("ready_pods", 0),
+            "test_rounds": len(self.results["resilience"].get("rounds", [])),
         }
-        
-        if self.results['resilience'].get('rounds'):
-            accuracies = [r['accuracy'] for r in self.results['resilience']['rounds']]
-            summary['avg_accuracy'] = float(np.mean(accuracies))
-            summary['min_accuracy'] = float(min(accuracies))
-            summary['max_accuracy'] = float(max(accuracies))
-            summary['verdict'] = 'PASS' if np.mean(accuracies) > 80.0 else 'FAIL'
-        
-        self.results['summary'] = summary
-        
+
+        if self.results["resilience"].get("rounds"):
+            accuracies = [r["accuracy"] for r in self.results["resilience"]["rounds"]]
+            summary["avg_accuracy"] = float(np.mean(accuracies))
+            summary["min_accuracy"] = float(min(accuracies))
+            summary["max_accuracy"] = float(max(accuracies))
+            summary["verdict"] = "PASS" if np.mean(accuracies) > 80.0 else "FAIL"
+
+        self.results["summary"] = summary
+
         print(f"\nSUMMARY:")
         print(f"  Nodes Deployed: {summary.get('nodes_deployed', 'N/A')}")
         print(f"  Nodes Ready: {summary.get('nodes_ready', 'N/A')}")
         print(f"  Test Rounds: {summary.get('test_rounds', 'N/A')}")
         print(f"  Avg Accuracy: {summary.get('avg_accuracy', 'N/A'):.2f}%")
         print(f"  Verdict: {summary.get('verdict', 'N/A')}")
-    
+
     def save_results(self, output_file: str = None):
         """Save results to JSON"""
         if not output_file:
             output_file = f"test-results/kubernetes-5000-node/k8s-test-{datetime.now().strftime('%Y%m%d-%H%M%S')}.json"
-        
+
         Path(output_file).parent.mkdir(parents=True, exist_ok=True)
-        
-        with open(output_file, 'w') as f:
+
+        with open(output_file, "w") as f:
             json.dump(self.results, f, indent=2)
-        
+
         print(f"\n[OK] Results saved to: {output_file}")
-        
+
         return output_file
 
 
 def main():
     """Main execution"""
     # Create test suite
-    suite = KubernetesByzantineTestSuite(namespace="byzantine-test-5000", nodes_count=5000)
-    
+    suite = KubernetesByzantineTestSuite(
+        namespace="byzantine-test-5000", nodes_count=5000
+    )
+
     # Run test (with cleanup after)
     suite.run_full_test(cleanup_after=False)  # Set to True to cleanup after test
-    
+
     # Save results
     suite.save_results()
 

@@ -281,6 +281,7 @@ def add_cors_headers(response):
     response.headers["Access-Control-Allow-Methods"] = "GET,POST,OPTIONS"
     return response
 
+
 # Prometheus metrics
 fl_rounds_total = Counter("sovereignmap_fl_rounds_total", "Completed FL rounds")
 fl_accuracy_gauge = Gauge("sovereignmap_fl_accuracy", "Current FL model accuracy %")
@@ -297,14 +298,17 @@ enclave_status = "Not initialized"
 
 @app.route("/health", methods=["GET"])
 def health():
-    return jsonify(
-        {
-            "status": "healthy",
-            "service": "metrics-api",
-            "enclave_status": enclave_status,
-            "tpm_verified": True,
-        }
-    ), 200
+    return (
+        jsonify(
+            {
+                "status": "healthy",
+                "service": "metrics-api",
+                "enclave_status": enclave_status,
+                "tpm_verified": True,
+            }
+        ),
+        200,
+    )
 
 
 @app.route("/founders", methods=["GET"])
@@ -319,13 +323,18 @@ def hud_data():
     if strategy is not None and strategy.convergence_history["accuracies"]:
         current_accuracy = strategy.convergence_history["accuracies"][-1]
 
-    return jsonify(
-        {
-            "last_audit_accuracy": f"{current_accuracy:.2f}%",
-            "bft_resilience": "55.5% Verified",
-            "dao_signatures": len(dao.founding_signatures) if dao else len(FOUNDERS),
-        }
-    ), 200
+    return (
+        jsonify(
+            {
+                "last_audit_accuracy": f"{current_accuracy:.2f}%",
+                "bft_resilience": "55.5% Verified",
+                "dao_signatures": len(dao.founding_signatures)
+                if dao
+                else len(FOUNDERS),
+            }
+        ),
+        200,
+    )
 
 
 @app.route("/trigger_fl", methods=["POST"])
