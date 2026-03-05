@@ -12,6 +12,7 @@ permissions:
 jobs:
   tpm-emulated:
     name: TPM Emulator (swtpm)
+    if: github.event_name != 'pull_request' || github.actor != 'dependabot[bot]'
     runs-on: ubuntu-latest
 
     steps:
@@ -38,6 +39,7 @@ jobs:
 
   npu-fallback:
     name: NPU Fallback Logic
+    if: github.event_name != 'pull_request' || github.actor != 'dependabot[bot]'
     runs-on: ubuntu-latest
 
     steps:

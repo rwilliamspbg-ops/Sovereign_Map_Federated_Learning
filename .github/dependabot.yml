@@ -4,34 +4,58 @@ updates:
     directory: "/"
     schedule:
       interval: "weekly"
-    open-pull-requests-limit: 10
+    open-pull-requests-limit: 3
+    groups:
+      github-actions-updates:
+        patterns:
+          - "*"
 
   - package-ecosystem: "npm"
     directory: "/"
     schedule:
       interval: "weekly"
-    open-pull-requests-limit: 10
+    open-pull-requests-limit: 3
+    groups:
+      npm-root-updates:
+        patterns:
+          - "*"
 
   - package-ecosystem: "npm"
     directory: "/packages/core"
     schedule:
       interval: "weekly"
-    open-pull-requests-limit: 10
+    open-pull-requests-limit: 3
+    groups:
+      npm-core-updates:
+        patterns:
+          - "*"
 
   - package-ecosystem: "npm"
     directory: "/packages/privacy"
     schedule:
       interval: "weekly"
-    open-pull-requests-limit: 10
+    open-pull-requests-limit: 3
+    groups:
+      npm-privacy-updates:
+        patterns:
+          - "*"
 
   - package-ecosystem: "pip"
     directory: "/"
     schedule:
       interval: "weekly"
-    open-pull-requests-limit: 10
+    open-pull-requests-limit: 3
+    groups:
+      pip-root-updates:
+        patterns:
+          - "*"
 
   - package-ecosystem: "gomod"
     directory: "/"
     schedule:
       interval: "weekly"
-    open-pull-requests-limit: 10
+    open-pull-requests-limit: 3
+    groups:
+      gomod-updates:
+        patterns:
+          - "*"
