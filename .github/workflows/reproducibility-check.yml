@@ -1,0 +1,50 @@
+name: Reproducibility Check
+
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+    branches:
+      - main
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  reproducibility:
+    name: Clone Reproducibility
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup Go
+        uses: actions/setup-go@v5
+        with:
+          go-version-file: go.mod
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+          cache: npm
+          cache-dependency-path: |
+            package-lock.json
+            packages/core/package-lock.json
+            packages/privacy/package-lock.json
+
+      - name: Validate Go test reproducibility
+        run: go test ./...
+
+      - name: Validate npm lockfile reproducibility
+        run: |
+          npm ci
+          npm --prefix packages/core ci
+          npm --prefix packages/privacy ci
+
+      - name: Validate compose configuration reproducibility
+        run: |
+          docker compose -f docker-compose.production.yml config >/dev/null
+          docker compose -f docker-compose.1000nodes.yml config >/dev/null
