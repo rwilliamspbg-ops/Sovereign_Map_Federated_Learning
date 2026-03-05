@@ -6,6 +6,8 @@ Thanks for contributing.
 
 Before opening or merging a PR, confirm all items below:
 
+Use the repository PR template at `.github/pull_request_template.md` when opening PRs.
+
 - [ ] CI workflows pass on your branch
 - [ ] Security checks pass (including CodeQL)
 - [ ] Documentation is updated for any behavior/config changes
