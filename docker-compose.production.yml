@@ -1,5 +1,3 @@
-version: '3.9'
-
 services:
   # Backend: Federated Learning Aggregator + Flask Metrics API
   backend:

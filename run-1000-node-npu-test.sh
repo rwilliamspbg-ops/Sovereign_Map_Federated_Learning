@@ -560,7 +560,11 @@ Assisted-By: cagent" \
     -m "Artifacts: plots, logs, metrics, reports" 2>/dev/null || true
 
 echo "  • Pushing to remote repository..."
-git push -u origin main 2>/dev/null || echo "⚠️  Git push skipped (not configured)"
+if [ "${ALLOW_GIT_PUSH:-false}" = "true" ]; then
+    git push -u origin main 2>/dev/null || echo "⚠️  Git push failed (not configured or rejected)"
+else
+    echo "⚠️  Git push skipped (set ALLOW_GIT_PUSH=true to enable)"
+fi
 
 echo "✅ Artifacts packaged and committed"
 echo ""

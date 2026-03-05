@@ -172,7 +172,11 @@ git commit -m "1000-Node NPU Performance Test - %TIMESTAMP%" ^
   -m "" ^
   -m "Assisted-By: cagent" 2>nul || echo ⚠️  Commit skipped
 
-git push -u origin main 2>nul || echo ⚠️  Push skipped
+if /I "%ALLOW_GIT_PUSH%"=="true" (
+  git push -u origin main 2>nul || echo ⚠️  Push failed
+) else (
+  echo ⚠️  Push skipped ^(set ALLOW_GIT_PUSH=true to enable^)
+)
 
 REM =============================================================================
 REM Final Summary

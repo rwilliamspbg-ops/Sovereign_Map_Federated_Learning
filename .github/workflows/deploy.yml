@@ -176,7 +176,7 @@ jobs:
       
       - name: Deploy to staging via SSH
         if: steps.staging_inputs.outputs.ready == 'true'
-        uses: appleboy/ssh-action@master
+        uses: appleboy/ssh-action@7eaf76671a0d7eec5d98ee897acda4f968735a17 # v1.2.0
         env:
           STAGING_MONGO_PASSWORD: ${{ secrets.STAGING_MONGO_PASSWORD }}
           STAGING_REDIS_PASSWORD: ${{ secrets.STAGING_REDIS_PASSWORD }}
@@ -326,7 +326,7 @@ jobs:
       
       - name: Deploy to production via SSH
         if: steps.prod_inputs.outputs.ready == 'true'
-        uses: appleboy/ssh-action@master
+        uses: appleboy/ssh-action@7eaf76671a0d7eec5d98ee897acda4f968735a17 # v1.2.0
         env:
           MONGO_PASSWORD: ${{ secrets.MONGO_PASSWORD }}
           REDIS_PASSWORD: ${{ secrets.REDIS_PASSWORD }}
@@ -409,7 +409,7 @@ jobs:
     
     steps:
       - name: Rollback to previous version
-        uses: appleboy/ssh-action@master
+        uses: appleboy/ssh-action@7eaf76671a0d7eec5d98ee897acda4f968735a17 # v1.2.0
         with:
           host: ${{ secrets.PROD_HOST }}
           username: ${{ secrets.DEPLOY_USER }}
