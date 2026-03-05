@@ -51,4 +51,6 @@ At minimum, require these checks:
 - `CodeQL Security Analysis / Analyze Code (go)`
 - `CodeQL Security Analysis / Analyze Code (javascript-typescript)`
 - `CodeQL Security Analysis / Analyze Code (python)`
+- `Reproducibility Check / Clone Reproducibility`
+- `Workflow Action Pin Check / Enforce SHA-Pinned Actions`
 - Your primary build/test workflow checks

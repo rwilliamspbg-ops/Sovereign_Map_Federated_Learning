@@ -44,6 +44,8 @@ Success criteria:
 
 GitHub Actions workflow `.github/workflows/reproducibility-check.yml` runs the same `make smoke` command after setting up Go and Node.
 
+Workflow policy guard `.github/workflows/workflow-action-pin-check.yml` ensures workflow actions remain pinned to immutable commit SHAs.
+
 ## Troubleshooting
 
 - npm lockfile issues:
