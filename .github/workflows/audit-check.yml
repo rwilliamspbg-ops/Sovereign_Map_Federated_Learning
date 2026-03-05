@@ -11,7 +11,7 @@ jobs:
   audit-validation:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd
 
       - name: SGP-001 Standards Check
         run: |
@@ -35,7 +35,7 @@ jobs:
   lint-scripts:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd
       - name: Run ShellCheck
         run: |
           # 1. Fix the SC2087 warning by quoting the EOF

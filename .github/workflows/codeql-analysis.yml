@@ -31,10 +31,10 @@ jobs:
     
     steps:
     - name: Checkout repository
-      uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5
+      uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd
 
     - name: Initialize CodeQL
-      uses: github/codeql-action/init@3b054500189c7b3ca9be7cd4f035ca58c00776cd
+      uses: github/codeql-action/init@ae9ef3a1d2e3413523c3741725c30064970cc0d4
       with:
         languages: ${{ matrix.language }}
         config-file: ./.github/codeql/codeql-config.yml
@@ -42,27 +42,27 @@ jobs:
         
     - name: Setup Go
       if: matrix.language == 'go'
-      uses: actions/setup-go@40f1582b2485089dde7abd97c1529aa768e1baff
+      uses: actions/setup-go@4b73464bb391d4059bd26b0524d20df3927bd417
       with:
         go-version: '1.23'
         
     - name: Setup Node.js
       if: matrix.language == 'javascript-typescript'
-      uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020
+      uses: actions/setup-node@53b83947a5a98c8d113130e565377fae1a50d02f
       with:
         node-version: '20'
         
     - name: Setup Python
       if: matrix.language == 'python'
-      uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065
+      uses: actions/setup-python@a309ff8b426b58ec0e2a45f0f869d46889d02405
       with:
         python-version: '3.12'
 
     # Autobuild for Go, JavaScript, Python
     - name: Autobuild
-      uses: github/codeql-action/autobuild@3b054500189c7b3ca9be7cd4f035ca58c00776cd
+      uses: github/codeql-action/autobuild@ae9ef3a1d2e3413523c3741725c30064970cc0d4
 
     - name: Perform CodeQL Analysis
-      uses: github/codeql-action/analyze@3b054500189c7b3ca9be7cd4f035ca58c00776cd
+      uses: github/codeql-action/analyze@ae9ef3a1d2e3413523c3741725c30064970cc0d4
       with:
         category: "/language:${{matrix.language}}"
