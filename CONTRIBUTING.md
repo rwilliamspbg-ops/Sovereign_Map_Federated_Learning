@@ -55,4 +55,5 @@ At minimum, require these checks:
 - `CodeQL Security Analysis / Analyze Code (python)`
 - `Reproducibility Check / Clone Reproducibility`
 - `Workflow Action Pin Check / Enforce SHA-Pinned Actions`
+- `Governance Check / Governance Integrity`
 - Your primary build/test workflow checks

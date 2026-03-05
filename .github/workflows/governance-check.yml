@@ -1,0 +1,60 @@
+name: Governance Check
+
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+    branches:
+      - main
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  governance:
+    name: Governance Integrity
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4
+
+      - name: Validate required governance files
+        run: |
+          set -e
+          required_files=(
+            ".github/CODEOWNERS"
+            ".github/dependabot.yml"
+            ".github/pull_request_template.md"
+            ".github/workflows/secret-scan.yml"
+            ".github/workflows/reproducibility-check.yml"
+            ".github/workflows/workflow-action-pin-check.yml"
+          )
+
+          for file in "${required_files[@]}"; do
+            if [ ! -f "$file" ]; then
+              echo "Missing required governance file: $file"
+              exit 1
+            fi
+          done
+
+          echo "All required governance files are present."
+
+      - name: Validate CODEOWNERS coverage
+        run: |
+          set -e
+          grep -q '^\.github/workflows/' .github/CODEOWNERS
+          grep -q '^\.github/dependabot\.yml' .github/CODEOWNERS
+          grep -q '^\.github/SECURITY\.md' .github/CODEOWNERS
+          echo "CODEOWNERS has required security/governance coverage."
+
+      - name: Validate Dependabot coverage
+        run: |
+          set -e
+          grep -q 'package-ecosystem: "github-actions"' .github/dependabot.yml
+          grep -q 'package-ecosystem: "gomod"' .github/dependabot.yml
+          grep -q 'package-ecosystem: "pip"' .github/dependabot.yml
+          grep -q 'package-ecosystem: "npm"' .github/dependabot.yml
+          echo "Dependabot ecosystems are configured."
