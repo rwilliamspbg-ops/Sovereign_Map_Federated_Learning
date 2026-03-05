@@ -21,6 +21,7 @@ cd Sovereign_Map_Federated_Learning
 - **Quick Start**: [GENESIS_QUICK_START.md](GENESIS_QUICK_START.md) (5-minute guide)
 - **Full Guide**: [GENESIS_LAUNCH_GUIDE.md](GENESIS_LAUNCH_GUIDE.md) (comprehensive documentation)
 - **Architecture**: [ARCHITECTURE.md](ARCHITECTURE.md) (system design)
+- **Reproducibility**: [REPRODUCIBLE_SETUP.md](REPRODUCIBLE_SETUP.md) (clone and smoke-check workflow)
 
 **Contributing:** See [CONTRIBUTING.md](CONTRIBUTING.md) for PR checklist, CodeQL guardrails, and branch protection recommendations.
 

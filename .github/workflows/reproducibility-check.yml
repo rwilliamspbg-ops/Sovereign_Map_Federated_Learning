@@ -40,16 +40,5 @@ jobs:
             packages/core/package-lock.json
             packages/privacy/package-lock.json
 
-      - name: Validate Go test reproducibility
-        run: go test ./...
-
-      - name: Validate npm lockfile reproducibility
-        run: |
-          npm ci
-          npm --prefix packages/core ci
-          npm --prefix packages/privacy ci
-
-      - name: Validate compose configuration reproducibility
-        run: |
-          docker compose -f docker-compose.production.yml config >/dev/null
-          docker compose -f docker-compose.1000nodes.yml config >/dev/null
+      - name: Validate reproducibility smoke profile
+        run: make smoke
