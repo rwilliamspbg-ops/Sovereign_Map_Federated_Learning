@@ -22,11 +22,11 @@
     "bench": "vitest bench"
   },
   "dependencies": {
-    "libsodium-wrappers": "^0.7.11",
+    "libsodium-wrappers": "^0.8.2",
     "ml-matrix": "^6.10.6"
   },
   "devDependencies": {
-    "@types/libsodium-wrappers": "^0.7.11",
+    "@types/libsodium-wrappers": "^0.8.2",
     "typescript": "^5.3.3"
   }
 }
