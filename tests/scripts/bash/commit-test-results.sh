@@ -3,7 +3,6 @@
 
 set -e
 
-TEST_RESULTS_DIR="${1:-.}"
 COMMIT_MESSAGE_FILE="/tmp/commit_message.txt"
 
 echo "🔍 Locating test results..."
@@ -73,8 +72,8 @@ echo ""
 # Stage test results
 echo "📂 Staging test results..."
 git add "$LATEST_TEST"
-git add Sovereign_Map_Federated_Learning/test-config.env
-git add Sovereign_Map_Federated_Learning/test-incremental-scale.sh
+git add test-config.env
+git add test-incremental-scale.sh
 
 # Show staged files
 echo ""

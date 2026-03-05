@@ -6,6 +6,7 @@ FROM python:3.11-slim as builder
 WORKDIR /build
 
 # Install build tools (minimal set)
+# hadolint ignore=DL3008
 RUN apt-get update && apt-get install -y --no-install-recommends \
     build-essential \
     libssl-dev \
@@ -26,6 +27,7 @@ FROM python:3.11-slim
 WORKDIR /app
 
 # Install minimal runtime dependencies
+# hadolint ignore=DL3008
 RUN apt-get update && apt-get install -y --no-install-recommends \
     curl \
     ca-certificates \

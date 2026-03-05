@@ -69,35 +69,26 @@ while true; do
   fi
 
   conv_json=$(curl -sS http://localhost:8000/convergence || echo '{}')
-  round=$(python3 - <<'PY'
-import json,sys
+  round=$(python3 -c 'import json,sys
 try:
- d=json.loads(sys.stdin.read() or '{}')
- print(int(d.get('current_round',0)))
+ d=json.loads(sys.stdin.read() or "{}")
+ print(int(d.get("current_round",0)))
 except Exception:
- print(0)
-PY
-<<< "$conv_json")
+ print(0)' <<< "$conv_json")
 
-  acc=$(python3 - <<'PY'
-import json,sys
+  acc=$(python3 -c 'import json,sys
 try:
- d=json.loads(sys.stdin.read() or '{}')
- print(d.get('current_accuracy',''))
+ d=json.loads(sys.stdin.read() or "{}")
+ print(d.get("current_accuracy",""))
 except Exception:
- print('')
-PY
-<<< "$conv_json")
+ print("")' <<< "$conv_json")
 
-  loss=$(python3 - <<'PY'
-import json,sys
+  loss=$(python3 -c 'import json,sys
 try:
- d=json.loads(sys.stdin.read() or '{}')
- print(d.get('current_loss',''))
+ d=json.loads(sys.stdin.read() or "{}")
+ print(d.get("current_loss",""))
 except Exception:
- print('')
-PY
-<<< "$conv_json")
+ print("")' <<< "$conv_json")
 
   if (( round < LAST_ROUND )); then
     RESETS=$((RESETS+1))

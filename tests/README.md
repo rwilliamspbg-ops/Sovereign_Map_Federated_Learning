@@ -14,6 +14,12 @@ Consolidated checkpoints for latest captured runs.
 FINAL_TEST_SUMMARY_20260227.md  - Final 200-round capture summary (latest)
 ```
 
+## Test File Catalog
+
+For a categorized inventory of test files across `tests/`, root-level compatibility scripts, Go test files, and archived legacy assets, see:
+
+`tests/docs/TEST_FILE_CATALOG.md`
+
 ---
 
 ## Scale Tests (tests/scale-tests/)

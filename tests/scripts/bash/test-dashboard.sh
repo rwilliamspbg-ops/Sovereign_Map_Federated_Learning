@@ -33,16 +33,24 @@ print_metrics() {
     echo -e "${YELLOW}📊 CONVERGENCE METRICS${NC}"
     echo "────────────────────────────────────────────────────────────────"
     
-    local line_count=$(wc -l < "$convergence_file")
-    local latest=$(tail -1 "$convergence_file")
-    local oldest=$(head -1 "$convergence_file")
+    local line_count
+    local latest
+    local oldest
+    line_count=$(wc -l < "$convergence_file")
+    latest=$(tail -1 "$convergence_file")
+    oldest=$(head -1 "$convergence_file")
     
-    local latest_round=$(echo "$latest" | jq -r '.round // "N/A"')
-    local latest_nodes=$(echo "$latest" | jq -r '.nodes // "N/A"')
-    local latest_accuracy=$(echo "$latest" | jq -r '.accuracy // "N/A"')
-    local latest_loss=$(echo "$latest" | jq -r '.loss // "N/A"')
+    local latest_round
+    local latest_nodes
+    local latest_accuracy
+    local latest_loss
+    latest_round=$(echo "$latest" | jq -r '.round // "N/A"')
+    latest_nodes=$(echo "$latest" | jq -r '.nodes // "N/A"')
+    latest_accuracy=$(echo "$latest" | jq -r '.accuracy // "N/A"')
+    latest_loss=$(echo "$latest" | jq -r '.loss // "N/A"')
     
-    local oldest_accuracy=$(echo "$oldest" | jq -r '.accuracy // "N/A"')
+    local oldest_accuracy
+    oldest_accuracy=$(echo "$oldest" | jq -r '.accuracy // "N/A"')
     
     echo "📈 Current State:"
     echo "  Round:        $latest_round"
@@ -57,7 +65,8 @@ print_metrics() {
     echo ""
     
     # Extract convergence events
-    local convergence_events=$(grep "Convergence.*Scaling" "$RESULTS_DIR/test.log" 2>/dev/null | wc -l || echo 0)
+    local convergence_events
+    convergence_events=$(grep -c "Convergence.*Scaling" "$RESULTS_DIR/test.log" 2>/dev/null || echo 0)
     echo "🎯 Convergence Events: $convergence_events"
     echo ""
 }
@@ -73,9 +82,11 @@ print_node_scaling() {
     echo "────────────────────────────────────────────────────────────────"
     
     # Group by nodes and show first/last occurrence
-    jq -r '.nodes' "$convergence_file" | uniq | while read nodes; do
-        local first_round=$(jq -r "select(.nodes == \"$nodes\") | .round" "$convergence_file" | head -1)
-        local last_round=$(jq -r "select(.nodes == \"$nodes\") | .round" "$convergence_file" | tail -1)
+    jq -r '.nodes' "$convergence_file" | uniq | while read -r nodes; do
+        local first_round
+        local last_round
+        first_round=$(jq -r "select(.nodes == \"$nodes\") | .round" "$convergence_file" | head -1)
+        last_round=$(jq -r "select(.nodes == \"$nodes\") | .round" "$convergence_file" | tail -1)
         printf "  %d nodes:  rounds %s - %s\n" "$nodes" "$first_round" "$last_round"
     done
     echo ""
@@ -93,15 +104,18 @@ print_system_health() {
     fi
     
     # Container health
-    local running=$(docker compose -f docker-compose.large-scale.yml ps --services --filter "status=running" 2>/dev/null | wc -l || echo 0)
+    local running
+    running=$(docker compose -f docker-compose.large-scale.yml ps --services --filter "status=running" 2>/dev/null | wc -l || echo 0)
     echo "  Services:     $running running"
     
     # Node agents
-    local node_agents=$(docker compose -f docker-compose.large-scale.yml ps node-agent --no-trunc 2>/dev/null | tail -n +2 | wc -l || echo 0)
+    local node_agents
+    node_agents=$(docker compose -f docker-compose.large-scale.yml ps node-agent --no-trunc 2>/dev/null | tail -n +2 | wc -l || echo 0)
     echo "  Node Agents:  $node_agents active"
     
     # Memory usage
-    local backend_mem=$(docker stats --no-stream sovereignmap-backend --format "{{.MemUsage}}" 2>/dev/null | cut -d' ' -f1 || echo "N/A")
+    local backend_mem
+    backend_mem=$(docker stats --no-stream sovereignmap-backend --format "{{.MemUsage}}" 2>/dev/null | cut -d' ' -f1 || echo "N/A")
     echo "  Backend RAM:  $backend_mem"
     
     echo ""
@@ -121,8 +135,10 @@ print_tpm_status() {
     echo -e "${YELLOW}🔐 TPM ATTESTATION${NC}"
     echo "────────────────────────────────────────────────────────────────"
     
-    local tpm_enabled=$(jq -r '.tpm_enabled' "$tpm_file" 2>/dev/null || echo "unknown")
-    local status=$(jq -r '.status' "$tpm_file" 2>/dev/null || echo "unknown")
+    local tpm_enabled
+    local status
+    tpm_enabled=$(jq -r '.tpm_enabled' "$tpm_file" 2>/dev/null || echo "unknown")
+    status=$(jq -r '.status' "$tpm_file" 2>/dev/null || echo "unknown")
     
     echo "  Enabled:  $tpm_enabled"
     echo "  Status:   $status"
@@ -143,8 +159,10 @@ print_npu_status() {
     echo -e "${YELLOW}⚡ NPU ACCELERATION${NC}"
     echo "────────────────────────────────────────────────────────────────"
     
-    local npu_enabled=$(jq -r '.npu_enabled' "$npu_file" 2>/dev/null || echo "unknown")
-    local hardware=$(jq -r '.hardware_info' "$npu_file" 2>/dev/null | head -1 || echo "N/A")
+    local npu_enabled
+    local hardware
+    npu_enabled=$(jq -r '.npu_enabled' "$npu_file" 2>/dev/null || echo "unknown")
+    hardware=$(jq -r '.hardware_info' "$npu_file" 2>/dev/null | head -1 || echo "N/A")
     
     echo "  Enabled:   $npu_enabled"
     echo "  Hardware:  ${hardware:0:30}..."
@@ -177,7 +195,8 @@ print_progress_bar() {
     fi
     
     local total_rounds=500
-    local current_rounds=$(wc -l < "$convergence_file")
+    local current_rounds
+    current_rounds=$(wc -l < "$convergence_file")
     local percentage=$((current_rounds * 100 / total_rounds))
     
     # Simple progress bar
@@ -221,7 +240,7 @@ main() {
     
     echo "📊 Monitoring: $RESULTS_DIR"
     echo "Press any key to start or Ctrl+C to exit..."
-    read -n 1
+    read -r -n 1
     
     while true; do
         clear_screen

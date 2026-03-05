@@ -103,6 +103,7 @@ for HOST_IP in $WORKER_HOSTS; do
     
     # Extract logs from ALL containers on the host
     # FIXED: Use a static tarball name to avoid hostname evaluation issues
+    # shellcheck disable=SC2087
     if ssh -i "$KEY_PATH" -o StrictHostKeyChecking=no -o ConnectTimeout=10 \
         -J ubuntu@"$AGGREGATOR_IP" ubuntu@"$HOST_IP" << EOF
         mkdir -p ~/node_logs

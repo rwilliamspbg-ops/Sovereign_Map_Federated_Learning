@@ -18,6 +18,7 @@ FROM nginx:1.26-alpine
 WORKDIR /app
 
 # Install only necessary tools
+# hadolint ignore=DL3018
 RUN apk add --no-cache curl ca-certificates && rm -rf /var/cache/apk/*
 
 # Copy built application from build stage
