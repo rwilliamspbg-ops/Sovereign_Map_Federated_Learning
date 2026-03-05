@@ -163,7 +163,7 @@ Log "Capturing backend logs..."
 ## Monitoring Stack Status
 - **Prometheus:** http://localhost:9090 ✅
 - **Grafana:** http://localhost:3001 ✅
-  - Default Credentials: admin/sovereignmap2026
+    - Credentials: admin/<configured password>
   - Dashboards: 7 available
 - **Backend API:** http://localhost:8000
 - **Alertmanager:** http://localhost:9093

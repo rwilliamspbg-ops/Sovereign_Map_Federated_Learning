@@ -97,3 +97,5 @@ These files are historical and kept under `archive/`.
 - Canonical test assets are organized in `tests/`.
 - Root-level scripts are retained for compatibility and operational workflows.
 - Legacy files under `archive/` are historical references and should not be used as default entry points for new validation runs.
+- Test sources and test documentation are intentionally public and must remain visible in the repository.
+- Do not commit runtime secrets into test files; use placeholder values in tracked configs and inject secrets from environment variables at execution time.

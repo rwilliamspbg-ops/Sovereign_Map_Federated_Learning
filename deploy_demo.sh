@@ -273,7 +273,7 @@ cat > "$OUT_DIR/DEMO_REPORT.md" <<REPORT_EOF
 ## Monitoring Stack Status
 - **Prometheus:** http://localhost:9090
   - Health Code: $PROM_HEALTH
-- **Grafana:** http://localhost:3001 (admin/sovereignmap2026)
+- **Grafana:** http://localhost:3001 (admin/<configured password>)
   - Health Code: $GRAFANA_HEALTH
   - Dashboards: 7 (Overview, Convergence, Performance, Scaling, Security, NPU, GPU)
 

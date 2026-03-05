@@ -294,7 +294,7 @@ docker run -d \
   --name sovereignmap-grafana \
   --network sovereignmap \
   -p 3001:3000 \
-  -e GF_SECURITY_ADMIN_PASSWORD=sovereignmap2026 \
+  -e GF_SECURITY_ADMIN_PASSWORD="${GRAFANA_ADMIN_PASSWORD:-CHANGE_ME_GRAFANA}" \
   -e GF_SECURITY_ADMIN_USER=admin \
   -e GF_INSTALL_PLUGINS=grafana-piechart-panel \
   -v grafana_data:/var/lib/grafana \
@@ -322,7 +322,7 @@ datasources:
 # Access web UI
 http://localhost:3001
 # Username: admin
-# Password: sovereignmap2026
+# Password: use your configured `GRAFANA_ADMIN_PASSWORD`
 
 # Check data source
 curl http://localhost:3001/api/datasources
@@ -607,7 +607,7 @@ DOCKER_NAMESPACE=sovereignmap
 
 # Grafana Configuration
 GRAFANA_USER=admin
-GRAFANA_PASSWORD=sovereignmap2026
+GRAFANA_PASSWORD=CHANGE_ME_GRAFANA
 GRAFANA_ADMIN_UID=admin
 GF_INSTALL_PLUGINS=grafana-piechart-panel
 
@@ -669,7 +669,7 @@ services:
     ports:
       - "3001:3000"
     environment:
-      - GF_SECURITY_ADMIN_PASSWORD=sovereignmap2026
+      - GF_SECURITY_ADMIN_PASSWORD=${GRAFANA_ADMIN_PASSWORD:-CHANGE_ME_GRAFANA}
 
   node-exporter:
     ports:
@@ -831,7 +831,7 @@ docker run -d --name sovereignmap-prometheus --network sovereignmap -p 9090:9090
 # Grafana
 echo "📈 Starting Grafana..."
 docker run -d --name sovereignmap-grafana --network sovereignmap -p 3001:3000 \
-  -e GF_SECURITY_ADMIN_PASSWORD=sovereignmap2026 \
+  -e GF_SECURITY_ADMIN_PASSWORD="${GRAFANA_ADMIN_PASSWORD:-CHANGE_ME_GRAFANA}" \
   grafana/grafana:10.2-alpine
 
 # Node Exporter
@@ -843,7 +843,7 @@ docker run -d --name sovereignmap-node-exporter --network sovereignmap -p 9100:9
 echo ""
 echo "✅ Setup Complete!"
 echo "📊 Prometheus: http://localhost:9090"
-echo "📈 Grafana: http://localhost:3001 (admin/sovereignmap2026)"
+echo "📈 Grafana: http://localhost:3001 (admin/<configured password>)"
 echo "📡 Node Exporter: http://localhost:9100"
 ```
 

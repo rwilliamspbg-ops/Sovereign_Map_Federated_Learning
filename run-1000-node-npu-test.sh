@@ -37,9 +37,10 @@ if [ ! -f "$SCRIPT_DIR/.env" ]; then
     echo "    Created .env from template"
 fi
 
-export MONGO_PASSWORD="sovereignmap2026"
-export GRAFANA_ADMIN_PASSWORD="sovereignmap2026"
-export REDIS_PASSWORD="sovereignmap2026"
+# Avoid static secrets in local and CI runs.
+export MONGO_PASSWORD="${MONGO_PASSWORD:-$(tr -dc 'A-Za-z0-9' </dev/urandom | head -c 24)}"
+export GRAFANA_ADMIN_PASSWORD="${GRAFANA_ADMIN_PASSWORD:-$(tr -dc 'A-Za-z0-9' </dev/urandom | head -c 24)}"
+export REDIS_PASSWORD="${REDIS_PASSWORD:-$(tr -dc 'A-Za-z0-9' </dev/urandom | head -c 24)}"
 
 echo "✅ Environment ready"
 echo ""
@@ -139,7 +140,7 @@ echo "  • Starting AlertManager..."
 docker compose -f "$SCRIPT_DIR/docker-compose.1000nodes.yml" up -d alertmanager 2>&1 | tee "$LOGS_DIR/deploy-alertmanager.log"
 
 echo "✅ Monitoring stack ready"
-echo "   🌐 Grafana: http://localhost:3001 (admin/sovereignmap2026)"
+echo "   🌐 Grafana: http://localhost:3001 (admin/<configured password>)"
 echo "   📊 Prometheus: http://localhost:9090"
 echo ""
 
@@ -581,7 +582,7 @@ echo "  • TEST-REPORT.md - Executive summary"
 echo ""
 echo "🔗 Access URLs:"
 echo "  • Frontend:    http://localhost:3000"
-echo "  • Grafana:     http://localhost:3001 (admin/sovereignmap2026)"
+echo "  • Grafana:     http://localhost:3001 (admin/<configured password>)"
 echo "  • Prometheus:  http://localhost:9090"
 echo "  • AlertManager: http://localhost:9093"
 echo ""
