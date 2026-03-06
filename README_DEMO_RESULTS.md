@@ -168,7 +168,7 @@ Scaling Factor: 46.3x over 10 iterations
 ## 🔗 Monitoring Access
 
 ### Live Dashboards (if monitoring stack running)
-- **Grafana:** http://localhost:3001 (admin/sovereignmap2026)
+- **Grafana:** http://localhost:3001 (admin/<configured password>)
 - **Prometheus:** http://localhost:9090
 - **Backend API:** http://localhost:8000
 

@@ -1,5 +1,3 @@
-version: '3.9'
-
 # 1000-Node NPU Performance Test Deployment
 # Comprehensive testing for NPU effectiveness across spectrum
 
@@ -13,7 +11,7 @@ services:
       - "127.0.0.1:27017:27017"
     environment:
       MONGO_INITDB_ROOT_USERNAME: admin
-      MONGO_INITDB_ROOT_PASSWORD: ${MONGO_PASSWORD:-sovereignmap2026}
+      MONGO_INITDB_ROOT_PASSWORD: ${MONGO_PASSWORD:-CHANGE_ME_MONGO}
       MONGO_INITDB_DATABASE: sovereignmap_1000
     restart: always
     healthcheck:
@@ -83,7 +81,7 @@ services:
       - NUM_NODES=1000
       - NUM_ROUNDS=50
       - FLASK_PORT=8000
-      - DATABASE_URI=mongodb://admin:sovereignmap2026@mongo:27017/sovereignmap_1000?authSource=admin
+      - DATABASE_URI=mongodb://admin:${MONGO_PASSWORD:-CHANGE_ME_MONGO}@mongo:27017/sovereignmap_1000?authSource=admin
       - REDIS_URL=redis://redis:6379/0
       - WORKERS=8
       - NPU_ENABLED=true
@@ -175,7 +173,7 @@ services:
       - NPU_ENABLED=true
       - NODE_PEER_ID={{.Node.ID}}
       - REDIS_URL=redis://redis:6379/0
-      - DATABASE_URI=mongodb://admin:sovereignmap2026@mongo:27017/sovereignmap_1000?authSource=admin
+      - DATABASE_URI=mongodb://admin:${MONGO_PASSWORD:-CHANGE_ME_MONGO}@mongo:27017/sovereignmap_1000?authSource=admin
     depends_on:
       backend:
         condition: service_healthy
@@ -250,7 +248,7 @@ services:
     ports:
       - "3001:3000"
     environment:
-      - GF_SECURITY_ADMIN_PASSWORD=${GRAFANA_ADMIN_PASSWORD:-sovereignmap2026}
+      - GF_SECURITY_ADMIN_PASSWORD=${GRAFANA_ADMIN_PASSWORD:-CHANGE_ME_GRAFANA}
       - GF_SECURITY_ADMIN_USER=admin
       - GF_USERS_ALLOW_SIGN_UP=false
       - GF_PANELS_PLUGIN_SUPPORT=enable

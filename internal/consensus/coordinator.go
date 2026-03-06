@@ -149,12 +149,19 @@ func (c *Coordinator) CommitModel(ctx context.Context, proposalID string) error 
 	c.mu.Lock()
 	defer c.mu.Unlock()
 
-	consensus, err := c.CheckConsensus(proposalID)
-	if err != nil {
-		return err
+	votes, exists := c.votes[proposalID]
+	if !exists {
+		return fmt.Errorf("proposal %s not found", proposalID)
 	}
 
-	if !consensus {
+	approvalCount := 0
+	for _, vote := range votes {
+		if vote.Approve {
+			approvalCount++
+		}
+	}
+
+	if approvalCount < c.quorumSize {
 		c.state = Aborted
 		return fmt.Errorf("consensus not reached: insufficient votes")
 	}

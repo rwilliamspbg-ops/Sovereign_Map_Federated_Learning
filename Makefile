@@ -3,7 +3,7 @@
 
 .PHONY: all build test clean deploy logs help \
         test-200-bft setup-200-test clean-200-test benchmark-200 \
-        chaos-test partition-test generate-data
+	chaos-test partition-test generate-data smoke
 
 COMPOSE ?= docker compose
 
@@ -202,6 +202,16 @@ security-scan:
 check: fmt vet lint test
 	@echo "✅ All checks passed"
 
+smoke:
+	@echo "🧪 Running reproducibility smoke checks..."
+	@go test -short ./...
+	@npm ci
+	@npm --prefix packages/core ci
+	@npm --prefix packages/privacy ci
+	@docker compose -f docker-compose.production.yml config >/dev/null
+	@docker compose -f docker-compose.1000nodes.yml config >/dev/null
+	@echo "✅ Smoke checks passed"
+
 # =============================================================================
 # Results & Reporting
 # =============================================================================
@@ -256,6 +266,7 @@ help:
 	@echo ""
 	@echo "Standard Tests:"
 	@echo "  make test           - Run all tests"
+	@echo "  make smoke          - Quick clone/reproducibility checks"
 	@echo "  make test-consensus - Run consensus tests only"
 	@echo "  make test-bft       - Run BFT tests only"
 	@echo ""

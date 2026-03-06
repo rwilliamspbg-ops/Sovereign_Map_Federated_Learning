@@ -21,6 +21,7 @@ cd Sovereign_Map_Federated_Learning
 - **Quick Start**: [GENESIS_QUICK_START.md](GENESIS_QUICK_START.md) (5-minute guide)
 - **Full Guide**: [GENESIS_LAUNCH_GUIDE.md](GENESIS_LAUNCH_GUIDE.md) (comprehensive documentation)
 - **Architecture**: [ARCHITECTURE.md](ARCHITECTURE.md) (system design)
+- **Reproducibility**: [REPRODUCIBLE_SETUP.md](REPRODUCIBLE_SETUP.md) (clone and smoke-check workflow)
 
 **Contributing:** See [CONTRIBUTING.md](CONTRIBUTING.md) for PR checklist, CodeQL guardrails, and branch protection recommendations.
 
@@ -38,6 +39,10 @@ cd Sovereign_Map_Federated_Learning
 [![Docker Build](https://github.com/rwilliamspbg-ops/Sovereign_Map_Federated_Learning/actions/workflows/docker-build.yml/badge.svg?branch=main)](https://github.com/rwilliamspbg-ops/Sovereign_Map_Federated_Learning/actions/workflows/docker-build.yml)
 [![Build & Deploy to Production](https://github.com/rwilliamspbg-ops/Sovereign_Map_Federated_Learning/actions/workflows/deploy.yml/badge.svg?branch=main)](https://github.com/rwilliamspbg-ops/Sovereign_Map_Federated_Learning/actions/workflows/deploy.yml)
 [![SDK Publish](https://github.com/rwilliamspbg-ops/Sovereign_Map_Federated_Learning/actions/workflows/sdk-publish.yml/badge.svg?branch=main)](https://github.com/rwilliamspbg-ops/Sovereign_Map_Federated_Learning/actions/workflows/sdk-publish.yml)
+[![Reproducibility Check](https://github.com/rwilliamspbg-ops/Sovereign_Map_Federated_Learning/actions/workflows/reproducibility-check.yml/badge.svg?branch=main)](https://github.com/rwilliamspbg-ops/Sovereign_Map_Federated_Learning/actions/workflows/reproducibility-check.yml)
+[![Secret Scan](https://github.com/rwilliamspbg-ops/Sovereign_Map_Federated_Learning/actions/workflows/secret-scan.yml/badge.svg?branch=main)](https://github.com/rwilliamspbg-ops/Sovereign_Map_Federated_Learning/actions/workflows/secret-scan.yml)
+[![Workflow Action Pin Check](https://github.com/rwilliamspbg-ops/Sovereign_Map_Federated_Learning/actions/workflows/workflow-action-pin-check.yml/badge.svg?branch=main)](https://github.com/rwilliamspbg-ops/Sovereign_Map_Federated_Learning/actions/workflows/workflow-action-pin-check.yml)
+[![Governance Check](https://github.com/rwilliamspbg-ops/Sovereign_Map_Federated_Learning/actions/workflows/governance-check.yml/badge.svg?branch=main)](https://github.com/rwilliamspbg-ops/Sovereign_Map_Federated_Learning/actions/workflows/governance-check.yml)
 
 ### Repository Status
 [![GitHub Release](https://img.shields.io/github/v/release/rwilliamspbg-ops/Sovereign_Map_Federated_Learning?label=Release&style=flat-square)](https://github.com/rwilliamspbg-ops/Sovereign_Map_Federated_Learning/releases)
@@ -52,6 +57,7 @@ cd Sovereign_Map_Federated_Learning
 [![Docker](https://img.shields.io/badge/Docker-Compose%20Ready-2496ED?logo=docker&style=flat-square)](https://docs.docker.com/compose/)
 [![PyTorch](https://img.shields.io/badge/PyTorch-2.1.0-EE4C2C?logo=pytorch&style=flat-square)](https://pytorch.org/)
 [![Flower](https://img.shields.io/badge/Flower-1.7.0-FF6A00?style=flat-square)](https://flower.ai/)
+[![Mohawk Protocol](https://img.shields.io/badge/Mohawk%20Protocol-Go%2FWasm%20Runtime-0A7EA4?style=flat-square)](https://github.com/rwilliamspbg-ops/Sovereign-Mohawk-Proto)
 
 ### Core Signals (Claim Scope)
 [![Byzantine Scope](https://img.shields.io/badge/Byzantine-validated%20in%20sim%2Ftests-informational?style=flat-square)](tests/README.md)

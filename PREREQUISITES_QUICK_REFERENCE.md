@@ -106,10 +106,10 @@ docker run -d \
   --name sovereignmap-grafana \
   --network sovereignmap \
   -p 3001:3000 \
-  -e GF_SECURITY_ADMIN_PASSWORD=sovereignmap2026 \
+  -e GF_SECURITY_ADMIN_PASSWORD="${GRAFANA_ADMIN_PASSWORD:-CHANGE_ME_GRAFANA}" \
   grafana/grafana:10.2-alpine
 
-# Verify: http://localhost:3001 (admin/sovereignmap2026)
+# Verify: http://localhost:3001 (admin/<configured password>)
 ```
 
 ### 3. Start Node Exporter
@@ -239,7 +239,7 @@ DOCKER_NAMESPACE=sovereignmap
 
 # Grafana
 GRAFANA_USER=admin
-GRAFANA_PASSWORD=sovereignmap2026
+GRAFANA_PASSWORD=CHANGE_ME_GRAFANA
 
 # Prometheus
 PROMETHEUS_RETENTION=30d
@@ -290,7 +290,7 @@ docker run -d --name sovereignmap-prometheus --network sovereignmap -p 9090:9090
 
 echo "📈 Starting Grafana..."
 docker run -d --name sovereignmap-grafana --network sovereignmap -p 3001:3000 \
-  -e GF_SECURITY_ADMIN_PASSWORD=sovereignmap2026 \
+  -e GF_SECURITY_ADMIN_PASSWORD="${GRAFANA_ADMIN_PASSWORD:-CHANGE_ME_GRAFANA}" \
   grafana/grafana:10.2-alpine
 
 echo "📡 Starting Node Exporter..."
@@ -325,7 +325,7 @@ echo "Next: Run the test scripts from scripts/ directory"
 
 2. **Configure Grafana datasource:**
    - Open http://localhost:3001
-   - Login: admin / sovereignmap2026
+  - Login: admin / <configured password>
    - Configuration > Data Sources > Add Prometheus
    - URL: http://sovereignmap-prometheus:9090
 

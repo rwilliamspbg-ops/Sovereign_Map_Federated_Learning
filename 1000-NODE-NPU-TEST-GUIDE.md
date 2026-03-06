@@ -156,7 +156,7 @@ test-results/1000-node-npu/
 ### 1. Live Dashboards (During Test)
 ```
 🌐 Frontend:     http://localhost:3000
-📊 Grafana:      http://localhost:3001    (admin/sovereignmap2026)
+📊 Grafana:      http://localhost:3001    (admin/<configured password>)
 📈 Prometheus:   http://localhost:9090
 🚨 AlertManager: http://localhost:9093
 ```

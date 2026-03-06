@@ -37,9 +37,9 @@ if not exist .env (
     echo     Created .env from template
 )
 
-set MONGO_PASSWORD=sovereignmap2026
-set GRAFANA_ADMIN_PASSWORD=sovereignmap2026
-set REDIS_PASSWORD=sovereignmap2026
+if "%MONGO_PASSWORD%"=="" set MONGO_PASSWORD=test_%RANDOM%%RANDOM%%RANDOM%
+if "%GRAFANA_ADMIN_PASSWORD%"=="" set GRAFANA_ADMIN_PASSWORD=test_%RANDOM%%RANDOM%%RANDOM%
+if "%REDIS_PASSWORD%"=="" set REDIS_PASSWORD=test_%RANDOM%%RANDOM%%RANDOM%
 
 echo ✅ Environment ready
 echo.
@@ -172,7 +172,11 @@ git commit -m "1000-Node NPU Performance Test - %TIMESTAMP%" ^
   -m "" ^
   -m "Assisted-By: cagent" 2>nul || echo ⚠️  Commit skipped
 
-git push -u origin main 2>nul || echo ⚠️  Push skipped
+if /I "%ALLOW_GIT_PUSH%"=="true" (
+  git push -u origin main 2>nul || echo ⚠️  Push failed
+) else (
+  echo ⚠️  Push skipped ^(set ALLOW_GIT_PUSH=true to enable^)
+)
 
 REM =============================================================================
 REM Final Summary
@@ -192,7 +196,7 @@ echo   - TEST-REPORT.md Executive summary
 echo.
 echo 🔗 Access URLs:
 echo   - Frontend:     http://localhost:3000
-echo   - Grafana:      http://localhost:3001 ^(admin/sovereignmap2026^)
+echo   - Grafana:      http://localhost:3001 ^(admin/^<configured password^>^)
 echo   - Prometheus:   http://localhost:9090
 echo   - AlertManager: http://localhost:9093
 echo.

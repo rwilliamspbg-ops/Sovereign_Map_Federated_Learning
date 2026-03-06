@@ -20,6 +20,10 @@ func Test200NodeQuorumCalculation(t *testing.T) {
 }
 
 func Test200NodeConsensusCommit(t *testing.T) {
+	if testing.Short() {
+		t.Skip("skipping 200-node consensus commit in short mode")
+	}
+
 	ctx := context.Background()
 	coord := NewCoordinator("node-main", 200, 5*time.Second)
 

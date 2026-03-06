@@ -1,0 +1,7 @@
+# Default owner for all files
+* @rwilliamspbg-ops
+
+# Security-sensitive automation requires explicit owner review
+.github/workflows/ @rwilliamspbg-ops
+.github/SECURITY.md @rwilliamspbg-ops
+.github/dependabot.yml @rwilliamspbg-ops

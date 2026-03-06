@@ -97,7 +97,6 @@ npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
 lerna-debug.log*
-package-lock.json
 yarn.lock
 
 # Build artifacts
@@ -447,6 +446,8 @@ checkpoints/
 data/
 *.csv
 *.json
+!package-lock.json
+!**/package-lock.json
 !fixtures/
 !config/*.json
 

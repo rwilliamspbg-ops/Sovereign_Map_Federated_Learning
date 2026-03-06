@@ -6,6 +6,8 @@ Thanks for contributing.
 
 Before opening or merging a PR, confirm all items below:
 
+Use the repository PR template at `.github/pull_request_template.md` when opening PRs.
+
 - [ ] CI workflows pass on your branch
 - [ ] Security checks pass (including CodeQL)
 - [ ] Documentation is updated for any behavior/config changes
@@ -51,4 +53,7 @@ At minimum, require these checks:
 - `CodeQL Security Analysis / Analyze Code (go)`
 - `CodeQL Security Analysis / Analyze Code (javascript-typescript)`
 - `CodeQL Security Analysis / Analyze Code (python)`
+- `Reproducibility Check / Clone Reproducibility`
+- `Workflow Action Pin Check / Enforce SHA-Pinned Actions`
+- `Governance Check / Governance Integrity`
 - Your primary build/test workflow checks

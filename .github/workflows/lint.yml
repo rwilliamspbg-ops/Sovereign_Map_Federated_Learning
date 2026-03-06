@@ -13,17 +13,18 @@ permissions:
 jobs:
   build:
     name: Lint and Validate
+    if: github.event_name != 'pull_request' || github.actor != 'dependabot[bot]'
     runs-on: ubuntu-latest
 
     steps:
       - name: Checkout Code
-        uses: actions/checkout@v4
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd
         with:
           # Full git history is needed for linter to check only changed files
           fetch-depth: 0
 
       - name: Lint Code Base
-        uses: super-linter/super-linter@v5
+        uses: super-linter/super-linter@61abc07d755095a68f4987d1c2c3d1d64408f1f9
         env:
           VALIDATE_ALL_CODEBASE: false
           DEFAULT_BRANCH: main
