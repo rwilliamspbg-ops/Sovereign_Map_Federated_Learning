@@ -120,6 +120,7 @@ Interpretation:
 
 - [Features](#features)
 - [Quick Start](#quick-start)
+- [Test Artifacts & Results](#test-artifacts--results)
 - [Mobile & Go Support](#mobile--go-support)
 - [Architecture](#architecture)
 - [System Components](#system-components)
@@ -248,6 +249,67 @@ while true; do
   sleep 30
 done
 ```
+
+---
+
+## 🧪 Test Artifacts & Results
+
+**Complete test results and benchmarks demonstrating system performance at scale.**
+
+### 🔥 Featured Test Results
+
+#### 1000-Node NPU Performance Test ⚡
+
+**Status:** ✅ **COMPLETE & VERIFIED** (2026-03-04)  
+**Key Result:** 4.38x throughput improvement (650 → 2,850 RPS) with 66.9% latency reduction
+
+📊 **Complete Report:** [1000-NODE-NPU-TEST-FINAL-SUMMARY.md](1000-NODE-NPU-TEST-FINAL-SUMMARY.md)  
+📖 **Reproduction Guide:** [1000-NODE-NPU-TEST-GUIDE.md](1000-NODE-NPU-TEST-GUIDE.md)  
+📁 **Test Data:** [test-results/1000-node-npu/20260304-103652/](test-results/1000-node-npu/20260304-103652/)  
+🐳 **Infrastructure:** [docker-compose.1000nodes.yml](docker-compose.1000nodes.yml)
+
+**Run the test:**
+```bash
+# Linux/Mac
+./run-1000-node-npu-test.sh
+
+# Windows PowerShell
+./run-1000-node-npu-test.ps1
+```
+
+#### 5000-Node Kubernetes Stress Test ☸️
+
+**Status:** ✅ **ALL 4 SCENARIOS PASSED** (2026-03-03)  
+**Key Result:** 86% accuracy maintained with 50% Byzantine nodes at 5000-node scale
+
+📊 **Complete Report:** [KUBERNETES_5000_NODE_REPORT.md](KUBERNETES_5000_NODE_REPORT.md)  
+📄 **Raw Data:** [test-results/kubernetes-5000-node/k8s-5000-node-20260303-052718.json](test-results/kubernetes-5000-node/k8s-5000-node-20260303-052718.json)  
+📈 **Visualizations:** [test-results/kubernetes-5000-node/plots/](test-results/kubernetes-5000-node/plots/)  
+☸️ **K8s Manifests:** [kubernetes-5000-node-manifests.yaml](kubernetes-5000-node-manifests.yaml)
+
+**View plots:**
+- [Master Summary](test-results/kubernetes-5000-node/plots/master-summary.png)
+- [5000-Node Stress Test](test-results/kubernetes-5000-node/plots/scenario-1-5000node.png)
+- [Linear Scaling Analysis](test-results/kubernetes-5000-node/plots/scenario-2-scaling.png)
+- [Byzantine Threshold](test-results/kubernetes-5000-node/plots/scenario-3-threshold.png)
+- [Attack Intensity](test-results/kubernetes-5000-node/plots/scenario-4-intensity.png)
+
+**Run the test:**
+```bash
+python kubernetes-5000-node-test.py
+python generate-k8s-5000-node-plots.py
+```
+
+### 📊 Additional Test Suites
+
+- **GPU Acceleration Tests:** [GPU_TESTING_COMPLETE.md](GPU_TESTING_COMPLETE.md) | [GPU_TESTING_RESULTS_REPORT.md](GPU_TESTING_RESULTS_REPORT.md)
+- **Byzantine Stress Tests:** [BYZANTINE_STRESS_TEST_REPORT.md](BYZANTINE_STRESS_TEST_REPORT.md) | [BYZANTINE_STRESS_TEST_SUITE_REPORT.md](BYZANTINE_STRESS_TEST_SUITE_REPORT.md)
+- **NPU Performance Analysis:** [NPU_PERFORMANCE_SCALING_COMPLETE.md](NPU_PERFORMANCE_SCALING_COMPLETE.md) | [NPU_GPU_CPU_PERFORMANCE_ANALYSIS.md](NPU_GPU_CPU_PERFORMANCE_ANALYSIS.md)
+
+### 📚 Complete Artifacts Index
+
+**For full test catalog, results, and reproduction scripts, see:**  
+📂 **[ARTIFACTS.md](ARTIFACTS.md)** - Complete index of all test artifacts and results
 
 ---
 

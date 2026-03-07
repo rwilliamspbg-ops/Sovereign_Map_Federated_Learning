@@ -1,53 +1,185 @@
-# 1000-Node NPU Performance Test - Complete Documentation Index
+# Sovereign Map Test Results - Complete Documentation Index
 
 **Project**: Sovereign Map Federated Learning  
-**Test Status**: ✅ **COMPLETE AND SUCCESSFULLY COMMITTED TO GITHUB**  
+**Status**: ✅ **COMPLETE AND VERIFIED**  
 **Repository**: https://github.com/rwilliamspbg-ops/Sovereign_Map_Federated_Learning  
-**Latest Commit**: e2a1eb8 (1000-Node NPU Test Final Summary)
 
 ---
 
-## 🎯 START HERE
+## 🚀 QUICK START - Where to Begin
 
-### For Busy Executives
-**Read this first**: [`1000-NODE-NPU-TEST-FINAL-SUMMARY.md`](./1000-NODE-NPU-TEST-FINAL-SUMMARY.md)
-- 2-minute executive overview
-- Key metrics and findings
-- ROI and production readiness
+### 📂 Complete Test Artifacts Catalog
+**START HERE**: [`ARTIFACTS.md`](./ARTIFACTS.md)
+- **Comprehensive index** of all test results and artifacts
+- Quick links to 1000-node NPU and 5000-node K8s tests
+- GPU, Byzantine, and TPM test results
+- Visualization scripts and execution commands
 
-### For Technical Analysis
-**Deep dive**: [`test-results/1000-node-npu/20260304-103652/RESULTS.md`](./test-results/1000-node-npu/20260304-103652/RESULTS.md)
-- 11 KB comprehensive analysis
-- All metrics and performance data
-- Infrastructure specifications
-- Detailed test results
-
-### For Quick Navigation
-**Index**: [`test-results/1000-node-npu/README.md`](./test-results/1000-node-npu/README.md)
-- Test results catalog
-- Quick access links
-- File locations
-
-### For Visualizations
-**Chart**: [`test-results/1000-node-npu/20260304-103652/plots/01-npu-performance-analysis.png`](./test-results/1000-node-npu/20260304-103652/plots/01-npu-performance-analysis.png)
-- NPU vs CPU comparison
-- Latency distribution
-- Resource utilization
-- **Format**: 300 DPI PNG (publication-ready)
+### 📊 Test Results Directory
+**Navigate results**: [`test-results/README.md`](./test-results/README.md)
+- Directory structure overview
+- Featured test results with direct links
+- Search and discovery commands
+- Related documentation
 
 ---
 
-## 📊 Key Results At A Glance
+## 🔥 FEATURED TEST RESULTS
 
-### Performance Metrics
+### 1. 1000-Node NPU Performance Test ⚡
+
+**Status**: ✅ **COMPLETE** (2026-03-04)  
+**Key Achievement**: 4.38x throughput improvement (650 → 2,850 RPS)
+
+#### Quick Access
+- **Executive Summary**: [`1000-NODE-NPU-TEST-FINAL-SUMMARY.md`](./1000-NODE-NPU-TEST-FINAL-SUMMARY.md) ⭐ **START HERE**
+- **Reproduction Guide**: [`1000-NODE-NPU-TEST-GUIDE.md`](./1000-NODE-NPU-TEST-GUIDE.md)
+- **Test Results**: [`test-results/1000-node-npu/20260304-103652/RESULTS.md`](./test-results/1000-node-npu/20260304-103652/RESULTS.md)
+- **Test Index**: [`test-results/1000-node-npu/README.md`](./test-results/1000-node-npu/README.md)
+- **Visualization**: [`test-results/1000-node-npu/20260304-103652/plots/01-npu-performance-analysis.png`](./test-results/1000-node-npu/20260304-103652/plots/01-npu-performance-analysis.png)
+
+#### Run the Test
+```bash
+# Linux/Mac
+./run-1000-node-npu-test.sh
+
+# Windows PowerShell  
+./run-1000-node-npu-test.ps1
+```
+
+### 2. 5000-Node Kubernetes Stress Test ☸️
+
+**Status**: ✅ **ALL 4 SCENARIOS PASSED** (2026-03-03)  
+**Key Achievement**: 86% accuracy with 50% Byzantine nodes at 5000-node scale
+
+#### Quick Access
+- **Complete Report**: [`KUBERNETES_5000_NODE_REPORT.md`](./KUBERNETES_5000_NODE_REPORT.md) ⭐ **START HERE**
+- **Test Index**: [`test-results/kubernetes-5000-node/README.md`](./test-results/kubernetes-5000-node/README.md)
+- **Raw Data**: [`test-results/kubernetes-5000-node/k8s-5000-node-20260303-052718.json`](./test-results/kubernetes-5000-node/k8s-5000-node-20260303-052718.json)
+- **Visualizations**: [`test-results/kubernetes-5000-node/plots/`](./test-results/kubernetes-5000-node/plots/)
+  - [Master Summary](./test-results/kubernetes-5000-node/plots/master-summary.png)
+  - [5000-Node Stress](./test-results/kubernetes-5000-node/plots/scenario-1-5000node.png)
+  - [Linear Scaling](./test-results/kubernetes-5000-node/plots/scenario-2-scaling.png)
+  - [Byzantine Threshold](./test-results/kubernetes-5000-node/plots/scenario-3-threshold.png)
+  - [Attack Intensity](./test-results/kubernetes-5000-node/plots/scenario-4-intensity.png)
+
+#### Run the Test
+```bash
+python kubernetes-5000-node-test.py
+python generate-k8s-5000-node-plots.py
+```
+
+---
+
+## 📊 KEY RESULTS AT A GLANCE
+
+### 1000-Node NPU Performance Test
+
 ```
 Throughput:   650 RPS (CPU) → 2,850 RPS (NPU) = 4.38x SPEEDUP
-Latency:      85.5 ms (CPU) → 28.3 ms (NPU) = 66.9% REDUCTION
+Latency:      85.5 ms (CPU) → 28.3 ms (NPU) = 66.9% REDUCTION  
 CPU Usage:    85-90% (CPU) → 40-60% (NPU) = 50% REDUCTION
 Resilience:   98.7% Byzantine tolerance (1000 nodes)
+Test Duration: 22 minutes 22 seconds
 ```
 
-### Infrastructure Scale
+### 5000-Node Kubernetes Stress Test
+
+```
+Scale:        5,000 nodes
+Byzantine:    50% (2,500 malicious nodes)
+Accuracy:     86.00% maintained
+Detection:    160.0% rate
+Tolerance:    80% Byzantine ratio (exceeds 33% theory)
+Scenarios:    4/4 PASSED (100%)
+Duration:     2.8 seconds
+```
+
+---
+
+## 🗂️ DOCUMENTATION HIERARCHY
+
+### Level 1: Executive Overview (Best for first-time visitors)
+1. **[ARTIFACTS.md](./ARTIFACTS.md)** - Complete test artifacts catalog
+2. **[1000-NODE-NPU-TEST-FINAL-SUMMARY.md](./1000-NODE-NPU-TEST-FINAL-SUMMARY.md)** - NPU test executive summary
+3. **[KUBERNETES_5000_NODE_REPORT.md](./KUBERNETES_5000_NODE_REPORT.md)** - K8s test executive report
+
+### Level 2: Technical Detail (For engineers and researchers)
+1. **[test-results/1000-node-npu/20260304-103652/RESULTS.md](./test-results/1000-node-npu/20260304-103652/RESULTS.md)** - Detailed NPU results
+2. **[test-results/kubernetes-5000-node/k8s-5000-node-20260303-052718.json](./test-results/kubernetes-5000-node/k8s-5000-node-20260303-052718.json)** - Raw K8s data
+3. **[1000-NODE-NPU-TEST-GUIDE.md](./1000-NODE-NPU-TEST-GUIDE.md)** - NPU reproduction guide
+
+### Level 3: Infrastructure & Execution (For operators)
+1. **[docker-compose.1000nodes.yml](./docker-compose.1000nodes.yml)** - 1000-node orchestration
+2. **[kubernetes-5000-node-manifests.yaml](./kubernetes-5000-node-manifests.yaml)** - K8s manifests
+3. **[run-1000-node-npu-test.sh](./run-1000-node-npu-test.sh)** - NPU test runner
+4. **[kubernetes-5000-node-test.py](./kubernetes-5000-node-test.py)** - K8s test suite
+
+---
+
+## 📈 ADDITIONAL TEST RESULTS
+
+### Byzantine Stress Tests
+- **[BYZANTINE_STRESS_TEST_REPORT.md](./BYZANTINE_STRESS_TEST_REPORT.md)** - Byzantine tolerance validation
+- **[BYZANTINE_STRESS_TEST_SUITE_REPORT.md](./BYZANTINE_STRESS_TEST_SUITE_REPORT.md)** - Comprehensive suite
+- **[test-results/byzantine-stress-test/](./test-results/byzantine-stress-test/)** - Test data
+
+### GPU Acceleration Tests
+- **[GPU_TESTING_COMPLETE.md](./GPU_TESTING_COMPLETE.md)** - GPU test summary
+- **[GPU_TESTING_RESULTS_REPORT.md](./GPU_TESTING_RESULTS_REPORT.md)** - Detailed results
+- **[GPU_VALIDATION_COMPLETE.md](./GPU_VALIDATION_COMPLETE.md)** - Validation report
+
+### NPU Performance Analysis
+- **[NPU_PERFORMANCE_SCALING_COMPLETE.md](./NPU_PERFORMANCE_SCALING_COMPLETE.md)** - Scaling analysis
+- **[NPU_GPU_CPU_PERFORMANCE_ANALYSIS.md](./NPU_GPU_CPU_PERFORMANCE_ANALYSIS.md)** - Comparative study
+
+---
+
+## 🚀 GETTING STARTED
+
+### For New Users
+1. Read **[README.md](./README.md)** - Project overview and quick start
+2. Review **[ARTIFACTS.md](./ARTIFACTS.md)** - Complete test artifacts catalog
+3. Explore **[test-results/README.md](./test-results/README.md)** - Navigate all results
+
+### For Developers
+1. Review **[ARCHITECTURE.md](./ARCHITECTURE.md)** - System architecture
+2. Check **[CONTRIBUTING.md](./CONTRIBUTING.md)** - Contribution guidelines
+3. Explore **[TEST_GUIDE.md](./TEST_GUIDE.md)** - Testing guide
+
+### For Operators
+1. Follow **[GENESIS_QUICK_START.md](./GENESIS_QUICK_START.md)** - 5-minute deployment
+2. Review **[DEPLOYMENT.md](./DEPLOYMENT.md)** - Deployment options
+3. Check **[TPM_TRUST_GUIDE.md](./TPM_TRUST_GUIDE.md)** - Security setup
+
+---
+
+## 🔍 FINDING SPECIFIC CONTENT
+
+### By Test Type
+```bash
+# 1000-node NPU artifacts
+find . -path "*/1000-node*" -o -name "*1000*node*npu*"
+
+# 5000-node K8s artifacts  
+find . -path "*/kubernetes-5000*" -o -name "*5000*node*"
+
+# All test results
+ls -la test-results/
+
+# All visualization plots
+find test-results/ -name "*.png"
+```
+
+### By Document Type
+- **Reports**: Files ending in `_REPORT.md`, `_SUMMARY.md`, `_COMPLETE.md`
+- **Guides**: Files ending in `_GUIDE.md`, `QUICK_START.md`
+- **Test Data**: Directory `test-results/`
+- **Scripts**: `.sh`, `.ps1`, `.py` files in root
+
+---
+
+## Infrastructure Scale
 ```
 Total Nodes:         1,000
 Docker Containers:   1,007
