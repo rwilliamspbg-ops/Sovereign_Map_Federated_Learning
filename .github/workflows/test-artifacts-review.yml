@@ -28,10 +28,10 @@ jobs:
 
     steps:
       - name: Checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v4
 
       - name: Set up Python
-        uses: actions/setup-python@v5
+        uses: actions/setup-python@a309ff8b426b58ec0e2a45f0f869d46889d02405 # v5
         with:
           python-version: '3.11'
 
@@ -47,7 +47,7 @@ jobs:
           python generate-byzantine-test-suite-plots.py
 
       - name: Upload stress suite plot artifacts
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@6f51ac03b9356f520e9adb1b1b7802705f340c2b # v4
         with:
           name: stress-suite-plots-${{ github.run_id }}
           if-no-files-found: error
@@ -63,7 +63,7 @@ jobs:
 
     steps:
       - name: Checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v4
 
       - name: Build artifact manifest
         shell: bash
@@ -84,7 +84,7 @@ jobs:
           } > test-artifact-manifest.md
 
       - name: Upload test artifacts
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@6f51ac03b9356f520e9adb1b1b7802705f340c2b # v4
         with:
           name: npu-and-stress-test-artifacts-${{ github.run_id }}
           if-no-files-found: warn
