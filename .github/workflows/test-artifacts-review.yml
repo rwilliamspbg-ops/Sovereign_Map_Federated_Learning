@@ -20,6 +20,41 @@ on:
       - 'test-results/**'
 
 jobs:
+  stress-suite-plots:
+    name: Stress Suite Plot Artifacts
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Install plotting deps
+        run: |
+          python -m pip install --upgrade pip
+          pip install numpy matplotlib seaborn
+
+      - name: Run stress suite and generate plots
+        run: |
+          set -euo pipefail
+          python byzantine-stress-test-suite.py
+          python generate-byzantine-test-suite-plots.py
+
+      - name: Upload stress suite plot artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: stress-suite-plots-${{ github.run_id }}
+          if-no-files-found: error
+          retention-days: 30
+          path: |
+            test-results/byzantine-stress-test-suite
+
   upload-test-artifacts:
     name: Upload NPU and Stress Artifacts
     runs-on: ubuntu-latest
