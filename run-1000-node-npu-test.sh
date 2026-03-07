@@ -2,7 +2,7 @@
 # 1000-Node NPU Performance Test Suite
 # Comprehensive testing for NPU effectiveness across spectrum
 
-set -e
+set -euo pipefail
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 TIMESTAMP=$(date +%Y%m%d-%H%M%S)
@@ -10,15 +10,23 @@ RESULTS_DIR="$SCRIPT_DIR/test-results/1000-node-npu/$TIMESTAMP"
 ARTIFACTS_DIR="$RESULTS_DIR/artifacts"
 PLOTS_DIR="$RESULTS_DIR/plots"
 LOGS_DIR="$RESULTS_DIR/logs"
+STRESS_RESULTS_DIR="$RESULTS_DIR/stress-test-suite"
+
+NODE_COUNT="${NODE_COUNT:-1000}"
+RUN_BYZANTINE_STRESS_TESTS="${RUN_BYZANTINE_STRESS_TESTS:-true}"
+NODE_AGENT_MEM_LIMIT="${NODE_AGENT_MEM_LIMIT:-192m}"
+NODE_AGENT_MEM_RESERVATION="${NODE_AGENT_MEM_RESERVATION:-96m}"
 
 # Create directories
-mkdir -p "$ARTIFACTS_DIR" "$PLOTS_DIR" "$LOGS_DIR"
+mkdir -p "$ARTIFACTS_DIR" "$PLOTS_DIR" "$LOGS_DIR" "$STRESS_RESULTS_DIR"
 
 echo "============================================"
 echo "🚀 1000-Node NPU Performance Test Suite"
 echo "============================================"
 echo "Timestamp: $TIMESTAMP"
 echo "Results Directory: $RESULTS_DIR"
+echo "Node Count Target: $NODE_COUNT"
+echo "Node Agent Memory: limit=$NODE_AGENT_MEM_LIMIT reservation=$NODE_AGENT_MEM_RESERVATION"
 echo ""
 
 # =============================================================================
@@ -147,16 +155,16 @@ echo ""
 # =============================================================================
 # Phase 5: Node Agent Deployment (1000 nodes)
 # =============================================================================
-echo "🚀 PHASE 5: Node Agent Deployment (1000 Replicas)"
+echo "🚀 PHASE 5: Node Agent Deployment (${NODE_COUNT} Replicas)"
 echo "Time: $(date)"
 
-echo "  • Scaling node-agent to 1000 replicas..."
-docker compose -f "$SCRIPT_DIR/docker-compose.1000nodes.yml" up -d --scale node-agent=1000 2>&1 | tee "$LOGS_DIR/deploy-nodes.log"
+echo "  • Scaling node-agent to ${NODE_COUNT} replicas..."
+docker compose -f "$SCRIPT_DIR/docker-compose.1000nodes.yml" up -d --scale "node-agent=${NODE_COUNT}" 2>&1 | tee "$LOGS_DIR/deploy-nodes.log"
 
 echo "  • Waiting for nodes to initialize (120 seconds)..."
 for i in {1..12}; do
-    active_nodes=$(docker ps --filter "name=node-agent" --format "table {{.Names}}" | wc -l)
-    echo "    [$i/12] Active containers: $(($active_nodes - 1)) (target: 1000)"
+    active_nodes=$(docker ps --filter "name=node-agent" --format "{{.Names}}" | wc -l | tr -d ' ')
+    echo "    [$i/12] Active containers: ${active_nodes} (target: ${NODE_COUNT})"
     sleep 10
 done
 
@@ -269,27 +277,94 @@ echo "✅ NPU spectrum testing complete"
 echo ""
 
 # =============================================================================
-# Phase 7: Metrics Collection
+# Phase 7: Metrics & Dashboard Artifact Collection
 # =============================================================================
-echo "📈 PHASE 7: Metrics Collection"
+echo "📈 PHASE 7: Metrics & Dashboard Artifact Collection"
 echo "Time: $(date)"
 
-echo "  • Collecting Prometheus metrics..."
-curl -s "http://localhost:9090/api/v1/query?query=node_cpu_usage" > "$ARTIFACTS_DIR/prometheus-cpu-metrics.json"
-curl -s "http://localhost:9090/api/v1/query?query=node_memory_usage" > "$ARTIFACTS_DIR/prometheus-memory-metrics.json"
-curl -s "http://localhost:9090/api/v1/query?query=consensus_latency" > "$ARTIFACTS_DIR/prometheus-consensus-latency.json"
-curl -s "http://localhost:9090/api/v1/query?query=npu_acceleration_factor" > "$ARTIFACTS_DIR/prometheus-npu-factor.json"
+mkdir -p "$ARTIFACTS_DIR/prometheus" "$ARTIFACTS_DIR/grafana" "$ARTIFACTS_DIR/runtime"
+
+safe_curl() {
+    local out_file="$1"
+    local url="$2"
+    if curl -sf "$url" > "$out_file"; then
+        echo "    ✓ $(basename "$out_file")"
+    else
+        echo "    ⚠️  Failed: $url" | tee -a "$LOGS_DIR/artifact-collection-warnings.log"
+    fi
+}
+
+echo "  • Collecting Prometheus instant queries..."
+safe_curl "$ARTIFACTS_DIR/prometheus/query-up.json" "http://localhost:9090/api/v1/query?query=up"
+safe_curl "$ARTIFACTS_DIR/prometheus/query-process-resident-memory-bytes.json" "http://localhost:9090/api/v1/query?query=process_resident_memory_bytes"
+safe_curl "$ARTIFACTS_DIR/prometheus/query-process-cpu-seconds-total.json" "http://localhost:9090/api/v1/query?query=process_cpu_seconds_total"
+safe_curl "$ARTIFACTS_DIR/prometheus/query-fl-round-latency-seconds.json" "http://localhost:9090/api/v1/query?query=fl_round_latency_seconds"
+safe_curl "$ARTIFACTS_DIR/prometheus/query-fl-consensus-duration-seconds.json" "http://localhost:9090/api/v1/query?query=fl_consensus_duration_seconds"
+
+echo "  • Collecting Prometheus range queries (last 30m)..."
+end_ts=$(date +%s)
+start_ts=$((end_ts - 1800))
+step=15
+safe_curl "$ARTIFACTS_DIR/prometheus/range-up.json" "http://localhost:9090/api/v1/query_range?query=up&start=${start_ts}&end=${end_ts}&step=${step}"
+safe_curl "$ARTIFACTS_DIR/prometheus/range-process-resident-memory-bytes.json" "http://localhost:9090/api/v1/query_range?query=process_resident_memory_bytes&start=${start_ts}&end=${end_ts}&step=${step}"
+safe_curl "$ARTIFACTS_DIR/prometheus/range-process-cpu-seconds-total.json" "http://localhost:9090/api/v1/query_range?query=process_cpu_seconds_total&start=${start_ts}&end=${end_ts}&step=${step}"
+
+echo "  • Exporting Grafana state and dashboards..."
+safe_curl "$ARTIFACTS_DIR/grafana/health.json" "http://localhost:3001/api/health"
+
+python3 - "$ARTIFACTS_DIR/grafana" "$GRAFANA_ADMIN_PASSWORD" << 'PYTHON_GRAFANA'
+import base64
+import json
+import pathlib
+import sys
+import urllib.request
+
+out_dir = pathlib.Path(sys.argv[1])
+password = sys.argv[2]
+out_dir.mkdir(parents=True, exist_ok=True)
+
+auth = base64.b64encode(f"admin:{password}".encode()).decode()
+headers = {
+    "Authorization": f"Basic {auth}",
+    "Accept": "application/json",
+}
+
+def fetch_json(url: str):
+    req = urllib.request.Request(url, headers=headers)
+    with urllib.request.urlopen(req, timeout=20) as resp:
+        return json.loads(resp.read().decode())
+
+try:
+    dashboards = fetch_json("http://localhost:3001/api/search?type=dash-db")
+    (out_dir / "dashboard-index.json").write_text(json.dumps(dashboards, indent=2))
+    for item in dashboards:
+        uid = item.get("uid")
+        if not uid:
+            continue
+        dashboard = fetch_json(f"http://localhost:3001/api/dashboards/uid/{uid}")
+        (out_dir / f"dashboard-{uid}.json").write_text(json.dumps(dashboard, indent=2))
+    print(f"✓ Exported {len(dashboards)} Grafana dashboards")
+except Exception as exc:
+    (out_dir / "export-error.txt").write_text(str(exc))
+    print(f"⚠️ Grafana export failed: {exc}")
+PYTHON_GRAFANA
 
 echo "  • Exporting test results from containers..."
 docker cp sovereignmap-backend-1000:/app/results/. "$ARTIFACTS_DIR/" 2>/dev/null || true
+
+echo "  • Collecting runtime snapshots..."
+docker ps --format '{{.Names}} {{.Status}} {{.RunningFor}}' > "$ARTIFACTS_DIR/runtime/docker-ps.txt" || true
+docker stats --no-stream --format 'table {{.Name}}\t{{.CPUPerc}}\t{{.MemUsage}}\t{{.NetIO}}\t{{.PIDs}}' > "$ARTIFACTS_DIR/runtime/docker-stats.txt" || true
+docker compose -f "$SCRIPT_DIR/docker-compose.1000nodes.yml" config > "$ARTIFACTS_DIR/runtime/docker-compose.1000nodes.resolved.yml" 2>/dev/null || true
 
 echo "  • Collecting container logs..."
 docker logs sovereignmap-backend-1000 > "$LOGS_DIR/backend-full.log" 2>&1 || true
 docker logs sovereignmap-frontend-1000 > "$LOGS_DIR/frontend-full.log" 2>&1 || true
 docker logs prometheus-1000 > "$LOGS_DIR/prometheus-full.log" 2>&1 || true
 docker logs grafana-1000 > "$LOGS_DIR/grafana-full.log" 2>&1 || true
+docker logs alertmanager-1000 > "$LOGS_DIR/alertmanager-full.log" 2>&1 || true
 
-echo "✅ Metrics collected"
+echo "✅ Metrics and dashboard artifacts collected"
 echo ""
 
 # =============================================================================
@@ -298,7 +373,7 @@ echo ""
 echo "📊 PHASE 8: Data Visualization & Plot Generation"
 echo "Time: $(date)"
 
-python3 << 'PYTHON_EOF'
+python3 - "$ARTIFACTS_DIR" "$PLOTS_DIR" << 'PYTHON_EOF'
 import json
 import os
 import sys
@@ -406,19 +481,64 @@ if throughput_data and 'latency' in throughput_data:
 print("✅ Plot generation complete")
 PYTHON_EOF
 
-python3 -c "
-import sys
-sys.path.insert(0, '$SCRIPT_DIR')
-exec(open('$SCRIPT_DIR/run-1000-node-npu-test.sh').read().split('PYTHON_EOF')[1].split('PYTHON_EOF')[0])
-" "$ARTIFACTS_DIR" "$PLOTS_DIR" 2>/dev/null || echo "⚠️  Skipping advanced plots"
-
 echo "✅ Data visualization complete"
 echo ""
 
 # =============================================================================
-# Phase 9: Report Generation
+# Phase 9: Byzantine Stress Test Suite + Plot Artifacts
 # =============================================================================
-echo "📝 PHASE 9: Report Generation"
+echo "🛡️ PHASE 9: Byzantine Stress Test Suite"
+echo "Time: $(date)"
+
+if [ "$RUN_BYZANTINE_STRESS_TESTS" = "true" ]; then
+    echo "  • Running byzantine stress test suite..."
+    python3 "$SCRIPT_DIR/byzantine-stress-test-suite.py" 2>&1 | tee "$LOGS_DIR/test-byzantine-stress-suite.log"
+
+    echo "  • Generating byzantine stress suite plots..."
+    python3 "$SCRIPT_DIR/generate-byzantine-test-suite-plots.py" 2>&1 | tee "$LOGS_DIR/plot-byzantine-stress-suite.log"
+
+    echo "  • Copying stress test JSON + plots into timestamped results..."
+    mkdir -p "$STRESS_RESULTS_DIR/raw" "$STRESS_RESULTS_DIR/plots"
+    latest_suite_json=$(ls -t "$SCRIPT_DIR"/test-results/byzantine-stress-test-suite/*.json 2>/dev/null | head -1 || true)
+    if [ -n "$latest_suite_json" ]; then
+        cp "$latest_suite_json" "$STRESS_RESULTS_DIR/raw/"
+    fi
+    cp -r "$SCRIPT_DIR"/test-results/byzantine-stress-test-suite/plots/. "$STRESS_RESULTS_DIR/plots/" 2>/dev/null || true
+    cp -r "$STRESS_RESULTS_DIR/plots/." "$PLOTS_DIR/" 2>/dev/null || true
+    cp "$STRESS_RESULTS_DIR/raw"/*.json "$ARTIFACTS_DIR/" 2>/dev/null || true
+    echo "✅ Byzantine stress test artifacts captured"
+else
+    echo "⚠️  Skipping byzantine stress tests (RUN_BYZANTINE_STRESS_TESTS=$RUN_BYZANTINE_STRESS_TESTS)"
+fi
+
+cat > "$RESULTS_DIR/ARTIFACT-INDEX.md" << INDEX_EOF
+# Artifact Index ($TIMESTAMP)
+
+## NPU Test Artifacts
+- `artifacts/` JSON outputs from benchmark, throughput, BFT, and consensus tests
+- `plots/` performance and latency visualizations
+- `logs/` build, deploy, test, and service logs
+
+## Observability Artifacts
+- `artifacts/prometheus/` instant and range query JSON snapshots
+- `artifacts/grafana/` health, dashboard index, and dashboard JSON exports
+- `artifacts/runtime/` docker ps/stats and resolved compose config
+
+## Byzantine Stress Suite Artifacts
+- `stress-test-suite/raw/` latest suite JSON result
+- `stress-test-suite/plots/` generated stress suite PNG plots
+
+## Packaging
+- `artifacts.tar.gz` compressed bundle used for review/upload
+INDEX_EOF
+
+echo "✅ Artifact index generated: $RESULTS_DIR/ARTIFACT-INDEX.md"
+echo ""
+
+# =============================================================================
+# Phase 10: Report Generation
+# =============================================================================
+echo "📝 PHASE 10: Report Generation"
 echo "Time: $(date)"
 
 cat > "$RESULTS_DIR/TEST-REPORT.md" << 'REPORT_EOF'
@@ -506,16 +626,16 @@ echo "✅ Report generated: $RESULTS_DIR/TEST-REPORT.md"
 echo ""
 
 # =============================================================================
-# Phase 10: Artifact Packaging & Git Commit
+# Phase 11: Artifact Packaging & Git Commit
 # =============================================================================
-echo "📦 PHASE 10: Artifact Packaging & Git Commit"
+echo "📦 PHASE 11: Artifact Packaging & Git Commit"
 echo "Time: $(date)"
 
 cd "$SCRIPT_DIR"
 
 echo "  • Creating artifact tarball..."
 tar -czf "$RESULTS_DIR/artifacts.tar.gz" \
-    -C "$RESULTS_DIR" artifacts logs plots TEST-REPORT.md \
+    -C "$RESULTS_DIR" artifacts logs plots stress-test-suite TEST-REPORT.md ARTIFACT-INDEX.md \
     2>/dev/null || true
 
 echo "  • Staging test results for commit..."

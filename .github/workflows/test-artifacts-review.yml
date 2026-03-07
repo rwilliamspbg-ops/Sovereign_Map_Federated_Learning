@@ -1,0 +1,60 @@
+name: Test Artifacts Review
+
+on:
+  workflow_dispatch:
+  pull_request:
+    paths:
+      - 'run-1000-node-npu-test.sh'
+      - 'docker-compose.1000nodes.yml'
+      - 'byzantine-stress-test-suite.py'
+      - 'generate-byzantine-test-suite-plots.py'
+      - 'test-results/**'
+  push:
+    branches:
+      - main
+    paths:
+      - 'run-1000-node-npu-test.sh'
+      - 'docker-compose.1000nodes.yml'
+      - 'byzantine-stress-test-suite.py'
+      - 'generate-byzantine-test-suite-plots.py'
+      - 'test-results/**'
+
+jobs:
+  upload-test-artifacts:
+    name: Upload NPU and Stress Artifacts
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Build artifact manifest
+        shell: bash
+        run: |
+          set -euo pipefail
+          {
+            echo "# Test Artifact Manifest"
+            echo
+            echo "Generated: $(date -u +%Y-%m-%dT%H:%M:%SZ)"
+            echo
+            echo "## Included Paths"
+            echo "- test-results/1000-node-npu"
+            echo "- test-results/byzantine-stress-test-suite"
+            echo
+            echo "## File Counts"
+            echo "- NPU files: $(find test-results/1000-node-npu -type f 2>/dev/null | wc -l | tr -d ' ')"
+            echo "- Stress files: $(find test-results/byzantine-stress-test-suite -type f 2>/dev/null | wc -l | tr -d ' ')"
+          } > test-artifact-manifest.md
+
+      - name: Upload test artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: npu-and-stress-test-artifacts-${{ github.run_id }}
+          if-no-files-found: warn
+          retention-days: 30
+          path: |
+            test-results/1000-node-npu
+            test-results/byzantine-stress-test-suite
+            test-artifact-manifest.md

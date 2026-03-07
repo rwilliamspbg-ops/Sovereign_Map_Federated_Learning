@@ -174,6 +174,13 @@ services:
       - NODE_PEER_ID={{.Node.ID}}
       - REDIS_URL=redis://redis:6379/0
       - DATABASE_URI=mongodb://admin:${MONGO_PASSWORD:-CHANGE_ME_MONGO}@mongo:27017/sovereignmap_1000?authSource=admin
+      # Memory-conscious client defaults so 1000 replicas can fit on constrained hosts.
+      - BATCH_SIZE=${NODE_AGENT_BATCH_SIZE:-4}
+      - LOCAL_EPOCHS=${NODE_AGENT_LOCAL_EPOCHS:-1}
+      - MAX_SAMPLES_PER_NODE=${NODE_AGENT_MAX_SAMPLES_PER_NODE:-32}
+      - FORCE_CPU=${NODE_AGENT_FORCE_CPU:-true}
+      - PYTHONMALLOC=${NODE_AGENT_PYTHONMALLOC:-malloc}
+      - MALLOC_ARENA_MAX=${NODE_AGENT_MALLOC_ARENA_MAX:-2}
     depends_on:
       backend:
         condition: service_healthy
@@ -193,15 +200,10 @@ services:
       options:
         max-size: "20m"
         max-file: "3"
+    mem_limit: ${NODE_AGENT_MEM_LIMIT:-192m}
+    mem_reservation: ${NODE_AGENT_MEM_RESERVATION:-96m}
     deploy:
       replicas: 1000
-      resources:
-        limits:
-          cpus: '0.5'
-          memory: 512M
-        reservations:
-          cpus: '0.25'
-          memory: 256M
 
   # Prometheus: Metrics collection for 1000 nodes
   prometheus:
@@ -210,7 +212,8 @@ services:
     ports:
       - "9090:9090"
     volumes:
-      - ./monitoring/prometheus.1000.yml:/etc/prometheus/prometheus.yml:ro
+      - ./monitoring/prometheus/prometheus.yml:/etc/prometheus/prometheus.yml:ro
+      - ./monitoring/prometheus/alerts:/etc/prometheus/alerts:ro
       - prometheus_data_1000:/prometheus
     command:
       - '--config.file=/etc/prometheus/prometheus.yml'
@@ -252,11 +255,11 @@ services:
       - GF_SECURITY_ADMIN_USER=admin
       - GF_USERS_ALLOW_SIGN_UP=false
       - GF_PANELS_PLUGIN_SUPPORT=enable
-      - GF_INSTALL_PLUGINS=grafana-piechart-panel,grafana-worldmap-panel-panel
+      - GF_INSTALL_PLUGINS=grafana-piechart-panel,grafana-worldmap-panel
     volumes:
       - grafana_data_1000:/var/lib/grafana
-      - ./monitoring/grafana/dashboards:/etc/grafana/provisioning/dashboards:ro
-      - ./monitoring/grafana/datasources:/etc/grafana/provisioning/datasources:ro
+      - ./grafana/provisioning/dashboards:/etc/grafana/provisioning/dashboards:ro
+      - ./grafana/provisioning/datasources:/etc/grafana/provisioning/datasources:ro
     depends_on:
       - prometheus
     restart: always
