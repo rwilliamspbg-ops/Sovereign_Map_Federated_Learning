@@ -30,10 +30,10 @@ services:
     deploy:
       resources:
         limits:
-          cpus: '4'
+          cpus: '${MONGO_CPUS_LIMIT:-1.00}'
           memory: 8G
         reservations:
-          cpus: '2'
+          cpus: '${MONGO_CPUS_RESERVATION:-0.50}'
           memory: 4G
 
   redis:
@@ -60,10 +60,10 @@ services:
     deploy:
       resources:
         limits:
-          cpus: '4'
+          cpus: '${REDIS_CPUS_LIMIT:-1.00}'
           memory: 4G
         reservations:
-          cpus: '2'
+          cpus: '${REDIS_CPUS_RESERVATION:-0.50}'
           memory: 2G
 
   backend:
@@ -112,10 +112,10 @@ services:
     deploy:
       resources:
         limits:
-          cpus: '8'
+          cpus: '${BACKEND_CPUS_LIMIT:-2.00}'
           memory: 8G
         reservations:
-          cpus: '4'
+          cpus: '${BACKEND_CPUS_RESERVATION:-1.00}'
           memory: 4G
 
   frontend:
@@ -153,10 +153,10 @@ services:
     deploy:
       resources:
         limits:
-          cpus: '2'
+          cpus: '${FRONTEND_CPUS_LIMIT:-0.50}'
           memory: 2G
         reservations:
-          cpus: '1'
+          cpus: '${FRONTEND_CPUS_RESERVATION:-0.25}'
           memory: 1G
 
   # Node Agents (1000 replicas)
@@ -238,15 +238,15 @@ services:
     deploy:
       resources:
         limits:
-          cpus: '4'
+          cpus: '${PROMETHEUS_CPUS_LIMIT:-1.00}'
           memory: 8G
         reservations:
-          cpus: '2'
+          cpus: '${PROMETHEUS_CPUS_RESERVATION:-0.50}'
           memory: 4G
 
   # Grafana: Visualization and dashboards
   grafana:
-    image: grafana/grafana:10.2
+    image: grafana/grafana:latest
     container_name: grafana-1000
     ports:
       - "3001:3000"
@@ -278,10 +278,10 @@ services:
     deploy:
       resources:
         limits:
-          cpus: '2'
+          cpus: '${GRAFANA_CPUS_LIMIT:-0.50}'
           memory: 2G
         reservations:
-          cpus: '1'
+          cpus: '${GRAFANA_CPUS_RESERVATION:-0.25}'
           memory: 1G
 
   # Alertmanager: Alert handling
