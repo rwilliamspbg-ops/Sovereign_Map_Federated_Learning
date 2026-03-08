@@ -2,11 +2,23 @@ package slam
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
+	"os"
+	"path/filepath"
 	"time"
 
 	"gocv.io/x/gocv"
 )
+
+type serializedMap struct {
+	Version     int         `json:"version"`
+	Config      map[string]any `json:"config"`
+	CurrentPose CameraPose  `json:"current_pose"`
+	MapPoints   []MapPoint  `json:"map_points"`
+	FrameCount  int         `json:"frame_count"`
+	SavedAt     time.Time   `json:"saved_at"`
+}
 
 // SLAMMode identifies SLAM operating mode.
 type SLAMMode string
@@ -124,14 +136,64 @@ func (b *ORBSLAMBridge) Reset() error {
 
 // SaveMap exports SLAM map to file for later reuse.
 func (b *ORBSLAMBridge) SaveMap(path string) error {
-	// In production, this would serialize map points and keyframes
-	return fmt.Errorf("not implemented")
+	if path == "" {
+		return fmt.Errorf("path is required")
+	}
+	if err := os.MkdirAll(filepath.Dir(path), 0o755); err != nil {
+		return fmt.Errorf("create map directory: %w", err)
+	}
+
+	payload := serializedMap{
+		Version: 1,
+		Config: map[string]any{
+			"mode":            b.config.Mode,
+			"vocabulary_path": b.config.VocabularyPath,
+			"settings_path":   b.config.SettingsPath,
+			"endpoint":        b.config.Endpoint,
+		},
+		CurrentPose: b.currentPose,
+		MapPoints:   append([]MapPoint(nil), b.mapPoints...),
+		FrameCount:  b.frameCount,
+		SavedAt:     time.Now().UTC(),
+	}
+
+	raw, err := json.MarshalIndent(payload, "", "  ")
+	if err != nil {
+		return fmt.Errorf("marshal map: %w", err)
+	}
+
+	if err := os.WriteFile(filepath.Clean(path), raw, 0o644); err != nil {
+		return fmt.Errorf("write map file: %w", err)
+	}
+
+	return nil
 }
 
 // LoadMap imports previously saved SLAM map.
 func (b *ORBSLAMBridge) LoadMap(path string) error {
-	// In production, this would deserialize and load map
-	return fmt.Errorf("not implemented")
+	if path == "" {
+		return fmt.Errorf("path is required")
+	}
+
+	raw, err := os.ReadFile(filepath.Clean(path))
+	if err != nil {
+		return fmt.Errorf("read map file: %w", err)
+	}
+
+	var payload serializedMap
+	if err := json.Unmarshal(raw, &payload); err != nil {
+		return fmt.Errorf("unmarshal map file: %w", err)
+	}
+	if payload.Version <= 0 {
+		return fmt.Errorf("unsupported map format version: %d", payload.Version)
+	}
+
+	b.currentPose = payload.CurrentPose
+	b.mapPoints = append([]MapPoint(nil), payload.MapPoints...)
+	b.frameCount = payload.FrameCount
+	b.initialized = true
+
+	return nil
 }
 
 // Shutdown cleanly stops SLAM system.

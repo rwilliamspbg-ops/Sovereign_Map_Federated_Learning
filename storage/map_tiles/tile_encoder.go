@@ -79,7 +79,18 @@ func (e *TileEncoder) Encode(img image.Image) ([]byte, error) {
 			return nil, fmt.Errorf("encode jpeg: %w", err)
 		}
 	case FormatWebP:
-		return nil, fmt.Errorf("webp encoding not yet implemented")
+		mat, err := gocv.ImageToMatRGB(img)
+		if err != nil {
+			return nil, fmt.Errorf("image to mat for webp: %w", err)
+		}
+		defer mat.Close()
+
+		encoded, err := gocv.IMEncode(".webp", mat)
+		if err != nil {
+			return nil, fmt.Errorf("encode webp: %w", err)
+		}
+		defer encoded.Close()
+		return encoded.GetBytes(), nil
 	default:
 		return nil, fmt.Errorf("unsupported format: %s", e.config.Format)
 	}
