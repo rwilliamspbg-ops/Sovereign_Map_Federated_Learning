@@ -53,6 +53,5 @@ jobs:
       - name: Run OpenCV-tagged package tests
         env:
           CGO_ENABLED: 1
-          CGO_CXXFLAGS: "-include opencv2/aruco.hpp -include opencv2/objdetect/aruco_detector.hpp"
         run: |
           go test -v -tags opencv ./sensors/slam ./storage/map_tiles
