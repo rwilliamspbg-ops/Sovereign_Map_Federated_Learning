@@ -39,6 +39,9 @@ type Extractor struct {
 	detector gocv.ORB
 	sift     gocv.SIFT
 	akaze    gocv.AKAZE
+	hasORB   bool
+	hasSIFT  bool
+	hasAKAZE bool
 }
 
 // NewExtractor creates feature extractor with specified algorithm.
@@ -60,14 +63,24 @@ func NewExtractor(cfg ExtractorConfig) (*Extractor, error) {
 
 	switch cfg.Type {
 	case FeatureORB:
-		ext.detector = gocv.NewORB()
-		ext.detector.SetMaxFeatures(cfg.MaxFeatures)
-		ext.detector.SetScaleFactor(cfg.ScaleFactor)
-		ext.detector.SetNLevels(cfg.NLevels)
+		ext.detector = gocv.NewORBWithParams(
+			cfg.MaxFeatures,
+			cfg.ScaleFactor,
+			cfg.NLevels,
+			cfg.EdgeThreshold,
+			0,
+			2,
+			gocv.ORBScoreTypeHarris,
+			31,
+			20,
+		)
+		ext.hasORB = true
 	case FeatureSIFT:
 		ext.sift = gocv.NewSIFT()
+		ext.hasSIFT = true
 	case FeatureAKAZE:
 		ext.akaze = gocv.NewAKAZE()
+		ext.hasAKAZE = true
 	default:
 		return nil, fmt.Errorf("unsupported feature type: %s", cfg.Type)
 	}
@@ -83,14 +96,16 @@ func (e *Extractor) Extract(img gocv.Mat) (FeatureExtractionResult, error) {
 
 	var keypoints []gocv.KeyPoint
 	descriptors := gocv.NewMat()
+	mask := gocv.NewMat()
+	defer mask.Close()
 
 	switch e.config.Type {
 	case FeatureORB:
-		keypoints, descriptors = e.detector.DetectAndCompute(img, gocv.NewMat())
+		keypoints, descriptors = e.detector.DetectAndCompute(img, mask)
 	case FeatureSIFT:
-		keypoints, descriptors = e.sift.DetectAndCompute(img, gocv.NewMat())
+		keypoints, descriptors = e.sift.DetectAndCompute(img, mask)
 	case FeatureAKAZE:
-		keypoints, descriptors = e.akaze.DetectAndCompute(img, gocv.NewMat())
+		keypoints, descriptors = e.akaze.DetectAndCompute(img, mask)
 	}
 
 	return FeatureExtractionResult{
@@ -128,13 +143,13 @@ func (e *Extractor) ExtractFromImage(img image.Image) (FeatureExtractionResult, 
 
 // Close releases detector resources.
 func (e *Extractor) Close() error {
-	if e.detector != nil {
+	if e.hasORB {
 		e.detector.Close()
 	}
-	if e.sift != nil {
+	if e.hasSIFT {
 		e.sift.Close()
 	}
-	if e.akaze != nil {
+	if e.hasAKAZE {
 		e.akaze.Close()
 	}
 	return nil
@@ -142,9 +157,15 @@ func (e *Extractor) Close() error {
 
 // MatchFeatures computes feature matches between two descriptor sets.
 func MatchFeatures(desc1, desc2 gocv.Mat, matchType gocv.NormType) []gocv.DMatch {
-	matcher := gocv.NewBFMatcher()
+	matcher := gocv.NewBFMatcherWithParams(matchType, false)
 	defer matcher.Close()
 
-	matches := matcher.Match(desc1, desc2)
+	knn := matcher.KnnMatch(desc1, desc2, 1)
+	matches := make([]gocv.DMatch, 0, len(knn))
+	for _, group := range knn {
+		if len(group) > 0 {
+			matches = append(matches, group[0])
+		}
+	}
 	return matches
 }
