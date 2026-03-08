@@ -186,12 +186,12 @@ validate_monitoring_stack() {
         if [[ -f "$dashboard" ]]; then
             # Validate JSON syntax
             if jq empty "$dashboard" 2> /dev/null; then
-                check_pass "$(basename $dashboard) exists and valid JSON"
+                check_pass "$(basename \"$dashboard\") exists and valid JSON"
             else
-                check_fail "$(basename $dashboard) invalid JSON"
+                check_fail "$(basename \"$dashboard\") invalid JSON"
             fi
         else
-            check_fail "$(basename $dashboard) missing"
+            check_fail "$(basename \"$dashboard\") missing"
         fi
     done
     
@@ -224,7 +224,7 @@ validate_network_ports() {
     PORTS=(8000 8080 9090 3000 9093)
     
     for port in "${PORTS[@]}"; do
-        if ! lsof -i :$port &> /dev/null && ! netstat -tuln 2>/dev/null | grep -q ":$port "; then
+        if ! lsof -i :"$port" &> /dev/null && ! netstat -tuln 2>/dev/null | grep -q ":$port "; then
             check_pass "Port $port available"
         else
             check_warn "Port $port already in use"
