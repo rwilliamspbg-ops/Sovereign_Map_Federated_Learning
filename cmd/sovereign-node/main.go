@@ -10,7 +10,9 @@ import (
 	"strings"
 	"time"
 
-	"github.com/rwilliamspbg-ops/Sovereign_Map_Federated_Learning/internal/p2p"
+	"context"
+
+	meshruntime "github.com/rwilliamspbg-ops/Sovereign_Map_Federated_Learning/node/network"
 )
 
 type bootstrapNode struct {
@@ -61,6 +63,7 @@ func run(mode string, args []string) error {
 	bootstrapPath := fs.String("bootstrap", "network/bootstrap/bootstrap_nodes.json", "path to bootstrap nodes json")
 	seedsPath := fs.String("seeds", "network/bootstrap/seed_peers.json", "path to seed peers json")
 	configPath := fs.String("config", "network/bootstrap/network_config.json", "path to network config json")
+	listenAddr := fs.String("listen", "/ip4/0.0.0.0/tcp/0", "libp2p listen multiaddr")
 
 	if err := fs.Parse(args); err != nil {
 		return err
@@ -79,25 +82,41 @@ func run(mode string, args []string) error {
 		return err
 	}
 
-	network := p2p.NewNetwork(*nodeID, 3, time.Duration(cfg.RoundTimeoutSeconds)*time.Second)
-	addBootstrapPeers(network, bootstrapNodes, seedPeers)
-	dialed := network.DialAllPeers()
+	bootstrapPeers := collectBootstrapPeers(bootstrapNodes, seedPeers)
 	topic := strings.TrimSpace(cfg.DefaultTopic)
 	if topic == "" {
 		topic = "fl.rounds"
 	}
-	network.JoinTopic(topic)
+
+	ctx, cancel := context.WithTimeout(context.Background(), 20*time.Second)
+	defer cancel()
+
+	mesh, err := meshruntime.NewMesh(ctx, meshruntime.MeshConfig{
+		NodeID:         *nodeID,
+		ListenAddrs:    []string{*listenAddr},
+		BootstrapPeers: bootstrapPeers,
+		DiscoveryTag:   cfg.Network,
+		Topic:          topic,
+	})
+	if err != nil {
+		return fmt.Errorf("initialize libp2p mesh: %w", err)
+	}
+	defer func() {
+		_ = mesh.Stop()
+	}()
 
 	hello := fmt.Sprintf("node=%s mode=%s ts=%s", *nodeID, mode, time.Now().UTC().Format(time.RFC3339))
-	publishedTo, err := network.Publish(topic, []byte(hello))
-	if err != nil {
+	if err := mesh.Publish(ctx, []byte(hello)); err != nil {
 		return fmt.Errorf("publish startup gossip: %w", err)
 	}
 
-	fmt.Printf("node=%s mode=%s network=%s transport=%s pubsub=%s topic=%s peers=%d dialed=%d gossip_fanout=%d\n",
-		*nodeID, mode, cfg.Network, cfg.Transport, cfg.PubSub, topic, network.GetActivePeerCount(), dialed, publishedTo)
+	dialed := mesh.JoinedBootstrap()
+	activePeers := mesh.ActivePeers()
 
-	if mode == "join" && dialed == 0 {
+	fmt.Printf("node=%s mode=%s network=%s transport=%s pubsub=%s topic=%s peers=%d dialed=%d gossip_fanout=%d\n",
+		*nodeID, mode, cfg.Network, cfg.Transport, cfg.PubSub, topic, activePeers, dialed, activePeers)
+
+	if mode == "join" && dialed == 0 && activePeers == 0 {
 		return errors.New("join requires at least one bootstrap or seed peer")
 	}
 
@@ -162,24 +181,23 @@ func readJSON(path string, out interface{}) error {
 	return nil
 }
 
-func addBootstrapPeers(network *p2p.Network, nodes []bootstrapNode, seeds []string) {
+func collectBootstrapPeers(nodes []bootstrapNode, seeds []string) []string {
+	out := make([]string, 0, len(nodes)+len(seeds))
 	for _, n := range nodes {
-		id := strings.TrimSpace(n.ID)
-		if id == "" {
-			continue
-		}
 		addr := strings.TrimSpace(n.Multiaddr)
 		if addr == "" {
 			continue
 		}
-		network.AddPeer(id, addr, 1.0)
+		out = append(out, addr)
 	}
 
-	for i, seed := range seeds {
+	for _, seed := range seeds {
 		addr := strings.TrimSpace(seed)
 		if addr == "" {
 			continue
 		}
-		network.AddPeer(fmt.Sprintf("seed-%d", i+1), addr, 0.9)
+		out = append(out, addr)
 	}
+
+	return out
 }
