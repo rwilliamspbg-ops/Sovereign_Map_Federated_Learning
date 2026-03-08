@@ -1,0 +1,25 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: sovereign-bootstrap
+  labels:
+    app: sovereign-bootstrap
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: sovereign-bootstrap
+  template:
+    metadata:
+      labels:
+        app: sovereign-bootstrap
+    spec:
+      containers:
+        - name: sovereign-node
+          image: ghcr.io/rwilliamspbg-ops/sovereign-map-node:latest
+          args: ["start"]
+          ports:
+            - containerPort: 4001
+              protocol: UDP
+            - containerPort: 9090
+              protocol: TCP

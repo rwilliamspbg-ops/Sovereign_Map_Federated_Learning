@@ -81,3 +81,17 @@ scrape_configs:
       - targets: ['node-agent:8080']
     metrics_path: '/metrics/island'
     scrape_interval: 30s
+
+  # Scheduler exporter metrics
+  - job_name: 'scheduler-exporter'
+    static_configs:
+      - targets: ['metrics-exporter:9108']
+    metrics_path: '/metrics/scheduler'
+    scrape_interval: 10s
+
+  # Simulator exporter metrics
+  - job_name: 'simulator-exporter'
+    static_configs:
+      - targets: ['metrics-exporter:9108']
+    metrics_path: '/metrics/simulator'
+    scrape_interval: 15s

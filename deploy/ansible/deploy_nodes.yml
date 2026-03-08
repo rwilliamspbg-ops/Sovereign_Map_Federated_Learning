@@ -1,0 +1,7 @@
+---
+- name: Deploy sovereign node
+  hosts: all
+  tasks:
+    - name: Placeholder deployment task
+      debug:
+        msg: "Deploy sovereign-node binary and config"
