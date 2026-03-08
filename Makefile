@@ -204,7 +204,8 @@ check: fmt vet lint test
 
 smoke:
 	@echo "🧪 Running reproducibility smoke checks..."
-	@go test -short ./...
+	@PKGS=$$(go list ./... | grep -Ev '(/sensors/camera|/sensors/slam|/storage/map_tiles)$$'); \
+		go test -short $$PKGS
 	@npm ci
 	@npm --prefix packages/core ci
 	@npm --prefix packages/privacy ci

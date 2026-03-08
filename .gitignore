@@ -195,6 +195,7 @@ output/
 # results/        (keep test results - see exception below)
 *.out
 *.tmp
+/sovereign-node
 
 # Test results
 test-results/
