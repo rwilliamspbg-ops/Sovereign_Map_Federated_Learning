@@ -1,0 +1,57 @@
+name: OpenCV Go Tests
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [ main ]
+    paths:
+      - 'sensors/slam/**'
+      - 'storage/map_tiles/**'
+      - '.github/workflows/opencv-go-tests.yml'
+      - 'go.mod'
+      - 'go.sum'
+  pull_request:
+    branches: [ main ]
+    paths:
+      - 'sensors/slam/**'
+      - 'storage/map_tiles/**'
+      - '.github/workflows/opencv-go-tests.yml'
+      - 'go.mod'
+      - 'go.sum'
+
+permissions:
+  contents: read
+
+jobs:
+  opencv-tests:
+    name: OpenCV-tagged Go Tests
+    if: github.event_name != 'pull_request' || github.actor != 'dependabot[bot]'
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd
+
+      - name: Set up Go
+        uses: actions/setup-go@4b73464bb391d4059bd26b0524d20df3927bd417
+        with:
+          go-version-file: go.mod
+          cache: true
+
+      - name: Install OpenCV dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y --no-install-recommends \
+            pkg-config \
+            libopencv-dev \
+            libopencv-contrib-dev
+
+      - name: Verify OpenCV installation
+        run: |
+          pkg-config --modversion opencv4
+
+      - name: Run OpenCV-tagged package tests
+        env:
+          CGO_ENABLED: 1
+        run: |
+          go test -v -tags opencv ./sensors/slam ./storage/map_tiles
