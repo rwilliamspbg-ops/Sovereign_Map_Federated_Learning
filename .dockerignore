@@ -1,0 +1,34 @@
+# VCS
+.git
+.gitignore
+
+# Build artifacts
+bin/
+dist/
+build/
+*.o
+*.out
+*.test
+coverage/
+
+# Go caches
+.gocache/
+
+# Node
+node_modules/
+frontend/node_modules/
+
+# Python
+__pycache__/
+*.pyc
+.venv/
+venv/
+
+# Logs and temp
+*.log
+tmp/
+.cache/
+
+# Test outputs
+test-results/
+results/

@@ -1,0 +1,13 @@
+{
+  "annotations": {"list": []},
+  "editable": true,
+  "panels": [],
+  "schemaVersion": 39,
+  "style": "dark",
+  "tags": ["consensus", "trust", "tpm"],
+  "templating": {"list": []},
+  "time": {"from": "now-6h", "to": "now"},
+  "title": "Consensus Trust Monitoring",
+  "uid": "consensus-trust-monitoring",
+  "version": 1
+}
