@@ -2,8 +2,10 @@ package drone
 
 import (
 	"context"
+	"encoding/binary"
 	"encoding/json"
 	"fmt"
+	"math"
 	"net"
 	"sync"
 	"time"
@@ -142,9 +144,20 @@ func (ti *TelemetryIngest) processJSON(data []byte) error {
 		return fmt.Errorf("unmarshal json: %w", err)
 	}
 
+	return ti.enqueueTelemetry(telem, int64(len(data)))
+}
+
+func (ti *TelemetryIngest) enqueueTelemetry(telem DroneTelemetry, bytes int64) error {
+	if telem.Timestamp.IsZero() {
+		telem.Timestamp = time.Now().UTC()
+	}
+	if telem.DroneID == "" {
+		telem.DroneID = "unknown"
+	}
+
 	ti.mu.Lock()
 	ti.stats.Samples++
-	ti.stats.BytesReceived += int64(len(data))
+	ti.stats.BytesReceived += bytes
 	ti.stats.LastUpdate = time.Now()
 	ti.drones[telem.DroneID] = time.Now()
 	ti.stats.ActiveDrones = len(ti.drones)
@@ -158,11 +171,122 @@ func (ti *TelemetryIngest) processJSON(data []byte) error {
 	}
 }
 
-// processMAVLink parses MAVLink telemetry (stub for future implementation).
+// processMAVLink parses MAVLink telemetry (v1/v2 framing, common message IDs).
 func (ti *TelemetryIngest) processMAVLink(data []byte) error {
-	// TODO: Implement MAVLink protocol parsing
-	// For now, return stub
-	return fmt.Errorf("mavlink parsing not implemented")
+	parsed := 0
+	i := 0
+	for i < len(data) {
+		magic := data[i]
+		headerLen := 0
+		payloadLen := 0
+		msgID := 0
+		sysID := uint8(0)
+
+		switch magic {
+		case 0xFE: // MAVLink v1
+			if i+6 > len(data) {
+				break
+			}
+			headerLen = 6
+			payloadLen = int(data[i+1])
+			sysID = data[i+3]
+			msgID = int(data[i+5])
+		case 0xFD: // MAVLink v2
+			if i+10 > len(data) {
+				break
+			}
+			headerLen = 10
+			payloadLen = int(data[i+1])
+			sysID = data[i+5]
+			msgID = int(data[i+7]) | int(data[i+8])<<8 | int(data[i+9])<<16
+		default:
+			i++
+			continue
+		}
+
+		packetLen := headerLen + payloadLen + 2 // checksum bytes
+		if i+packetLen > len(data) {
+			break
+		}
+
+		payloadStart := i + headerLen
+		payload := data[payloadStart : payloadStart+payloadLen]
+		telem, ok := parseMAVLinkTelemetry(msgID, sysID, payload)
+		if ok {
+			if err := ti.enqueueTelemetry(telem, int64(packetLen)); err != nil {
+				return err
+			}
+			parsed++
+		}
+
+		i += packetLen
+	}
+
+	if parsed == 0 {
+		return fmt.Errorf("no supported mavlink telemetry messages found")
+	}
+
+	return nil
+}
+
+func parseMAVLinkTelemetry(msgID int, sysID uint8, payload []byte) (DroneTelemetry, bool) {
+	t := DroneTelemetry{
+		DroneID:   fmt.Sprintf("sys-%d", sysID),
+		Timestamp: time.Now().UTC(),
+	}
+
+	switch msgID {
+	case 0: // HEARTBEAT
+		if len(payload) < 9 {
+			return DroneTelemetry{}, false
+		}
+		baseMode := payload[6]
+		systemStatus := payload[7]
+		t.FlightMode = fmt.Sprintf("base_mode=%d,status=%d", baseMode, systemStatus)
+		return t, true
+
+	case 1: // SYS_STATUS
+		if len(payload) < 31 {
+			return DroneTelemetry{}, false
+		}
+		// battery_remaining (int8) at offset 30
+		t.BatteryPercent = float64(int8(payload[30]))
+		return t, true
+
+	case 33: // GLOBAL_POSITION_INT
+		if len(payload) < 28 {
+			return DroneTelemetry{}, false
+		}
+		lat := int32(binary.LittleEndian.Uint32(payload[4:8]))
+		lon := int32(binary.LittleEndian.Uint32(payload[8:12]))
+		altMM := int32(binary.LittleEndian.Uint32(payload[12:16]))
+		hdgCd := binary.LittleEndian.Uint16(payload[26:28])
+		vx := int16(binary.LittleEndian.Uint16(payload[20:22]))
+		vy := int16(binary.LittleEndian.Uint16(payload[22:24]))
+
+		t.Latitude = float64(lat) / 1e7
+		t.Longitude = float64(lon) / 1e7
+		t.AltitudeMeters = float64(altMM) / 1000.0
+		if hdgCd != 0xFFFF {
+			t.HeadingDegrees = float64(hdgCd) / 100.0
+		}
+		t.GroundSpeedMS = math.Sqrt(float64(vx*vx+vy*vy)) / 100.0
+		return t, true
+
+	case 74: // VFR_HUD
+		if len(payload) < 20 {
+			return DroneTelemetry{}, false
+		}
+		// groundspeed float32 at offset 4, heading int16 at offset 8, alt float32 at offset 12
+		gsBits := binary.LittleEndian.Uint32(payload[4:8])
+		altBits := binary.LittleEndian.Uint32(payload[12:16])
+		t.GroundSpeedMS = float64(math.Float32frombits(gsBits))
+		t.HeadingDegrees = float64(int16(binary.LittleEndian.Uint16(payload[8:10])))
+		t.AltitudeMeters = float64(math.Float32frombits(altBits))
+		return t, true
+	}
+
+	return DroneTelemetry{}, false
 }
 
 // heartbeatMonitor removes stale drones from active list.
