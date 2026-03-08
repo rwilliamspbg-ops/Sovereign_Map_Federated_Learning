@@ -1,7 +1,11 @@
 # Sovereign Map Roadmap (2026)
 
 ## Scope
-This roadmap tracks execution priorities after the v1.1.0 readiness update on branch `fork/Full-Testnet-Deployment-v1.1.0`.
+This roadmap tracks execution priorities after the v1.1.0 readiness update on `main`.
+
+## Release Finalized
+- Version `v1.1.0` tagged from `92fbdb85da5dc455fcb0ff3e309d97fe6e6c5a91`.
+- Release published: `https://github.com/rwilliamspbg-ops/Sovereign_Map_Federated_Learning/releases/tag/v1.1.0`.
 
 ## Completed
 - P2P mesh runtime connected to libp2p default transports (TCP + QUIC).
@@ -18,9 +22,10 @@ This roadmap tracks execution priorities after the v1.1.0 readiness update on br
   - `IMPLEMENTATION_SUMMARY.md`
   - `OPENCV_INSTALL.md`
 
-## In Progress
+## Completed in v1.1.0 Finalization
 - End-to-end validation across mesh, storage, and sensor pipeline.
 - Operational hardening for production-like deployments.
+- OpenCV-tagged CI lane validated green on `main`.
 
 ## Next Milestones
 

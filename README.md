@@ -27,6 +27,8 @@ cd Sovereign_Map_Federated_Learning
 
 ## Release Update (2026-03)
 
+- `v1.1.0` finalized and published from `main`: [Release v1.1.0](https://github.com/rwilliamspbg-ops/Sovereign_Map_Federated_Learning/releases/tag/v1.1.0).
+
 - P2P mesh updated with libp2p default transports (TCP + QUIC) and NAT traversal service.
 - Distributed checkpoint storage expanded with IPFS backend support.
 - Sensor ingestion expanded with camera, SLAM, mobile API, and drone telemetry modules.
