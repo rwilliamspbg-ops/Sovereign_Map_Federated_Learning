@@ -1,4 +1,4 @@
-# Sovereign Map v1.0.0 - Byzantine-Tolerant Federated Learning
+# Sovereign Map v1.1.0 - Byzantine-Tolerant Federated Learning
 
 ## Genesis Block Launch - CI-Verified Testnet Stack
 
@@ -24,6 +24,17 @@ cd Sovereign_Map_Federated_Learning
 - **Reproducibility**: [REPRODUCIBLE_SETUP.md](REPRODUCIBLE_SETUP.md) (clone and smoke-check workflow)
 
 **Contributing:** See [CONTRIBUTING.md](CONTRIBUTING.md) for PR checklist, CodeQL guardrails, and branch protection recommendations.
+
+## Release Update (2026-03)
+
+- P2P mesh updated with libp2p default transports (TCP + QUIC) and NAT traversal service.
+- Distributed checkpoint storage expanded with IPFS backend support.
+- Sensor ingestion expanded with camera, SLAM, mobile API, and drone telemetry modules.
+- Runtime readiness and implementation details documented in:
+  - [NETWORK_READINESS_ASSESSMENT.md](NETWORK_READINESS_ASSESSMENT.md)
+  - [IMPLEMENTATION_SUMMARY.md](IMPLEMENTATION_SUMMARY.md)
+  - [OPENCV_INSTALL.md](OPENCV_INSTALL.md)
+  - [ROADMAP.md](ROADMAP.md)
 
 ---
 
@@ -130,6 +141,7 @@ Interpretation:
 - [Security](#security)
 - [Testing](#testing)
 - [Documentation](#documentation)
+- [Roadmap](#roadmap)
 - [Performance](#performance)
 - [Support](#support)
 
@@ -1046,6 +1058,10 @@ Comprehensive documentation included:
 | **ARCHITECTURE.md** | System design & component details | 23KB |
 | **TPM_TRUST_GUIDE.md** | Certificate & trust system | 15KB |
 | **TPM_MONITORING_GUIDE.md** | Monitoring setup & best practices | 9KB |
+| **NETWORK_READINESS_ASSESSMENT.md** | Current network readiness and gaps | 17KB |
+| **IMPLEMENTATION_SUMMARY.md** | Implementation and dependency summary | 8KB |
+| **OPENCV_INSTALL.md** | OpenCV dependency setup for sensor modules | 3KB |
+| **ROADMAP.md** | Current roadmap and milestones | 4KB |
 
 ### API Documentation
 
@@ -1160,29 +1176,16 @@ If you use Sovereign Map in your research, please cite:
 
 ## 🗺️ Roadmap
 
-### Q1 2024
-- [x] Flower aggregator implementation
-- [x] Byzantine-robust strategy
-- [x] Testnet deployment guide
-- [ ] Hardware TPM integration
+Active roadmap and milestone tracking are maintained in [ROADMAP.md](ROADMAP.md).
 
-### Q2 2024
-- [ ] Automatic certificate rotation
-- [ ] Multi-cluster federation
-- [ ] Machine learning-based anomaly detection
-- [ ] Kubernetes deployment manifests
-
-### Q3 2024
-- [ ] Performance optimization (target 1M nodes)
-- [ ] Privacy-preserving aggregation (homomorphic encryption)
-- [ ] Incentive mechanism (DAO/token economics)
-- [ ] Mainnet alpha launch
-
-### Q4 2024
-- [ ] Production mainnet
-- [ ] Enterprise support packages
-- [ ] Academic partnerships
-- [ ] Ecosystem integrations
+### Current Priorities (2026)
+- [x] P2P mesh transport updates (TCP + QUIC)
+- [x] NAT traversal service scaffolding
+- [x] IPFS checkpoint backend integration
+- [x] Mobile and drone ingestion service scaffolding
+- [ ] End-to-end integration tests for sensor-to-tile pipeline
+- [ ] OpenCV-enabled CI lane for camera/SLAM packages
+- [ ] Production observability dashboards for new services
 
 ---
 

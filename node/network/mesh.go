@@ -54,7 +54,11 @@ func NewMesh(ctx context.Context, cfg MeshConfig) (*Mesh, error) {
 		listenAddrs = append(listenAddrs, addr)
 	}
 
-	h, err := libp2p.New(libp2p.ListenAddrs(listenAddrs...))
+	// Enable default transports (TCP + QUIC automatically included)
+	h, err := libp2p.New(
+		libp2p.ListenAddrs(listenAddrs...),
+		libp2p.DefaultTransports,
+	)
 	if err != nil {
 		return nil, fmt.Errorf("create libp2p host: %w", err)
 	}
