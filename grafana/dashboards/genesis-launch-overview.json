@@ -1,0 +1,13 @@
+{
+  "annotations": {"list": []},
+  "editable": true,
+  "panels": [],
+  "schemaVersion": 39,
+  "style": "dark",
+  "tags": ["genesis", "testnet"],
+  "templating": {"list": []},
+  "time": {"from": "now-1h", "to": "now"},
+  "title": "Genesis Launch Overview",
+  "uid": "genesis-launch-overview",
+  "version": 1
+}

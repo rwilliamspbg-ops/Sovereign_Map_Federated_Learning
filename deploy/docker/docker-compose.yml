@@ -1,0 +1,7 @@
+version: '3.9'
+services:
+  sovereign-node:
+    build:
+      context: ../..
+      dockerfile: deploy/docker/Dockerfile
+    command: ["start"]

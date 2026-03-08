@@ -4,6 +4,7 @@
 package p2p
 
 import (
+	"errors"
 	"sync"
 	"time"
 )
@@ -13,7 +14,16 @@ type Network struct {
 	mu           sync.RWMutex
 	nodeID       string
 	peers        map[string]*Peer
+	topics       map[string][]GossipMessage
 	verification *VerificationProtocol
+}
+
+// GossipMessage captures a published payload on a topic.
+type GossipMessage struct {
+	Topic     string    `json:"topic"`
+	FromNode  string    `json:"from_node"`
+	Payload   []byte    `json:"payload"`
+	Published time.Time `json:"published"`
 }
 
 // Peer represents a connected peer node
@@ -32,6 +42,7 @@ func NewNetwork(nodeID string, minVerifiers int, timeout time.Duration) *Network
 	return &Network{
 		nodeID:       nodeID,
 		peers:        make(map[string]*Peer),
+		topics:       make(map[string][]GossipMessage),
 		verification: NewVerificationProtocol(nodeID, minVerifiers, timeout),
 	}
 }
@@ -151,6 +162,85 @@ func (n *Network) SetPeerConnected(id string, connected bool) {
 			peer.LastSeen = time.Now()
 		}
 	}
+}
+
+// DialPeer marks a known peer as dialed/connected and updates metadata.
+func (n *Network) DialPeer(id string) error {
+	n.mu.Lock()
+	defer n.mu.Unlock()
+
+	peer, exists := n.peers[id]
+	if !exists {
+		return errors.New("peer not found")
+	}
+
+	peer.Connected = true
+	peer.LastSeen = time.Now()
+	peer.Metadata["dialed_at"] = peer.LastSeen.UTC().Format(time.RFC3339)
+	return nil
+}
+
+// DialAllPeers performs dial attempts for all known peers and returns successes.
+func (n *Network) DialAllPeers() int {
+	n.mu.RLock()
+	peerIDs := make([]string, 0, len(n.peers))
+	for id := range n.peers {
+		peerIDs = append(peerIDs, id)
+	}
+	n.mu.RUnlock()
+
+	dialed := 0
+	for _, id := range peerIDs {
+		if n.DialPeer(id) == nil {
+			dialed++
+		}
+	}
+	return dialed
+}
+
+// JoinTopic initializes a gossip topic for local publish/subscribe flow.
+func (n *Network) JoinTopic(topic string) {
+	n.mu.Lock()
+	defer n.mu.Unlock()
+
+	if _, exists := n.topics[topic]; !exists {
+		n.topics[topic] = make([]GossipMessage, 0)
+	}
+}
+
+// Publish publishes a message to a topic and broadcasts to active peers.
+func (n *Network) Publish(topic string, payload []byte) (int, error) {
+	n.mu.Lock()
+	if _, exists := n.topics[topic]; !exists {
+		n.topics[topic] = make([]GossipMessage, 0)
+	}
+	msg := GossipMessage{
+		Topic:     topic,
+		FromNode:  n.nodeID,
+		Payload:   append([]byte(nil), payload...),
+		Published: time.Now(),
+	}
+	n.topics[topic] = append(n.topics[topic], msg)
+	n.mu.Unlock()
+
+	if err := n.Broadcast(payload); err != nil {
+		return 0, err
+	}
+	return n.GetActivePeerCount(), nil
+}
+
+// GetTopicMessages returns published messages for a topic.
+func (n *Network) GetTopicMessages(topic string) []GossipMessage {
+	n.mu.RLock()
+	defer n.mu.RUnlock()
+
+	messages, exists := n.topics[topic]
+	if !exists {
+		return nil
+	}
+	out := make([]GossipMessage, len(messages))
+	copy(out, messages)
+	return out
 }
 
 // GetNodeID returns this node's ID

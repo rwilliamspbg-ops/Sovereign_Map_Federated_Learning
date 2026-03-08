@@ -1,0 +1,17 @@
+groups:
+  - name: sovereign-node-alerts
+    rules:
+      - alert: LowActivePeers
+        expr: sovereign_active_peers < 5
+        for: 5m
+        labels:
+          severity: warning
+        annotations:
+          summary: "Sovereign node peer count is low"
+      - alert: TrainingRoundStall
+        expr: time() - sovereign_last_round_completed_unix > 300
+        for: 10m
+        labels:
+          severity: critical
+        annotations:
+          summary: "No training round completion in the last 5 minutes"
