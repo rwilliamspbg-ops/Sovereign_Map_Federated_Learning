@@ -1,23 +1,28 @@
 package slam
 
 import (
+	"bytes"
 	"context"
+	"encoding/base64"
 	"encoding/json"
 	"fmt"
+	"io"
+	"net/http"
 	"os"
 	"path/filepath"
+	"strings"
 	"time"
 
 	"gocv.io/x/gocv"
 )
 
 type serializedMap struct {
-	Version     int         `json:"version"`
+	Version     int            `json:"version"`
 	Config      map[string]any `json:"config"`
-	CurrentPose CameraPose  `json:"current_pose"`
-	MapPoints   []MapPoint  `json:"map_points"`
-	FrameCount  int         `json:"frame_count"`
-	SavedAt     time.Time   `json:"saved_at"`
+	CurrentPose CameraPose     `json:"current_pose"`
+	MapPoints   []MapPoint     `json:"map_points"`
+	FrameCount  int            `json:"frame_count"`
+	SavedAt     time.Time      `json:"saved_at"`
 }
 
 // SLAMMode identifies SLAM operating mode.
@@ -62,6 +67,19 @@ type ORBSLAMBridge struct {
 	currentPose CameraPose
 	mapPoints   []MapPoint
 	frameCount  int
+	httpClient  *http.Client
+}
+
+type trackRequest struct {
+	Mode      SLAMMode `json:"mode"`
+	Timestamp string   `json:"timestamp"`
+	FrameJPEG string   `json:"frame_jpeg_b64"`
+}
+
+type trackResponse struct {
+	Pose      CameraPose `json:"pose"`
+	MapPoints []MapPoint `json:"map_points"`
+	Status    string     `json:"status"`
 }
 
 // NewORBSLAMBridge creates ORB-SLAM bridge connection.
@@ -89,8 +107,32 @@ func NewORBSLAMBridge(cfg ORBSLAMBridgeConfig) (*ORBSLAMBridge, error) {
 
 // initialize starts ORB-SLAM system with vocabulary and camera settings.
 func (b *ORBSLAMBridge) initialize() error {
-	// In production, this would load ORB vocabulary and camera calibration
-	// For now, mark as initialized for stub mode
+	b.httpClient = &http.Client{Timeout: b.config.Timeout}
+
+	// If endpoint is not configured, bridge remains in local fallback mode.
+	if strings.TrimSpace(b.config.Endpoint) == "" {
+		b.initialized = true
+		return nil
+	}
+
+	// Probe endpoint health when remote SLAM backend is configured.
+	ctx, cancel := context.WithTimeout(context.Background(), b.config.Timeout)
+	defer cancel()
+
+	req, err := http.NewRequestWithContext(ctx, http.MethodGet, b.endpointURL("/health"), nil)
+	if err != nil {
+		return fmt.Errorf("create health request: %w", err)
+	}
+
+	resp, err := b.httpClient.Do(req)
+	if err != nil {
+		return fmt.Errorf("connect ORB-SLAM endpoint: %w", err)
+	}
+	defer resp.Body.Close()
+	if resp.StatusCode < 200 || resp.StatusCode >= 300 {
+		return fmt.Errorf("ORB-SLAM endpoint unhealthy: status=%d", resp.StatusCode)
+	}
+
 	b.initialized = true
 	return nil
 }
@@ -100,20 +142,90 @@ func (b *ORBSLAMBridge) ProcessFrame(ctx context.Context, img gocv.Mat, timestam
 	if !b.initialized {
 		return CameraPose{}, fmt.Errorf("SLAM bridge not initialized")
 	}
-
-	b.frameCount++
-
-	// In production, this would call ORB-SLAM3 TrackMonocular/TrackStereo/TrackRGBD
-	// For stub mode, return identity pose
-	pose := CameraPose{
-		X: 0, Y: 0, Z: 0,
-		Qw: 1, Qx: 0, Qy: 0, Qz: 0,
-		Timestamp:     timestamp,
-		TrackingState: "OK",
+	if timestamp.IsZero() {
+		timestamp = time.Now().UTC()
 	}
 
+	b.frameCount++
+	if strings.TrimSpace(b.config.Endpoint) == "" {
+		// Local fallback mode keeps deterministic behavior without remote engine.
+		pose := CameraPose{
+			X: 0, Y: 0, Z: 0,
+			Qw: 1, Qx: 0, Qy: 0, Qz: 0,
+			Timestamp:     timestamp,
+			TrackingState: "LOCAL_FALLBACK",
+		}
+		b.currentPose = pose
+		return pose, nil
+	}
+
+	if img.Empty() {
+		return CameraPose{}, fmt.Errorf("empty frame")
+	}
+
+	encoded, err := gocv.IMEncode(".jpg", img)
+	if err != nil {
+		return CameraPose{}, fmt.Errorf("encode frame: %w", err)
+	}
+	defer encoded.Close()
+
+	reqPayload := trackRequest{
+		Mode:      b.config.Mode,
+		Timestamp: timestamp.UTC().Format(time.RFC3339Nano),
+		FrameJPEG: base64.StdEncoding.EncodeToString(encoded.GetBytes()),
+	}
+	body, err := json.Marshal(reqPayload)
+	if err != nil {
+		return CameraPose{}, fmt.Errorf("marshal track request: %w", err)
+	}
+
+	req, err := http.NewRequestWithContext(ctx, http.MethodPost, b.endpointURL("/track"), bytes.NewReader(body))
+	if err != nil {
+		return CameraPose{}, fmt.Errorf("create track request: %w", err)
+	}
+	req.Header.Set("Content-Type", "application/json")
+
+	resp, err := b.httpClient.Do(req)
+	if err != nil {
+		return CameraPose{}, fmt.Errorf("track frame via ORB-SLAM endpoint: %w", err)
+	}
+	defer resp.Body.Close()
+	if resp.StatusCode < 200 || resp.StatusCode >= 300 {
+		respBody, _ := io.ReadAll(io.LimitReader(resp.Body, 4096))
+		return CameraPose{}, fmt.Errorf("track request failed: status=%d body=%s", resp.StatusCode, string(respBody))
+	}
+
+	var out trackResponse
+	if err := json.NewDecoder(resp.Body).Decode(&out); err != nil {
+		return CameraPose{}, fmt.Errorf("decode track response: %w", err)
+	}
+
+	pose := out.Pose
+	if pose.Timestamp.IsZero() {
+		pose.Timestamp = timestamp
+	}
+	if strings.TrimSpace(pose.TrackingState) == "" {
+		if strings.TrimSpace(out.Status) != "" {
+			pose.TrackingState = out.Status
+		} else {
+			pose.TrackingState = "REMOTE_OK"
+		}
+	}
+
+	b.mapPoints = append([]MapPoint(nil), out.MapPoints...)
 	b.currentPose = pose
 	return pose, nil
+}
+
+func (b *ORBSLAMBridge) endpointURL(path string) string {
+	base := strings.TrimRight(strings.TrimSpace(b.config.Endpoint), "/")
+	if base == "" {
+		return ""
+	}
+	if !strings.HasPrefix(path, "/") {
+		path = "/" + path
+	}
+	return base + path
 }
 
 // GetMap retrieves current SLAM map points.
