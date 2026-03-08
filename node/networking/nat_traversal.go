@@ -3,6 +3,7 @@ package networking
 import (
 	"context"
 	"fmt"
+	"sync"
 	"time"
 
 	"github.com/libp2p/go-libp2p/core/host"
@@ -23,6 +24,7 @@ type NATStatus struct {
 
 // NATService handles NAT traversal with AutoNAT and circuit relay.
 type NATService struct {
+	mu          sync.RWMutex
 	host        host.Host
 	autonat     autonat.AutoNAT
 	relayClient *client.Client
@@ -95,22 +97,29 @@ func (ns *NATService) updateStatus() {
 
 	relayCount := 0
 	for _, conn := range ns.host.Network().Conns() {
-		protoName := conn.RemoteMultiaddr().Protocols()[0].Name
-		if protoName == "p2p-circuit" {
-			relayCount++
+		protos := conn.RemoteMultiaddr().Protocols()
+		for _, p := range protos {
+			if p.Name == "p2p-circuit" {
+				relayCount++
+				break
+			}
 		}
 	}
 
+	ns.mu.Lock()
 	ns.status = NATStatus{
 		Reachability: reachability,
 		PublicAddrs:  publicAddrs,
 		RelayCount:   relayCount,
 		LastCheck:    time.Now(),
 	}
+	ns.mu.Unlock()
 }
 
 // Status returns current NAT traversal status.
 func (ns *NATService) Status() NATStatus {
+	ns.mu.RLock()
+	defer ns.mu.RUnlock()
 	return ns.status
 }
 

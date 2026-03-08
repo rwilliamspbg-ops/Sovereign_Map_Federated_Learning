@@ -13,6 +13,7 @@ import (
 	"context"
 
 	meshruntime "github.com/rwilliamspbg-ops/Sovereign_Map_Federated_Learning/node/network"
+	"github.com/rwilliamspbg-ops/Sovereign_Map_Federated_Learning/node/networking"
 )
 
 type bootstrapNode struct {
@@ -105,6 +106,11 @@ func run(mode string, args []string) error {
 		_ = mesh.Stop()
 	}()
 
+	natSvc, err := networking.NewNATService(ctx, mesh.Host(), true)
+	if err != nil {
+		return fmt.Errorf("initialize NAT traversal service: %w", err)
+	}
+
 	hello := fmt.Sprintf("node=%s mode=%s ts=%s", *nodeID, mode, time.Now().UTC().Format(time.RFC3339))
 	if err := mesh.Publish(ctx, []byte(hello)); err != nil {
 		return fmt.Errorf("publish startup gossip: %w", err)
@@ -112,9 +118,10 @@ func run(mode string, args []string) error {
 
 	dialed := mesh.JoinedBootstrap()
 	activePeers := mesh.ActivePeers()
+	natStatus := natSvc.Status()
 
-	fmt.Printf("node=%s mode=%s network=%s transport=%s pubsub=%s topic=%s peers=%d dialed=%d gossip_fanout=%d\n",
-		*nodeID, mode, cfg.Network, cfg.Transport, cfg.PubSub, topic, activePeers, dialed, activePeers)
+	fmt.Printf("node=%s mode=%s network=%s transport=%s pubsub=%s topic=%s peers=%d dialed=%d gossip_fanout=%d nat_reachability=%v relays=%d\n",
+		*nodeID, mode, cfg.Network, cfg.Transport, cfg.PubSub, topic, activePeers, dialed, activePeers, natStatus.Reachability, natStatus.RelayCount)
 
 	if mode == "join" && dialed == 0 && activePeers == 0 {
 		return errors.New("join requires at least one bootstrap or seed peer")

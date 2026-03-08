@@ -139,6 +139,22 @@ func (m *Mesh) ListenAddrs() []string {
 	return out
 }
 
+// PeerID returns the local host peer ID string.
+func (m *Mesh) PeerID() string {
+	if m == nil || m.host == nil {
+		return ""
+	}
+	return m.host.ID().String()
+}
+
+// Host returns the underlying libp2p host for advanced integrations.
+func (m *Mesh) Host() host.Host {
+	if m == nil {
+		return nil
+	}
+	return m.host
+}
+
 // Stop closes pubsub topic and libp2p host.
 func (m *Mesh) Stop() error {
 	m.mu.Lock()
