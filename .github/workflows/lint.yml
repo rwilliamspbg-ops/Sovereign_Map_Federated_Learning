@@ -29,6 +29,9 @@ jobs:
           VALIDATE_ALL_CODEBASE: false
           DEFAULT_BRANCH: main
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          ENABLE_GITHUB_PULL_REQUEST_SUMMARY_COMMENT: false
+          ENABLE_GITHUB_ACTIONS_STEP_SUMMARY: true
+          SAVE_SUPER_LINTER_SUMMARY: true
           # Tailored to your specific repo stack
           VALIDATE_PYTHON_BLACK: true
           VALIDATE_TERRAFORM: true
