@@ -6,10 +6,10 @@ python-socketio==5.16.1
 python-engineio==4.13.1
 
 # Science & Data Processing
-numpy==1.26.4
-scipy==1.11.4
-scikit-learn==1.4.2
-flwr==1.7.0
+numpy==2.4.3
+scipy==1.17.1
+scikit-learn==1.8.0
+flwr==1.26.1
 
 # Async & Threading
 asyncio==4.0.0
@@ -17,10 +17,10 @@ aiohttp==3.13.3
 
 # Google Gemini AI
 google-generativeai==0.8.6
-google-auth==2.48.0
+google-auth==2.49.0
 
 # Database & Caching
-redis==7.2.1
+redis==7.3.0
 
 # Monitoring & Metrics
 prometheus-client==0.24.1
