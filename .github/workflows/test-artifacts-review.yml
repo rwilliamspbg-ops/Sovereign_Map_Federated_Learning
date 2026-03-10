@@ -47,7 +47,7 @@ jobs:
           python generate-byzantine-test-suite-plots.py
 
       - name: Upload stress suite plot artifacts
-        uses: actions/upload-artifact@6f51ac03b9356f520e9adb1b1b7802705f340c2b # v4
+        uses: actions/upload-artifact@bbbca2ddaa5d8feaa63e36b76fdaad77386f024f # v4
         with:
           name: stress-suite-plots-${{ github.run_id }}
           if-no-files-found: error
@@ -84,7 +84,7 @@ jobs:
           } > test-artifact-manifest.md
 
       - name: Upload test artifacts
-        uses: actions/upload-artifact@6f51ac03b9356f520e9adb1b1b7802705f340c2b # v4
+        uses: actions/upload-artifact@bbbca2ddaa5d8feaa63e36b76fdaad77386f024f # v4
         with:
           name: npu-and-stress-test-artifacts-${{ github.run_id }}
           if-no-files-found: warn
