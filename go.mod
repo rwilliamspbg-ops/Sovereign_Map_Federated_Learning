@@ -23,7 +23,7 @@ require (
 	github.com/libp2p/go-libp2p-pubsub v0.15.0
 	github.com/multiformats/go-multiaddr v0.16.1
 	github.com/tetratelabs/wazero v1.11.0
-	gocv.io/x/gocv v0.43.0
+	gocv.io/x/gocv v0.32.0
 )
 
 require (

@@ -6,6 +6,8 @@ The camera capture and SLAM feature extraction modules require OpenCV 4.x instal
 
 Since v1.1.0, all OpenCV-dependent packages use Go build constraints (`//go:build opencv`) to ensure clean compilation when OpenCV is not installed. Standard builds skip these packages automatically.
 
+For compatibility with the Ubuntu/OpenCV toolchain currently used by this repository, `gocv.io/x/gocv` is pinned to `v0.32.0`. This pin is intentional: OpenCV `4.6.x` is compatible with GoCV `v0.32.0`, while newer GoCV releases expect newer ArUco APIs that are not available in OpenCV `4.6.x`.
+
 ## Packages Requiring OpenCV
 
 - `sensors/camera/frame_capture.go` - Camera frame capture with GoCV
@@ -40,6 +42,19 @@ pkg-config --modversion opencv4
 
 Expected output: `4.x.x`
 
+### Verify Repository Compatibility
+
+This repository is validated against the following combination:
+
+```bash
+go list -m gocv.io/x/gocv
+pkg-config --modversion opencv4
+```
+
+Expected output:
+- GoCV: `v0.32.0`
+- OpenCV: `4.6.x`
+
 ## Build Without OpenCV (Recommended for CI/Testing)
 
 Since v1.1.0, standard builds automatically skip OpenCV-dependent packages:
@@ -67,6 +82,8 @@ go build -tags opencv ./...
 go test -tags opencv -v ./sensors/camera ./sensors/slam ./storage/map_tiles
 ```
 
+If you upgrade OpenCV beyond `4.6.x`, revalidate the GoCV pin before changing it in `go.mod`.
+
 ## Alternative: Docker Build
 
 For production deployments, use the Docker image which includes OpenCV:
@@ -89,6 +106,7 @@ RUN go build -o sovereign-node ./cmd/sovereign-node/
 - ✅ OpenCV packages load with `-tags opencv` flag
 - ✅ Main `sovereign-node` binary builds without OpenCV dependency
 - ⚠️ OpenCV packages require 4.x native libraries to compile in tagged builds
+- ⚠️ Repository is intentionally pinned to GoCV `v0.32.0` for OpenCV `4.6.x` compatibility
 
 ## Build Constraint Implementation
 
