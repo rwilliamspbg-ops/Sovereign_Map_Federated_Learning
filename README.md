@@ -3,6 +3,8 @@
 ## Genesis Block Launch - CI-Verified Testnet Stack
 
 **Sovereign Map provides a CI-verified federated learning and trust-monitoring stack for testnet and research workloads.**
+⚠️ Intellectual Property Notice: This project implements the Sovereign Mohawk Protocol. Portions of this technology are Patent Pending (U.S. Provisional Patent Application Filed March 2026).
+
 
 ### Quick Start (5 Minutes)
 
