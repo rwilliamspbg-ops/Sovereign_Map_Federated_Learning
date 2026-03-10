@@ -1,3 +1,6 @@
+//go:build opencv
+// +build opencv
+
 package slam
 
 import (
