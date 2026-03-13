@@ -13,7 +13,7 @@
 
 #### 1. Genesis Launch Overview Dashboard
 **File**: `grafana/dashboards/genesis-launch-overview.json`  
-**URL**: http://localhost:3000/d/genesis-launch-overview
+**URL**: http://localhost:3001/d/genesis-launch-overview
 
 **11 Comprehensive Panels:**
 - 🚀 Genesis Block Round (current FL round counter)
@@ -30,7 +30,7 @@
 
 #### 2. Network Performance & Health Dashboard
 **File**: `grafana/dashboards/network-performance-health.json`  
-**URL**: http://localhost:3000/d/network-performance-health
+**URL**: http://localhost:3001/d/network-performance-health
 
 **10 Network Monitoring Panels:**
 - 🟢 Online/Offline Nodes Summary
@@ -46,7 +46,7 @@
 
 #### 3. Consensus & Trust Monitoring Dashboard
 **File**: `grafana/dashboards/consensus-trust-monitoring.json`  
-**URL**: http://localhost:3000/d/consensus-trust-monitoring
+**URL**: http://localhost:3001/d/consensus-trust-monitoring
 
 **8 Trust & Security Panels:**
 - 📊 Federated Learning Metrics (accuracy, loss, convergence)
@@ -239,7 +239,7 @@
 ./genesis-launch.sh
 
 # 3. Access Grafana dashboards
-open http://localhost:3000
+open http://localhost:3001
 # Login: admin / admin
 
 # 4. Monitor progress
@@ -250,9 +250,9 @@ open http://localhost:3000
 
 | Dashboard | URL |
 |-----------|-----|
-| **Genesis Launch Overview** | http://localhost:3000/d/genesis-launch-overview |
-| **Network Performance** | http://localhost:3000/d/network-performance-health |
-| **Consensus & Trust** | http://localhost:3000/d/consensus-trust-monitoring |
+| **Genesis Launch Overview** | http://localhost:3001/d/genesis-launch-overview |
+| **Network Performance** | http://localhost:3001/d/network-performance-health |
+| **Consensus & Trust** | http://localhost:3001/d/consensus-trust-monitoring |
 
 ---
 
@@ -355,7 +355,7 @@ Fix ESLint configuration for ESLint 9.x
 ### Next Steps:
 1. Run validation: `./validate-genesis-launch.sh`
 2. Execute launch: `./genesis-launch.sh`
-3. Access dashboards: http://localhost:3000
+3. Access dashboards: http://localhost:3001
 4. Monitor progress for 30 minutes
 5. Verify success criteria in [GENESIS_LAUNCH_GUIDE.md](GENESIS_LAUNCH_GUIDE.md)
 

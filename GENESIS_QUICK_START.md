@@ -36,7 +36,7 @@ ls genesis-launch.sh      # Must exist
 
 | Service | URL | Credentials |
 |---------|-----|-------------|
-| **Grafana** | http://localhost:3000 | admin / admin |
+| **Grafana** | http://localhost:3001 | admin / admin |
 | **Prometheus** | http://localhost:9090 | - |
 | **Backend API** | http://localhost:8000 | - |
 | **Alertmanager** | http://localhost:9093 | - |
@@ -47,19 +47,19 @@ ls genesis-launch.sh      # Must exist
 
 ### 🎯 Genesis Launch Overview
 ```
-http://localhost:3000/d/genesis-launch-overview
+http://localhost:3001/d/genesis-launch-overview
 ```
 **Primary launch dashboard** - Training progress, node-agent count, accuracy
 
 ### 🌐 Network Performance
 ```
-http://localhost:3000/d/network-performance-health
+http://localhost:3001/d/network-performance-health
 ```
 **Network health** - Latency, throughput, connections
 
 ### 🔒 Consensus & Trust
 ```
-http://localhost:3000/d/consensus-trust-monitoring
+http://localhost:3001/d/consensus-trust-monitoring
 ```
 **Security monitoring** - Trust scores, TPM verification
 

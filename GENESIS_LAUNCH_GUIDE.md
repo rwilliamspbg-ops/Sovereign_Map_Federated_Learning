@@ -49,7 +49,7 @@ The **Genesis Block Launch** marks the official production deployment of Soverei
 │                                                 │
 │  📊 Monitoring Stack                           │
 │  ├─ Prometheus (Port 9090)                     │
-│  ├─ Grafana (Port 3000)                        │
+│  ├─ Grafana (Port 3001)                        │
 │  └─ Alertmanager (Port 9093)                   │
 │                                                 │
 └─────────────────────────────────────────────────┘
@@ -143,7 +143,7 @@ docker compose -f docker-compose.monitoring.yml up -d
 
 **Verification:**
 - Prometheus: http://localhost:9090
-- Grafana: http://localhost:3000 (admin/admin)
+- Grafana: http://localhost:3001 (admin/admin)
 - Alertmanager: http://localhost:9093
 
 ### Step 3: Genesis Block Creation
@@ -193,7 +193,7 @@ Monitor system health:
 
 ### Genesis Launch Overview Dashboard
 
-**URL**: http://localhost:3000/d/genesis-launch-overview
+**URL**: http://localhost:3001/d/genesis-launch-overview
 
 **Key Metrics:**
 - 🚀 Genesis Block Round (current training round)
@@ -211,7 +211,7 @@ Monitor system health:
 
 ### Network Performance & Health
 
-**URL**: http://localhost:3000/d/network-performance-health
+**URL**: http://localhost:3001/d/network-performance-health
 
 **Key Metrics:**
 - 🟢 Online/Offline Nodes
@@ -229,7 +229,7 @@ Monitor system health:
 
 ### Consensus & Trust Monitoring
 
-**URL**: http://localhost:3000/d/consensus-trust-monitoring
+**URL**: http://localhost:3001/d/consensus-trust-monitoring
 
 **Key Metrics:**
 - 📊 Federated Learning Metrics
@@ -249,7 +249,7 @@ Monitor system health:
 ### Dashboard Navigation
 
 ```
-http://localhost:3000
+http://localhost:3001
 ├─ Genesis Launch Overview     (Main launch dashboard)
 ├─ Network Performance         (Network health & metrics)
 ├─ Consensus & Trust          (Security & trust monitoring)
@@ -336,7 +336,7 @@ docker run --rm -v grafana_data:/data -v $(pwd):/backup \
 **Restore from Backup:**
 ```bash
 # Stop services
-docker compose -f docker-compose.production.yml -f docker-compose.monitoring.yml down --remove-orphans
+- docker compose -f docker-compose.production.yml down --remove-orphans
 
 # Restore data
 tar xzf prometheus-backup-YYYYMMDD.tar.gz -C /var/lib/docker/volumes/prometheus_data/_data

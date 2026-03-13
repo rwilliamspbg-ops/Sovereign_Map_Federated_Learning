@@ -41,7 +41,7 @@
 - [ ] 30-day retention policy set
 
 ### Grafana
-- [ ] Grafana container running on port 3000
+- [ ] Grafana container running on port 3001
 - [ ] Admin credentials working (admin/admin)
 - [ ] Dashboards provisioned automatically
 - [ ] Three Genesis dashboards visible:
@@ -305,7 +305,7 @@
 2. Review dashboards for anomalies
 3. Consult troubleshooting guide: [GENESIS_LAUNCH_GUIDE.md](GENESIS_LAUNCH_GUIDE.md)
 4. Contact technical team if unresolved
-5. Emergency shutdown if critical: `docker compose -f docker-compose.production.yml -f docker-compose.monitoring.yml down --remove-orphans`
+5. Emergency shutdown if critical: `docker compose -f docker-compose.production.yml down --remove-orphans`
 
 ---
 

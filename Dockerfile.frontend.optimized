@@ -1,13 +1,13 @@
 # Multi-stage Dockerfile for Sovereign Map Frontend (Optimized)
 
 # Stage 1: Dependencies
-FROM node:20-alpine as deps
+FROM node:20-alpine AS deps
 WORKDIR /app
 COPY frontend/package*.json ./
 RUN npm install --no-audit --no-fund && npm cache clean --force
 
 # Stage 2: Build
-FROM node:20-alpine as build
+FROM node:20-alpine AS build
 WORKDIR /app
 COPY --from=deps /app/node_modules ./node_modules
 COPY frontend/ .
