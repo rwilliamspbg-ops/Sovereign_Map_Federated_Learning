@@ -3,7 +3,7 @@ version: "3.9"
 services:
   # 1. PROMETHEUS: Configured to scrape the Sovereign Map Backend & Nodes
   prometheus:
-    image: prom/prometheus:v2.48.0-alpine
+    image: prom/prometheus:v2.48.0
     container_name: mohawk-prometheus
     command:
       - '--config.file=/etc/prometheus/prometheus.yml'

@@ -6,7 +6,7 @@
 # Copyright 2026 Sovereign-Mohawk Core Team
 ##############################################################################
 
-set -e
+set -euo pipefail
 
 # Color codes for output
 RED='\033[0;31m'
@@ -70,7 +70,7 @@ pre_launch_checks() {
     log_success "Docker installed: $(docker --version | head -1)"
     
     # Check Docker Compose
-    if ! command -v docker compose &> /dev/null; then
+    if ! docker compose version >/dev/null 2>&1; then
         log_error "Docker Compose not found. Please install Docker Compose first."
         exit 1
     fi
@@ -93,13 +93,20 @@ pre_launch_checks() {
     log_success "All required files present"
     
     # Check available resources
+    local total_ram="N/A"
+    if command -v free >/dev/null 2>&1; then
+        total_ram="$(free -h | awk '/^Mem:/ {print $2}')"
+    elif [ -r /proc/meminfo ]; then
+        total_ram="$(awk '/MemTotal:/ {printf "%.1fG", $2/1024/1024}' /proc/meminfo)"
+    fi
+
     log_info "System Resources:"
     echo "  - CPU Cores: $(nproc)" | tee -a "$LOG_FILE"
-    echo "  - Total RAM: $(free -h | awk '/^Mem:/ {print $2}')" | tee -a "$LOG_FILE"
+    echo "  - Total RAM: $total_ram" | tee -a "$LOG_FILE"
     echo "  - Disk Space: $(df -h . | awk 'NR==2 {print $4}') available" | tee -a "$LOG_FILE"
     
     # Check ports
-    local ports=(8000 8080 9090 3000 9093)
+    local ports=(8000 8080 9090 9093 3000 3001)
     for port in "${ports[@]}"; do
         if lsof -Pi :$port -sTCP:LISTEN -t >/dev/null 2>&1; then
             log_warn "Port $port is already in use"
@@ -118,7 +125,9 @@ initialize_network() {
 
     # Remove any stale containers left from a previous incomplete run
     log_info "Cleaning up any stale containers..."
-    docker compose -f docker-compose.production.yml down --remove-orphans 2>&1 | tee -a "$LOG_FILE"
+    if ! docker compose -f docker-compose.production.yml down --remove-orphans 2>&1 | tee -a "$LOG_FILE"; then
+        log_warn "Cleanup encountered stale/absent containers; continuing with fresh startup"
+    fi
 
     # Create Docker network
     if docker network inspect "$NETWORK_NAME" >/dev/null 2>&1; then
@@ -130,7 +139,7 @@ initialize_network() {
     
     # Pull latest images
     log_info "Pulling latest Docker images..."
-    docker compose -f docker-compose.production.yml pull 2>&1 | tee -a "$LOG_FILE"
+    docker compose -f docker-compose.production.yml pull mongo redis prometheus grafana alertmanager 2>&1 | tee -a "$LOG_FILE"
     log_success "Images updated"
 }
 
@@ -142,7 +151,7 @@ launch_monitoring() {
     log_header "📊 LAUNCHING MONITORING STACK"
     
     log_info "Starting Prometheus, Grafana, and Alertmanager..."
-    docker compose -f docker-compose.production.yml up -d prometheus grafana alertmanager 2>&1 | tee -a "$LOG_FILE"
+    docker compose -f docker-compose.production.yml up -d --no-deps prometheus grafana alertmanager 2>&1 | tee -a "$LOG_FILE"
     
     # Wait for services to be ready
     log_info "Waiting for monitoring services to initialize..."
@@ -205,12 +214,12 @@ launch_network() {
     log_header "🚀 LAUNCHING NODE NETWORK"
     
     log_info "Starting Sovereign Map backend..."
-    docker compose -f docker-compose.production.yml up -d backend 2>&1 | tee -a "$LOG_FILE"
+    docker compose -f docker-compose.production.yml up -d --build backend 2>&1 | tee -a "$LOG_FILE"
     
     sleep 5
     
     log_info "Deploying initial node set ($MIN_NODES nodes)..."
-    docker compose -f docker-compose.production.yml up -d --scale node-agent=$MIN_NODES 2>&1 | tee -a "$LOG_FILE"
+    docker compose -f docker-compose.production.yml up -d --build --scale node-agent=$MIN_NODES mongo redis backend frontend node-agent 2>&1 | tee -a "$LOG_FILE"
     
     log_success "Initial nodes deployed"
     

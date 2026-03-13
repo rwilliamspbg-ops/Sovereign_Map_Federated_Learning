@@ -192,7 +192,7 @@ services:
 
   # Prometheus: Metrics Collection
   prometheus:
-    image: prom/prometheus:v2.48.0-alpine
+    image: prom/prometheus:v2.48.0
     container_name: sovereignmap-prometheus
     ports:
       - "9090:9090"
@@ -271,7 +271,7 @@ services:
 
   # Alertmanager: Alert Management
   alertmanager:
-    image: prom/alertmanager:v0.26.0-alpine
+    image: prom/alertmanager:v0.26.0
     container_name: sovereignmap-alertmanager
     ports:
       - "9093:9093"

@@ -1,6 +1,6 @@
 services:
   prometheus:
-    image: prom/prometheus:v2.48.0-alpine
+    image: prom/prometheus:v2.48.0
     ports:
       - "9090:9090"
     volumes:
@@ -40,7 +40,7 @@ services:
     restart: unless-stopped
 
   alertmanager:
-    image: prom/alertmanager:v0.26.0-alpine
+    image: prom/alertmanager:v0.26.0
     ports:
       - "9093:9093"
     volumes:

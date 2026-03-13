@@ -135,7 +135,7 @@ services:
 
   # Prometheus: Metrics Collection
   prometheus:
-    image: prom/prometheus:v2.48.0-alpine
+    image: prom/prometheus:v2.48.0
     container_name: sovereignmap-prometheus-dev
     ports:
       - "9090:9090"
