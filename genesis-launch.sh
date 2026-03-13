@@ -413,11 +413,13 @@ EOF
 # Command Line Interface
 ##############################################################################
 
-if [ "$1" == "monitor" ]; then
+CMD="${1:-}"
+
+if [ "$CMD" == "monitor" ]; then
     start_monitoring
-elif [ "$1" == "status" ]; then
+elif [ "$CMD" == "status" ]; then
     monitor_health
-elif [ "$1" == "dashboard" ]; then
+elif [ "$CMD" == "dashboard" ]; then
     display_dashboard
     echo "Press Enter to exit..."
     read
