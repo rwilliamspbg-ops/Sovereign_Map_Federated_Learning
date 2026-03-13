@@ -129,6 +129,25 @@ initialize_network() {
         log_warn "Cleanup encountered stale/absent containers; continuing with fresh startup"
     fi
 
+    # Force-remove known service containers and previously scaled node-agent instances.
+    # This avoids stale Compose metadata trying to recreate deleted container IDs.
+    log_info "Removing any stale Sovereign Map containers..."
+    docker rm -f \
+        sovereignmap-backend \
+        sovereignmap-frontend \
+        sovereignmap-mongo \
+        sovereignmap-redis \
+        sovereignmap-prometheus \
+        sovereignmap-grafana \
+        sovereignmap-alertmanager \
+        >/dev/null 2>&1 || true
+
+    local stale_node_ids
+    stale_node_ids=$(docker ps -aq --filter "name=sovereign_map_federated_learning-node-agent")
+    if [ -n "$stale_node_ids" ]; then
+        echo "$stale_node_ids" | xargs docker rm -f >/dev/null 2>&1 || true
+    fi
+
     # Create Docker network
     if docker network inspect "$NETWORK_NAME" >/dev/null 2>&1; then
         log_info "Network '$NETWORK_NAME' already exists"
