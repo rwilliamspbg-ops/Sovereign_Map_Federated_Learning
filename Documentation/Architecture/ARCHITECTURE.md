@@ -2,7 +2,7 @@
 
 Comprehensive technical documentation of the Sovereign Map Byzantine-tolerant federated learning system.
 
-> Claim scope: This architecture describes intended behavior and implemented components. Validation strength varies by test type (unit/integration/emulation/benchmark). See [CI_STATUS_AND_CLAIMS.md](CI_STATUS_AND_CLAIMS.md).
+> Claim scope: This architecture describes intended behavior and implemented components. Validation strength varies by test type (unit/integration/emulation/benchmark). See [CI_STATUS_AND_CLAIMS.md](/Documentation/Security/CI_STATUS_AND_CLAIMS.md).
 
 **Table of Contents**
 - [High-Level Architecture](#high-level-architecture)

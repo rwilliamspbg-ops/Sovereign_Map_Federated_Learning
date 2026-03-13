@@ -148,7 +148,7 @@ docker compose -f docker-compose.production.yml restart backend
 
 ## 📞 Get Help
 
-**Full Documentation**: [GENESIS_LAUNCH_GUIDE.md](GENESIS_LAUNCH_GUIDE.md)
+**Full Documentation**: [GENESIS_LAUNCH_GUIDE.md](/Documentation/Deployment/GENESIS_LAUNCH_GUIDE.md)
 
 **Common Issues**: See Troubleshooting section in full guide
 
@@ -169,4 +169,4 @@ After 30 minutes, verify:
 
 ---
 
-*For detailed information, see [GENESIS_LAUNCH_GUIDE.md](GENESIS_LAUNCH_GUIDE.md)*
+*For detailed information, see [GENESIS_LAUNCH_GUIDE.md](/Documentation/Deployment/GENESIS_LAUNCH_GUIDE.md)*

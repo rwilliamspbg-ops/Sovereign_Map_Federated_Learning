@@ -303,7 +303,7 @@
 ### Escalation Procedure
 1. Check logs: `docker compose logs -f`
 2. Review dashboards for anomalies
-3. Consult troubleshooting guide: [GENESIS_LAUNCH_GUIDE.md](GENESIS_LAUNCH_GUIDE.md)
+3. Consult troubleshooting guide: [GENESIS_LAUNCH_GUIDE.md](/Documentation/Deployment/GENESIS_LAUNCH_GUIDE.md)
 4. Contact technical team if unresolved
 5. Emergency shutdown if critical: `docker compose -f docker-compose.production.yml down --remove-orphans`
 
@@ -375,4 +375,4 @@ _______________________________________________
 
 **🚀 Welcome to the Sovereign Map Genesis Era! 🚀**
 
-*For support, see [GENESIS_LAUNCH_GUIDE.md](GENESIS_LAUNCH_GUIDE.md)*
+*For support, see [GENESIS_LAUNCH_GUIDE.md](/Documentation/Deployment/GENESIS_LAUNCH_GUIDE.md)*

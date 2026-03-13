@@ -42,8 +42,8 @@ test-results/
 - [RESULTS.md](1000-node-npu/20260304-103652/RESULTS.md) - Detailed results and analysis
 
 **Documentation:**
-- [📊 Full Report](../1000-NODE-NPU-TEST-FINAL-SUMMARY.md)
-- [📖 Test Guide](../1000-NODE-NPU-TEST-GUIDE.md)
+- [📊 Full Report](/Documentation/Testing/1000-NODE-NPU-TEST-FINAL-SUMMARY.md)
+- [📖 Test Guide](/Documentation/Testing/1000-NODE-NPU-TEST-GUIDE.md)
 
 ### 2. 5000-Node Kubernetes Stress Test
 
@@ -67,8 +67,8 @@ test-results/
 - [plots/scenario-4-intensity.png](kubernetes-5000-node/plots/scenario-4-intensity.png) - Attack intensity
 
 **Documentation:**
-- [📊 Full Report](../KUBERNETES_5000_NODE_REPORT.md)
-- [📖 Session Report](../SESSION_KUBERNETES_5000_NODE_COMPLETE.md)
+- [📊 Full Report](/Documentation/Deployment/KUBERNETES_5000_NODE_REPORT.md)
+- [📖 Session Report](/Documentation/Reports/SESSION_KUBERNETES_5000_NODE_COMPLETE.md)
 
 ---
 
@@ -81,8 +81,8 @@ test-results/
 - [`byzantine-stress-test-suite/`](byzantine-stress-test-suite/) - Comprehensive test suite
 
 **Documentation:**
-- [📊 Byzantine Stress Test Report](../BYZANTINE_STRESS_TEST_REPORT.md)
-- [📊 Byzantine Test Suite Report](../BYZANTINE_STRESS_TEST_SUITE_REPORT.md)
+- [📊 Byzantine Stress Test Report](/Documentation/Testing/BYZANTINE_STRESS_TEST_REPORT.md)
+- [📊 Byzantine Test Suite Report](/Documentation/Testing/BYZANTINE_STRESS_TEST_SUITE_REPORT.md)
 
 ### GPU Acceleration Tests
 
@@ -92,18 +92,18 @@ test-results/
 - `gpu-round-5nodes.json` through `gpu-round-20nodes.json` - Round performance data
 
 **Documentation:**
-- [📊 GPU Testing Complete](../GPU_TESTING_COMPLETE.md)
-- [📊 GPU Testing Results Report](../GPU_TESTING_RESULTS_REPORT.md)
-- [📊 GPU Validation Complete](../GPU_VALIDATION_COMPLETE.md)
+- [📊 GPU Testing Complete](/Documentation/Testing/GPU_TESTING_COMPLETE.md)
+- [📊 GPU Testing Results Report](/Documentation/Testing/GPU_TESTING_RESULTS_REPORT.md)
+- [📊 GPU Validation Complete](/Documentation/Testing/GPU_VALIDATION_COMPLETE.md)
 
 ### Demo & Simulation Results
 
 **Directory:** [`demo-simulated/`](demo-simulated/)  
 
 **Documentation:**
-- [📊 Complete Demo Data](../COMPLETE_DEMO_DATA_VIEWABLE.md)
-- [📊 Demo Results Summary](../DEMO_RESULTS_SUMMARY.txt)
-- [📖 Demo Results README](../README_DEMO_RESULTS.md)
+- [📊 Complete Demo Data](/Documentation/Reports/COMPLETE_DEMO_DATA_VIEWABLE.md)
+- [📊 Demo Results Summary](/Documentation/Reports/DEMO_RESULTS_SUMMARY.txt)
+- [📖 Demo Results README](/Documentation/Reports/README_DEMO_RESULTS.md)
 
 ### TPM + NPU Integrated Tests
 
@@ -111,7 +111,7 @@ test-results/
 **Archive:** `tpm-npu-full-artifacts.tar.gz`
 
 **Documentation:**
-- [📊 Grafana NPU Laptop Final](../GRAFANA_NPU_LAPTOP_FINAL.md)
+- [📊 Grafana NPU Laptop Final](/Documentation/Deployment/GRAFANA_NPU_LAPTOP_FINAL.md)
 
 ### Large-Scale Historical Tests
 
@@ -180,10 +180,10 @@ find . -name "*.md"
 
 ## 📚 Related Documentation
 
-- **[Complete Artifacts Index](../ARTIFACTS.md)** - Full catalog of all test artifacts
-- **[Testing Guide](../TEST_GUIDE.md)** - How to run tests
-- **[Test Completion Index](../TESTING_COMPLETION_INDEX.md)** - Testing status tracker
-- **[Architecture Documentation](../ARCHITECTURE.md)** - System architecture
+- **[Complete Artifacts Index](/Documentation/Reports/ARTIFACTS.md)** - Full catalog of all test artifacts
+- **[Testing Guide](/Documentation/Testing/TEST_GUIDE.md)** - How to run tests
+- **[Test Completion Index](/Documentation/Testing/TESTING_COMPLETION_INDEX.md)** - Testing status tracker
+- **[Architecture Documentation](/Documentation/Architecture/ARCHITECTURE.md)** - System architecture
 
 ---
 
@@ -227,5 +227,5 @@ python analyze-gpu-results.py
 ---
 
 **Last Updated:** 2026-03-07  
-**For complete test artifact catalog, see:** [ARTIFACTS.md](../ARTIFACTS.md)
+**For complete test artifact catalog, see:** [ARTIFACTS.md](/Documentation/Reports/ARTIFACTS.md)
 

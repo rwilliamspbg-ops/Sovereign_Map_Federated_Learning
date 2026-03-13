@@ -392,9 +392,9 @@ curl http://localhost:8000/api/metrics | jq '.accuracy'
 
 ## 📞 Support Resources
 
-- **Quick Start**: [GENESIS_QUICK_START.md](GENESIS_QUICK_START.md)
-- **Full Guide**: [GENESIS_LAUNCH_GUIDE.md](GENESIS_LAUNCH_GUIDE.md)
-- **Checklist**: [GENESIS_LAUNCH_CHECKLIST.md](GENESIS_LAUNCH_CHECKLIST.md)
+- **Quick Start**: [GENESIS_QUICK_START.md](/Documentation/Guides/GENESIS_QUICK_START.md)
+- **Full Guide**: [GENESIS_LAUNCH_GUIDE.md](/Documentation/Deployment/GENESIS_LAUNCH_GUIDE.md)
+- **Checklist**: [GENESIS_LAUNCH_CHECKLIST.md](/Documentation/Deployment/GENESIS_LAUNCH_CHECKLIST.md)
 - **This Report**: [tests/results/reports/VALIDATION_REPORT.md](tests/results/reports/VALIDATION_REPORT.md)
 
 ---

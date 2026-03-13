@@ -13,8 +13,8 @@
 **Key Achievement:** 4.38x throughput improvement (650 → 2,850 RPS) with 66.9% latency reduction
 
 #### Documentation
-- 📊 **[1000-NODE-NPU-TEST-FINAL-SUMMARY.md](1000-NODE-NPU-TEST-FINAL-SUMMARY.md)** - Complete test report
-- 📖 **[1000-NODE-NPU-TEST-GUIDE.md](1000-NODE-NPU-TEST-GUIDE.md)** - Reproduction guide
+- 📊 **[1000-NODE-NPU-TEST-FINAL-SUMMARY.md](/Documentation/Testing/1000-NODE-NPU-TEST-FINAL-SUMMARY.md)** - Complete test report
+- 📖 **[1000-NODE-NPU-TEST-GUIDE.md](/Documentation/Testing/1000-NODE-NPU-TEST-GUIDE.md)** - Reproduction guide
 - 🐳 **[docker-compose.1000nodes.yml](docker-compose.1000nodes.yml)** - Infrastructure orchestration
 
 #### Test Results
@@ -34,8 +34,8 @@
 **Key Achievement:** 86% accuracy maintained with 50% Byzantine nodes at 5000-node scale
 
 #### Documentation
-- 📊 **[KUBERNETES_5000_NODE_REPORT.md](KUBERNETES_5000_NODE_REPORT.md)** - Complete test report
-- 📖 **[SESSION_KUBERNETES_5000_NODE_COMPLETE.md](SESSION_KUBERNETES_5000_NODE_COMPLETE.md)** - Session analysis
+- 📊 **[KUBERNETES_5000_NODE_REPORT.md](/Documentation/Deployment/KUBERNETES_5000_NODE_REPORT.md)** - Complete test report
+- 📖 **[SESSION_KUBERNETES_5000_NODE_COMPLETE.md](/Documentation/Reports/SESSION_KUBERNETES_5000_NODE_COMPLETE.md)** - Session analysis
 
 #### Test Results & Artifacts
 - 📁 **[test-results/kubernetes-5000-node/](test-results/kubernetes-5000-node/)** - Test data directory
@@ -58,16 +58,16 @@
 ## 🧪 Additional Test Artifacts
 
 ### Byzantine Stress Tests
-- 📊 **[BYZANTINE_STRESS_TEST_REPORT.md](BYZANTINE_STRESS_TEST_REPORT.md)** - Byzantine fault tolerance validation
-- 📊 **[BYZANTINE_STRESS_TEST_SUITE_REPORT.md](BYZANTINE_STRESS_TEST_SUITE_REPORT.md)** - Comprehensive suite
+- 📊 **[BYZANTINE_STRESS_TEST_REPORT.md](/Documentation/Testing/BYZANTINE_STRESS_TEST_REPORT.md)** - Byzantine fault tolerance validation
+- 📊 **[BYZANTINE_STRESS_TEST_SUITE_REPORT.md](/Documentation/Testing/BYZANTINE_STRESS_TEST_SUITE_REPORT.md)** - Comprehensive suite
 - 📁 **[test-results/byzantine-stress-test/](test-results/byzantine-stress-test/)** - Test data
 - 📁 **[test-results/byzantine-stress-test-suite/](test-results/byzantine-stress-test-suite/)** - Suite data
 
 ### GPU Acceleration Tests
-- 📊 **[GPU_TESTING_COMPLETE.md](GPU_TESTING_COMPLETE.md)** - GPU test summary
-- 📊 **[GPU_TESTING_RESULTS_REPORT.md](GPU_TESTING_RESULTS_REPORT.md)** - Detailed results
-- 📊 **[GPU_VALIDATION_COMPLETE.md](GPU_VALIDATION_COMPLETE.md)** - Validation report
-- 📊 **[GPU_ACCELERATION_GUIDE.md](GPU_ACCELERATION_GUIDE.md)** - Setup and usage guide
+- 📊 **[GPU_TESTING_COMPLETE.md](/Documentation/Testing/GPU_TESTING_COMPLETE.md)** - GPU test summary
+- 📊 **[GPU_TESTING_RESULTS_REPORT.md](/Documentation/Testing/GPU_TESTING_RESULTS_REPORT.md)** - Detailed results
+- 📊 **[GPU_VALIDATION_COMPLETE.md](/Documentation/Testing/GPU_VALIDATION_COMPLETE.md)** - Validation report
+- 📊 **[GPU_ACCELERATION_GUIDE.md](/Documentation/Performance/GPU_ACCELERATION_GUIDE.md)** - Setup and usage guide
 - 📄 Raw JSON results:
   - [gpu-benchmark-baseline.json](gpu-benchmark-baseline.json)
   - [gpu-contention-5nodes.json](gpu-contention-5nodes.json)
@@ -79,9 +79,9 @@
   - [gpu-round-20nodes.json](gpu-round-20nodes.json)
 
 ### NPU Performance Analysis
-- 📊 **[NPU_PERFORMANCE_SCALING_COMPLETE.md](NPU_PERFORMANCE_SCALING_COMPLETE.md)** - NPU scaling analysis
-- 📊 **[NPU_GPU_CPU_PERFORMANCE_ANALYSIS.md](NPU_GPU_CPU_PERFORMANCE_ANALYSIS.md)** - Comparative analysis
-- 📊 **[GRAFANA_NPU_LAPTOP_FINAL.md](GRAFANA_NPU_LAPTOP_FINAL.md)** - Grafana NPU monitoring
+- 📊 **[NPU_PERFORMANCE_SCALING_COMPLETE.md](/Documentation/Performance/NPU_PERFORMANCE_SCALING_COMPLETE.md)** - NPU scaling analysis
+- 📊 **[NPU_GPU_CPU_PERFORMANCE_ANALYSIS.md](/Documentation/Performance/NPU_GPU_CPU_PERFORMANCE_ANALYSIS.md)** - Comparative analysis
+- 📊 **[GRAFANA_NPU_LAPTOP_FINAL.md](/Documentation/Deployment/GRAFANA_NPU_LAPTOP_FINAL.md)** - Grafana NPU monitoring
 - 📄 [npu-gpu-cpu-comparison.json](npu-gpu-cpu-comparison.json) - Raw comparison data
 
 ### TPM & Trust Tests
@@ -90,9 +90,9 @@
 
 ### Demo & Simulation Results
 - 📁 **[test-results/demo-simulated/](test-results/demo-simulated/)** - Simulated demo runs
-- 📊 **[COMPLETE_DEMO_DATA_VIEWABLE.md](COMPLETE_DEMO_DATA_VIEWABLE.md)** - Demo data overview
-- 📊 **[DEMO_RESULTS_SUMMARY.txt](DEMO_RESULTS_SUMMARY.txt)** - Quick summary
-- 📊 **[README_DEMO_RESULTS.md](README_DEMO_RESULTS.md)** - Demo results documentation
+- 📊 **[COMPLETE_DEMO_DATA_VIEWABLE.md](/Documentation/Reports/COMPLETE_DEMO_DATA_VIEWABLE.md)** - Demo data overview
+- 📊 **[DEMO_RESULTS_SUMMARY.txt](/Documentation/Reports/DEMO_RESULTS_SUMMARY.txt)** - Quick summary
+- 📊 **[README_DEMO_RESULTS.md](/Documentation/Reports/README_DEMO_RESULTS.md)** - Demo results documentation
 
 ### Large-Scale Tests
 - 📁 **[test-results/20260227T004204Z_200round_fullscope/](test-results/20260227T004204Z_200round_fullscope/)** - 200-round full scope test
@@ -169,11 +169,11 @@
 
 ## 📚 Related Documentation
 
-- 📖 **[TEST_GUIDE.md](TEST_GUIDE.md)** - Comprehensive testing guide
-- 📖 **[TESTING_COMPLETION_INDEX.md](TESTING_COMPLETION_INDEX.md)** - Testing completion tracker
-- 📖 **[ARCHITECTURE.md](ARCHITECTURE.md)** - System architecture
-- 📖 **[DEPLOYMENT.md](DEPLOYMENT.md)** - Deployment guide
-- 📖 **[HIL_TESTING.md](HIL_TESTING.md)** - Hardware-in-the-loop testing
+- 📖 **[TEST_GUIDE.md](/Documentation/Testing/TEST_GUIDE.md)** - Comprehensive testing guide
+- 📖 **[TESTING_COMPLETION_INDEX.md](/Documentation/Testing/TESTING_COMPLETION_INDEX.md)** - Testing completion tracker
+- 📖 **[ARCHITECTURE.md](/Documentation/Architecture/ARCHITECTURE.md)** - System architecture
+- 📖 **[DEPLOYMENT.md](/Documentation/Deployment/DEPLOYMENT.md)** - Deployment guide
+- 📖 **[HIL_TESTING.md](/Documentation/Testing/HIL_TESTING.md)** - Hardware-in-the-loop testing
 
 ---
 

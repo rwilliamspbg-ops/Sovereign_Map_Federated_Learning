@@ -512,8 +512,8 @@ docker compose -f docker-compose.production.yml -f docker-compose.monitoring.yml
 - Security Team: [contact information]
 
 **Documentation:**
-- Architecture: [ARCHITECTURE.md](ARCHITECTURE.md)
-- Deployment: [DEPLOYMENT.md](DEPLOYMENT.md)
+- Architecture: [ARCHITECTURE.md](/Documentation/Architecture/ARCHITECTURE.md)
+- Deployment: [DEPLOYMENT.md](/Documentation/Deployment/DEPLOYMENT.md)
 - Testing: [tests/docs/TEST_GUIDE.md](tests/docs/TEST_GUIDE.md)
 
 ---

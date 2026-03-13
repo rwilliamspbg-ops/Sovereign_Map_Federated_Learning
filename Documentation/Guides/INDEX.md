@@ -9,7 +9,7 @@
 ## 🚀 QUICK START - Where to Begin
 
 ### 📂 Complete Test Artifacts Catalog
-**START HERE**: [`ARTIFACTS.md`](./ARTIFACTS.md)
+**START HERE**: [`ARTIFACTS.md`](/Documentation/Reports/ARTIFACTS.md)
 - **Comprehensive index** of all test results and artifacts
 - Quick links to 1000-node NPU and 5000-node K8s tests
 - GPU, Byzantine, and TPM test results
@@ -32,8 +32,8 @@
 **Key Achievement**: 4.38x throughput improvement (650 → 2,850 RPS)
 
 #### Quick Access
-- **Executive Summary**: [`1000-NODE-NPU-TEST-FINAL-SUMMARY.md`](./1000-NODE-NPU-TEST-FINAL-SUMMARY.md) ⭐ **START HERE**
-- **Reproduction Guide**: [`1000-NODE-NPU-TEST-GUIDE.md`](./1000-NODE-NPU-TEST-GUIDE.md)
+- **Executive Summary**: [`1000-NODE-NPU-TEST-FINAL-SUMMARY.md`](/Documentation/Testing/1000-NODE-NPU-TEST-FINAL-SUMMARY.md) ⭐ **START HERE**
+- **Reproduction Guide**: [`1000-NODE-NPU-TEST-GUIDE.md`](/Documentation/Testing/1000-NODE-NPU-TEST-GUIDE.md)
 - **Test Results**: [`test-results/1000-node-npu/20260304-103652/RESULTS.md`](./test-results/1000-node-npu/20260304-103652/RESULTS.md)
 - **Test Index**: [`test-results/1000-node-npu/README.md`](./test-results/1000-node-npu/README.md)
 - **Visualization**: [`test-results/1000-node-npu/20260304-103652/plots/01-npu-performance-analysis.png`](./test-results/1000-node-npu/20260304-103652/plots/01-npu-performance-analysis.png)
@@ -53,7 +53,7 @@
 **Key Achievement**: 86% accuracy with 50% Byzantine nodes at 5000-node scale
 
 #### Quick Access
-- **Complete Report**: [`KUBERNETES_5000_NODE_REPORT.md`](./KUBERNETES_5000_NODE_REPORT.md) ⭐ **START HERE**
+- **Complete Report**: [`KUBERNETES_5000_NODE_REPORT.md`](/Documentation/Deployment/KUBERNETES_5000_NODE_REPORT.md) ⭐ **START HERE**
 - **Test Index**: [`test-results/kubernetes-5000-node/README.md`](./test-results/kubernetes-5000-node/README.md)
 - **Raw Data**: [`test-results/kubernetes-5000-node/k8s-5000-node-20260303-052718.json`](./test-results/kubernetes-5000-node/k8s-5000-node-20260303-052718.json)
 - **Visualizations**: [`test-results/kubernetes-5000-node/plots/`](./test-results/kubernetes-5000-node/plots/)
@@ -100,14 +100,14 @@ Duration:     2.8 seconds
 ## 🗂️ DOCUMENTATION HIERARCHY
 
 ### Level 1: Executive Overview (Best for first-time visitors)
-1. **[ARTIFACTS.md](./ARTIFACTS.md)** - Complete test artifacts catalog
-2. **[1000-NODE-NPU-TEST-FINAL-SUMMARY.md](./1000-NODE-NPU-TEST-FINAL-SUMMARY.md)** - NPU test executive summary
-3. **[KUBERNETES_5000_NODE_REPORT.md](./KUBERNETES_5000_NODE_REPORT.md)** - K8s test executive report
+1. **[ARTIFACTS.md](/Documentation/Reports/ARTIFACTS.md)** - Complete test artifacts catalog
+2. **[1000-NODE-NPU-TEST-FINAL-SUMMARY.md](/Documentation/Testing/1000-NODE-NPU-TEST-FINAL-SUMMARY.md)** - NPU test executive summary
+3. **[KUBERNETES_5000_NODE_REPORT.md](/Documentation/Deployment/KUBERNETES_5000_NODE_REPORT.md)** - K8s test executive report
 
 ### Level 2: Technical Detail (For engineers and researchers)
 1. **[test-results/1000-node-npu/20260304-103652/RESULTS.md](./test-results/1000-node-npu/20260304-103652/RESULTS.md)** - Detailed NPU results
 2. **[test-results/kubernetes-5000-node/k8s-5000-node-20260303-052718.json](./test-results/kubernetes-5000-node/k8s-5000-node-20260303-052718.json)** - Raw K8s data
-3. **[1000-NODE-NPU-TEST-GUIDE.md](./1000-NODE-NPU-TEST-GUIDE.md)** - NPU reproduction guide
+3. **[1000-NODE-NPU-TEST-GUIDE.md](/Documentation/Testing/1000-NODE-NPU-TEST-GUIDE.md)** - NPU reproduction guide
 
 ### Level 3: Infrastructure & Execution (For operators)
 1. **[docker-compose.1000nodes.yml](./docker-compose.1000nodes.yml)** - 1000-node orchestration
@@ -120,18 +120,18 @@ Duration:     2.8 seconds
 ## 📈 ADDITIONAL TEST RESULTS
 
 ### Byzantine Stress Tests
-- **[BYZANTINE_STRESS_TEST_REPORT.md](./BYZANTINE_STRESS_TEST_REPORT.md)** - Byzantine tolerance validation
-- **[BYZANTINE_STRESS_TEST_SUITE_REPORT.md](./BYZANTINE_STRESS_TEST_SUITE_REPORT.md)** - Comprehensive suite
+- **[BYZANTINE_STRESS_TEST_REPORT.md](/Documentation/Testing/BYZANTINE_STRESS_TEST_REPORT.md)** - Byzantine tolerance validation
+- **[BYZANTINE_STRESS_TEST_SUITE_REPORT.md](/Documentation/Testing/BYZANTINE_STRESS_TEST_SUITE_REPORT.md)** - Comprehensive suite
 - **[test-results/byzantine-stress-test/](./test-results/byzantine-stress-test/)** - Test data
 
 ### GPU Acceleration Tests
-- **[GPU_TESTING_COMPLETE.md](./GPU_TESTING_COMPLETE.md)** - GPU test summary
-- **[GPU_TESTING_RESULTS_REPORT.md](./GPU_TESTING_RESULTS_REPORT.md)** - Detailed results
-- **[GPU_VALIDATION_COMPLETE.md](./GPU_VALIDATION_COMPLETE.md)** - Validation report
+- **[GPU_TESTING_COMPLETE.md](/Documentation/Testing/GPU_TESTING_COMPLETE.md)** - GPU test summary
+- **[GPU_TESTING_RESULTS_REPORT.md](/Documentation/Testing/GPU_TESTING_RESULTS_REPORT.md)** - Detailed results
+- **[GPU_VALIDATION_COMPLETE.md](/Documentation/Testing/GPU_VALIDATION_COMPLETE.md)** - Validation report
 
 ### NPU Performance Analysis
-- **[NPU_PERFORMANCE_SCALING_COMPLETE.md](./NPU_PERFORMANCE_SCALING_COMPLETE.md)** - Scaling analysis
-- **[NPU_GPU_CPU_PERFORMANCE_ANALYSIS.md](./NPU_GPU_CPU_PERFORMANCE_ANALYSIS.md)** - Comparative study
+- **[NPU_PERFORMANCE_SCALING_COMPLETE.md](/Documentation/Performance/NPU_PERFORMANCE_SCALING_COMPLETE.md)** - Scaling analysis
+- **[NPU_GPU_CPU_PERFORMANCE_ANALYSIS.md](/Documentation/Performance/NPU_GPU_CPU_PERFORMANCE_ANALYSIS.md)** - Comparative study
 
 ---
 
@@ -139,18 +139,18 @@ Duration:     2.8 seconds
 
 ### For New Users
 1. Read **[README.md](./README.md)** - Project overview and quick start
-2. Review **[ARTIFACTS.md](./ARTIFACTS.md)** - Complete test artifacts catalog
+2. Review **[ARTIFACTS.md](/Documentation/Reports/ARTIFACTS.md)** - Complete test artifacts catalog
 3. Explore **[test-results/README.md](./test-results/README.md)** - Navigate all results
 
 ### For Developers
-1. Review **[ARCHITECTURE.md](./ARCHITECTURE.md)** - System architecture
+1. Review **[ARCHITECTURE.md](/Documentation/Architecture/ARCHITECTURE.md)** - System architecture
 2. Check **[CONTRIBUTING.md](./CONTRIBUTING.md)** - Contribution guidelines
-3. Explore **[TEST_GUIDE.md](./TEST_GUIDE.md)** - Testing guide
+3. Explore **[TEST_GUIDE.md](/Documentation/Testing/TEST_GUIDE.md)** - Testing guide
 
 ### For Operators
-1. Follow **[GENESIS_QUICK_START.md](./GENESIS_QUICK_START.md)** - 5-minute deployment
-2. Review **[DEPLOYMENT.md](./DEPLOYMENT.md)** - Deployment options
-3. Check **[TPM_TRUST_GUIDE.md](./TPM_TRUST_GUIDE.md)** - Security setup
+1. Follow **[GENESIS_QUICK_START.md](/Documentation/Guides/GENESIS_QUICK_START.md)** - 5-minute deployment
+2. Review **[DEPLOYMENT.md](/Documentation/Deployment/DEPLOYMENT.md)** - Deployment options
+3. Check **[TPM_TRUST_GUIDE.md](/Documentation/Security/TPM_TRUST_GUIDE.md)** - Security setup
 
 ---
 
@@ -504,4 +504,4 @@ Visit: https://github.com/rwilliamspbg-ops/Sovereign_Map_Federated_Learning
 
 🎉 **1000-Node NPU Performance Test Complete!**
 
-Start with: [`1000-NODE-NPU-TEST-FINAL-SUMMARY.md`](./1000-NODE-NPU-TEST-FINAL-SUMMARY.md)
+Start with: [`1000-NODE-NPU-TEST-FINAL-SUMMARY.md`](/Documentation/Testing/1000-NODE-NPU-TEST-FINAL-SUMMARY.md)

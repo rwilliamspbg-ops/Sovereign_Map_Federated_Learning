@@ -1,6 +1,6 @@
 # 🚀 Sovereign Map v1.0.0 - Testnet Implementation Summary
 
-> Note: This document is a point-in-time implementation summary. For current branch health and safe claim wording, see [CI_STATUS_AND_CLAIMS.md](CI_STATUS_AND_CLAIMS.md).
+> Note: This document is a point-in-time implementation summary. For current branch health and safe claim wording, see [CI_STATUS_AND_CLAIMS.md](/Documentation/Security/CI_STATUS_AND_CLAIMS.md).
 
 ## ✅ Status: TESTNET-ORIENTED DEPLOYMENT BASELINE
 

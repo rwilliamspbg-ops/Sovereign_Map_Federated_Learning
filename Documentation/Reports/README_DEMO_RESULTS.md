@@ -8,7 +8,7 @@
 
 ## 🎯 Quick Start - What to Read First
 
-1. **START HERE:** [`DEMO_RESULTS_SUMMARY.txt`](./DEMO_RESULTS_SUMMARY.txt)
+1. **START HERE:** [`DEMO_RESULTS_SUMMARY.txt`](/Documentation/Reports/DEMO_RESULTS_SUMMARY.txt)
    - 5-minute overview of all key results
    - Achievement scorecard
    - Quick access guide

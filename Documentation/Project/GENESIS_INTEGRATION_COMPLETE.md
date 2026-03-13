@@ -357,7 +357,7 @@ Fix ESLint configuration for ESLint 9.x
 2. Execute launch: `./genesis-launch.sh`
 3. Access dashboards: http://localhost:3001
 4. Monitor progress for 30 minutes
-5. Verify success criteria in [GENESIS_LAUNCH_GUIDE.md](GENESIS_LAUNCH_GUIDE.md)
+5. Verify success criteria in [GENESIS_LAUNCH_GUIDE.md](/Documentation/Deployment/GENESIS_LAUNCH_GUIDE.md)
 
 ---
 
@@ -369,10 +369,10 @@ Fix ESLint configuration for ESLint 9.x
 
 ## 📞 Support
 
-- **Quick Start**: [GENESIS_QUICK_START.md](GENESIS_QUICK_START.md)
-- **Full Guide**: [GENESIS_LAUNCH_GUIDE.md](GENESIS_LAUNCH_GUIDE.md)
-- **Checklist**: [GENESIS_LAUNCH_CHECKLIST.md](GENESIS_LAUNCH_CHECKLIST.md)
-- **Architecture**: [ARCHITECTURE.md](ARCHITECTURE.md)
+- **Quick Start**: [GENESIS_QUICK_START.md](/Documentation/Guides/GENESIS_QUICK_START.md)
+- **Full Guide**: [GENESIS_LAUNCH_GUIDE.md](/Documentation/Deployment/GENESIS_LAUNCH_GUIDE.md)
+- **Checklist**: [GENESIS_LAUNCH_CHECKLIST.md](/Documentation/Deployment/GENESIS_LAUNCH_CHECKLIST.md)
+- **Architecture**: [ARCHITECTURE.md](/Documentation/Architecture/ARCHITECTURE.md)
 
 ---
 

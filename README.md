@@ -20,10 +20,10 @@ cd Sovereign_Map_Federated_Learning
 - **Consensus & Trust**: [http://localhost:3001/d/consensus-trust-monitoring](http://localhost:3001/d/consensus-trust-monitoring)
 
 **Documentation:**
-- **Quick Start**: [GENESIS_QUICK_START.md](GENESIS_QUICK_START.md) (5-minute guide)
-- **Full Guide**: [GENESIS_LAUNCH_GUIDE.md](GENESIS_LAUNCH_GUIDE.md) (comprehensive documentation)
-- **Architecture**: [ARCHITECTURE.md](ARCHITECTURE.md) (system design)
-- **Reproducibility**: [REPRODUCIBLE_SETUP.md](REPRODUCIBLE_SETUP.md) (clone and smoke-check workflow)
+- **Quick Start**: [GENESIS_QUICK_START.md](/Documentation/Guides/GENESIS_QUICK_START.md) (5-minute guide)
+- **Full Guide**: [GENESIS_LAUNCH_GUIDE.md](/Documentation/Deployment/GENESIS_LAUNCH_GUIDE.md) (comprehensive documentation)
+- **Architecture**: [ARCHITECTURE.md](/Documentation/Architecture/ARCHITECTURE.md) (system design)
+- **Reproducibility**: [REPRODUCIBLE_SETUP.md](/Documentation/Guides/REPRODUCIBLE_SETUP.md) (clone and smoke-check workflow)
 
 **Contributing:** See [CONTRIBUTING.md](CONTRIBUTING.md) for PR checklist, CodeQL guardrails, and branch protection recommendations.
 
@@ -35,10 +35,10 @@ cd Sovereign_Map_Federated_Learning
 - Distributed checkpoint storage expanded with IPFS backend support.
 - Sensor ingestion expanded with camera, SLAM, mobile API, and drone telemetry modules.
 - Runtime readiness and implementation details documented in:
-  - [NETWORK_READINESS_ASSESSMENT.md](NETWORK_READINESS_ASSESSMENT.md)
-  - [IMPLEMENTATION_SUMMARY.md](IMPLEMENTATION_SUMMARY.md)
-  - [OPENCV_INSTALL.md](OPENCV_INSTALL.md)
-  - [ROADMAP.md](ROADMAP.md)
+  - [NETWORK_READINESS_ASSESSMENT.md](/Documentation/Deployment/NETWORK_READINESS_ASSESSMENT.md)
+  - [IMPLEMENTATION_SUMMARY.md](/Documentation/Architecture/IMPLEMENTATION_SUMMARY.md)
+  - [OPENCV_INSTALL.md](/Documentation/Guides/OPENCV_INSTALL.md)
+  - [ROADMAP.md](/Documentation/Project/ROADMAP.md)
 
 ---
 
@@ -77,19 +77,19 @@ cd Sovereign_Map_Federated_Learning
 ### Core Signals (Claim Scope)
 [![Byzantine Scope](https://img.shields.io/badge/Byzantine-validated%20in%20sim%2Ftests-informational?style=flat-square)](tests/README.md)
 [![Scaling Scope](https://img.shields.io/badge/Scaling-mixed%20empirical%20%2B%20theoretical-informational?style=flat-square)](results/README.md)
-[![TPM Scope](https://img.shields.io/badge/TPM-swtpm%20emulated%20in%20CI-informational?style=flat-square)](HIL_TESTING.md)
-[![NPU Scope](https://img.shields.io/badge/NPU-fallback%20logic%20tested-informational?style=flat-square)](HIL_TESTING.md)
+[![TPM Scope](https://img.shields.io/badge/TPM-swtpm%20emulated%20in%20CI-informational?style=flat-square)](/Documentation/Testing/HIL_TESTING.md)
+[![NPU Scope](https://img.shields.io/badge/NPU-fallback%20logic%20tested-informational?style=flat-square)](/Documentation/Testing/HIL_TESTING.md)
 
 ### Security & Trust
 [![CodeQL](https://img.shields.io/badge/CodeQL-enabled-2088FF?style=flat-square)](.github/workflows/codeql-analysis.yml)
-[![mTLS](https://img.shields.io/badge/mTLS-configured-2ea44f?style=flat-square)](TPM_TRUST_GUIDE.md)
-[![TPM-Inspired Trust](https://img.shields.io/badge/Trust-TPM--inspired%20PKI-2ea44f?style=flat-square)](TPM_TRUST_GUIDE.md)
-[![Security Note](https://img.shields.io/badge/Compliance-no%20formal%20certification%20claim-lightgrey?style=flat-square)](CI_STATUS_AND_CLAIMS.md)
+[![mTLS](https://img.shields.io/badge/mTLS-configured-2ea44f?style=flat-square)](/Documentation/Security/TPM_TRUST_GUIDE.md)
+[![TPM-Inspired Trust](https://img.shields.io/badge/Trust-TPM--inspired%20PKI-2ea44f?style=flat-square)](/Documentation/Security/TPM_TRUST_GUIDE.md)
+[![Security Note](https://img.shields.io/badge/Compliance-no%20formal%20certification%20claim-lightgrey?style=flat-square)](/Documentation/Security/CI_STATUS_AND_CLAIMS.md)
 
 ### Deployment & Monitoring
 [![Docker Compose](https://img.shields.io/badge/Docker%20Compose-Multi--Profile-2496ED?style=flat-square)](docker-compose.full.yml)
-[![Prometheus Ready](https://img.shields.io/badge/Prometheus-20%2B%20Metrics-E6522C?logo=prometheus&style=flat-square)](ARCHITECTURE.md)
-[![Grafana Dashboards](https://img.shields.io/badge/Grafana-3%20Dashboards-F05A28?logo=grafana&style=flat-square)](ARCHITECTURE.md)
+[![Prometheus Ready](https://img.shields.io/badge/Prometheus-20%2B%20Metrics-E6522C?logo=prometheus&style=flat-square)](/Documentation/Architecture/ARCHITECTURE.md)
+[![Grafana Dashboards](https://img.shields.io/badge/Grafana-3%20Dashboards-F05A28?logo=grafana&style=flat-square)](/Documentation/Architecture/ARCHITECTURE.md)
 [![Alertmanager](https://img.shields.io/badge/Alertmanager-14%20Rules-red?style=flat-square)](tpm_alerts.yml)
 [![CI/CD](https://img.shields.io/badge/CI%2FCD-GitHub%20Actions-2088FF?logo=github-actions&style=flat-square)](.github/workflows/deploy.yml)
 
@@ -105,7 +105,7 @@ cd Sovereign_Map_Federated_Learning
 
 > **A Byzantine-tolerant federated learning stack with Flower aggregation, TPM-inspired trust verification, observability, and explicit CI validation gates.**
 
-**Evidence policy:** CI badges prove build/test/security/lint/audit status on `main`. Large-scale and performance claims are treated as benchmark artifacts (not universal guarantees). See [CI_STATUS_AND_CLAIMS.md](CI_STATUS_AND_CLAIMS.md).
+**Evidence policy:** CI badges prove build/test/security/lint/audit status on `main`. Large-scale and performance claims are treated as benchmark artifacts (not universal guarantees). See [CI_STATUS_AND_CLAIMS.md](/Documentation/Security/CI_STATUS_AND_CLAIMS.md).
 
 ## 🔎 Local Verification Snapshot (2026-03-02)
 
@@ -126,8 +126,8 @@ Interpretation:
 **Latest Update**: Flower aggregator + Byzantine-robust strategy implemented  
 **Status**: ✅ **CI workflow status is badge-driven; local lint/test/security checks are currently passing as of 2026-03-02** (compose profiles for 5-1000 nodes remain available)  
 **Deploy Profiles**: Local (2 min) | Staging (5 min) | Production-like (10 min)  
-**See**: [TESTNET_DEPLOYMENT.md](TESTNET_DEPLOYMENT.md) for complete guide  
-**Summary**: [TESTNET_READY_SUMMARY.md](TESTNET_READY_SUMMARY.md) for quick reference  
+**See**: [TESTNET_DEPLOYMENT.md](/Documentation/Deployment/TESTNET_DEPLOYMENT.md) for complete guide  
+**Summary**: [TESTNET_READY_SUMMARY.md](/Documentation/Testing/TESTNET_READY_SUMMARY.md) for quick reference  
 
 ---
 
@@ -279,8 +279,8 @@ done
 **Status:** ✅ **COMPLETE & VERIFIED** (2026-03-04)  
 **Key Result:** 4.38x throughput improvement (650 → 2,850 RPS) with 66.9% latency reduction
 
-📊 **Complete Report:** [1000-NODE-NPU-TEST-FINAL-SUMMARY.md](1000-NODE-NPU-TEST-FINAL-SUMMARY.md)  
-📖 **Reproduction Guide:** [1000-NODE-NPU-TEST-GUIDE.md](1000-NODE-NPU-TEST-GUIDE.md)  
+📊 **Complete Report:** [1000-NODE-NPU-TEST-FINAL-SUMMARY.md](/Documentation/Testing/1000-NODE-NPU-TEST-FINAL-SUMMARY.md)  
+📖 **Reproduction Guide:** [1000-NODE-NPU-TEST-GUIDE.md](/Documentation/Testing/1000-NODE-NPU-TEST-GUIDE.md)  
 📁 **Test Data:** [test-results/1000-node-npu/20260304-103652/](test-results/1000-node-npu/20260304-103652/)  
 🐳 **Infrastructure:** [docker-compose.1000nodes.yml](docker-compose.1000nodes.yml)
 
@@ -298,7 +298,7 @@ done
 **Status:** ✅ **ALL 4 SCENARIOS PASSED** (2026-03-03)  
 **Key Result:** 86% accuracy maintained with 50% Byzantine nodes at 5000-node scale
 
-📊 **Complete Report:** [KUBERNETES_5000_NODE_REPORT.md](KUBERNETES_5000_NODE_REPORT.md)  
+📊 **Complete Report:** [KUBERNETES_5000_NODE_REPORT.md](/Documentation/Deployment/KUBERNETES_5000_NODE_REPORT.md)  
 📄 **Raw Data:** [test-results/kubernetes-5000-node/k8s-5000-node-20260303-052718.json](test-results/kubernetes-5000-node/k8s-5000-node-20260303-052718.json)  
 📈 **Visualizations:** [test-results/kubernetes-5000-node/plots/](test-results/kubernetes-5000-node/plots/)  
 ☸️ **K8s Manifests:** [kubernetes-5000-node-manifests.yaml](kubernetes-5000-node-manifests.yaml)
@@ -318,14 +318,14 @@ python generate-k8s-5000-node-plots.py
 
 ### 📊 Additional Test Suites
 
-- **GPU Acceleration Tests:** [GPU_TESTING_COMPLETE.md](GPU_TESTING_COMPLETE.md) | [GPU_TESTING_RESULTS_REPORT.md](GPU_TESTING_RESULTS_REPORT.md)
-- **Byzantine Stress Tests:** [BYZANTINE_STRESS_TEST_REPORT.md](BYZANTINE_STRESS_TEST_REPORT.md) | [BYZANTINE_STRESS_TEST_SUITE_REPORT.md](BYZANTINE_STRESS_TEST_SUITE_REPORT.md)
-- **NPU Performance Analysis:** [NPU_PERFORMANCE_SCALING_COMPLETE.md](NPU_PERFORMANCE_SCALING_COMPLETE.md) | [NPU_GPU_CPU_PERFORMANCE_ANALYSIS.md](NPU_GPU_CPU_PERFORMANCE_ANALYSIS.md)
+- **GPU Acceleration Tests:** [GPU_TESTING_COMPLETE.md](/Documentation/Testing/GPU_TESTING_COMPLETE.md) | [GPU_TESTING_RESULTS_REPORT.md](/Documentation/Testing/GPU_TESTING_RESULTS_REPORT.md)
+- **Byzantine Stress Tests:** [BYZANTINE_STRESS_TEST_REPORT.md](/Documentation/Testing/BYZANTINE_STRESS_TEST_REPORT.md) | [BYZANTINE_STRESS_TEST_SUITE_REPORT.md](/Documentation/Testing/BYZANTINE_STRESS_TEST_SUITE_REPORT.md)
+- **NPU Performance Analysis:** [NPU_PERFORMANCE_SCALING_COMPLETE.md](/Documentation/Performance/NPU_PERFORMANCE_SCALING_COMPLETE.md) | [NPU_GPU_CPU_PERFORMANCE_ANALYSIS.md](/Documentation/Performance/NPU_GPU_CPU_PERFORMANCE_ANALYSIS.md)
 
 ### 📚 Complete Artifacts Index
 
 **For full test catalog, results, and reproduction scripts, see:**  
-📂 **[ARTIFACTS.md](ARTIFACTS.md)** - Complete index of all test artifacts and results
+📂 **[ARTIFACTS.md](/Documentation/Reports/ARTIFACTS.md)** - Complete index of all test artifacts and results
 
 ---
 
@@ -1053,19 +1053,28 @@ done
 
 Comprehensive documentation included:
 
+- **Documentation Hub**: [Documentation/README.md](Documentation/README.md)
+- **Master Repo Index**: [Documentation/MASTER_DOCUMENTATION_INDEX.md](Documentation/MASTER_DOCUMENTATION_INDEX.md)
+- **Security Index**: [Documentation/SECURITY_INDEX.md](Documentation/SECURITY_INDEX.md)
+- **Testing Index**: [Documentation/TESTING_INDEX.md](Documentation/TESTING_INDEX.md)
+- **Deployment Index**: [Documentation/DEPLOYMENT_INDEX.md](Documentation/DEPLOYMENT_INDEX.md)
+- **Architecture Index**: [Documentation/ARCHITECTURE_INDEX.md](Documentation/ARCHITECTURE_INDEX.md)
+
 | Document | Purpose | Size |
 |----------|---------|------|
+| **Documentation/README.md** | Central documentation hub and navigation entry point | 1KB |
+| **Documentation/MASTER_DOCUMENTATION_INDEX.md** | Full categorized index of repository documentation files | 100KB |
 | **README.md** | Overview & quick start (this file) | 15KB |
-| **TESTNET_DEPLOYMENT.md** | Step-by-step deployment guide | 14KB |
-| **TESTNET_READY_SUMMARY.md** | Quick reference & architecture | 12KB |
-| **DEPLOYMENT.md** | Detailed deployment instructions | 15KB |
-| **ARCHITECTURE.md** | System design & component details | 23KB |
-| **TPM_TRUST_GUIDE.md** | Certificate & trust system | 15KB |
-| **TPM_MONITORING_GUIDE.md** | Monitoring setup & best practices | 9KB |
-| **NETWORK_READINESS_ASSESSMENT.md** | Current network readiness and gaps | 17KB |
-| **IMPLEMENTATION_SUMMARY.md** | Implementation and dependency summary | 8KB |
-| **OPENCV_INSTALL.md** | OpenCV dependency setup for sensor modules | 3KB |
-| **ROADMAP.md** | Current roadmap and milestones | 4KB |
+| **Documentation/Deployment/TESTNET_DEPLOYMENT.md** | Step-by-step deployment guide | 14KB |
+| **Documentation/Testing/TESTNET_READY_SUMMARY.md** | Quick reference & architecture | 12KB |
+| **Documentation/Deployment/DEPLOYMENT.md** | Detailed deployment instructions | 15KB |
+| **Documentation/Architecture/ARCHITECTURE.md** | System design & component details | 23KB |
+| **Documentation/Security/TPM_TRUST_GUIDE.md** | Certificate & trust system | 15KB |
+| **Documentation/Security/TPM_MONITORING_GUIDE.md** | Monitoring setup & best practices | 9KB |
+| **Documentation/Deployment/NETWORK_READINESS_ASSESSMENT.md** | Current network readiness and gaps | 17KB |
+| **Documentation/Architecture/IMPLEMENTATION_SUMMARY.md** | Implementation and dependency summary | 8KB |
+| **Documentation/Guides/OPENCV_INSTALL.md** | OpenCV dependency setup for sensor modules | 3KB |
+| **Documentation/Project/ROADMAP.md** | Current roadmap and milestones | 4KB |
 
 ### API Documentation
 
@@ -1180,7 +1189,7 @@ If you use Sovereign Map in your research, please cite:
 
 ## 🗺️ Roadmap
 
-Active roadmap and milestone tracking are maintained in [ROADMAP.md](ROADMAP.md).
+Active roadmap and milestone tracking are maintained in [ROADMAP.md](/Documentation/Project/ROADMAP.md).
 
 ### Current Priorities (2026)
 - [x] P2P mesh transport updates (TCP + QUIC)
@@ -1207,11 +1216,11 @@ Active roadmap and milestone tracking are maintained in [ROADMAP.md](ROADMAP.md)
 
 ### Quick Links
 
-- 📖 **Documentation**: [TESTNET_DEPLOYMENT.md](TESTNET_DEPLOYMENT.md)
-- ✅ **Integration Sign-off**: [TPM_NPU_GPU_SIGNOFF_CHECKLIST.md](TPM_NPU_GPU_SIGNOFF_CHECKLIST.md)
-- 🏗️ **Architecture**: [ARCHITECTURE.md](ARCHITECTURE.md)
-- 🔒 **Security**: [TPM_TRUST_GUIDE.md](TPM_TRUST_GUIDE.md)
-- 📊 **Monitoring**: [TPM_MONITORING_GUIDE.md](TPM_MONITORING_GUIDE.md)
+- 📖 **Documentation**: [TESTNET_DEPLOYMENT.md](/Documentation/Deployment/TESTNET_DEPLOYMENT.md)
+- ✅ **Integration Sign-off**: [TPM_NPU_GPU_SIGNOFF_CHECKLIST.md](/Documentation/Testing/TPM_NPU_GPU_SIGNOFF_CHECKLIST.md)
+- 🏗️ **Architecture**: [ARCHITECTURE.md](/Documentation/Architecture/ARCHITECTURE.md)
+- 🔒 **Security**: [TPM_TRUST_GUIDE.md](/Documentation/Security/TPM_TRUST_GUIDE.md)
+- 📊 **Monitoring**: [TPM_MONITORING_GUIDE.md](/Documentation/Security/TPM_MONITORING_GUIDE.md)
 - 💬 **Issues**: [GitHub Issues](https://github.com/rwilliamspbg-ops/Sovereign_Map_Federated_Learning/issues)
 
 ### Troubleshooting

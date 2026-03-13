@@ -339,8 +339,8 @@ Refer to: `1000-NODE-NPU-TEST-GUIDE.md`
 
 ---
 
-**Start Here**: [`INDEX.md`](./INDEX.md)  
-**Quick Results**: [`1000-NODE-NPU-TEST-FINAL-SUMMARY.md`](./1000-NODE-NPU-TEST-FINAL-SUMMARY.md)  
+**Start Here**: [`INDEX.md`](/Documentation/Guides/INDEX.md)  
+**Quick Results**: [`1000-NODE-NPU-TEST-FINAL-SUMMARY.md`](/Documentation/Testing/1000-NODE-NPU-TEST-FINAL-SUMMARY.md)  
 **GitHub**: https://github.com/rwilliamspbg-ops/Sovereign_Map_Federated_Learning
 
 ✅ **Mission Accomplished**
