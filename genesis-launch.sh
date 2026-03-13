@@ -78,9 +78,7 @@ pre_launch_checks() {
     
     # Check required files
     local required_files=(
-        "docker-compose.yml"
         "docker-compose.production.yml"
-        "docker-compose.monitoring.yml"
         "prometheus.yml"
         "alertmanager.yml"
         "grafana/dashboards/genesis-launch-overview.json"
@@ -129,7 +127,6 @@ initialize_network() {
     # Pull latest images
     log_info "Pulling latest Docker images..."
     docker compose -f docker-compose.production.yml pull 2>&1 | tee -a "$LOG_FILE"
-    docker compose -f docker-compose.monitoring.yml pull 2>&1 | tee -a "$LOG_FILE"
     log_success "Images updated"
 }
 
@@ -141,7 +138,7 @@ launch_monitoring() {
     log_header "📊 LAUNCHING MONITORING STACK"
     
     log_info "Starting Prometheus, Grafana, and Alertmanager..."
-    docker compose -f docker-compose.monitoring.yml up -d 2>&1 | tee -a "$LOG_FILE"
+    docker compose -f docker-compose.production.yml up -d prometheus grafana alertmanager 2>&1 | tee -a "$LOG_FILE"
     
     # Wait for services to be ready
     log_info "Waiting for monitoring services to initialize..."
@@ -155,9 +152,9 @@ launch_monitoring() {
     fi
     
     # Check Grafana
-    if curl -s http://localhost:3000/api/health > /dev/null 2>&1; then
-        log_success "Grafana is healthy (http://localhost:3000)"
-        log_info "Grafana credentials: admin/admin"
+    if curl -s http://localhost:3001/api/health > /dev/null 2>&1; then
+        log_success "Grafana is healthy (http://localhost:3001)"
+        log_info "Grafana credentials: admin/${GRAFANA_ADMIN_PASSWORD:-CHANGE_ME_GRAFANA}"
     else
         log_warn "Grafana health check failed"
     fi
@@ -280,10 +277,10 @@ display_dashboard() {
     echo -e "${BLUE}═══════════════════════════════════════════════════════════════${NC}"
     echo -e "${YELLOW}📊 MONITORING INTERFACES:${NC}"
     echo ""
-    echo -e "  ${CYAN}🌐 Grafana Dashboard:${NC}      http://localhost:3000"
-    echo -e "     ${MAGENTA}↳${NC} Genesis Overview:      http://localhost:3000/d/genesis-launch-overview"
-    echo -e "     ${MAGENTA}↳${NC} Network Performance:   http://localhost:3000/d/network-performance-health"
-    echo -e "     ${MAGENTA}↳${NC} Consensus & Trust:     http://localhost:3000/d/consensus-trust-monitoring"
+    echo -e "  ${CYAN}🌐 Grafana Dashboard:${NC}      http://localhost:3001"
+    echo -e "     ${MAGENTA}↳${NC} Genesis Overview:      http://localhost:3001/d/genesis-launch-overview"
+    echo -e "     ${MAGENTA}↳${NC} Network Performance:   http://localhost:3001/d/network-performance-health"
+    echo -e "     ${MAGENTA}↳${NC} Consensus & Trust:     http://localhost:3001/d/consensus-trust-monitoring"
     echo ""
     echo -e "  ${CYAN}📈 Prometheus Metrics:${NC}     http://localhost:9090"
     echo -e "  ${CYAN}🔔 Alert Manager:${NC}          http://localhost:9093"
@@ -294,8 +291,8 @@ display_dashboard() {
     echo ""
     echo -e "  View logs:         ${GREEN}docker compose logs -f${NC}"
     echo -e "  Scale nodes:       ${GREEN}docker compose -f docker-compose.production.yml up -d --scale node-agent=50${NC}"
-    echo -e "  Stop network:      ${GREEN}docker compose -f docker-compose.production.yml -f docker-compose.monitoring.yml down --remove-orphans${NC}"
-    echo -e "  Restart services:  ${GREEN}docker compose -f docker-compose.production.yml -f docker-compose.monitoring.yml restart${NC}"
+    echo -e "  Stop network:      ${GREEN}docker compose -f docker-compose.production.yml down --remove-orphans${NC}"
+    echo -e "  Restart services:  ${GREEN}docker compose -f docker-compose.production.yml restart${NC}"
     echo ""
     echo -e "${BLUE}═══════════════════════════════════════════════════════════════${NC}"
     echo ""
