@@ -381,7 +381,7 @@ sudo ufw allow 8000,8080,9090,3000,9093/tcp
 **Solutions:**
 ```bash
 # Check data distribution
-curl http://localhost:8000/api/metrics | jq '.heterogeneity'
+curl http://localhost:8000/convergence | jq '{current_round, current_accuracy, current_loss}'
 
 # Increase training iterations
 # Edit docker-compose.yml:
@@ -405,7 +405,7 @@ docker compose -f docker-compose.production.yml restart node-agent
 ./tpm-bootstrap.sh
 
 # Check certificate validity
-curl http://localhost:8000/api/trust_status
+curl http://localhost:8000/health
 
 # Restart TPM services
 docker compose -f docker-compose.production.yml restart backend

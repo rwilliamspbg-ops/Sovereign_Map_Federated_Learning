@@ -86,7 +86,7 @@ services:
 
   # MongoDB: Primary Data Store
   mongo:
-    image: mongo:7.0-alpine
+    image: mongo:7.0
     container_name: sovereignmap-mongo
     ports:
       - "127.0.0.1:27017:27017"

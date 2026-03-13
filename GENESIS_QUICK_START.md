@@ -69,26 +69,26 @@ http://localhost:3000/d/consensus-trust-monitoring
 
 **30 seconds after launch:**
 ```bash
-# Check active nodes
-curl http://localhost:8000/api/network_status | jq '.active_nodes'
+# Check active node-agents
+docker ps --filter "name=node-agent" --format "{{.Names}}" | wc -l
 # Expected: >= 20
 ```
 
 **5 minutes after launch:**
 ```bash
 # Check training rounds
-curl http://localhost:8000/api/metrics | jq '.round'
+curl http://localhost:8000/convergence | jq '.current_round'
 # Expected: >= 5
 
 # Check accuracy
-curl http://localhost:8000/api/metrics | jq '.accuracy'
+curl http://localhost:8000/convergence | jq '.current_accuracy'
 # Expected: > 0.60
 ```
 
 **30 minutes after launch:**
 ```bash
 # Check convergence
-curl http://localhost:8000/api/convergence_status | jq '.accuracy'
+curl http://localhost:8000/convergence | jq '.current_accuracy'
 # Expected: > 0.85
 ```
 

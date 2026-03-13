@@ -319,15 +319,15 @@ start_monitoring() {
         echo ""
         
         # Get metrics from backend
-        if curl -s http://localhost:8000/api/metrics > /tmp/metrics.json 2>/dev/null; then
+        if curl -s http://localhost:8000/convergence > /tmp/metrics.json 2>/dev/null; then
             local accuracy
             local loss
             local round
             local nodes
-            accuracy=$(jq -r '.accuracy // "N/A"' /tmp/metrics.json 2>/dev/null || echo "N/A")
-            loss=$(jq -r '.loss // "N/A"' /tmp/metrics.json 2>/dev/null || echo "N/A")
-            round=$(jq -r '.round // "N/A"' /tmp/metrics.json 2>/dev/null || echo "N/A")
-            nodes=$(jq -r '.active_nodes // "N/A"' /tmp/metrics.json 2>/dev/null || echo "N/A")
+            accuracy=$(jq -r '.current_accuracy // "N/A"' /tmp/metrics.json 2>/dev/null || echo "N/A")
+            loss=$(jq -r '.current_loss // "N/A"' /tmp/metrics.json 2>/dev/null || echo "N/A")
+            round=$(jq -r '.current_round // "N/A"' /tmp/metrics.json 2>/dev/null || echo "N/A")
+            nodes=$(docker ps --filter "name=node-agent" --format "{{.Names}}" | wc -l)
             
             echo -e "  ${CYAN}Round:${NC}          $round"
             echo -e "  ${CYAN}Accuracy:${NC}       $accuracy"

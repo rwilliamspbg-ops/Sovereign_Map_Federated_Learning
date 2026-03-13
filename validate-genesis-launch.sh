@@ -109,7 +109,7 @@ validate_repository_files() {
     # Essential scripts
     FILES=(
         "genesis-launch.sh"
-        "docker-compose.yml"
+        "docker-compose.production.yml"
         "docker-compose.monitoring.yml"
         "prometheus.yml"
         "alertmanager.yml"
@@ -136,7 +136,7 @@ validate_docker_configs() {
     
     # Validate docker-compose files
     COMPOSE_FILES=(
-        "docker-compose.yml"
+        "docker-compose.production.yml"
         "docker-compose.monitoring.yml"
     )
     
