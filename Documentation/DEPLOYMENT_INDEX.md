@@ -2,6 +2,7 @@
 
 ## Files
 
+- [Documentation/DEPLOYMENT_INDEX.md](./DEPLOYMENT_INDEX.md)
 - [Documentation/Deployment/DEPLOYMENT.md](./Deployment/DEPLOYMENT.md)
 - [Documentation/Deployment/DOCKER_OPTIMIZATION.md](./Deployment/DOCKER_OPTIMIZATION.md)
 - [Documentation/Deployment/DOCKER_OPTIMIZATION_SUMMARY.md](./Deployment/DOCKER_OPTIMIZATION_SUMMARY.md)

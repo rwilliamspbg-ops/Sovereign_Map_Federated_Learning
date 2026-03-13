@@ -5,6 +5,7 @@
 - [.github/CODEQL.md](../.github/CODEQL.md)
 - [.github/SECURITY.md](../.github/SECURITY.md)
 - [Documentation/Performance/RELEASE_NOTES_TPM_NPU_2026-03-03.md](./Performance/RELEASE_NOTES_TPM_NPU_2026-03-03.md)
+- [Documentation/SECURITY_INDEX.md](./SECURITY_INDEX.md)
 - [Documentation/Security/CI_STATUS_AND_CLAIMS.md](./Security/CI_STATUS_AND_CLAIMS.md)
 - [Documentation/Security/CODEQL_FIX_REPORT.md](./Security/CODEQL_FIX_REPORT.md)
 - [Documentation/Security/COMMIT_PUSH_CERTIFICATE.md](./Security/COMMIT_PUSH_CERTIFICATE.md)

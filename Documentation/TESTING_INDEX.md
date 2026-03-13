@@ -6,6 +6,7 @@
 - [Documentation/Deployment/TESTNET_DEPLOYMENT.md](./Deployment/TESTNET_DEPLOYMENT.md)
 - [Documentation/Reports/SESSION_TESTNET_FINALIZATION_V1_1_0.md](./Reports/SESSION_TESTNET_FINALIZATION_V1_1_0.md)
 - [Documentation/Security/TPM_TESTNET_READY.md](./Security/TPM_TESTNET_READY.md)
+- [Documentation/TESTING_INDEX.md](./TESTING_INDEX.md)
 - [Documentation/Testing/1000-NODE-NPU-TEST-FINAL-SUMMARY.md](./Testing/1000-NODE-NPU-TEST-FINAL-SUMMARY.md)
 - [Documentation/Testing/1000-NODE-NPU-TEST-GUIDE.md](./Testing/1000-NODE-NPU-TEST-GUIDE.md)
 - [Documentation/Testing/BYZANTINE_STRESS_TEST_REPORT.md](./Testing/BYZANTINE_STRESS_TEST_REPORT.md)

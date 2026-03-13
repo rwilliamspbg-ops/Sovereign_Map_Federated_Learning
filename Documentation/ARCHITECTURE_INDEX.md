@@ -2,6 +2,7 @@
 
 ## Files
 
+- [Documentation/ARCHITECTURE_INDEX.md](./ARCHITECTURE_INDEX.md)
 - [Documentation/Architecture/ARCHITECTURE.md](./Architecture/ARCHITECTURE.md)
 - [Documentation/Architecture/IMPLEMENTATION_SUMMARY.md](./Architecture/IMPLEMENTATION_SUMMARY.md)
 - [archive/legacy/docs/IMPLEMENTATION_COMPLETE.md](../archive/legacy/docs/IMPLEMENTATION_COMPLETE.md)
