@@ -168,9 +168,12 @@ initialize_network() {
 
 launch_monitoring() {
     log_header "📊 LAUNCHING MONITORING STACK"
+
+    # Ensure Compose metadata is clean for monitoring services
+    docker compose -f docker-compose.production.yml rm -fsv prometheus grafana alertmanager >/dev/null 2>&1 || true
     
     log_info "Starting Prometheus, Grafana, and Alertmanager..."
-    docker compose -f docker-compose.production.yml up -d --no-deps prometheus grafana alertmanager 2>&1 | tee -a "$LOG_FILE"
+    docker compose -f docker-compose.production.yml up -d --no-deps --no-recreate prometheus grafana alertmanager 2>&1 | tee -a "$LOG_FILE"
     
     # Wait for services to be ready
     log_info "Waiting for monitoring services to initialize..."
@@ -231,14 +234,17 @@ EOF
 
 launch_network() {
     log_header "🚀 LAUNCHING NODE NETWORK"
+
+    # Clear stale compose state for core services before startup
+    docker compose -f docker-compose.production.yml rm -fsv backend frontend node-agent mongo redis >/dev/null 2>&1 || true
     
     log_info "Starting Sovereign Map backend..."
-    docker compose -f docker-compose.production.yml up -d --build backend 2>&1 | tee -a "$LOG_FILE"
+    docker compose -f docker-compose.production.yml up -d --build --no-recreate backend 2>&1 | tee -a "$LOG_FILE"
     
     sleep 5
     
     log_info "Deploying initial node set ($MIN_NODES nodes)..."
-    docker compose -f docker-compose.production.yml up -d --build --scale node-agent=$MIN_NODES mongo redis backend frontend node-agent 2>&1 | tee -a "$LOG_FILE"
+    docker compose -f docker-compose.production.yml up -d --build --no-recreate --scale node-agent=$MIN_NODES mongo redis backend frontend node-agent 2>&1 | tee -a "$LOG_FILE"
     
     log_success "Initial nodes deployed"
     
