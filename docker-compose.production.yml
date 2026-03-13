@@ -5,7 +5,6 @@ services:
       context: .
       dockerfile: Dockerfile.backend.optimized
     image: sovereignmap/backend:latest
-    container_name: sovereignmap-backend
     ports:
       - "8000:8000"  # Flask Metrics API
       - "8080:8080"  # Flower gRPC (if enabled)
@@ -56,7 +55,6 @@ services:
       context: .
       dockerfile: Dockerfile.frontend.optimized
     image: sovereignmap/frontend:latest
-    container_name: sovereignmap-frontend
     ports:
       - "3000:80"
     depends_on:
@@ -87,7 +85,6 @@ services:
   # MongoDB: Primary Data Store
   mongo:
     image: mongo:7.0
-    container_name: sovereignmap-mongo
     ports:
       - "127.0.0.1:27017:27017"
     environment:
@@ -121,7 +118,6 @@ services:
   # Redis: Caching & Session Store
   redis:
     image: redis:7-alpine
-    container_name: sovereignmap-redis
     ports:
       - "127.0.0.1:6379:6379"
     restart: always
@@ -193,7 +189,6 @@ services:
   # Prometheus: Metrics Collection
   prometheus:
     image: prom/prometheus:v2.48.0
-    container_name: sovereignmap-prometheus
     ports:
       - "9090:9090"
     volumes:
@@ -232,7 +227,6 @@ services:
   # Grafana: Visualization & Dashboards
   grafana:
     image: grafana/grafana:10.2.3
-    container_name: sovereignmap-grafana
     ports:
       - "3001:3000"
     environment:
@@ -272,7 +266,6 @@ services:
   # Alertmanager: Alert Management
   alertmanager:
     image: prom/alertmanager:v0.26.0
-    container_name: sovereignmap-alertmanager
     ports:
       - "9093:9093"
     volumes:
