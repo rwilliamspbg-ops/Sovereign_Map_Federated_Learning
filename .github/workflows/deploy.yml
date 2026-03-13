@@ -62,11 +62,28 @@ jobs:
       
       - name: Check documentation
         run: |
-          [ -f README.md ] && echo "✅ README.md exists"
-          [ -f DEPLOYMENT.md ] && echo "✅ DEPLOYMENT.md exists"
-          [ -f ARCHITECTURE.md ] && echo "✅ ARCHITECTURE.md exists"
-          [ -f TPM_TRUST_GUIDE.md ] && echo "✅ TPM_TRUST_GUIDE.md exists"
-          [ -f TPM_MONITORING_GUIDE.md ] && echo "✅ TPM_MONITORING_GUIDE.md exists"
+          REQUIRED_DOCS=(
+            "README.md"
+            "Documentation/Deployment/DEPLOYMENT.md"
+            "Documentation/Architecture/ARCHITECTURE.md"
+            "Documentation/Security/TPM_TRUST_GUIDE.md"
+            "Documentation/Security/TPM_MONITORING_GUIDE.md"
+          )
+
+          missing=0
+          for doc in "${REQUIRED_DOCS[@]}"; do
+            if [ -f "$doc" ]; then
+              echo "✅ $doc exists"
+            else
+              echo "❌ Missing required documentation: $doc"
+              missing=1
+            fi
+          done
+
+          if [ "$missing" -ne 0 ]; then
+            echo "Documentation checks failed"
+            exit 1
+          fi
   
   # ========================================================================
   # BUILD DOCKER IMAGES
