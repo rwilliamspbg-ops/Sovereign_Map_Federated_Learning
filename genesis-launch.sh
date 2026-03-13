@@ -129,23 +129,17 @@ initialize_network() {
         log_warn "Cleanup encountered stale/absent containers; continuing with fresh startup"
     fi
 
-    # Force-remove known service containers and previously scaled node-agent instances.
-    # This avoids stale Compose metadata trying to recreate deleted container IDs.
-    log_info "Removing any stale Sovereign Map containers..."
-    docker rm -f \
-        sovereignmap-backend \
-        sovereignmap-frontend \
-        sovereignmap-mongo \
-        sovereignmap-redis \
-        sovereignmap-prometheus \
-        sovereignmap-grafana \
-        sovereignmap-alertmanager \
-        >/dev/null 2>&1 || true
+    # Remove any container tracked by this Compose project label.
+    # This is more reliable than hard-coded names and catches scaled services.
+    local project_name
+    local project_container_ids
+    project_name=$(docker compose -f docker-compose.production.yml config 2>/dev/null | awk '/^name: / {print $2; exit}')
+    project_name=${project_name:-sovereign_map_federated_learning}
 
-    local stale_node_ids
-    stale_node_ids=$(docker ps -aq --filter "name=sovereign_map_federated_learning-node-agent")
-    if [ -n "$stale_node_ids" ]; then
-        echo "$stale_node_ids" | xargs docker rm -f >/dev/null 2>&1 || true
+    log_info "Removing stale project containers for '$project_name'..."
+    project_container_ids=$(docker ps -aq --filter "label=com.docker.compose.project=$project_name")
+    if [ -n "$project_container_ids" ]; then
+        echo "$project_container_ids" | xargs docker rm -f >/dev/null 2>&1 || true
     fi
 
     # Create Docker network
