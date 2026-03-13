@@ -115,7 +115,11 @@ pre_launch_checks() {
 
 initialize_network() {
     log_header "🌐 NETWORK INITIALIZATION"
-    
+
+    # Remove any stale containers left from a previous incomplete run
+    log_info "Cleaning up any stale containers..."
+    docker compose -f docker-compose.production.yml down --remove-orphans 2>&1 | tee -a "$LOG_FILE"
+
     # Create Docker network
     if docker network inspect "$NETWORK_NAME" >/dev/null 2>&1; then
         log_info "Network '$NETWORK_NAME' already exists"
