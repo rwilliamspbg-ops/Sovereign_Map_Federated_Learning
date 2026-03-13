@@ -305,7 +305,7 @@
 2. Review dashboards for anomalies
 3. Consult troubleshooting guide: [GENESIS_LAUNCH_GUIDE.md](GENESIS_LAUNCH_GUIDE.md)
 4. Contact technical team if unresolved
-5. Emergency shutdown if critical: `docker compose down`
+5. Emergency shutdown if critical: `docker compose -f docker-compose.production.yml -f docker-compose.monitoring.yml down --remove-orphans`
 
 ---
 

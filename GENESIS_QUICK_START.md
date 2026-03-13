@@ -49,7 +49,7 @@ ls genesis-launch.sh      # Must exist
 ```
 http://localhost:3000/d/genesis-launch-overview
 ```
-**Primary launch dashboard** - Training progress, node count, accuracy
+**Primary launch dashboard** - Training progress, node-agent count, accuracy
 
 ### 🌐 Network Performance
 ```
@@ -100,17 +100,17 @@ curl http://localhost:8000/api/convergence_status | jq '.accuracy'
 # View logs
 docker compose logs -f
 
-# Check node count
-docker ps | grep node | wc -l
+# Check node-agent count
+docker ps | grep node-agent | wc -l
 
-# Scale nodes
-docker compose up -d --scale node=50
+# Scale node-agents
+docker compose -f docker-compose.production.yml up -d --scale node-agent=50
 
 # Stop everything
-docker compose down
+docker compose -f docker-compose.production.yml -f docker-compose.monitoring.yml down --remove-orphans
 
 # Restart
-docker compose restart
+docker compose -f docker-compose.production.yml -f docker-compose.monitoring.yml restart
 ```
 
 ---
@@ -126,13 +126,13 @@ docker ps | grep grafana
 docker compose -f docker-compose.monitoring.yml restart
 ```
 
-### Issue: Low node count
+### Issue: Low node-agent count
 ```bash
 # Check Docker resources
 docker stats
 
-# Increase nodes manually
-docker compose up -d --scale node=30
+# Increase node-agents manually
+docker compose -f docker-compose.production.yml up -d --scale node-agent=30
 ```
 
 ### Issue: Backend errors
@@ -141,7 +141,7 @@ docker compose up -d --scale node=30
 docker compose logs backend
 
 # Restart backend
-docker compose restart backend
+docker compose -f docker-compose.production.yml restart backend
 ```
 
 ---
@@ -152,7 +152,7 @@ docker compose restart backend
 
 **Common Issues**: See Troubleshooting section in full guide
 
-**Emergency**: Stop all services with `docker compose down`
+**Emergency**: Stop all services with `docker compose -f docker-compose.production.yml -f docker-compose.monitoring.yml down --remove-orphans`
 
 ---
 

@@ -209,7 +209,7 @@ launch_network() {
     sleep 5
     
     log_info "Deploying initial node set ($MIN_NODES nodes)..."
-    docker compose -f docker-compose.production.yml up -d --scale node=$MIN_NODES 2>&1 | tee -a "$LOG_FILE"
+    docker compose -f docker-compose.production.yml up -d --scale node-agent=$MIN_NODES 2>&1 | tee -a "$LOG_FILE"
     
     log_success "Initial nodes deployed"
     
@@ -241,7 +241,7 @@ monitor_health() {
     
     # Check node count
     local active_nodes
-    active_nodes=$(docker ps --filter "name=node" --format "{{.Names}}" | wc -l)
+    active_nodes=$(docker ps --filter "name=node-agent" --format "{{.Names}}" | wc -l)
     log_info "Active nodes: $active_nodes / $MIN_NODES"
     
     if [ "$active_nodes" -ge "$MIN_NODES" ]; then
@@ -293,9 +293,9 @@ display_dashboard() {
     echo -e "${YELLOW}🔧 MANAGEMENT COMMANDS:${NC}"
     echo ""
     echo -e "  View logs:         ${GREEN}docker compose logs -f${NC}"
-    echo -e "  Scale nodes:       ${GREEN}docker compose up -d --scale node=50${NC}"
-    echo -e "  Stop network:      ${GREEN}docker compose down${NC}"
-    echo -e "  Restart services:  ${GREEN}docker compose restart${NC}"
+    echo -e "  Scale nodes:       ${GREEN}docker compose -f docker-compose.production.yml up -d --scale node-agent=50${NC}"
+    echo -e "  Stop network:      ${GREEN}docker compose -f docker-compose.production.yml -f docker-compose.monitoring.yml down --remove-orphans${NC}"
+    echo -e "  Restart services:  ${GREEN}docker compose -f docker-compose.production.yml -f docker-compose.monitoring.yml restart${NC}"
     echo ""
     echo -e "${BLUE}═══════════════════════════════════════════════════════════════${NC}"
     echo ""

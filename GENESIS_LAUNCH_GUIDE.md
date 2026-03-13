@@ -169,10 +169,10 @@ Nodes are deployed in stages:
 ```bash
 # Phase 1: Initial 20 nodes (automatic)
 # Phase 2: Scale to 50 nodes (if needed)
-docker compose up -d --scale node=50
+docker compose -f docker-compose.production.yml up -d --scale node-agent=50
 
 # Phase 3: Scale to 100 nodes (production)
-docker compose up -d --scale node=100
+docker compose -f docker-compose.production.yml up -d --scale node-agent=100
 ```
 
 ### Step 5: Health Verification
@@ -283,19 +283,19 @@ rate(sovereignmap_network_bytes_total[1m])
 **Gradual Scaling (Recommended):**
 ```bash
 # Scale to 30 nodes
-docker compose up -d --scale node=30
+docker compose -f docker-compose.production.yml up -d --scale node-agent=30
 
 # Wait for stabilization (5 minutes)
 sleep 300
 
 # Scale to 50 nodes
-docker compose up -d --scale node=50
+docker compose -f docker-compose.production.yml up -d --scale node-agent=50
 ```
 
 **Immediate Scaling:**
 ```bash
 # Scale directly to target
-docker compose up -d --scale node=100
+docker compose -f docker-compose.production.yml up -d --scale node-agent=100
 ```
 
 ### Performance Tuning
@@ -336,7 +336,7 @@ docker run --rm -v grafana_data:/data -v $(pwd):/backup \
 **Restore from Backup:**
 ```bash
 # Stop services
-docker compose down
+docker compose -f docker-compose.production.yml -f docker-compose.monitoring.yml down --remove-orphans
 
 # Restore data
 tar xzf prometheus-backup-YYYYMMDD.tar.gz -C /var/lib/docker/volumes/prometheus_data/_data
@@ -354,7 +354,7 @@ docker compose up -d
 #### Issue: Nodes Not Connecting
 
 **Symptoms:**
-- Low active node count
+- Low active node-agent count
 - Network errors in logs
 - Timeouts in Grafana
 
@@ -364,7 +364,7 @@ docker compose up -d
 docker network inspect sovereign-genesis
 
 # Restart networking
-docker compose restart
+docker compose -f docker-compose.production.yml -f docker-compose.monitoring.yml restart
 
 # Check firewall rules
 sudo ufw status
@@ -389,7 +389,7 @@ curl http://localhost:8000/api/metrics | jq '.heterogeneity'
 #     - EPOCHS_PER_ROUND=5  # Increase from 3
 
 # Restart nodes
-docker compose restart node
+docker compose -f docker-compose.production.yml restart node-agent
 ```
 
 #### Issue: TPM Verification Failures
@@ -408,7 +408,7 @@ docker compose restart node
 curl http://localhost:8000/api/trust_status
 
 # Restart TPM services
-docker compose restart backend
+docker compose -f docker-compose.production.yml restart backend
 ```
 
 #### Issue: High Memory Usage
@@ -420,8 +420,8 @@ docker compose restart backend
 
 **Solutions:**
 ```bash
-# Reduce node count
-docker compose up -d --scale node=20
+# Reduce node-agent count
+docker compose -f docker-compose.production.yml up -d --scale node-agent=20
 
 # Increase swap space
 sudo fallocate -l 8G /swapfile
@@ -468,18 +468,18 @@ docker stats --no-stream
 
 ```bash
 # Graceful shutdown (recommended)
-docker compose down
+docker compose -f docker-compose.production.yml -f docker-compose.monitoring.yml down --remove-orphans
 
 # Force shutdown (if unresponsive)
-docker compose kill
-docker compose rm -f
+docker compose -f docker-compose.production.yml -f docker-compose.monitoring.yml kill
+docker compose -f docker-compose.production.yml -f docker-compose.monitoring.yml rm -f
 ```
 
 ### Network Recovery
 
 ```bash
 # 1. Stop all services
-docker compose down
+docker compose -f docker-compose.production.yml -f docker-compose.monitoring.yml down --remove-orphans
 
 # 2. Clean Docker state
 docker system prune -af --volumes
@@ -492,7 +492,7 @@ docker system prune -af --volumes
 
 ```bash
 # 1. Stop services
-docker compose down
+docker compose -f docker-compose.production.yml -f docker-compose.monitoring.yml down --remove-orphans
 
 # 2. Remove corrupted volumes
 docker volume rm prometheus_data grafana_data
@@ -501,7 +501,7 @@ docker volume rm prometheus_data grafana_data
 tar xzf prometheus-backup-*.tar.gz -C /var/lib/docker/volumes/
 
 # 4. Restart services
-docker compose up -d
+docker compose -f docker-compose.production.yml -f docker-compose.monitoring.yml up -d
 ```
 
 ### Contact & Support
