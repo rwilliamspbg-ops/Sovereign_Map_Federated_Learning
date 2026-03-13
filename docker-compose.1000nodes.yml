@@ -246,7 +246,7 @@ services:
 
   # Grafana: Visualization and dashboards
   grafana:
-    image: grafana/grafana:latest
+    image: grafana/grafana:10.2.3
     container_name: grafana-1000
     ports:
       - "3001:3000"

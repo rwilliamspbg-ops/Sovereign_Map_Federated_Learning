@@ -3,7 +3,7 @@ version: "3.9"
 services:
   # 1. PROMETHEUS: Configured to scrape the Sovereign Map Backend & Nodes
   prometheus:
-    image: prom/prometheus:latest
+    image: prom/prometheus:v2.48.0-alpine
     container_name: mohawk-prometheus
     command:
       - '--config.file=/etc/prometheus/prometheus.yml'
@@ -35,7 +35,7 @@ services:
 
   # 2. GRAFANA: Provisioned with your Mohawk Observability Dashboard
   grafana:
-    image: grafana/grafana:latest
+    image: grafana/grafana:10.2.3
     container_name: mohawk-grafana
     environment:
       - GF_SECURITY_ADMIN_USER=admin

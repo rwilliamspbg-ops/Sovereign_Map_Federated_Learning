@@ -15,9 +15,9 @@ cd Sovereign_Map_Federated_Learning
 ```
 
 **Access Dashboards:**
-- **Genesis Launch Overview**: [http://localhost:3000/d/genesis-launch-overview](http://localhost:3000/d/genesis-launch-overview)
-- **Network Performance**: [http://localhost:3000/d/network-performance-health](http://localhost:3000/d/network-performance-health)
-- **Consensus & Trust**: [http://localhost:3000/d/consensus-trust-monitoring](http://localhost:3000/d/consensus-trust-monitoring)
+- **Genesis Launch Overview**: [http://localhost:3001/d/genesis-launch-overview](http://localhost:3001/d/genesis-launch-overview)
+- **Network Performance**: [http://localhost:3001/d/network-performance-health](http://localhost:3001/d/network-performance-health)
+- **Consensus & Trust**: [http://localhost:3001/d/consensus-trust-monitoring](http://localhost:3001/d/consensus-trust-monitoring)
 
 **Documentation:**
 - **Quick Start**: [GENESIS_QUICK_START.md](GENESIS_QUICK_START.md) (5-minute guide)
@@ -228,7 +228,7 @@ curl http://localhost:8000/convergence | jq '.current_accuracy'
 
 | Service | URL | Credentials |
 |---------|-----|-------------|
-| **Grafana** | http://localhost:3000 | `${GRAFANA_USER:-admin}` / `${GRAFANA_ADMIN_PASSWORD}` |
+| **Grafana** | http://localhost:3001 | `${GRAFANA_USER:-admin}` / `${GRAFANA_ADMIN_PASSWORD}` |
 | **Prometheus** | http://localhost:9090 | (no auth) |
 | **Backend API** | http://localhost:8000 | (no auth) |
 | **Flower Aggregator** | localhost:8080 | (internal gRPC) |
@@ -822,7 +822,7 @@ services:
 
 ```bash
 # Grafana - System Overview
-open http://localhost:3000  # admin/admin
+open http://localhost:3001  # admin/admin
 
 # Prometheus - Raw Metrics
 open http://localhost:9090

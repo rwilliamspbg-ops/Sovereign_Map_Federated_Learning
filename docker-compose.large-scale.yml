@@ -198,7 +198,7 @@ services:
 
   # Grafana: Visualization with performance optimizations
   grafana:
-    image: grafana/grafana:10.2
+    image: grafana/grafana:10.2.3
     container_name: sovereignmap-grafana-scale
     ports:
       - "3001:3000"
