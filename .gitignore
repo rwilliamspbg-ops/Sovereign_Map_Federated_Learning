@@ -451,6 +451,8 @@ data/
 !**/package-lock.json
 !fixtures/
 !config/*.json
+!grafana/dashboards/*.json
+!grafana/provisioning/dashboards/*.json
 
 # TPM-related
 tpm_data/
