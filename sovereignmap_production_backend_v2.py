@@ -498,13 +498,12 @@ if __name__ == "__main__":
     logger.info("- Flower aggregator: 0.0.0.0:8080")
     logger.info("- Flask metrics API: 0.0.0.0:8000")
 
-    # Start Flask in main thread
-    # Start Flower in background thread
-    flower_thread = threading.Thread(target=run_flower_server, daemon=False)
-    flower_thread.start()
+    # Run Flask metrics API in a background thread so Flower stays on the main thread.
+    flask_thread = threading.Thread(target=run_flask_metrics, daemon=True)
+    flask_thread.start()
 
-    # Give Flower a moment to initialize
+    # Give Flask a moment to initialize before starting Flower.
     time.sleep(2)
 
-    # Flask runs on main thread
-    run_flask_metrics()
+    # Flower must run on the main thread (signal handlers are registered by start_server).
+    run_flower_server()
