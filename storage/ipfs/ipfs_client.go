@@ -5,6 +5,7 @@ import (
 	"context"
 	"fmt"
 	"io"
+	"log"
 	"time"
 
 	shell "github.com/ipfs/go-ipfs-api"
@@ -56,7 +57,11 @@ func (c *Client) Get(ctx context.Context, cid string) ([]byte, error) {
 	if err != nil {
 		return nil, fmt.Errorf("ipfs cat %s: %w", cid, err)
 	}
-	defer reader.Close()
+	defer func() {
+		if err := reader.Close(); err != nil {
+			log.Printf("ipfs close reader for %s: %v", cid, err)
+		}
+	}()
 
 	data, err := io.ReadAll(reader)
 	if err != nil {

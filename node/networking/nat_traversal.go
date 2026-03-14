@@ -10,7 +10,6 @@ import (
 	"github.com/libp2p/go-libp2p/core/network"
 	autonat "github.com/libp2p/go-libp2p/p2p/host/autonat"
 	"github.com/libp2p/go-libp2p/p2p/host/autorelay"
-	"github.com/libp2p/go-libp2p/p2p/protocol/circuitv2/client"
 	"github.com/libp2p/go-libp2p/p2p/protocol/circuitv2/relay"
 )
 
@@ -24,11 +23,10 @@ type NATStatus struct {
 
 // NATService handles NAT traversal with AutoNAT and circuit relay.
 type NATService struct {
-	mu          sync.RWMutex
-	host        host.Host
-	autonat     autonat.AutoNAT
-	relayClient *client.Client
-	status      NATStatus
+	mu      sync.RWMutex
+	host    host.Host
+	autonat autonat.AutoNAT
+	status  NATStatus
 }
 
 // NewNATService creates NAT traversal service with AutoNAT + relay.

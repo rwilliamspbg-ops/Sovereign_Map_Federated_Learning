@@ -5,6 +5,7 @@ import (
 	"encoding/binary"
 	"encoding/json"
 	"fmt"
+	"log"
 	"math"
 	"net"
 	"sync"
@@ -100,7 +101,11 @@ func (ti *TelemetryIngest) Start(ctx context.Context) error {
 
 // receiveLoop continuously reads telemetry packets from UDP socket.
 func (ti *TelemetryIngest) receiveLoop(ctx context.Context) {
-	defer ti.conn.Close()
+	defer func() {
+		if err := ti.conn.Close(); err != nil {
+			log.Printf("drone telemetry close socket: %v", err)
+		}
+	}()
 
 	buf := make([]byte, 65536)
 
@@ -109,7 +114,10 @@ func (ti *TelemetryIngest) receiveLoop(ctx context.Context) {
 		case <-ctx.Done():
 			return
 		default:
-			ti.conn.SetReadDeadline(time.Now().Add(1 * time.Second))
+			if err := ti.conn.SetReadDeadline(time.Now().Add(1 * time.Second)); err != nil {
+				log.Printf("drone telemetry set read deadline: %v", err)
+				return
+			}
 			n, _, err := ti.conn.ReadFrom(buf)
 			if err != nil {
 				if netErr, ok := err.(net.Error); ok && netErr.Timeout() {
@@ -350,7 +358,9 @@ func (ti *TelemetryIngest) GetActiveDrones() []string {
 // Shutdown gracefully stops telemetry ingestion.
 func (ti *TelemetryIngest) Shutdown(ctx context.Context) error {
 	if ti.conn != nil {
-		ti.conn.Close()
+		if err := ti.conn.Close(); err != nil {
+			return fmt.Errorf("close telemetry socket: %w", err)
+		}
 	}
 	close(ti.telemetry)
 	return nil

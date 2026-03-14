@@ -5,6 +5,7 @@ import (
 	"crypto/tls"
 	"encoding/json"
 	"fmt"
+	"log"
 	"net/http"
 	"sync"
 	"time"
@@ -150,7 +151,10 @@ func (api *PhoneClientAPI) handleRegister(w http.ResponseWriter, r *http.Request
 	api.mu.Unlock()
 
 	w.Header().Set("Content-Type", "application/json")
-	json.NewEncoder(w).Encode(map[string]string{"status": "registered", "client_id": req.ClientID})
+	if err := json.NewEncoder(w).Encode(map[string]string{"status": "registered", "client_id": req.ClientID}); err != nil {
+		log.Printf("phone api register response encode: %v", err)
+		http.Error(w, "failed to encode response", http.StatusInternalServerError)
+	}
 }
 
 // handleUpload receives sensor data from mobile client.
@@ -199,9 +203,16 @@ func (api *PhoneClientAPI) handleStream(w http.ResponseWriter, r *http.Request) 
 			return
 		case <-ticker.C:
 			api.mu.RLock()
-			data, _ := json.Marshal(api.clients)
+			data, err := json.Marshal(api.clients)
 			api.mu.RUnlock()
-			fmt.Fprintf(w, "data: %s\n\n", data)
+			if err != nil {
+				log.Printf("phone api stream marshal: %v", err)
+				return
+			}
+			if _, err := fmt.Fprintf(w, "data: %s\n\n", data); err != nil {
+				log.Printf("phone api stream write: %v", err)
+				return
+			}
 			if f, ok := w.(http.Flusher); ok {
 				f.Flush()
 			}
@@ -216,10 +227,13 @@ func (api *PhoneClientAPI) handleHealth(w http.ResponseWriter, r *http.Request) 
 	api.mu.RUnlock()
 
 	w.Header().Set("Content-Type", "application/json")
-	json.NewEncoder(w).Encode(map[string]interface{}{
+	if err := json.NewEncoder(w).Encode(map[string]interface{}{
 		"status":  "ok",
 		"clients": clientCount,
-	})
+	}); err != nil {
+		log.Printf("phone api health response encode: %v", err)
+		http.Error(w, "failed to encode response", http.StatusInternalServerError)
+	}
 }
 
 // NextFrame returns next sensor frame from ingestion queue.
