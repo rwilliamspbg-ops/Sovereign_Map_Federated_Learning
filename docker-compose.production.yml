@@ -11,17 +11,21 @@ services:
     environment:
       - FLASK_ENV=production
       - NODE_ID=0
-      - NUM_NODES=${NUM_NODES:-10}
+      - NUM_NODES=100
       - NUM_ROUNDS=${NUM_ROUNDS:-100}
       - FLASK_PORT=8000
       - PYTHONUNBUFFERED=1
       - DATABASE_URI=mongodb://${MONGO_USER:-admin}:${MONGO_PASSWORD:-CHANGE_ME_MONGO}@mongo:27017/sovereignmap?authSource=admin
       - REDIS_URL=redis://:${REDIS_PASSWORD:-CHANGE_ME_REDIS}@redis:6379/0
+      - TPM_ENABLED=true
+      - CERT_DIR=/etc/sovereign/certs
     depends_on:
       mongo:
         condition: service_started
       redis:
         condition: service_started
+      tpm-ca:
+        condition: service_completed_successfully
     restart: always
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
@@ -35,6 +39,10 @@ services:
       - ./src:/app/src:ro
       - ./config:/app/config:ro
       - backend_data:/app/data
+      - ./tpm_cert_manager.py:/app/tpm_cert_manager.py:ro
+      - ./secure_communication.py:/app/secure_communication.py:ro
+      - tpm-certs:/etc/sovereign/certs
+      - sovereign-logs:/var/log/sovereign
     logging:
       driver: json-file
       options:
@@ -146,6 +154,25 @@ services:
           memory: 256M
 
   # Federated Learning Node Agent (scales horizontally)
+  tpm-ca:
+    image: python:3.11-slim
+    container_name: sovereign-tpm-ca
+    environment:
+      - CERT_DIR=/etc/sovereign/certs
+      - NODE_ID=0
+      - NUM_NODES=100
+    volumes:
+      - ./tpm_cert_manager.py:/app/tpm_cert_manager.py:ro
+      - ./tpm-bootstrap.sh:/app/tpm-bootstrap.sh
+      - tpm-certs:/etc/sovereign/certs
+      - sovereign-logs:/var/log/sovereign
+    working_dir: /app
+    command: >
+      bash -c "pip install --quiet cryptography && bash /app/tpm-bootstrap.sh echo done"
+    networks:
+      - sovereignmap
+    restart: "no"
+
   node-agent:
     build:
       context: .
@@ -157,11 +184,16 @@ services:
       - BACKEND_URL=http://backend:8000
       - PYTHONUNBUFFERED=1
       - NODE_PEER_ID=${NODE_ID:-node_agent}
+      - TPM_ENABLED=true
+      - CERT_DIR=/etc/sovereign/certs
+      - NUM_NODES=100
     depends_on:
       backend:
         condition: service_healthy
       mongo:
         condition: service_healthy
+      tpm-ca:
+        condition: service_completed_successfully
     restart: always
     healthcheck:
       test: ["CMD", "pgrep", "-f", "python"]
@@ -172,6 +204,10 @@ services:
       - sovereignmap
     volumes:
       - ./src:/app/src:ro
+      - ./tpm_cert_manager.py:/app/tpm_cert_manager.py:ro
+      - ./secure_communication.py:/app/secure_communication.py:ro
+      - tpm-certs:/etc/sovereign/certs:ro
+      - sovereign-logs:/var/log/sovereign
     logging:
       driver: json-file
       options:
@@ -312,4 +348,8 @@ volumes:
   grafana_data:
     driver: local
   alertmanager_data:
+    driver: local
+  tpm-certs:
+    driver: local
+  sovereign-logs:
     driver: local
