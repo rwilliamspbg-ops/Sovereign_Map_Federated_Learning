@@ -106,7 +106,7 @@ services:
       - "27017:27017"
     environment:
       MONGO_INITDB_ROOT_USERNAME: admin
-      MONGO_INITDB_ROOT_PASSWORD: sovereign2026
+      MONGO_INITDB_ROOT_PASSWORD: ${MONGO_PASSWORD:-CHANGE_ME_MONGO}
     networks:
       - sovereign-net-200
 
@@ -120,7 +120,7 @@ services:
       - "5000:5000"
     environment:
       - NODE_ID=backend-200
-      - DATABASE_URI=mongodb://admin:sovereign2026@mongo:27017/sovereign_200?authSource=admin
+      - DATABASE_URI=mongodb://admin:${MONGO_PASSWORD:-CHANGE_ME_MONGO}@mongo:27017/sovereign_200?authSource=admin
       - NODE_COUNT=200
       - QUORUM_SIZE=134
     depends_on:
@@ -151,7 +151,7 @@ services:
     image: federated-learning:latest
     environment:
       - AGGREGATOR_URL=http://aggregator:8080
-      - DATABASE_URI=mongodb://admin:sovereign2026@mongo:27017/sovereign_200?authSource=admin
+      - DATABASE_URI=mongodb://admin:${MONGO_PASSWORD:-CHANGE_ME_MONGO}@mongo:27017/sovereign_200?authSource=admin
       - BATCH_SIZE=32
       - TPM_ENABLED=false
     depends_on:
@@ -186,7 +186,7 @@ services:
       - "3001:3000"
     environment:
       - GF_SECURITY_ADMIN_USER=admin
-      - GF_SECURITY_ADMIN_PASSWORD=sovereign2026
+      - GF_SECURITY_ADMIN_PASSWORD=${GRAFANA_ADMIN_PASSWORD:-CHANGE_ME_GRAFANA}
     volumes:
       - grafana_data_200:/var/lib/grafana
     depends_on:
@@ -301,7 +301,7 @@ if [[ ! ${REPLY:-Y} =~ ^[Nn]$ ]]; then
     echo "🧹 Infrastructure stopped"
 else
     echo "🔌 Infrastructure still running"
-    echo "   Grafana: http://localhost:3001 (admin/sovereign2026)"
+    echo "   Grafana: http://localhost:3001 (admin/<configured-password>)"
 fi
 EOF
     chmod +x scripts/run-200-bft-test.sh

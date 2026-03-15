@@ -45,7 +45,7 @@ is_placeholder_or_weak() {
   local value="$1"
 
   case "$value" in
-    ""|CHANGE_ME*|changeme|dev|dev_only_not_for_production|default|password|admin|sovereignmap|sovereign2026)
+    ""|CHANGE_ME*|changeme|dev|dev_only_not_for_production|default|password|admin|sovereignmap|legacy_weak_password)
       return 0
       ;;
     *)

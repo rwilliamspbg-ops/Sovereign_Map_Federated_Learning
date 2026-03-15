@@ -91,5 +91,5 @@ if [[ ! ${REPLY:-Y} =~ ^[Nn]$ ]]; then
     echo "🧹 Infrastructure stopped"
 else
     echo "🔌 Infrastructure still running"
-    echo "   Grafana: http://localhost:3001 (admin/sovereign2026)"
+    echo "   Grafana: http://localhost:3001 (admin/<configured-password>)"
 fi

@@ -25,7 +25,7 @@ This audit identified **7 critical security vulnerabilities** related to hardcod
 **File**: `docker-compose.200nodes.yml`
 
 **Issue**:
-- MongoDB password hardcoded as `sovereign2026`
+- MongoDB password hardcoded as `<redacted-example-password>`
 - Password exposed in 3 locations:
   - MongoDB service configuration
   - Backend service environment
@@ -34,7 +34,7 @@ This audit identified **7 critical security vulnerabilities** related to hardcod
 **Fix Applied**:
 ```yaml
 # Before
-MONGO_INITDB_ROOT_PASSWORD: sovereign2026
+MONGO_INITDB_ROOT_PASSWORD: <redacted-example-password>
 
 # After
 MONGO_INITDB_ROOT_PASSWORD: ${MONGO_PASSWORD:-CHANGE_ME_200}
@@ -96,13 +96,13 @@ MONGO_INITDB_ROOT_PASSWORD: ${MONGO_PASSWORD:-dev_only_not_for_production}
 **File**: `docker-compose.200nodes.yml`
 
 **Issue**:
-- Grafana admin password set to `sovereign2026`
+- Grafana admin password set to `<redacted-example-password>`
 - Monitoring dashboards accessible with known password
 
 **Fix Applied**:
 ```yaml
 # Before
-GF_SECURITY_ADMIN_PASSWORD: sovereign2026
+GF_SECURITY_ADMIN_PASSWORD: <redacted-example-password>
 
 # After
 GF_SECURITY_ADMIN_PASSWORD: ${GRAFANA_ADMIN_PASSWORD:-changeme}
