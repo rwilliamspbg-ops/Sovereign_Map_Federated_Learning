@@ -51,7 +51,7 @@ go test -v ./internal/consensus/... -run "Test200NodeBFT/BaselineConsensus" -tim
 
 # Inject Byzantine faults (111 nodes)
 echo "🔥 Phase 2: Injecting 111 Byzantine nodes..."
-docker ps -q --filter "name=node-agent" | head -111 | while read container; do
+docker ps -q --filter "name=node-agent" | head -111 | while read -r container; do
     docker exec "$container" sh -c "export BYZANTINE_MODE=true" 2>/dev/null || true
 done
 
