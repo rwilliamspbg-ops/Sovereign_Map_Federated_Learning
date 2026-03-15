@@ -5,8 +5,9 @@
 set -euo pipefail
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+REPO_ROOT="$(cd "$SCRIPT_DIR/../../.." && pwd)"
 TIMESTAMP=$(date +%Y%m%d-%H%M%S)
-RESULTS_DIR="$SCRIPT_DIR/test-results/1000-node-npu/$TIMESTAMP"
+RESULTS_DIR="$REPO_ROOT/test-results/1000-node-npu/$TIMESTAMP"
 ARTIFACTS_DIR="$RESULTS_DIR/artifacts"
 PLOTS_DIR="$RESULTS_DIR/plots"
 LOGS_DIR="$RESULTS_DIR/logs"
@@ -40,8 +41,8 @@ echo "  • Checking Docker availability..."
 docker ps > /dev/null 2>&1 || { echo "❌ Docker not running"; exit 1; }
 
 echo "  • Setting up environment file..."
-if [ ! -f "$SCRIPT_DIR/.env" ]; then
-    cp "$SCRIPT_DIR/.env.example" "$SCRIPT_DIR/.env"
+if [ ! -f "$REPO_ROOT/.env" ]; then
+    cp "$REPO_ROOT/.env.example" "$REPO_ROOT/.env"
     echo "    Created .env from template"
 fi
 
@@ -60,19 +61,19 @@ echo "🔨 PHASE 2: Docker Build"
 echo "Time: $(date)"
 
 echo "  • Building backend (optimized)..."
-docker build -f "$SCRIPT_DIR/Dockerfile.backend.optimized" \
+docker build -f "$REPO_ROOT/Dockerfile.backend.optimized" \
     -t sovereignmap/backend:1000-test \
-    "$SCRIPT_DIR" 2>&1 | tee "$LOGS_DIR/build-backend.log"
+    "$REPO_ROOT" 2>&1 | tee "$LOGS_DIR/build-backend.log"
 
 echo "  • Building frontend (optimized)..."
-docker build -f "$SCRIPT_DIR/Dockerfile.frontend.optimized" \
+docker build -f "$REPO_ROOT/Dockerfile.frontend.optimized" \
     -t sovereignmap/frontend:1000-test \
-    "$SCRIPT_DIR" 2>&1 | tee "$LOGS_DIR/build-frontend.log"
+    "$REPO_ROOT" 2>&1 | tee "$LOGS_DIR/build-frontend.log"
 
 echo "  • Building node-agent..."
-docker build -f "$SCRIPT_DIR/Dockerfile" \
+docker build -f "$REPO_ROOT/Dockerfile" \
     -t sovereignmap/node-agent:1000-test \
-    "$SCRIPT_DIR" 2>&1 | tee "$LOGS_DIR/build-node-agent.log"
+    "$REPO_ROOT" 2>&1 | tee "$LOGS_DIR/build-node-agent.log"
 
 echo "✅ All images built successfully"
 echo ""
@@ -84,7 +85,7 @@ echo "🏗️ PHASE 3: Infrastructure Deployment"
 echo "Time: $(date)"
 
 echo "  • Starting MongoDB, Redis, Backend, Frontend..."
-docker compose -f "$SCRIPT_DIR/docker-compose.1000nodes.yml" up -d mongo redis backend frontend 2>&1 | tee "$LOGS_DIR/deploy-infra.log"
+docker compose -f "$REPO_ROOT/docker-compose.1000nodes.yml" up -d mongo redis backend frontend 2>&1 | tee "$LOGS_DIR/deploy-infra.log"
 
 echo "  • Waiting for MongoDB to be healthy..."
 for i in {1..60}; do
@@ -137,15 +138,15 @@ echo "📊 PHASE 4: Monitoring Deployment (Prometheus + Grafana)"
 echo "Time: $(date)"
 
 echo "  • Starting Prometheus..."
-docker compose -f "$SCRIPT_DIR/docker-compose.1000nodes.yml" up -d prometheus 2>&1 | tee "$LOGS_DIR/deploy-prometheus.log"
+docker compose -f "$REPO_ROOT/docker-compose.1000nodes.yml" up -d prometheus 2>&1 | tee "$LOGS_DIR/deploy-prometheus.log"
 sleep 10
 
 echo "  • Starting Grafana..."
-docker compose -f "$SCRIPT_DIR/docker-compose.1000nodes.yml" up -d grafana 2>&1 | tee "$LOGS_DIR/deploy-grafana.log"
+docker compose -f "$REPO_ROOT/docker-compose.1000nodes.yml" up -d grafana 2>&1 | tee "$LOGS_DIR/deploy-grafana.log"
 sleep 10
 
 echo "  • Starting AlertManager..."
-docker compose -f "$SCRIPT_DIR/docker-compose.1000nodes.yml" up -d alertmanager 2>&1 | tee "$LOGS_DIR/deploy-alertmanager.log"
+docker compose -f "$REPO_ROOT/docker-compose.1000nodes.yml" up -d alertmanager 2>&1 | tee "$LOGS_DIR/deploy-alertmanager.log"
 
 echo "✅ Monitoring stack ready"
 echo "   🌐 Grafana: http://localhost:3001 (admin/<configured password>)"
@@ -159,7 +160,7 @@ echo "🚀 PHASE 5: Node Agent Deployment (${NODE_COUNT} Replicas)"
 echo "Time: $(date)"
 
 echo "  • Scaling node-agent to ${NODE_COUNT} replicas..."
-docker compose -f "$SCRIPT_DIR/docker-compose.1000nodes.yml" up -d --scale "node-agent=${NODE_COUNT}" 2>&1 | tee "$LOGS_DIR/deploy-nodes.log"
+docker compose -f "$REPO_ROOT/docker-compose.1000nodes.yml" up -d --scale "node-agent=${NODE_COUNT}" 2>&1 | tee "$LOGS_DIR/deploy-nodes.log"
 
 echo "  • Waiting for nodes to initialize (120 seconds)..."
 for i in {1..12}; do
@@ -384,8 +385,8 @@ PYTHON_GRAFANA
 if [ -f "$ARTIFACTS_DIR/grafana/export-error.txt" ]; then
     echo "  • Falling back to provisioned dashboard files..."
     mkdir -p "$ARTIFACTS_DIR/grafana/provisioned-dashboards" "$ARTIFACTS_DIR/grafana/provisioning"
-    cp -r "$SCRIPT_DIR/grafana/provisioning/dashboards/." "$ARTIFACTS_DIR/grafana/provisioned-dashboards/" 2>/dev/null || true
-    cp -r "$SCRIPT_DIR/grafana/provisioning/datasources/." "$ARTIFACTS_DIR/grafana/provisioning/" 2>/dev/null || true
+    cp -r "$REPO_ROOT/grafana/provisioning/dashboards/." "$ARTIFACTS_DIR/grafana/provisioned-dashboards/" 2>/dev/null || true
+    cp -r "$REPO_ROOT/grafana/provisioning/datasources/." "$ARTIFACTS_DIR/grafana/provisioning/" 2>/dev/null || true
 fi
 
 echo "  • Exporting test results from containers..."
@@ -394,7 +395,7 @@ docker cp sovereignmap-backend-1000:/app/results/. "$ARTIFACTS_DIR/" 2>/dev/null
 echo "  • Collecting runtime snapshots..."
 docker ps --format '{{.Names}} {{.Status}} {{.RunningFor}}' > "$ARTIFACTS_DIR/runtime/docker-ps.txt" || true
 docker stats --no-stream --format 'table {{.Name}}\t{{.CPUPerc}}\t{{.MemUsage}}\t{{.NetIO}}\t{{.PIDs}}' > "$ARTIFACTS_DIR/runtime/docker-stats.txt" || true
-docker compose -f "$SCRIPT_DIR/docker-compose.1000nodes.yml" config > "$ARTIFACTS_DIR/runtime/docker-compose.1000nodes.resolved.yml" 2>/dev/null || true
+docker compose -f "$REPO_ROOT/docker-compose.1000nodes.yml" config > "$ARTIFACTS_DIR/runtime/docker-compose.1000nodes.resolved.yml" 2>/dev/null || true
 
 echo "  • Collecting container logs..."
 docker logs sovereignmap-backend-1000 > "$LOGS_DIR/backend-full.log" 2>&1 || true
@@ -531,18 +532,18 @@ echo "Time: $(date)"
 
 if [ "$RUN_BYZANTINE_STRESS_TESTS" = "true" ]; then
     echo "  • Running byzantine stress test suite..."
-    python3 "$SCRIPT_DIR/byzantine-stress-test-suite.py" 2>&1 | tee "$LOGS_DIR/test-byzantine-stress-suite.log"
+    python3 "$REPO_ROOT/tests/scripts/python/byzantine-stress-test-suite.py" 2>&1 | tee "$LOGS_DIR/test-byzantine-stress-suite.log"
 
     echo "  • Generating byzantine stress suite plots..."
-    python3 "$SCRIPT_DIR/generate-byzantine-test-suite-plots.py" 2>&1 | tee "$LOGS_DIR/plot-byzantine-stress-suite.log"
+    python3 "$REPO_ROOT/tests/scripts/python/generate-byzantine-test-suite-plots.py" 2>&1 | tee "$LOGS_DIR/plot-byzantine-stress-suite.log"
 
     echo "  • Copying stress test JSON + plots into timestamped results..."
     mkdir -p "$STRESS_RESULTS_DIR/raw" "$STRESS_RESULTS_DIR/plots"
-    latest_suite_json=$(ls -t "$SCRIPT_DIR"/test-results/byzantine-stress-test-suite/*.json 2>/dev/null | head -1 || true)
+    latest_suite_json=$(ls -t "$REPO_ROOT"/test-results/byzantine-stress-test-suite/*.json 2>/dev/null | head -1 || true)
     if [ -n "$latest_suite_json" ]; then
         cp "$latest_suite_json" "$STRESS_RESULTS_DIR/raw/"
     fi
-    cp -r "$SCRIPT_DIR"/test-results/byzantine-stress-test-suite/plots/. "$STRESS_RESULTS_DIR/plots/" 2>/dev/null || true
+    cp -r "$REPO_ROOT"/test-results/byzantine-stress-test-suite/plots/. "$STRESS_RESULTS_DIR/plots/" 2>/dev/null || true
     cp -r "$STRESS_RESULTS_DIR/plots/." "$PLOTS_DIR/" 2>/dev/null || true
     cp "$STRESS_RESULTS_DIR/raw"/*.json "$ARTIFACTS_DIR/" 2>/dev/null || true
     echo "✅ Byzantine stress test artifacts captured"
@@ -670,7 +671,7 @@ echo ""
 echo "📦 PHASE 11: Artifact Packaging & Git Commit"
 echo "Time: $(date)"
 
-cd "$SCRIPT_DIR"
+cd "$REPO_ROOT"
 
 echo "  • Creating artifact tarball..."
 tar -czf "$RESULTS_DIR/artifacts.tar.gz" \

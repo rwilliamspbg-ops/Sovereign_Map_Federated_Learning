@@ -9,6 +9,8 @@ import (
 	"strings"
 	"sync"
 	"time"
+
+	"github.com/rwilliamspbg-ops/Sovereign_Map_Federated_Learning/internal/hva"
 )
 
 type CachedQuote struct {
@@ -224,12 +226,19 @@ func checkAndRememberNonce(nonceKey string) error {
 // Byzantine fault tolerance (f) per the Hierarchical Multi-Krum proof.
 // Reference: /proofs/bft_resilience.md
 func VerifyByzantineResilience(totalNodes int, maliciousNodes int) (bool, error) {
-	// Theorem 1 requirement: n > 2f + 1
-	// For 10M nodes, this allows up to 4,999,999 malicious nodes per tier.
-	if totalNodes <= 2*maliciousNodes {
+	if totalNodes <= 0 {
+		return false, fmt.Errorf("total nodes must be positive")
+	}
+	if maliciousNodes < 0 || maliciousNodes > totalNodes {
+		return false, fmt.Errorf("malicious node count out of range")
+	}
+
+	maxByzantine := hva.MaximumByzantineNodes(totalNodes)
+	if maliciousNodes > maxByzantine {
 		return false, fmt.Errorf(
-			"security threshold violated: total nodes (%d) must be > 2 * malicious nodes (%d) + 1",
-			totalNodes, maliciousNodes,
+			"security threshold violated: Theorem 1 allows at most %d Byzantine nodes out of %d at the 55.5%% honest boundary",
+			maxByzantine,
+			totalNodes,
 		)
 	}
 	return true, nil

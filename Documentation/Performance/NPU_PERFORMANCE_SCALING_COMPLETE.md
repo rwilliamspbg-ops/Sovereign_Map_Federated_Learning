@@ -245,13 +245,13 @@ def _select_device(self) -> torch.device:
 ### Usage Examples
 ```bash
 # Compare all available devices
-python npu-gpu-cpu-benchmark.py --compare-devices --json results.json
+python tests/scripts/python/npu-gpu-cpu-benchmark.py --compare-devices --json results.json
 
 # Benchmark specific device
-python npu-gpu-cpu-benchmark.py --npu --nodes 20
+python tests/scripts/python/npu-gpu-cpu-benchmark.py --npu --nodes 20
 
 # Run contention test on GPU
-python npu-gpu-cpu-benchmark.py --contention --device cuda --nodes 20
+python tests/scripts/python/npu-gpu-cpu-benchmark.py --contention --device cuda --nodes 20
 ```
 
 ---
@@ -259,7 +259,7 @@ python npu-gpu-cpu-benchmark.py --contention --device cuda --nodes 20
 ## Files Created
 
 ### Benchmark Suite
-- ✅ `npu-gpu-cpu-benchmark.py` (19.4 KB)
+- ✅ `tests/scripts/python/npu-gpu-cpu-benchmark.py` (19.4 KB)
   - Multi-device detection
   - Automatic fallback hierarchy
   - Device comparison framework
@@ -274,7 +274,7 @@ python npu-gpu-cpu-benchmark.py --contention --device cuda --nodes 20
   - Implementation guide
 
 ### Results
-- ✅ `npu-gpu-cpu-comparison.json`
+- ✅ `test-results/benchmarks/npu-gpu-cpu-comparison.json`
   - CPU baseline measurement
   - Test metadata
 

@@ -1,3 +1,5 @@
+<!-- markdownlint-disable MD010 MD012 MD013 MD022 MD031 MD032 MD033 MD034 MD036 MD040 MD051 MD060 -->
+
 # Sovereign Map v1.1.0 - Byzantine-Tolerant Federated Learning
 
 ## Genesis Block Launch - CI-Verified Testnet Stack
@@ -51,10 +53,12 @@ cd Sovereign_Map_Federated_Learning
 [![SGP-001 Audit Sync](https://github.com/rwilliamspbg-ops/Sovereign_Map_Federated_Learning/actions/workflows/audit-check.yml/badge.svg?branch=main)](https://github.com/rwilliamspbg-ops/Sovereign_Map_Federated_Learning/actions/workflows/audit-check.yml)
 [![Contributor Rankings](https://github.com/rwilliamspbg-ops/Sovereign_Map_Federated_Learning/actions/workflows/contributor-rankings.yml/badge.svg?branch=main)](https://github.com/rwilliamspbg-ops/Sovereign_Map_Federated_Learning/actions/workflows/contributor-rankings.yml)
 [![HIL Tests](https://github.com/rwilliamspbg-ops/Sovereign_Map_Federated_Learning/actions/workflows/hil-tests.yml/badge.svg?branch=main)](https://github.com/rwilliamspbg-ops/Sovereign_Map_Federated_Learning/actions/workflows/hil-tests.yml)
+[![OpenCV Go Tests](https://github.com/rwilliamspbg-ops/Sovereign_Map_Federated_Learning/actions/workflows/opencv-go-tests.yml/badge.svg?branch=main)](https://github.com/rwilliamspbg-ops/Sovereign_Map_Federated_Learning/actions/workflows/opencv-go-tests.yml)
 [![Docker Build](https://github.com/rwilliamspbg-ops/Sovereign_Map_Federated_Learning/actions/workflows/docker-build.yml/badge.svg?branch=main)](https://github.com/rwilliamspbg-ops/Sovereign_Map_Federated_Learning/actions/workflows/docker-build.yml)
 [![Build & Deploy to Production](https://github.com/rwilliamspbg-ops/Sovereign_Map_Federated_Learning/actions/workflows/deploy.yml/badge.svg?branch=main)](https://github.com/rwilliamspbg-ops/Sovereign_Map_Federated_Learning/actions/workflows/deploy.yml)
 [![SDK Publish](https://github.com/rwilliamspbg-ops/Sovereign_Map_Federated_Learning/actions/workflows/sdk-publish.yml/badge.svg?branch=main)](https://github.com/rwilliamspbg-ops/Sovereign_Map_Federated_Learning/actions/workflows/sdk-publish.yml)
 [![Reproducibility Check](https://github.com/rwilliamspbg-ops/Sovereign_Map_Federated_Learning/actions/workflows/reproducibility-check.yml/badge.svg?branch=main)](https://github.com/rwilliamspbg-ops/Sovereign_Map_Federated_Learning/actions/workflows/reproducibility-check.yml)
+[![Test Artifacts Review](https://github.com/rwilliamspbg-ops/Sovereign_Map_Federated_Learning/actions/workflows/test-artifacts-review.yml/badge.svg?branch=main)](https://github.com/rwilliamspbg-ops/Sovereign_Map_Federated_Learning/actions/workflows/test-artifacts-review.yml)
 [![Secret Scan](https://github.com/rwilliamspbg-ops/Sovereign_Map_Federated_Learning/actions/workflows/secret-scan.yml/badge.svg?branch=main)](https://github.com/rwilliamspbg-ops/Sovereign_Map_Federated_Learning/actions/workflows/secret-scan.yml)
 [![Workflow Action Pin Check](https://github.com/rwilliamspbg-ops/Sovereign_Map_Federated_Learning/actions/workflows/workflow-action-pin-check.yml/badge.svg?branch=main)](https://github.com/rwilliamspbg-ops/Sovereign_Map_Federated_Learning/actions/workflows/workflow-action-pin-check.yml)
 [![Governance Check](https://github.com/rwilliamspbg-ops/Sovereign_Map_Federated_Learning/actions/workflows/governance-check.yml/badge.svg?branch=main)](https://github.com/rwilliamspbg-ops/Sovereign_Map_Federated_Learning/actions/workflows/governance-check.yml)
@@ -146,6 +150,7 @@ Interpretation:
 - [Testing](#testing)
 - [Documentation](#documentation)
 - [Roadmap](#roadmap)
+- [Contributing](#contributing)
 - [Performance](#performance)
 - [Support](#support)
 
@@ -224,6 +229,104 @@ docker compose ps
 curl http://localhost:8000/convergence | jq '.current_accuracy'
 ```
 
+### Mohawk Capability Parity Mode
+
+The repository now includes protocol capability artifacts and an override compose profile aligned with the upgraded Sovereign-Mohawk-Proto runtime:
+
+- `capabilities.json`
+- `bridge-policies.json`
+- `docker-compose.mohawk-capabilities.yml`
+
+Run with capability parity enabled:
+
+```bash
+docker compose \
+  -f docker-compose.full.yml \
+  -f docker-compose.mohawk-capabilities.yml \
+  up -d
+```
+
+Optional strict-hybrid defaults:
+
+```bash
+export MOHAWK_DEFAULT_STARK_BACKEND=winterfell_mock
+export MOHAWK_STARK_VERIFY_TIMEOUT=5s
+```
+
+Node-agent runtime endpoints (when `MOHAWK_API_LISTEN` is enabled, default `:8082`):
+
+- `GET /api/v1/capabilities`
+- `POST /api/v1/proof/verify`
+- `POST /api/v1/proof/hybrid/verify`
+
+#### Node-agent API auth and roles
+
+Proof verification and ledger endpoints are token-protected by default.
+
+Auth-protected endpoints:
+
+- `POST /api/v1/proof/verify`
+- `POST /api/v1/proof/hybrid/verify`
+- `GET /api/v1/ledger`
+
+Open endpoints:
+
+- `GET /api/v1/capabilities`
+- `GET /api/v1/status`
+- `GET /health`
+
+Accepted auth headers:
+
+- `Authorization: Bearer <token>`
+- `X-API-Token: <token>`
+
+Required role header (when role enforcement is enabled):
+
+- `X-API-Role: verifier`
+
+Environment variables:
+
+- `MOHAWK_API_AUTH_MODE` (default `file-only`; use `off` to disable auth)
+- `MOHAWK_API_TOKEN_FILE` (default `/run/secrets/mohawk_api_token`)
+- `MOHAWK_API_ENFORCE_ROLES` (default `true`)
+- `MOHAWK_API_PROOF_ALLOWED_ROLES` (default `verifier,admin`)
+- `MOHAWK_API_HYBRID_ALLOWED_ROLES` (fallback role list when proof roles are not set)
+
+Operations runbook:
+
+- [API_AUTH_TOKEN_ROTATION_RUNBOOK.md](/Documentation/Security/API_AUTH_TOKEN_ROTATION_RUNBOOK.md)
+
+Example calls:
+
+```bash
+TOKEN="$(cat /run/secrets/mohawk_api_token)"
+
+# Capabilities (open)
+curl -s http://localhost:8082/api/v1/capabilities | jq .
+
+# SNARK proof verify (auth + role)
+curl -s -X POST http://localhost:8082/api/v1/proof/verify \
+  -H "Authorization: Bearer $TOKEN" \
+  -H "X-API-Role: verifier" \
+  -H "Content-Type: application/json" \
+  -d '{"encoding":"raw","proof":"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"}' | jq .
+
+# Hybrid verify (auth + role)
+curl -s -X POST http://localhost:8082/api/v1/proof/hybrid/verify \
+  -H "Authorization: Bearer $TOKEN" \
+  -H "X-API-Role: verifier" \
+  -H "Content-Type: application/json" \
+  -d '{"mode":"any","encoding":"raw","stark_backend":"simulated_fri","snark_proof":"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa","stark_proof":"bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb"}' | jq .
+
+# Ledger events (auth + role)
+curl -s http://localhost:8082/api/v1/ledger \
+  -H "Authorization: Bearer $TOKEN" \
+  -H "X-API-Role: verifier" | jq .
+
+# Capabilities include API/auth/observability metadata
+curl -s http://localhost:8082/api/v1/capabilities | jq '.api,.observability'
+```
+
 ### Access Dashboards
 
 | Service | URL | Credentials |
@@ -287,10 +390,10 @@ done
 **Run the test:**
 ```bash
 # Linux/Mac
-./run-1000-node-npu-test.sh
+./tests/scripts/bash/run-1000-node-npu-test.sh
 
 # Windows PowerShell
-./run-1000-node-npu-test.ps1
+./tests/scripts/powershell/run-1000-node-npu-test.ps1
 ```
 
 #### 5000-Node Kubernetes Stress Test ☸️
@@ -312,7 +415,7 @@ done
 
 **Run the test:**
 ```bash
-python kubernetes-5000-node-test.py
+python tests/scripts/python/kubernetes-5000-node-test.py
 python generate-k8s-5000-node-plots.py
 ```
 
@@ -326,6 +429,10 @@ python generate-k8s-5000-node-plots.py
 
 **For full test catalog, results, and reproduction scripts, see:**  
 📂 **[ARTIFACTS.md](/Documentation/Reports/ARTIFACTS.md)** - Complete index of all test artifacts and results
+
+Test orchestration scripts are consolidated under `tests/scripts/`:
+
+- [tests/scripts/README.md](tests/scripts/README.md)
 
 ---
 
@@ -975,13 +1082,13 @@ pytest tests/ -v --tb=short
 go test -v ./internal/tpm/...
 
 # 2) Extended Byzantine threshold sweep (70%-99%)
-python byzantine-stress-test-suite.py --threshold-ratios 70,75,80,85,90,95,99
+python tests/scripts/python/byzantine-stress-test-suite.py --threshold-ratios 70,75,80,85,90,95,99
 
 # 3) Generate visualization artifacts from latest suite JSON
-python generate-byzantine-test-suite-plots.py
+python tests/scripts/python/generate-byzantine-test-suite-plots.py
 
 # 4) Run device benchmark pipeline (NPU/GPU/CPU fallback aware)
-python npu-gpu-cpu-benchmark.py --all --contention --nodes 20 --json test-results/tpm-npu-full/npu-benchmark-$(date +%Y%m%d-%H%M%S).json
+python tests/scripts/python/npu-gpu-cpu-benchmark.py --all --contention --nodes 20 --json test-results/tpm-npu-full/npu-benchmark-$(date +%Y%m%d-%H%M%S).json
 
 # 5) Package commit-ready artifacts
 tar -czf test-results/tpm-npu-full-artifacts.tar.gz -C test-results tpm-npu-full
@@ -1059,6 +1166,9 @@ Comprehensive documentation included:
 - **Testing Index**: [Documentation/TESTING_INDEX.md](Documentation/TESTING_INDEX.md)
 - **Deployment Index**: [Documentation/DEPLOYMENT_INDEX.md](Documentation/DEPLOYMENT_INDEX.md)
 - **Architecture Index**: [Documentation/ARCHITECTURE_INDEX.md](Documentation/ARCHITECTURE_INDEX.md)
+- **Capabilities Schema v1**: [Documentation/Project/CAPABILITIES_SCHEMA_V1.md](Documentation/Project/CAPABILITIES_SCHEMA_V1.md)
+- **Release Readiness (2026-03-15)**: [Documentation/Project/RELEASE_READINESS_2026-03-15.md](Documentation/Project/RELEASE_READINESS_2026-03-15.md)
+- **Test File Relocation Addendum (2026-03-15)**: [Documentation/Project/TEST_FILE_RELOCATION_ADDENDUM_2026-03-15.md](Documentation/Project/TEST_FILE_RELOCATION_ADDENDUM_2026-03-15.md)
 
 | Document | Purpose | Size |
 |----------|---------|------|
@@ -1075,6 +1185,9 @@ Comprehensive documentation included:
 | **Documentation/Architecture/IMPLEMENTATION_SUMMARY.md** | Implementation and dependency summary | 8KB |
 | **Documentation/Guides/OPENCV_INSTALL.md** | OpenCV dependency setup for sensor modules | 3KB |
 | **Documentation/Project/ROADMAP.md** | Current roadmap and milestones | 4KB |
+| **Documentation/Project/CAPABILITIES_SCHEMA_V1.md** | Versioned API capability contract | 4KB |
+| **Documentation/Project/RELEASE_READINESS_2026-03-15.md** | Current release readiness verification summary | 2KB |
+| **Documentation/Project/TEST_FILE_RELOCATION_ADDENDUM_2026-03-15.md** | Test file relocation and validation evidence | 2KB |
 
 ### API Documentation
 
@@ -1196,9 +1309,31 @@ Active roadmap and milestone tracking are maintained in [ROADMAP.md](/Documentat
 - [x] NAT traversal service scaffolding
 - [x] IPFS checkpoint backend integration
 - [x] Mobile and drone ingestion service scaffolding
+- [x] Node-agent proof API auth and role enforcement (`Authorization`/`X-API-Token`, `X-API-Role`)
+- [x] Proof verification ledger endpoint (`GET /api/v1/ledger`) with ring-buffer retention
+- [x] Hybrid verifier unit coverage for FRI/Winterfell proof validation and policy behavior
+- [x] Crypto session-key and TLS handshake validation tests (including no-deadlock rotation checks)
+- [x] Capabilities API v1 contract test coverage and CI gate
+- [x] Versioned capabilities schema and release-readiness publication
 - [ ] End-to-end integration tests for sensor-to-tile pipeline
 - [ ] OpenCV-enabled CI lane for camera/SLAM packages
-- [ ] Production observability dashboards for new services
+- [x] Production observability dashboards for proof and ledger verification signals
+
+### Next Steps (Execution Queue)
+1. Add end-to-end sensor-to-tile integration test coverage in CI.
+2. Add an OpenCV-enabled CI lane for camera and SLAM modules.
+3. Execute release-candidate environment smoke checks and verify alert thresholds.
+4. Track first-cycle production telemetry and tune SLO/SLA thresholds.
+
+## 🤝 Contributing
+
+Contributor workflow, branch policies, and PR quality checks are documented in [CONTRIBUTING.md](CONTRIBUTING.md).
+
+When a PR changes API behavior, security controls, or deployment/runtime environment variables, update all of the following in the same PR:
+
+- `README.md` (operator and endpoint usage)
+- `CONTRIBUTING.md` (review/merge expectations)
+- `Documentation/Project/ROADMAP.md` (status + next milestone)
 
 ---
 
@@ -1220,6 +1355,9 @@ Active roadmap and milestone tracking are maintained in [ROADMAP.md](/Documentat
 - ✅ **Integration Sign-off**: [TPM_NPU_GPU_SIGNOFF_CHECKLIST.md](/Documentation/Testing/TPM_NPU_GPU_SIGNOFF_CHECKLIST.md)
 - 🏗️ **Architecture**: [ARCHITECTURE.md](/Documentation/Architecture/ARCHITECTURE.md)
 - 🔒 **Security**: [TPM_TRUST_GUIDE.md](/Documentation/Security/TPM_TRUST_GUIDE.md)
+- 🔁 **API Auth Runbook**: [API_AUTH_TOKEN_ROTATION_RUNBOOK.md](/Documentation/Security/API_AUTH_TOKEN_ROTATION_RUNBOOK.md)
+- 🧾 **Capabilities Schema**: [CAPABILITIES_SCHEMA_V1.md](/Documentation/Project/CAPABILITIES_SCHEMA_V1.md)
+- ✅ **Release Readiness**: [RELEASE_READINESS_2026-03-15.md](/Documentation/Project/RELEASE_READINESS_2026-03-15.md)
 - 📊 **Monitoring**: [TPM_MONITORING_GUIDE.md](/Documentation/Security/TPM_MONITORING_GUIDE.md)
 - 💬 **Issues**: [GitHub Issues](https://github.com/rwilliamspbg-ops/Sovereign_Map_Federated_Learning/issues)
 
@@ -1278,3 +1416,6 @@ For updates and latest releases, visit: https://github.com/rwilliamspbg-ops/Sove
 ⭐ If this project helped you, please star it on GitHub! ⭐
 
 </div>
+
+<!-- markdownlint-enable MD010 MD012 MD022 MD031 MD032 MD033 -->
+<!-- markdownlint-enable MD034 MD036 MD040 MD051 MD060 -->

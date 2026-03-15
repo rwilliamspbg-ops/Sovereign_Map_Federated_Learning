@@ -4,19 +4,19 @@ on:
   workflow_dispatch:
   pull_request:
     paths:
-      - 'run-1000-node-npu-test.sh'
+      - 'tests/scripts/bash/run-1000-node-npu-test.sh'
       - 'docker-compose.1000nodes.yml'
-      - 'byzantine-stress-test-suite.py'
-      - 'generate-byzantine-test-suite-plots.py'
+      - 'tests/scripts/python/byzantine-stress-test-suite.py'
+      - 'tests/scripts/python/generate-byzantine-test-suite-plots.py'
       - 'test-results/**'
   push:
     branches:
       - main
     paths:
-      - 'run-1000-node-npu-test.sh'
+      - 'tests/scripts/bash/run-1000-node-npu-test.sh'
       - 'docker-compose.1000nodes.yml'
-      - 'byzantine-stress-test-suite.py'
-      - 'generate-byzantine-test-suite-plots.py'
+      - 'tests/scripts/python/byzantine-stress-test-suite.py'
+      - 'tests/scripts/python/generate-byzantine-test-suite-plots.py'
       - 'test-results/**'
 
 jobs:
@@ -43,8 +43,8 @@ jobs:
       - name: Run stress suite and generate plots
         run: |
           set -euo pipefail
-          python byzantine-stress-test-suite.py
-          python generate-byzantine-test-suite-plots.py
+          python tests/scripts/python/byzantine-stress-test-suite.py
+          python tests/scripts/python/generate-byzantine-test-suite-plots.py
 
       - name: Upload stress suite plot artifacts
         uses: actions/upload-artifact@bbbca2ddaa5d8feaa63e36b76fdaad77386f024f # v4

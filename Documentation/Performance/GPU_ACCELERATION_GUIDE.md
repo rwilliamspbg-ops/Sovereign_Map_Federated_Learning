@@ -59,7 +59,7 @@ Run the comprehensive GPU test suite:
 
 ```bash
 # 1. CPU vs GPU comparison (2 epochs, 50 batches)
-python gpu-test-suite.py --benchmark --json gpu-benchmark.json
+python tests/scripts/python/gpu-test-suite.py --benchmark --json gpu-benchmark.json
 
 # Output shows:
 # - CPU epoch time: ~X seconds
@@ -75,7 +75,7 @@ Simulate 20+ nodes competing for GPU resources:
 
 ```bash
 # Test with 20 nodes on GPU
-python gpu-test-suite.py --contention --nodes 20 --device cuda:0
+python tests/scripts/python/gpu-test-suite.py --contention --nodes 20 --device cuda:0
 
 # Expected:
 # - 20 nodes training sequentially on GPU
@@ -95,7 +95,7 @@ Measure end-to-end federated learning round latency:
 
 ```bash
 # Measure 10 FL rounds with 20 nodes on GPU
-python gpu-test-suite.py --round-latency --nodes 20 --rounds 10 --device cuda:0
+python tests/scripts/python/gpu-test-suite.py --round-latency --nodes 20 --rounds 10 --device cuda:0
 
 # Expected:
 # - Avg round latency: 10-30 seconds (20 nodes sequential training)
@@ -108,7 +108,7 @@ python gpu-test-suite.py --round-latency --nodes 20 --rounds 10 --device cuda:0
 Run all tests together:
 
 ```bash
-python gpu-test-suite.py --all --nodes 20 --rounds 10 --json gpu-results.json
+python tests/scripts/python/gpu-test-suite.py --all --nodes 20 --rounds 10 --json gpu-results.json
 ```
 
 **Generates:**
@@ -229,7 +229,7 @@ The Sovereign-Mohawk-Proto handles 200-byte zk-SNARK verification. Target: **<10
 # Without GPU: 50-100ms per proof
 
 # Test during high-density run:
-python gpu-test-suite.py --round-latency --nodes 20
+python tests/scripts/python/gpu-test-suite.py --round-latency --nodes 20
 # Watch "zk-SNARK Verification Latency" metric in Grafana
 ```
 
@@ -379,13 +379,13 @@ def aggregate_fit_parallel(self, server_round, results, failures):
 ## Benchmarking Checklist
 
 - [ ] Verify GPU detection: `python -c "import torch; print(torch.cuda.is_available())"`
-- [ ] Run CPU vs GPU benchmark: `python gpu-test-suite.py --benchmark`
+- [ ] Run CPU vs GPU benchmark: `python tests/scripts/python/gpu-test-suite.py --benchmark`
 - [ ] Start Grafana dashboard: `docker compose -f docker-compose.production.yml up -d`
-- [ ] Run 20-node contention test: `python gpu-test-suite.py --contention --nodes 20`
-- [ ] Measure round latency: `python gpu-test-suite.py --round-latency --nodes 20`
+- [ ] Run 20-node contention test: `python tests/scripts/python/gpu-test-suite.py --contention --nodes 20`
+- [ ] Measure round latency: `python tests/scripts/python/gpu-test-suite.py --round-latency --nodes 20`
 - [ ] Monitor GPU metrics: Open Grafana dashboard
 - [ ] Check zk-SNARK latency: Verify <10ms in dashboard
-- [ ] Save results: `python gpu-test-suite.py --all --json gpu-results.json`
+- [ ] Save results: `python tests/scripts/python/gpu-test-suite.py --all --json gpu-results.json`
 - [ ] Generate report: Parse `gpu-results.json`
 
 ## Performance Targets
@@ -400,7 +400,7 @@ def aggregate_fit_parallel(self, server_round, results, failures):
 
 ## Next Steps
 
-1. **Run GPU test suite:** `python gpu-test-suite.py --all --json results.json`
+1. **Run GPU test suite:** `python tests/scripts/python/gpu-test-suite.py --all --json results.json`
 2. **Open Grafana:** http://localhost:3001 → GPU/CUDA Acceleration dashboard
 3. **Test with Docker:** `docker compose -f docker-compose.full.yml up --scale node-agent=20`
 4. **Monitor live:** Watch GPU metrics during 5000-round test

@@ -216,9 +216,9 @@ The GPU/CUDA acceleration testing infrastructure has been successfully validated
 ## Test Artifacts
 
 Generated files:
-- `gpu-benchmark-baseline.json` - CPU baseline metrics
-- `gpu-contention-5nodes.json` through `gpu-contention-30nodes.json` - Contention tests
-- `gpu-round-5nodes.json` through `gpu-round-20nodes.json` - Round latency tests
+- `test-results/benchmarks/gpu-benchmark-baseline.json` - CPU baseline metrics
+- `test-results/benchmarks/gpu-contention-5nodes.json` through `test-results/benchmarks/gpu-contention-30nodes.json` - Contention tests
+- `test-results/benchmarks/gpu-round-5nodes.json` through `test-results/benchmarks/gpu-round-20nodes.json` - Round latency tests
 - `analyze-gpu-results.py` - Analysis script
 - `GPU_TESTING_RESULTS_REPORT.md` - This report
 

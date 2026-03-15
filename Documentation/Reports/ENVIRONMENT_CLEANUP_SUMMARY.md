@@ -62,8 +62,8 @@ a5b8ad6 - GPU validation complete
 ## Files Created This Session
 
 ### Test Suites (2)
-- ✅ gpu-test-suite.py (19.4 KB) - GPU benchmarking
-- ✅ npu-gpu-cpu-benchmark.py (19.4 KB) - Multi-device comparison
+- ✅ tests/scripts/python/gpu-test-suite.py (19.4 KB) - GPU benchmarking
+- ✅ tests/scripts/python/npu-gpu-cpu-benchmark.py (19.4 KB) - Multi-device comparison
 
 ### Analysis Documents (8)
 - ✅ GPU_ACCELERATION_GUIDE.md (12 KB)
@@ -95,15 +95,15 @@ a5b8ad6 - GPU validation complete
 
 ### JSON Results Files (8)
 Located in: `Sovereign_Map_Federated_Learning/`
-- gpu-benchmark-baseline.json
-- gpu-contention-5nodes.json
-- gpu-contention-10nodes.json
-- gpu-contention-20nodes.json
-- gpu-contention-30nodes.json
-- gpu-round-5nodes.json
-- gpu-round-10nodes.json
-- gpu-round-20nodes.json
-- npu-gpu-cpu-comparison.json
+- test-results/benchmarks/gpu-benchmark-baseline.json
+- test-results/benchmarks/gpu-contention-5nodes.json
+- test-results/benchmarks/gpu-contention-10nodes.json
+- test-results/benchmarks/gpu-contention-20nodes.json
+- test-results/benchmarks/gpu-contention-30nodes.json
+- test-results/benchmarks/gpu-round-5nodes.json
+- test-results/benchmarks/gpu-round-10nodes.json
+- test-results/benchmarks/gpu-round-20nodes.json
+- test-results/benchmarks/npu-gpu-cpu-comparison.json
 
 **Status:** Kept as reference data (not committed to git, ~8 MB)
 **Purpose:** Performance analysis, regression testing
@@ -260,8 +260,8 @@ Status:        ✅ Ready for validation
 - Setup: `GRAFANA_SETUP_COMPLETE.md`
 
 ### Test Suites
-- GPU Benchmarking: `gpu-test-suite.py`
-- Multi-Device: `npu-gpu-cpu-benchmark.py`
+- GPU Benchmarking: `tests/scripts/python/gpu-test-suite.py`
+- Multi-Device: `tests/scripts/python/npu-gpu-cpu-benchmark.py`
 - Analysis: `analyze-gpu-results.py`
 
 ---

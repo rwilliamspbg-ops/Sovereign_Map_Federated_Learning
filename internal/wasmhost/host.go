@@ -19,12 +19,16 @@ package wasmhost
 
 import (
 	"context"
+	"crypto/sha256"
+	"encoding/hex"
 	"fmt"
 	"sync"
 
 	"github.com/tetratelabs/wazero"
 	"github.com/tetratelabs/wazero/api"
 )
+
+const compilationCacheDir = "/tmp/mohawk-wasm-cache"
 
 // Host manages the WebAssembly runtime environment for zk-SNARK verification.
 type Host struct {
@@ -33,16 +37,26 @@ type Host struct {
 	mu      sync.Mutex
 }
 
+// Registry stores hash-addressed modules and supports default module hot reload.
+type Registry struct {
+	mu          sync.RWMutex
+	modules     map[string]*Host
+	defaultHash string
+}
+
+func NewRegistry() *Registry {
+	return &Registry{modules: make(map[string]*Host)}
+}
+
 // NewHost initializes a high-performance Wasm environment.
 func NewHost(ctx context.Context, wasmBin []byte) (*Host, error) {
-	r := wazero.NewRuntime(ctx)
+	cfg := wazero.NewRuntimeConfig().WithCompilationCache(newCompilationCache())
+	r := wazero.NewRuntimeWithConfig(ctx, cfg)
 
 	// Instantiate the module with hardware acceleration where available
 	mod, err := r.Instantiate(ctx, wasmBin)
 	if err != nil {
-		if closeErr := r.Close(ctx); closeErr != nil {
-			return nil, fmt.Errorf("failed to instantiate wasm: %w (additionally failed to close runtime: %v)", err, closeErr)
-		}
+		r.Close(ctx)
 		return nil, fmt.Errorf("failed to instantiate wasm: %w", err)
 	}
 
@@ -52,13 +66,104 @@ func NewHost(ctx context.Context, wasmBin []byte) (*Host, error) {
 	}, nil
 }
 
+func newCompilationCache() wazero.CompilationCache {
+	cache, err := wazero.NewCompilationCacheWithDir(compilationCacheDir)
+	if err != nil {
+		return wazero.NewCompilationCache()
+	}
+	return cache
+}
+
+// NewRunner keeps backward compatibility with earlier host naming.
+// Upsert stores a module keyed by SHA256 of its bytes.
+func (r *Registry) Upsert(ctx context.Context, wasmBin []byte) (string, error) {
+	if len(wasmBin) == 0 {
+		return "", fmt.Errorf("empty wasm module")
+	}
+	hashBytes := sha256.Sum256(wasmBin)
+	hash := hex.EncodeToString(hashBytes[:])
+
+	r.mu.RLock()
+	_, exists := r.modules[hash]
+	r.mu.RUnlock()
+	if exists {
+		return hash, nil
+	}
+
+	host, err := NewHost(ctx, wasmBin)
+	if err != nil {
+		return "", err
+	}
+
+	r.mu.Lock()
+	if _, exists = r.modules[hash]; exists {
+		r.mu.Unlock()
+		_ = host.Close(ctx)
+		return hash, nil
+	}
+	r.modules[hash] = host
+	if r.defaultHash == "" {
+		r.defaultHash = hash
+	}
+	r.mu.Unlock()
+
+	return hash, nil
+}
+
+func (r *Registry) Get(hash string) (*Host, bool) {
+	r.mu.RLock()
+	defer r.mu.RUnlock()
+	host, ok := r.modules[hash]
+	return host, ok
+}
+
+func (r *Registry) Default() *Host {
+	r.mu.RLock()
+	defer r.mu.RUnlock()
+	if r.defaultHash == "" {
+		return nil
+	}
+	return r.modules[r.defaultHash]
+}
+
+func (r *Registry) HotReload(ctx context.Context, wasmBin []byte) (string, error) {
+	hash, err := r.Upsert(ctx, wasmBin)
+	if err != nil {
+		return "", err
+	}
+	r.mu.Lock()
+	r.defaultHash = hash
+	r.mu.Unlock()
+	return hash, nil
+}
+
+func (r *Registry) Close(ctx context.Context) error {
+	r.mu.Lock()
+	modules := r.modules
+	r.modules = make(map[string]*Host)
+	r.defaultHash = ""
+	r.mu.Unlock()
+
+	for _, host := range modules {
+		if host != nil {
+			_ = host.Close(ctx)
+		}
+	}
+	return nil
+}
+
 // Verify executes the zk-SNARK proof verification in the Wasm sandbox.
 func (h *Host) Verify(ctx context.Context, proof []byte) (bool, error) {
 	h.mu.Lock()
 	defer h.mu.Unlock()
 
+	fn := h.mod.ExportedFunction("verify_proof")
+	if fn == nil {
+		return false, fmt.Errorf("wasm module missing required export: verify_proof")
+	}
+
 	// Theorem 5: Constant-time verification check
-	results, err := h.mod.ExportedFunction("verify_proof").Call(ctx, uint64(len(proof)))
+	results, err := fn.Call(ctx, uint64(len(proof)))
 	if err != nil {
 		return false, fmt.Errorf("wasm execution error: %w", err)
 	}

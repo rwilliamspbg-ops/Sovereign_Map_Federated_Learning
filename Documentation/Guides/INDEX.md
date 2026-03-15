@@ -65,7 +65,7 @@
 
 #### Run the Test
 ```bash
-python kubernetes-5000-node-test.py
+python tests/scripts/python/kubernetes-5000-node-test.py
 python generate-k8s-5000-node-plots.py
 ```
 
@@ -112,8 +112,8 @@ Duration:     2.8 seconds
 ### Level 3: Infrastructure & Execution (For operators)
 1. **[docker-compose.1000nodes.yml](./docker-compose.1000nodes.yml)** - 1000-node orchestration
 2. **[kubernetes-5000-node-manifests.yaml](./kubernetes-5000-node-manifests.yaml)** - K8s manifests
-3. **[run-1000-node-npu-test.sh](./run-1000-node-npu-test.sh)** - NPU test runner
-4. **[kubernetes-5000-node-test.py](./kubernetes-5000-node-test.py)** - K8s test suite
+3. **[tests/scripts/bash/run-1000-node-npu-test.sh](./run-1000-node-npu-test.sh)** - NPU test runner
+4. **[tests/scripts/python/kubernetes-5000-node-test.py](./kubernetes-5000-node-test.py)** - K8s test suite
 
 ---
 
@@ -210,8 +210,8 @@ Sovereign_Map_Federated_Learning/
 │
 ├── docker-compose.1000nodes.yml (8 KB) - Infrastructure configuration
 ├── run-1000-node-npu-test.py (17 KB) - Main test orchestrator
-├── run-1000-node-npu-test.sh (23 KB) - Bash version
-├── run-1000-node-npu-test.ps1 (7 KB) - PowerShell version
+├── tests/scripts/bash/run-1000-node-npu-test.sh (23 KB) - Bash version
+├── tests/scripts/powershell/run-1000-node-npu-test.ps1 (7 KB) - PowerShell version
 │
 ├── scripts/generate-npu-test-plots.py (14 KB) - Visualization generator
 │

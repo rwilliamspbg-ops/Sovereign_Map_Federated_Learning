@@ -80,8 +80,8 @@ COMPLETION_REPORT.md
 ```
 docker-compose.1000nodes.yml
 run-1000-node-npu-test.py
-run-1000-node-npu-test.sh
-run-1000-node-npu-test.ps1
+tests/scripts/bash/run-1000-node-npu-test.sh
+tests/scripts/powershell/run-1000-node-npu-test.ps1
 scripts/generate-npu-test-plots.py
 ```
 

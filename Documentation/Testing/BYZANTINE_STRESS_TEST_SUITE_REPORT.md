@@ -253,8 +253,8 @@ Successfully executed a comprehensive **Byzantine Stress Test Suite** combining 
 
 ### Documentation
 - `BYZANTINE_STRESS_TEST_REPORT.md` (existing, single test)
-- `byzantine-stress-test-suite.py` (23 KB, comprehensive test framework)
-- `generate-byzantine-test-suite-plots.py` (13.8 KB, visualization generator)
+- `tests/scripts/python/byzantine-stress-test-suite.py` (23 KB, comprehensive test framework)
+- `tests/scripts/python/generate-byzantine-test-suite-plots.py` (13.8 KB, visualization generator)
 - This report (comprehensive analysis)
 
 ---

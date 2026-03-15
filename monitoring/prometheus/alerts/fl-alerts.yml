@@ -85,3 +85,54 @@ groups:
         annotations:
           summary: "Low update processing throughput"
           description: "Processing {{ $value }} updates/second"
+
+      # Proof Verification & Ledger Alerts
+      - alert: ProofAcceptanceRateLow
+        expr: |
+          (
+            1 - (
+              sum(rate(mohawk_proof_verifications_total{result="rejected"}[5m])) /
+              clamp_min(sum(rate(mohawk_proof_verifications_total[5m])), 0.001)
+            )
+          ) < 0.8
+        for: 10m
+        labels:
+          severity: warning
+          component: proof-api
+        annotations:
+          summary: "Proof acceptance rate dropped below 80%"
+          description: "Acceptance ratio over 5m is {{ $value | humanizePercentage }}"
+
+      - alert: ProofVerificationLatencyP95High
+        expr: |
+          histogram_quantile(
+            0.95,
+            sum by (le) (rate(mohawk_proof_verification_latency_seconds_bucket[5m]))
+          ) > 0.25
+        for: 10m
+        labels:
+          severity: warning
+          component: proof-api
+        annotations:
+          summary: "Proof verification p95 latency is high"
+          description: "95th percentile verification latency is above 250ms"
+
+      - alert: LedgerEventRateSpike
+        expr: sum(rate(mohawk_ledger_events_total[5m])) > 40
+        for: 5m
+        labels:
+          severity: warning
+          component: ledger
+        annotations:
+          summary: "Ledger event ingestion rate spike"
+          description: "Ledger ingest rate is {{ $value }} events/second"
+
+      - alert: LedgerNearCapacity
+        expr: max(mohawk_ledger_entries) > 900
+        for: 10m
+        labels:
+          severity: warning
+          component: ledger
+        annotations:
+          summary: "Proof ledger near capacity"
+          description: "In-memory ledger entries exceeded 900"

@@ -1,7 +1,7 @@
 #!/bin/bash
-# setup-200node-test.sh
+# tests/scripts/bash/setup-200node-test.sh
 # One-command setup for 200-node BFT testing
-# Run: chmod +x setup-200node-test.sh && ./setup-200node-test.sh
+# Run: chmod +x tests/scripts/bash/setup-200node-test.sh && ./setup-200node-test.sh
 
 set -e
 

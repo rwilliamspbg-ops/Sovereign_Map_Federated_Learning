@@ -60,21 +60,21 @@
 
 ### Cleanup Status: READY
 
-**Cleanup Script:** `cleanup-testing.ps1`
+**Cleanup Script:** `tests/scripts/powershell/cleanup-testing.ps1`
 
 **Usage Options:**
 ```powershell
 # Option 1: Selective cleanup (keep monitoring)
-.\cleanup-testing.ps1 -CleanupLevel selective
+.\tests/scripts/powershell/cleanup-testing.ps1 -CleanupLevel selective
 
 # Option 2: Full cleanup
-.\cleanup-testing.ps1 -CleanupLevel full
+.\tests/scripts/powershell/cleanup-testing.ps1 -CleanupLevel full
 
 # Option 3: Archive first, then clean
-.\cleanup-testing.ps1 -CleanupLevel archive
+.\tests/scripts/powershell/cleanup-testing.ps1 -CleanupLevel archive
 
 # Option 4: Dry run (no changes)
-.\cleanup-testing.ps1 -DryRun -Force
+.\tests/scripts/powershell/cleanup-testing.ps1 -DryRun -Force
 ```
 
 ### Current Docker State
@@ -229,7 +229,7 @@ Sovereign_Map_Federated_Learning/
 ├── TESTING_CLOSEOUT_FINAL.md       ← Final sign-off
 ├── DEMO_RESULTS_SUMMARY.txt        ← Text summary
 ├── README_DEMO_RESULTS.md          ← Index & guide
-├── cleanup-testing.ps1             ← Cleanup script
+├── tests/scripts/powershell/cleanup-testing.ps1             ← Cleanup script
 ├── DEPLOYMENT.md                   ← Deployment guide
 ├── QUICK_START_GUIDE.md            ← Quick reference
 ├── PREREQUISITES_*.md              ← Setup guides

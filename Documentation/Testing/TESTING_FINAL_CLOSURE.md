@@ -96,7 +96,7 @@ The Sovereign Map 1000-node Byzantine Fault Tolerant federated learning system h
 | TESTING_COMPLETION_INDEX.md | 9.4 KB | Index & reference |
 | COMPLETION_CHECKLIST.md | 12.8 KB | Checklist verification |
 | ENVIRONMENT_CLEANUP_SUMMARY.md | 7.9 KB | Cleanup procedures |
-| cleanup-testing.ps1 | 7.8 KB | Cleanup script |
+| tests/scripts/powershell/cleanup-testing.ps1 | 7.8 KB | Cleanup script |
 | DEMO_RESULTS_SUMMARY.txt | 11.2 KB | Text summary |
 | README_DEMO_RESULTS.md | 7.0 KB | Documentation index |
 
@@ -154,7 +154,7 @@ The Sovereign Map 1000-node Byzantine Fault Tolerant federated learning system h
 
 **Quick Cleanup (Keep Monitoring):**
 ```powershell
-.\cleanup-testing.ps1 -CleanupLevel selective
+.\tests/scripts/powershell/cleanup-testing.ps1 -CleanupLevel selective
 ```
 - Time: ~2 minutes
 - Result: Test containers removed, monitoring kept
@@ -162,7 +162,7 @@ The Sovereign Map 1000-node Byzantine Fault Tolerant federated learning system h
 
 **Full Cleanup:**
 ```powershell
-.\cleanup-testing.ps1 -CleanupLevel full
+.\tests/scripts/powershell/cleanup-testing.ps1 -CleanupLevel full
 ```
 - Time: ~5 minutes
 - Result: Complete cleanup
@@ -170,7 +170,7 @@ The Sovereign Map 1000-node Byzantine Fault Tolerant federated learning system h
 
 **Archive Then Cleanup:**
 ```powershell
-.\cleanup-testing.ps1 -CleanupLevel archive
+.\tests/scripts/powershell/cleanup-testing.ps1 -CleanupLevel archive
 ```
 - Time: ~10 minutes
 - Result: Archive test data, then clean
@@ -178,7 +178,7 @@ The Sovereign Map 1000-node Byzantine Fault Tolerant federated learning system h
 
 **Dry Run (Preview):**
 ```powershell
-.\cleanup-testing.ps1 -DryRun -Force
+.\tests/scripts/powershell/cleanup-testing.ps1 -DryRun -Force
 ```
 - No changes made
 - Shows what will be cleaned

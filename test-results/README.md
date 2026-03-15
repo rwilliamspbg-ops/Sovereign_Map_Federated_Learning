@@ -87,9 +87,9 @@ test-results/
 ### GPU Acceleration Tests
 
 **Files in root directory:**
-- `gpu-benchmark-baseline.json` - GPU baseline performance
-- `gpu-contention-5nodes.json` through `gpu-contention-30nodes.json` - Contention analysis
-- `gpu-round-5nodes.json` through `gpu-round-20nodes.json` - Round performance data
+- `test-results/benchmarks/gpu-benchmark-baseline.json` - GPU baseline performance
+- `test-results/benchmarks/gpu-contention-5nodes.json` through `test-results/benchmarks/gpu-contention-30nodes.json` - Contention analysis
+- `test-results/benchmarks/gpu-round-5nodes.json` through `test-results/benchmarks/gpu-round-20nodes.json` - Round performance data
 
 **Documentation:**
 - [📊 GPU Testing Complete](/Documentation/Testing/GPU_TESTING_COMPLETE.md)
@@ -197,14 +197,14 @@ find . -name "*.md"
 ./run-1000-node-npu-test.ps1  # Windows
 
 # Run 5000-node K8s test
-python kubernetes-5000-node-test.py
+python tests/scripts/python/kubernetes-5000-node-test.py
 python generate-k8s-5000-node-plots.py
 
 # Run GPU test suite
-python gpu-test-suite.py
+python tests/scripts/python/gpu-test-suite.py
 
 # Run Byzantine stress test suite
-python byzantine-stress-test-suite.py
+python tests/scripts/python/byzantine-stress-test-suite.py
 ```
 
 ### Generate Visualizations
@@ -214,8 +214,8 @@ python byzantine-stress-test-suite.py
 python generate-k8s-5000-node-plots.py
 
 # Generate Byzantine plots
-python generate-byzantine-plots.py
-python generate-byzantine-test-suite-plots.py
+python tests/scripts/python/generate-byzantine-plots.py
+python tests/scripts/python/generate-byzantine-test-suite-plots.py
 
 # Analyze demo results
 python analyze-demo-results.py

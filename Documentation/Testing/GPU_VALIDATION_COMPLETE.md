@@ -128,14 +128,14 @@ Successfully ran and validated GPU acceleration testing across **5-30 node sizes
 ## Files Generated
 
 ### Test Results
-- `gpu-benchmark-baseline.json` - CPU baseline (0.87s/epoch)
-- `gpu-contention-5nodes.json` - 5-node parallel test
-- `gpu-contention-10nodes.json` - 10-node parallel test
-- `gpu-contention-20nodes.json` - 20-node parallel test
-- `gpu-contention-30nodes.json` - 30-node parallel test (stress)
-- `gpu-round-5nodes.json` - 5-node sequential test
-- `gpu-round-10nodes.json` - 10-node sequential test
-- `gpu-round-20nodes.json` - 20-node sequential test
+- `test-results/benchmarks/gpu-benchmark-baseline.json` - CPU baseline (0.87s/epoch)
+- `test-results/benchmarks/gpu-contention-5nodes.json` - 5-node parallel test
+- `test-results/benchmarks/gpu-contention-10nodes.json` - 10-node parallel test
+- `test-results/benchmarks/gpu-contention-20nodes.json` - 20-node parallel test
+- `test-results/benchmarks/gpu-contention-30nodes.json` - 30-node parallel test (stress)
+- `test-results/benchmarks/gpu-round-5nodes.json` - 5-node sequential test
+- `test-results/benchmarks/gpu-round-10nodes.json` - 10-node sequential test
+- `test-results/benchmarks/gpu-round-20nodes.json` - 20-node sequential test
 - `gpu-test-baseline.log` - Baseline test output log
 
 ### Analysis & Documentation
@@ -199,7 +199,7 @@ Successfully ran and validated GPU acceleration testing across **5-30 node sizes
 
 **Run all tests:**
 ```bash
-python gpu-test-suite.py --all --nodes 30 --rounds 5 --json results.json
+python tests/scripts/python/gpu-test-suite.py --all --nodes 30 --rounds 5 --json results.json
 ```
 
 **Analyze results:**
@@ -210,13 +210,13 @@ python analyze-gpu-results.py
 **Individual tests:**
 ```bash
 # CPU vs GPU benchmark
-python gpu-test-suite.py --benchmark
+python tests/scripts/python/gpu-test-suite.py --benchmark
 
 # 20-node contention
-python gpu-test-suite.py --contention --nodes 20
+python tests/scripts/python/gpu-test-suite.py --contention --nodes 20
 
 # 20-node round latency
-python gpu-test-suite.py --round-latency --nodes 20
+python tests/scripts/python/gpu-test-suite.py --round-latency --nodes 20
 ```
 
 **Monitor:**

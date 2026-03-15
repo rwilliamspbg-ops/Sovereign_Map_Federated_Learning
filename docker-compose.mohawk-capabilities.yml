@@ -1,0 +1,51 @@
+services:
+  backend:
+    environment:
+      - MOHAWK_CAPABILITIES_PATH=/app/capabilities.json
+      - MOHAWK_BRIDGE_POLICIES_PATH=/app/bridge-policies.json
+      - MOHAWK_DEFAULT_STARK_BACKEND=${MOHAWK_DEFAULT_STARK_BACKEND:-simulated_fri}
+      - MOHAWK_STARK_VERIFY_TIMEOUT=${MOHAWK_STARK_VERIFY_TIMEOUT:-5s}
+      - MOHAWK_API_AUTH_MODE=${MOHAWK_API_AUTH_MODE:-file-only}
+      - MOHAWK_API_TOKEN_FILE=${MOHAWK_API_TOKEN_FILE:-/run/secrets/mohawk_api_token}
+      - MOHAWK_API_ENFORCE_ROLES=${MOHAWK_API_ENFORCE_ROLES:-true}
+      - MOHAWK_API_BRIDGE_ALLOWED_ROLES=${MOHAWK_API_BRIDGE_ALLOWED_ROLES:-bridge,admin}
+      - MOHAWK_API_HYBRID_ALLOWED_ROLES=${MOHAWK_API_HYBRID_ALLOWED_ROLES:-verifier,admin}
+      - MOHAWK_UTILITY_ENFORCE_ROLES=${MOHAWK_UTILITY_ENFORCE_ROLES:-true}
+      - MOHAWK_UTILITY_RATE_LIMIT_PER_MIN=${MOHAWK_UTILITY_RATE_LIMIT_PER_MIN:-240}
+      - MOHAWK_UTILITY_MINT_ALLOWED_ROLES=${MOHAWK_UTILITY_MINT_ALLOWED_ROLES:-minter,admin}
+      - MOHAWK_UTILITY_TRANSFER_ALLOWED_ROLES=${MOHAWK_UTILITY_TRANSFER_ALLOWED_ROLES:-user,operator,admin}
+      - MOHAWK_UTILITY_BACKUP_ALLOWED_ROLES=${MOHAWK_UTILITY_BACKUP_ALLOWED_ROLES:-operator,admin}
+      - MOHAWK_UTILITY_RESTORE_ALLOWED_ROLES=${MOHAWK_UTILITY_RESTORE_ALLOWED_ROLES:-admin}
+      - MOHAWK_BRIDGE_SETTLEMENT_ASSETS=${MOHAWK_BRIDGE_SETTLEMENT_ASSETS:-MHC}
+      - MOHAWK_LEDGER_STATE_PATH=${MOHAWK_LEDGER_STATE_PATH:-/var/lib/mohawk/utility-ledger/state.json}
+      - MOHAWK_LEDGER_AUDIT_PATH=${MOHAWK_LEDGER_AUDIT_PATH:-/var/lib/mohawk/utility-ledger/audit.jsonl}
+      - MOHAWK_UTILITY_MINTER=${MOHAWK_UTILITY_MINTER:-protocol}
+    volumes:
+      - ./capabilities.json:/app/capabilities.json:ro
+      - ./bridge-policies.json:/app/bridge-policies.json:ro
+      - ./data/utility-ledger:/var/lib/mohawk/utility-ledger
+
+  node-agent:
+    environment:
+      - MOHAWK_API_LISTEN=${MOHAWK_API_LISTEN:-:8082}
+      - MOHAWK_CAPABILITIES_PATH=/app/capabilities.json
+      - MOHAWK_BRIDGE_POLICIES_PATH=/app/bridge-policies.json
+      - MOHAWK_DEFAULT_STARK_BACKEND=${MOHAWK_DEFAULT_STARK_BACKEND:-simulated_fri}
+      - MOHAWK_API_AUTH_MODE=${MOHAWK_API_AUTH_MODE:-file-only}
+      - MOHAWK_API_ENFORCE_ROLES=${MOHAWK_API_ENFORCE_ROLES:-true}
+      - MOHAWK_API_BRIDGE_ALLOWED_ROLES=${MOHAWK_API_BRIDGE_ALLOWED_ROLES:-bridge,admin}
+      - MOHAWK_API_HYBRID_ALLOWED_ROLES=${MOHAWK_API_HYBRID_ALLOWED_ROLES:-verifier,admin}
+      - MOHAWK_UTILITY_ENFORCE_ROLES=${MOHAWK_UTILITY_ENFORCE_ROLES:-true}
+      - MOHAWK_UTILITY_RATE_LIMIT_PER_MIN=${MOHAWK_UTILITY_RATE_LIMIT_PER_MIN:-240}
+      - MOHAWK_BRIDGE_SETTLEMENT_ASSETS=${MOHAWK_BRIDGE_SETTLEMENT_ASSETS:-MHC}
+    volumes:
+      - ./capabilities.json:/app/capabilities.json:ro
+      - ./bridge-policies.json:/app/bridge-policies.json:ro
+
+  tpm-metrics:
+    environment:
+      - MOHAWK_CAPABILITIES_PATH=/app/capabilities.json
+      - MOHAWK_BRIDGE_POLICIES_PATH=/app/bridge-policies.json
+    volumes:
+      - ./capabilities.json:/app/capabilities.json:ro
+      - ./bridge-policies.json:/app/bridge-policies.json:ro

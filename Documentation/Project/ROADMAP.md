@@ -27,40 +27,58 @@ This roadmap tracks execution priorities after the v1.1.0 readiness update on `m
 - Operational hardening for production-like deployments.
 - OpenCV-tagged CI lane validated green on `main`.
 
+## Completed in Post-v1.1.0 Hardening (2026-03)
+- Node-agent API listener wiring with versioned capability/proof/hybrid/ledger routes.
+- Proof API auth middleware added with token-file validation and role enforcement.
+- Proof verification ledger added as a bounded in-memory ring buffer with API access.
+- Hybrid verifier package expanded with FRI/Winterfell verification and backend registry tests.
+- Secure channel ECDH migration and TLS 1.3 handshake/deadlock regression coverage added.
+- End-to-end node-agent integration test updated to validate auth-gated proof and ledger behavior.
+- Capability contract test (`TestCapabilitiesContractV1`) added and wired into CI build workflow.
+- Versioned capability schema and release-readiness summaries published in project documentation.
+
 ## Next Milestones
 
-### Milestone 1: Integration Confidence
-- Add integration tests for:
-  - node join/discovery under mixed network conditions
-  - checkpoint write/read flows for filesystem + IPFS
-  - camera/SLAM -> tile generation pipeline
-  - mobile/drone ingest -> aggregation input path
+### Milestone 1: API and Security Confidence
+- Status: completed
+- Added negative-path API tests for malformed payloads, missing tokens, and role mismatches.
+- Added stress-style ledger tests to validate retention behavior at high verification event volume.
 - Exit criteria:
-  - CI green on integration suite
-  - deterministic test fixtures for sensor data
+  - CI includes API failure-path checks for proof/hybrid/ledger routes: met
+  - ledger retention behavior validated under sustained event generation: met
 
-### Milestone 2: OpenCV and Build Reliability
-- Add OpenCV-capable CI path for `gocv` packages.
-- Document supported environments for camera/SLAM builds.
+### Milestone 2: Operator Readiness and Docs
+- Status: completed
+- Published token rotation and role policy runbook for compose and testnet setups.
+- Added troubleshooting matrix for auth and role failures (`401`/`403`) in runtime docs.
 - Exit criteria:
-  - reproducible build docs for Linux/macOS
-  - one CI lane compiling camera and SLAM packages
+  - operator runbook published and linked from README: met
+  - documented rollback and recovery steps for auth misconfiguration: met
 
 ### Milestone 3: Observability and SLOs
-- Add dashboards/alerts for:
-  - peer count, join success, relay usage
-  - checkpoint storage latency/error rates
-  - sensor ingestion queue depth and drop rate
+- Status: in progress
+- Added dashboards/alerts for:
+  - proof acceptance/rejection rates by backend and mode
+  - ledger event volume and verification latency bands
+  - existing peer count, join success, relay usage, and checkpoint storage errors
 - Exit criteria:
-  - baseline SLO dashboards published
+  - baseline SLO dashboards published: in progress
   - alert runbook linked in docs
 
 ### Milestone 4: Scale and Readiness Gate
-- Run staged scale tests (10 -> 100 -> 1000 nodes).
+- Run staged scale tests (10 -> 100 -> 1000 nodes) with updated API/auth settings.
 - Validate throughput, convergence, and stability at each stage.
 - Exit criteria:
   - scale report captured in repository
   - release gate checklist fully checked
+
+### Milestone 5: Capability Contract Stabilization
+ - Status: completed
+- Freeze `/api/v1/capabilities` as the runtime contract for API, auth, and observability metadata.
+- Add contract tests to detect accidental capability schema regressions.
+- Exit criteria:
+  - capability schema documented and versioned: met
+  - capability contract tests enabled in CI: met
 
 ## Risks
 - OpenCV dependency variance across environments.
@@ -69,4 +87,5 @@ This roadmap tracks execution priorities after the v1.1.0 readiness update on `m
 
 ## Tracking
 - Issue labels recommended: `roadmap`, `integration`, `performance`, `observability`, `testnet`.
+- Additional labels recommended for current stream: `api`, `auth`, `ledger`, `hybrid-proof`.
 - Keep this document aligned with `README.md` and release notes.

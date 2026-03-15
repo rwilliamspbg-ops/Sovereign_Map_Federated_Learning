@@ -15,9 +15,9 @@ NPU Support:
 - Falls back to CPU if GPU unavailable
 
 Usage:
-    python npu-gpu-cpu-benchmark.py --all
-    python npu-gpu-cpu-benchmark.py --npu --nodes 20
-    python npu-gpu-cpu-benchmark.py --compare-devices
+    python tests/scripts/python/npu-gpu-cpu-benchmark.py --all
+    python tests/scripts/python/npu-gpu-cpu-benchmark.py --npu --nodes 20
+    python tests/scripts/python/npu-gpu-cpu-benchmark.py --compare-devices
 """
 
 import argparse

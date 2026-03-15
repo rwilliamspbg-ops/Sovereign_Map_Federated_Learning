@@ -8,7 +8,7 @@ All GPU acceleration testing infrastructure has been successfully implemented, t
 
 ## What Was Completed
 
-### 1. **GPU Test Suite** (`gpu-test-suite.py`) ✅
+### 1. **GPU Test Suite** (`tests/scripts/python/gpu-test-suite.py`) ✅
 Comprehensive Python benchmarking tool with:
 - **CPU vs GPU Training Benchmark**
   - 2 epochs, 50 batches MNIST-like data
@@ -123,7 +123,7 @@ python -c "import torch; print(f'CUDA: {torch.cuda.is_available()}')"
 ### Phase 2: Run CPU vs GPU Benchmark (2-3 minutes)
 
 ```bash
-python gpu-test-suite.py --benchmark --json gpu-bench.json
+python tests/scripts/python/gpu-test-suite.py --benchmark --json gpu-bench.json
 ```
 
 **Output:**
@@ -136,7 +136,7 @@ Speedup:          2.5-3.5x ✅
 ### Phase 3: Test 20-Node GPU Contention (3-5 minutes)
 
 ```bash
-python gpu-test-suite.py --contention --nodes 20 --device cuda:0
+python tests/scripts/python/gpu-test-suite.py --contention --nodes 20 --device cuda:0
 ```
 
 **Output:**
@@ -150,7 +150,7 @@ GPU util: 95-100%
 ### Phase 4: Measure FL Round Latency (5-10 minutes)
 
 ```bash
-python gpu-test-suite.py --round-latency --nodes 20 --rounds 10
+python tests/scripts/python/gpu-test-suite.py --round-latency --nodes 20 --rounds 10
 ```
 
 **Output:**
@@ -163,7 +163,7 @@ Updates/sec: 0.8-1.4
 ### Phase 5: Complete Suite (10-15 minutes)
 
 ```bash
-python gpu-test-suite.py --all --nodes 20 --rounds 10 --json gpu-results.json
+python tests/scripts/python/gpu-test-suite.py --all --nodes 20 --rounds 10 --json gpu-results.json
 ```
 
 ### Phase 6: Monitor in Grafana
@@ -221,7 +221,7 @@ python gpu-test-suite.py --all --nodes 20 --rounds 10 --json gpu-results.json
 
 ```
 NEW FILES (3):
-✅ gpu-test-suite.py                           (19 KB)
+✅ tests/scripts/python/gpu-test-suite.py                           (19 KB)
 ✅ grafana/provisioning/dashboards/
    sovereign-map-gpu-cuda.json                 (15 KB)
 ✅ GPU_ACCELERATION_GUIDE.md                   (12 KB)
@@ -316,7 +316,7 @@ ThreadPoolExecutor(max_workers=4)
 
 ## Verification Checklist
 
-- [x] GPU test suite created (`gpu-test-suite.py`)
+- [x] GPU test suite created (`tests/scripts/python/gpu-test-suite.py`)
 - [x] PyTorch CUDA integration verified
 - [x] CPU vs GPU benchmark tool ready
 - [x] High-density contention tests implemented
@@ -333,19 +333,19 @@ ThreadPoolExecutor(max_workers=4)
 
 ### 1. **One-Command Full Test**
 ```bash
-python gpu-test-suite.py --all --nodes 20 --json results.json
+python tests/scripts/python/gpu-test-suite.py --all --nodes 20 --json results.json
 ```
 
 ### 2. **Individual Tests**
 ```bash
 # CPU vs GPU only
-python gpu-test-suite.py --benchmark
+python tests/scripts/python/gpu-test-suite.py --benchmark
 
 # 20-node contention only
-python gpu-test-suite.py --contention --nodes 20
+python tests/scripts/python/gpu-test-suite.py --contention --nodes 20
 
 # Round latency only
-python gpu-test-suite.py --round-latency --nodes 20
+python tests/scripts/python/gpu-test-suite.py --round-latency --nodes 20
 ```
 
 ### 3. **With Grafana Monitoring**
@@ -354,7 +354,7 @@ python gpu-test-suite.py --round-latency --nodes 20
 docker compose -f docker-compose.production.yml up -d
 
 # Terminal 2: Run tests
-python gpu-test-suite.py --all --json results.json
+python tests/scripts/python/gpu-test-suite.py --all --json results.json
 
 # Terminal 3: Watch dashboard
 open http://localhost:3001
@@ -386,7 +386,7 @@ docker logs -f sovereignmap-backend
 
 ```
 Add GPU/CUDA acceleration testing infrastructure:
-- gpu-test-suite.py with CPU vs GPU benchmarks
+- tests/scripts/python/gpu-test-suite.py with CPU vs GPU benchmarks
 - GPU contention tests with 20+ nodes
 - FL round latency measurement
 - GPU Grafana dashboard
@@ -436,7 +436,7 @@ Add GPU/CUDA acceleration testing infrastructure:
 
 **Ready to run GPU acceleration tests immediately.**
 
-Start with: `python gpu-test-suite.py --all --json results.json`
+Start with: `python tests/scripts/python/gpu-test-suite.py --all --json results.json`
 
 ---
 

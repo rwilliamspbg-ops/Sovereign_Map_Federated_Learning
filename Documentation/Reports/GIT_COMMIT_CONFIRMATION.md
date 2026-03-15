@@ -35,7 +35,7 @@ Deliverables:
 - Test results archive: 17 files (50 KB)
 - Closeout documentation: 8 reports (96 KB)
 - Interactive dashboard: RESULTS_DASHBOARD.html
-- Cleanup script: cleanup-testing.ps1
+- Cleanup script: tests/scripts/powershell/cleanup-testing.ps1
 - 8 new scripts and tools
 
 Production Status: APPROVED FOR DEPLOYMENT
@@ -58,7 +58,7 @@ Assisted-By: Gordon
 8. ✅ GRAFANA_READY.txt (existing, updated)
 
 ### Scripts & Tools (8 files)
-1. ✅ cleanup-testing.ps1 (7.8 KB) - Automated cleanup
+1. ✅ tests/scripts/powershell/cleanup-testing.ps1 (7.8 KB) - Automated cleanup
 2. ✅ simulate-demo.py (18.7 KB) - Demo simulator
 3. ✅ generate-demo-report.py (8.7 KB) - Report generator
 4. ✅ analyze-demo-results.py (4.6 KB) - Results analyzer
@@ -218,7 +218,7 @@ Root directory:
   - TESTING_PHASE_CLOSEOUT.md
   - TESTING_CLOSEOUT_FINAL.md
   - TESTING_COMPLETION_INDEX.md
-  - cleanup-testing.ps1
+  - tests/scripts/powershell/cleanup-testing.ps1
   - simulate-demo.py
   - [and 11 more files]
 

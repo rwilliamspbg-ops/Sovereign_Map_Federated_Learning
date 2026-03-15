@@ -34,7 +34,7 @@
 - ✅ 8 comprehensive closeout documents (96 KB)
 - ✅ Test results archive (17 files, 50 KB)
 - ✅ Interactive dashboard (RESULTS_DASHBOARD.html)
-- ✅ Cleanup script (cleanup-testing.ps1)
+- ✅ Cleanup script (tests/scripts/powershell/cleanup-testing.ps1)
 - ✅ All guides and references
 
 ---
@@ -89,7 +89,7 @@
 
 ### Support Files (1 file)
 
-**cleanup-testing.ps1** (7.8 KB)
+**tests/scripts/powershell/cleanup-testing.ps1** (7.8 KB)
 - Automated cleanup script
 - Multiple cleanup levels (selective, full, archive)
 - Dry-run capability
@@ -144,22 +144,22 @@ Key files:
 
 **Quick (2 min - keeps monitoring):**
 ```powershell
-.\cleanup-testing.ps1 -CleanupLevel selective
+.\tests/scripts/powershell/cleanup-testing.ps1 -CleanupLevel selective
 ```
 
 **Full (5 min - complete cleanup):**
 ```powershell
-.\cleanup-testing.ps1 -CleanupLevel full
+.\tests/scripts/powershell/cleanup-testing.ps1 -CleanupLevel full
 ```
 
 **Archive + Clean (10 min - saves data first):**
 ```powershell
-.\cleanup-testing.ps1 -CleanupLevel archive
+.\tests/scripts/powershell/cleanup-testing.ps1 -CleanupLevel archive
 ```
 
 **Preview Only (no changes):**
 ```powershell
-.\cleanup-testing.ps1 -DryRun -Force
+.\tests/scripts/powershell/cleanup-testing.ps1 -DryRun -Force
 ```
 
 ---

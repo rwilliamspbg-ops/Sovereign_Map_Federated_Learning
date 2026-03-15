@@ -80,7 +80,7 @@
    - Status report
 
 ### Scripts & Tools (8 files)
-1. **cleanup-testing.ps1** (7.8 KB)
+1. **tests/scripts/powershell/cleanup-testing.ps1** (7.8 KB)
    - Automated cleanup script
    - 4 cleanup levels
    - Dry-run capability
@@ -281,7 +281,7 @@ Latest: daeae98
 ### Key Files Location
 **Root Directory:**
 - TESTING_PHASE_CLOSEOUT.md
-- cleanup-testing.ps1
+- tests/scripts/powershell/cleanup-testing.ps1
 - simulate-demo.py
 - [and 13 more files]
 

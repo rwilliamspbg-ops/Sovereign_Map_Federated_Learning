@@ -122,13 +122,13 @@ Consistent performance across ALL test scenarios:
 ## 📁 Artifacts Created (9 Files)
 
 ### Test Framework Scripts (2 Files)
-1. **kubernetes-5000-node-test.py** (18.7 KB)
+1. **tests/scripts/python/kubernetes-5000-node-test.py** (18.7 KB)
    - Kubernetes orchestration using kubectl
    - Dynamic StatefulSet deployment
    - Real aggregator service
    - Namespace management
 
-2. **k8s-5000-node-local-test.py** (19.5 KB)
+2. **tests/scripts/python/k8s-5000-node-local-test.py** (19.5 KB)
    - Complete 4-scenario test framework
    - Local simulator (Kubernetes-ready)
    - Comprehensive metrics collection

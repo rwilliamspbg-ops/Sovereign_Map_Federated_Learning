@@ -14,9 +14,9 @@
     archive  - Archive first, then clean
 
 .EXAMPLE
-    .\cleanup-testing.ps1 -CleanupLevel full
-    .\cleanup-testing.ps1 -CleanupLevel selective
-    .\cleanup-testing.ps1 -CleanupLevel archive
+    .\tests/scripts/powershell/cleanup-testing.ps1 -CleanupLevel full
+    .\tests/scripts/powershell/cleanup-testing.ps1 -CleanupLevel selective
+    .\tests/scripts/powershell/cleanup-testing.ps1 -CleanupLevel archive
 #>
 
 param(

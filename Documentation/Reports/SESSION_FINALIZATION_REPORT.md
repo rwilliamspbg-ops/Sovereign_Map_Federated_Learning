@@ -41,14 +41,14 @@
 
 ### Test Suites Created
 
-**1. GPU Acceleration Suite (`gpu-test-suite.py`)**
+**1. GPU Acceleration Suite (`tests/scripts/python/gpu-test-suite.py`)**
 - CPU baseline benchmark
 - GPU contention tests (parallel threading)
 - FL round latency measurement
 - Multi-node scaling tests
 - JSON result export
 
-**2. NPU/GPU/CPU Multi-Device Suite (`npu-gpu-cpu-benchmark.py`)**
+**2. NPU/GPU/CPU Multi-Device Suite (`tests/scripts/python/npu-gpu-cpu-benchmark.py`)**
 - Automatic device detection (NPU, GPU, CPU)
 - Priority-based device selection
 - Performance comparison across devices
@@ -101,14 +101,14 @@ CPU Baseline:           ✅ 0.764s/epoch, 1,047 samples/sec
 ### Test Artifacts Generated
 
 **JSON Results (8 files):**
-- gpu-benchmark-baseline.json
+- test-results/benchmarks/gpu-benchmark-baseline.json
 - gpu-contention-{5,10,20,30}nodes.json
 - gpu-round-{5,10,20}nodes.json
-- npu-gpu-cpu-comparison.json
+- test-results/benchmarks/npu-gpu-cpu-comparison.json
 
 **Analysis Scripts:**
 - analyze-gpu-results.py
-- npu-gpu-cpu-benchmark.py
+- tests/scripts/python/npu-gpu-cpu-benchmark.py
 
 ---
 
@@ -217,8 +217,8 @@ a5b8ad6 - GPU validation complete: 8 tests across 5-30 nodes
 ```
 
 **Files Added This Session:**
-- gpu-test-suite.py (19.4 KB)
-- npu-gpu-cpu-benchmark.py (19.4 KB)
+- tests/scripts/python/gpu-test-suite.py (19.4 KB)
+- tests/scripts/python/npu-gpu-cpu-benchmark.py (19.4 KB)
 - GPU_ACCELERATION_GUIDE.md (12 KB)
 - GPU_TESTING_COMPLETE.md (11 KB)
 - GPU_TESTING_RESULTS_REPORT.md (7.6 KB)
@@ -265,10 +265,10 @@ a5b8ad6 - GPU validation complete: 8 tests across 5-30 nodes
 
 ### Temporary Files (Test Results)
 Located in: `Sovereign_Map_Federated_Learning/`
-- gpu-benchmark-baseline.json
+- test-results/benchmarks/gpu-benchmark-baseline.json
 - gpu-contention-*.json (4 files)
 - gpu-round-*.json (3 files)
-- npu-gpu-cpu-comparison.json
+- test-results/benchmarks/npu-gpu-cpu-comparison.json
 
 **Status:** Kept for reference (8 MB total, not committed to git)
 
@@ -442,10 +442,10 @@ Status: ✅ All code committed
 cd Sovereign_Map_Federated_Learning
 
 # Run GPU benchmarks
-python gpu-test-suite.py --all --nodes 30 --json results.json
+python tests/scripts/python/gpu-test-suite.py --all --nodes 30 --json results.json
 
 # Compare devices
-python npu-gpu-cpu-benchmark.py --compare-devices
+python tests/scripts/python/npu-gpu-cpu-benchmark.py --compare-devices
 
 # View Grafana
 docker compose -f docker-compose.production.yml up -d

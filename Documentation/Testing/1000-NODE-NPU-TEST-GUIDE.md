@@ -16,13 +16,13 @@ Complete automated test suite for validating NPU effectiveness across 1000 feder
 ### 1. Start the Test (Linux/Mac)
 ```bash
 cd Sovereign_Map_Federated_Learning
-bash run-1000-node-npu-test.sh
+bash tests/scripts/bash/run-1000-node-npu-test.sh
 ```
 
 ### 2. Start the Test (Windows)
 ```powershell
 cd Sovereign_Map_Federated_Learning
-powershell -ExecutionPolicy Bypass -File run-1000-node-npu-test.sh
+powershell -ExecutionPolicy Bypass -File tests/scripts/bash/run-1000-node-npu-test.sh
 ```
 
 ## Test Phases
@@ -300,7 +300,7 @@ node-agent:
 ```
 
 ### Extended Test Duration
-Edit `run-1000-node-npu-test.sh`:
+Edit `tests/scripts/bash/run-1000-node-npu-test.sh`:
 ```bash
 NUM_ROUNDS=100  # Increase consensus rounds
 ```

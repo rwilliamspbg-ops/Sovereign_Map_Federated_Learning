@@ -334,7 +334,7 @@ StatefulSet deployment, headless services, and pod ordinal-based Byzantine assig
 ### Documentation
 - `KUBERNETES_5000_NODE_REPORT.md` - This comprehensive report
 - `kubernetes-5000-node-manifests.yaml` - Production-ready K8s manifests
-- `k8s-5000-node-local-test.py` - Test framework (23 KB)
+- `tests/scripts/python/k8s-5000-node-local-test.py` - Test framework (23 KB)
 - `generate-k8s-5000-node-plots.py` - Visualization generator (18 KB)
 
 ---

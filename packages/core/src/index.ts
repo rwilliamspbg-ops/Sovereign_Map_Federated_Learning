@@ -57,7 +57,7 @@ export {
 
 // Constants
 export const SDK_VERSION = '0.1.0-alpha.1';
-export const PROTOCOL_VERSION = '0.2.0';
+export const PROTOCOL_VERSION = '1.0.0';
 export const SGP001_VERSION = '1.0.0';
 export const MIN_NODE_VERSION = '18.0.0';
 

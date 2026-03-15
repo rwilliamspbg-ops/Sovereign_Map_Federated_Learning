@@ -56,27 +56,27 @@ This document categorizes test-related files discovered in the repository and po
 
 These are actively used top-level scripts and scenario drivers.
 
-- `byzantine-stress-test-suite.py`
-- `gpu-test-suite.py`
-- `k8s-5000-node-local-test.py`
-- `kubernetes-5000-node-test.py`
-- `run-1000-node-npu-test.sh`
-- `run-1000-node-npu-test.ps1`
-- `run-test.sh`
-- `run-test.ps1`
-- `run-test-python.py`
-- `run-full-test.ps1`
-- `run-5000-round-test.ps1`
-- `test-dashboard.sh`
-- `test-incremental-scale.sh`
-- `setup-200node-test.sh`
-- `commit-test-results.sh`
-- `continuous-load-test.ps1`
+- `tests/scripts/python/byzantine-stress-test-suite.py`
+- `tests/scripts/python/gpu-test-suite.py`
+- `tests/scripts/python/k8s-5000-node-local-test.py`
+- `tests/scripts/python/kubernetes-5000-node-test.py`
+- `tests/scripts/bash/run-1000-node-npu-test.sh`
+- `tests/scripts/powershell/run-1000-node-npu-test.ps1`
+- `tests/scripts/bash/run-test.sh`
+- `tests/scripts/powershell/run-test.ps1`
+- `tests/scripts/python/run-test-python.py`
+- `tests/scripts/powershell/run-full-test.ps1`
+- `tests/scripts/powershell/run-5000-round-test.ps1`
+- `tests/scripts/bash/test-dashboard.sh`
+- `tests/scripts/bash/test-incremental-scale.sh`
+- `tests/scripts/bash/setup-200node-test.sh`
+- `tests/scripts/bash/commit-test-results.sh`
+- `tests/scripts/powershell/continuous-load-test.ps1`
 - `phase-4-execute-test.sh`
 
 ## 4. Test Analysis and Plot Generation
 
-- `generate-byzantine-test-suite-plots.py`
+- `tests/scripts/python/generate-byzantine-test-suite-plots.py`
 - `scripts/generate-npu-test-plots.py`
 
 ## 5. Archived Legacy Test Assets

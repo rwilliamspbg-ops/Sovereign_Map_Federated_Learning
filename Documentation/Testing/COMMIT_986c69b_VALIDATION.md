@@ -21,8 +21,8 @@ The following test/result/documentation assets are visible in the commit payload
   - `SESSION_KUBERNETES_5000_NODE_COMPLETE.md`
 - Test/plot generation scripts
   - `generate-k8s-5000-node-plots.py`
-  - `k8s-5000-node-local-test.py`
-  - `kubernetes-5000-node-test.py`
+  - `tests/scripts/python/k8s-5000-node-local-test.py`
+  - `tests/scripts/python/kubernetes-5000-node-test.py`
   - `kubernetes-5000-node-manifests.yaml`
 - Result JSON
   - `test-results/kubernetes-5000-node/k8s-5000-node-20260303-052718.json`

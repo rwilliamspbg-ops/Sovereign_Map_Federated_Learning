@@ -19,14 +19,28 @@ package tpm
 
 import (
 	"fmt"
+
+	"github.com/rwilliamspbg-ops/Sovereign_Map_Federated_Learning/internal/hva"
 )
 
 // VerifyShardIntegrity ensures that a regional shard has enough participants
-// to meet the local f < n/2 requirement.
+// to meet Mohawk's 55.5% honest-node threshold.
 func VerifyShardIntegrity(participants int, faultyNodes int) error {
-	// Active Guard: Enforce Theorem 1 safety threshold at the shard level.
-	if participants <= 2*faultyNodes {
-		return fmt.Errorf("shard security failure: f=%d requires n > %d (violated Theorem 1)", faultyNodes, 2*faultyNodes)
+	if participants <= 0 {
+		return fmt.Errorf("participants must be positive")
+	}
+	if faultyNodes < 0 || faultyNodes > participants {
+		return fmt.Errorf("faulty node count out of range")
+	}
+
+	honestNodes := participants - faultyNodes
+	minimumHonest := hva.MinimumHonestNodes(participants)
+	if honestNodes < minimumHonest {
+		return fmt.Errorf(
+			"shard security failure: honest=%d requires >= %d to satisfy the 55.5%% Theorem 1 boundary",
+			honestNodes,
+			minimumHonest,
+		)
 	}
 	return nil
 }

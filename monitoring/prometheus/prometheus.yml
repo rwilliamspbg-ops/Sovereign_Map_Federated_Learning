@@ -32,6 +32,14 @@ scrape_configs:
     scrape_interval: 10s
     scrape_timeout: 5s
 
+  # Node agent API proof/ledger metrics
+  - job_name: 'node-agent-api'
+    static_configs:
+      - targets: ['node-agent:8082']
+    metrics_path: '/metrics'
+    scrape_interval: 10s
+    scrape_timeout: 5s
+
   # Backend API metrics
   - job_name: 'backend'
     static_configs:

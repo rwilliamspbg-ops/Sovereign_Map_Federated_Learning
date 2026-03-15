@@ -12,6 +12,7 @@
 - [Documentation/Security/DISABLE_DEFAULT_CODEQL.md](./Security/DISABLE_DEFAULT_CODEQL.md)
 - [Documentation/Security/LINT_SECURITY_FIXES.md](./Security/LINT_SECURITY_FIXES.md)
 - [Documentation/Security/SECURITY_AUDIT_2026-02-28.md](./Security/SECURITY_AUDIT_2026-02-28.md)
+- [Documentation/Security/API_AUTH_TOKEN_ROTATION_RUNBOOK.md](./Security/API_AUTH_TOKEN_ROTATION_RUNBOOK.md)
 - [Documentation/Security/TPM_MONITORING_GUIDE.md](./Security/TPM_MONITORING_GUIDE.md)
 - [Documentation/Security/TPM_TESTNET_READY.md](./Security/TPM_TESTNET_READY.md)
 - [Documentation/Security/TPM_TRUST_GUIDE.md](./Security/TPM_TRUST_GUIDE.md)

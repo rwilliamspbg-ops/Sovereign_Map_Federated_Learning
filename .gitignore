@@ -447,6 +447,8 @@ checkpoints/
 data/
 *.csv
 *.json
+!capabilities.json
+!bridge-policies.json
 !package-lock.json
 !**/package-lock.json
 !fixtures/

@@ -287,7 +287,7 @@ cat test-results/200-node-bft/*/TEST-REPORT.md
 
 4. **Integrate with GPU testing:**
    ```bash
-   python gpu-test-suite.py --all
+   python tests/scripts/python/gpu-test-suite.py --all
    ```
 
 ---

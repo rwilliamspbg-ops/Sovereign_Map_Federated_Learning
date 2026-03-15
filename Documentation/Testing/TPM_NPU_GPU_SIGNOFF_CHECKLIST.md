@@ -76,9 +76,9 @@ pytest -q tests/hil/test_npu_device_selection.py
 Commands:
 
 ```bash
-python gpu-test-suite.py --benchmark
-python gpu-test-suite.py --contention --nodes 20
-python gpu-test-suite.py --round-latency --nodes 20
+python tests/scripts/python/gpu-test-suite.py --benchmark
+python tests/scripts/python/gpu-test-suite.py --contention --nodes 20
+python tests/scripts/python/gpu-test-suite.py --round-latency --nodes 20
 python analyze-gpu-results.py
 ```
 
@@ -97,8 +97,8 @@ python analyze-gpu-results.py
 Commands:
 
 ```bash
-python byzantine-stress-test-suite.py --threshold-ratios 70,75,80,85,90,95,99
-python generate-byzantine-test-suite-plots.py
+python tests/scripts/python/byzantine-stress-test-suite.py --threshold-ratios 70,75,80,85,90,95,99
+python tests/scripts/python/generate-byzantine-test-suite-plots.py
 ```
 
 ---

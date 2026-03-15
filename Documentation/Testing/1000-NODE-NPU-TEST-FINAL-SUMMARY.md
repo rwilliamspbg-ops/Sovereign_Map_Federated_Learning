@@ -53,7 +53,7 @@ A comprehensive 1000-node federated learning test demonstrating NPU (Neural Proc
 ### Supporting Artifacts
 - `docker-compose.1000nodes.yml` (8,271 lines)
 - `run-1000-node-npu-test.py` (17,074 lines, Windows/Linux compatible)
-- `run-1000-node-npu-test.sh` (22,751 lines, bash version)
+- `tests/scripts/bash/run-1000-node-npu-test.sh` (22,751 lines, bash version)
 - `scripts/generate-npu-test-plots.py` (13,819 lines, matplotlib visualizations)
 - `1000-NODE-NPU-TEST-GUIDE.md` (9,140 lines, complete documentation)
 

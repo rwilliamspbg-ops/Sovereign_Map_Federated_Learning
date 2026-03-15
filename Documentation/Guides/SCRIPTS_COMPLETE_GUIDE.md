@@ -438,8 +438,8 @@ Solution: Check environment variables, mount paths
 ## Integration with GPU/NPU Testing
 
 These scripts can be enhanced with:
-- `gpu-test-suite.py` - GPU acceleration benchmarks
-- `npu-gpu-cpu-benchmark.py` - Multi-device comparison
+- `tests/scripts/python/gpu-test-suite.py` - GPU acceleration benchmarks
+- `tests/scripts/python/npu-gpu-cpu-benchmark.py` - Multi-device comparison
 - GPU monitoring dashboards in Grafana
 
 ---

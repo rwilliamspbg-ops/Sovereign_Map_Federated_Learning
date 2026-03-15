@@ -72,8 +72,8 @@ echo ""
 # Stage test results
 echo "📂 Staging test results..."
 git add "$LATEST_TEST"
-git add test-config.env
-git add test-incremental-scale.sh
+git add tests/scripts/config/test-config.env
+git add tests/scripts/bash/test-incremental-scale.sh
 
 # Show staged files
 echo ""

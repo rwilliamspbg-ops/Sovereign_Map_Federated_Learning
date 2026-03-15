@@ -17,9 +17,12 @@ package main
 import (
 	"context"
 	"log"
+	"net/http"
 	"os"
 	"time"
 
+	"github.com/prometheus/client_golang/prometheus/promhttp"
+	"github.com/rwilliamspbg-ops/Sovereign_Map_Federated_Learning/internal/api"
 	"github.com/rwilliamspbg-ops/Sovereign_Map_Federated_Learning/internal/wasmhost"
 )
 
@@ -76,5 +79,18 @@ func main() {
 		log.Printf("Theorem 5 Verification Status: %v", success)
 	}
 
-	log.Println("Node Agent operational. Awaiting regional synchronization...")
+	handler := api.NewHandler(nil, nil, nil, nil)
+	mux := http.NewServeMux()
+	mux.Handle("/metrics", promhttp.Handler())
+	handler.RegisterRoutes(mux)
+
+	listenAddr := os.Getenv("MOHAWK_API_LISTEN")
+	if listenAddr == "" {
+		listenAddr = ":8082"
+	}
+
+	log.Printf("Node Agent API listening on %s", listenAddr)
+	if err := http.ListenAndServe(listenAddr, mux); err != nil {
+		log.Fatalf("API server failed: %v", err)
+	}
 }

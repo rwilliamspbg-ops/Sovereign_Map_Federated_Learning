@@ -3,15 +3,37 @@
 package api
 
 import (
+	"crypto/subtle"
+	"encoding/base64"
+	"encoding/hex"
 	"encoding/json"
+	"fmt"
 	"net/http"
+	"os"
+	"strings"
 	"time"
 
+	internalproof "github.com/rwilliamspbg-ops/Sovereign_Map_Federated_Learning/internal"
 	"github.com/rwilliamspbg-ops/Sovereign_Map_Federated_Learning/internal/convergence"
+	"github.com/rwilliamspbg-ops/Sovereign_Map_Federated_Learning/internal/hybrid"
 	"github.com/rwilliamspbg-ops/Sovereign_Map_Federated_Learning/internal/island"
 	"github.com/rwilliamspbg-ops/Sovereign_Map_Federated_Learning/internal/monitoring"
 	"github.com/rwilliamspbg-ops/Sovereign_Map_Federated_Learning/internal/p2p"
 )
+
+type proofVerifyRequest struct {
+	Proof       string `json:"proof"`
+	Encoding    string `json:"encoding,omitempty"`
+	PublicInput string `json:"public_input,omitempty"`
+}
+
+type hybridVerifyRequest struct {
+	Mode         string `json:"mode,omitempty"`
+	STARKBackend string `json:"stark_backend,omitempty"`
+	SNARKProof   string `json:"snark_proof"`
+	STARKProof   string `json:"stark_proof"`
+	Encoding     string `json:"encoding,omitempty"`
+}
 
 // Handler provides HTTP endpoints for the federated learning system
 type Handler struct {
@@ -19,6 +41,7 @@ type Handler struct {
 	island      *island.Manager
 	metrics     *monitoring.Collector
 	p2pNetwork  *p2p.Network
+	ledger      *ProofLedger
 }
 
 func writeJSON(w http.ResponseWriter, payload interface{}) {
@@ -42,6 +65,159 @@ func ensureGetMethod(w http.ResponseWriter, r *http.Request) bool {
 	return true
 }
 
+func ensurePostMethod(w http.ResponseWriter, r *http.Request) bool {
+	if r.Method != http.MethodPost {
+		methodNotAllowed(w)
+		return false
+	}
+	return true
+}
+
+func decodePayload(payload string, encoding string) ([]byte, error) {
+	trimmed := strings.TrimSpace(payload)
+	if trimmed == "" {
+		return nil, fmt.Errorf("payload is required")
+	}
+
+	enc := strings.ToLower(strings.TrimSpace(encoding))
+	if enc == "" {
+		if strings.HasPrefix(trimmed, "0x") {
+			enc = "hex"
+		} else {
+			enc = "base64"
+		}
+	}
+
+	switch enc {
+	case "hex":
+		hexPayload := strings.TrimPrefix(trimmed, "0x")
+		data, err := hex.DecodeString(hexPayload)
+		if err != nil {
+			return nil, fmt.Errorf("invalid hex payload")
+		}
+		return data, nil
+	case "base64":
+		data, err := base64.StdEncoding.DecodeString(trimmed)
+		if err == nil {
+			return data, nil
+		}
+		data, err = base64.URLEncoding.DecodeString(trimmed)
+		if err == nil {
+			return data, nil
+		}
+		return nil, fmt.Errorf("invalid base64 payload")
+	case "raw":
+		return []byte(trimmed), nil
+	default:
+		return nil, fmt.Errorf("unsupported encoding: %s", enc)
+	}
+}
+
+func boolEnv(name string, defaultValue bool) bool {
+	raw := strings.ToLower(strings.TrimSpace(os.Getenv(name)))
+	if raw == "" {
+		return defaultValue
+	}
+	switch raw {
+	case "1", "true", "yes", "on":
+		return true
+	case "0", "false", "no", "off":
+		return false
+	default:
+		return defaultValue
+	}
+}
+
+func parseRoleList(raw string) map[string]struct{} {
+	roles := map[string]struct{}{}
+	for _, part := range strings.Split(raw, ",") {
+		role := strings.ToLower(strings.TrimSpace(part))
+		if role == "" {
+			continue
+		}
+		roles[role] = struct{}{}
+	}
+	return roles
+}
+
+func extractRequestToken(r *http.Request) string {
+	authHeader := strings.TrimSpace(r.Header.Get("Authorization"))
+	if strings.HasPrefix(strings.ToLower(authHeader), "bearer ") {
+		return strings.TrimSpace(authHeader[len("Bearer "):])
+	}
+	return strings.TrimSpace(r.Header.Get("X-API-Token"))
+}
+
+func loadExpectedToken() (string, error) {
+	tokenFile := strings.TrimSpace(os.Getenv("MOHAWK_API_TOKEN_FILE"))
+	if tokenFile == "" {
+		tokenFile = "/run/secrets/mohawk_api_token"
+	}
+
+	raw, err := os.ReadFile(tokenFile)
+	if err != nil {
+		return "", fmt.Errorf("failed to read token file: %w", err)
+	}
+	token := strings.TrimSpace(string(raw))
+	if token == "" {
+		return "", fmt.Errorf("token file is empty")
+	}
+	return token, nil
+}
+
+func requireProofAuth(w http.ResponseWriter, r *http.Request) bool {
+	authMode := strings.ToLower(strings.TrimSpace(os.Getenv("MOHAWK_API_AUTH_MODE")))
+	if authMode == "" {
+		authMode = "file-only"
+	}
+
+	if authMode == "off" || authMode == "disabled" || authMode == "none" {
+		return true
+	}
+
+	expectedToken, err := loadExpectedToken()
+	if err != nil {
+		http.Error(w, "auth configuration error", http.StatusInternalServerError)
+		return false
+	}
+
+	receivedToken := extractRequestToken(r)
+	if receivedToken == "" {
+		http.Error(w, "missing api token", http.StatusUnauthorized)
+		return false
+	}
+
+	if subtle.ConstantTimeCompare([]byte(expectedToken), []byte(receivedToken)) != 1 {
+		http.Error(w, "invalid api token", http.StatusUnauthorized)
+		return false
+	}
+
+	if !boolEnv("MOHAWK_API_ENFORCE_ROLES", true) {
+		return true
+	}
+
+	allowedRolesRaw := strings.TrimSpace(os.Getenv("MOHAWK_API_PROOF_ALLOWED_ROLES"))
+	if allowedRolesRaw == "" {
+		allowedRolesRaw = strings.TrimSpace(os.Getenv("MOHAWK_API_HYBRID_ALLOWED_ROLES"))
+	}
+	if allowedRolesRaw == "" {
+		allowedRolesRaw = "verifier,admin"
+	}
+
+	allowedRoles := parseRoleList(allowedRolesRaw)
+	requestRole := strings.ToLower(strings.TrimSpace(r.Header.Get("X-API-Role")))
+	if requestRole == "" {
+		http.Error(w, "missing api role", http.StatusForbidden)
+		return false
+	}
+	if _, ok := allowedRoles[requestRole]; !ok {
+		http.Error(w, "role not allowed", http.StatusForbidden)
+		return false
+	}
+
+	return true
+}
+
 // NewHandler creates a new API handler with integrated backends
 func NewHandler(detector *convergence.Detector, islandMgr *island.Manager, collector *monitoring.Collector, network *p2p.Network) *Handler {
 	return &Handler{
@@ -49,6 +225,7 @@ func NewHandler(detector *convergence.Detector, islandMgr *island.Manager, colle
 		island:      islandMgr,
 		metrics:     collector,
 		p2pNetwork:  network,
+		ledger:      NewProofLedger(0),
 	}
 }
 
@@ -73,6 +250,14 @@ func (h *Handler) RegisterRoutes(mux *http.ServeMux) {
 	mux.HandleFunc("/api/v1/peers", h.GetPeers)
 	mux.HandleFunc("/api/v1/network_status", h.GetNetworkStatus)
 	mux.HandleFunc("/api/v1/trust_status", h.GetTrustStatus)
+	mux.HandleFunc("/api/proof/verify", h.VerifyProof)
+	mux.HandleFunc("/api/v1/proof/verify", h.VerifyProof)
+	mux.HandleFunc("/api/proof/hybrid/verify", h.VerifyHybridProof)
+	mux.HandleFunc("/api/v1/proof/hybrid/verify", h.VerifyHybridProof)
+	mux.HandleFunc("/api/capabilities", h.GetCapabilities)
+	mux.HandleFunc("/api/v1/capabilities", h.GetCapabilities)
+	mux.HandleFunc("/api/ledger", h.GetLedger)
+	mux.HandleFunc("/api/v1/ledger", h.GetLedger)
 }
 
 // HealthCheck returns basic health status
@@ -286,6 +471,205 @@ func (h *Handler) GetTrustStatus(w http.ResponseWriter, r *http.Request) {
 		response["total_peers"] = len(peers)
 		response["active_peers"] = activePeers
 		response["average_reputation"] = avgReputation
+	}
+
+	writeJSON(w, response)
+}
+
+func (h *Handler) VerifyProof(w http.ResponseWriter, r *http.Request) {
+	if !ensurePostMethod(w, r) {
+		return
+	}
+	if !requireProofAuth(w, r) {
+		return
+	}
+
+	var req proofVerifyRequest
+	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+		http.Error(w, "invalid request body", http.StatusBadRequest)
+		return
+	}
+
+	proofBytes, err := decodePayload(req.Proof, req.Encoding)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusBadRequest)
+		return
+	}
+
+	inputBytes := []byte(req.PublicInput)
+	started := time.Now()
+	ok, verifyErr := internalproof.VerifyProof(proofBytes, inputBytes)
+	latencyDur := time.Since(started)
+	latency := latencyDur.Milliseconds()
+	observeProofVerification("snark", "groth16_bn254", ok, latencyDur)
+
+	role := strings.ToLower(strings.TrimSpace(r.Header.Get("X-API-Role")))
+	h.ledger.Record("snark_verify", proofBytes, role, ok, latency, verifyErr)
+	observeLedgerEvent("snark_verify", h.ledger.Len())
+
+	response := map[string]interface{}{
+		"valid":      ok,
+		"latency_ms": latency,
+	}
+	if verifyErr != nil {
+		response["error"] = verifyErr.Error()
+	}
+
+	writeJSON(w, response)
+}
+
+func (h *Handler) VerifyHybridProof(w http.ResponseWriter, r *http.Request) {
+	if !ensurePostMethod(w, r) {
+		return
+	}
+	if !requireProofAuth(w, r) {
+		return
+	}
+
+	var req hybridVerifyRequest
+	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+		http.Error(w, "invalid request body", http.StatusBadRequest)
+		return
+	}
+
+	snarkBytes, err := decodePayload(req.SNARKProof, req.Encoding)
+	if err != nil {
+		http.Error(w, "invalid snark_proof: "+err.Error(), http.StatusBadRequest)
+		return
+	}
+
+	starkBytes, err := decodePayload(req.STARKProof, req.Encoding)
+	if err != nil {
+		http.Error(w, "invalid stark_proof: "+err.Error(), http.StatusBadRequest)
+		return
+	}
+
+	mode := hybrid.HybridMode(req.Mode)
+	if mode == "" {
+		mode = hybrid.ModePreferSNARK
+	}
+
+	started := time.Now()
+	result, verifyErr := hybrid.VerifyHybrid(hybrid.VerifyRequest{
+		Mode:         mode,
+		SNARKProof:   snarkBytes,
+		STARKProof:   starkBytes,
+		STARKBackend: req.STARKBackend,
+	})
+	latencyDur := time.Since(started)
+
+	combinedProof := append(snarkBytes, starkBytes...)
+	hyRole := strings.ToLower(strings.TrimSpace(r.Header.Get("X-API-Role")))
+	h.ledger.Record("hybrid_verify", combinedProof, hyRole, result.Accepted, latencyDur.Milliseconds(), verifyErr)
+	observeProofVerification("hybrid", result.STARKBackend, result.Accepted, latencyDur)
+	observeLedgerEvent("hybrid_verify", h.ledger.Len())
+
+	response := map[string]interface{}{
+		"accepted": result.Accepted,
+		"policy":   result.Policy,
+		"snark":    result.SNARKValid,
+		"stark":    result.STARKValid,
+		"backend":  result.STARKBackend,
+	}
+	if verifyErr != nil {
+		response["error"] = verifyErr.Error()
+	}
+
+	writeJSON(w, response)
+}
+
+// GetLedger returns the proof verification ledger (auth-gated).
+func (h *Handler) GetLedger(w http.ResponseWriter, r *http.Request) {
+	if !ensureGetMethod(w, r) {
+		return
+	}
+	if !requireProofAuth(w, r) {
+		return
+	}
+
+	entries := h.ledger.Entries()
+	writeJSON(w, map[string]interface{}{
+		"count":   len(entries),
+		"entries": entries,
+	})
+}
+
+func (h *Handler) GetCapabilities(w http.ResponseWriter, r *http.Request) {
+	if !ensureGetMethod(w, r) {
+		return
+	}
+
+	capPath := os.Getenv("MOHAWK_CAPABILITIES_PATH")
+	if strings.TrimSpace(capPath) == "" {
+		capPath = "capabilities.json"
+	}
+	bridgePath := os.Getenv("MOHAWK_BRIDGE_POLICIES_PATH")
+	if strings.TrimSpace(bridgePath) == "" {
+		bridgePath = "bridge-policies.json"
+	}
+
+	capabilities := map[string]interface{}{}
+	bridgePolicies := map[string]interface{}{}
+
+	if raw, err := os.ReadFile(capPath); err == nil {
+		_ = json.Unmarshal(raw, &capabilities)
+	}
+	if raw, err := os.ReadFile(bridgePath); err == nil {
+		_ = json.Unmarshal(raw, &bridgePolicies)
+	}
+
+	response := map[string]interface{}{
+		"protocol_version":  "1.0.0",
+		"stark_backends":    hybrid.AvailableSTARKBackends(),
+		"capabilities":      capabilities,
+		"bridge_policies":   bridgePolicies,
+		"capabilities_path": capPath,
+		"bridge_path":       bridgePath,
+		"api": map[string]interface{}{
+			"base_paths": []string{"/api", "/api/v1"},
+			"open_endpoints": []string{
+				"GET /health",
+				"GET /api/v1/status",
+				"GET /api/v1/capabilities",
+			},
+			"auth_protected_endpoints": []string{
+				"POST /api/v1/proof/verify",
+				"POST /api/v1/proof/hybrid/verify",
+				"GET /api/v1/ledger",
+			},
+			"proof_payload": map[string]interface{}{
+				"fields":              []string{"proof", "encoding", "public_input"},
+				"supported_encodings": []string{"base64", "hex", "raw"},
+			},
+			"hybrid_payload": map[string]interface{}{
+				"fields":              []string{"mode", "stark_backend", "snark_proof", "stark_proof", "encoding"},
+				"supported_modes":     []string{string(hybrid.ModeAny), string(hybrid.ModeBoth), string(hybrid.ModePreferSNARK)},
+				"supported_encodings": []string{"base64", "hex", "raw"},
+			},
+			"auth": map[string]interface{}{
+				"default_mode":              "file-only",
+				"disable_values":            []string{"off", "disabled", "none"},
+				"token_headers":             []string{"Authorization: Bearer <token>", "X-API-Token: <token>"},
+				"role_header":               "X-API-Role",
+				"default_token_file":        "/run/secrets/mohawk_api_token",
+				"roles_enforced_by_default": true,
+				"default_allowed_roles":     []string{"verifier", "admin"},
+			},
+		},
+		"observability": map[string]interface{}{
+			"proof_metrics": []string{
+				"mohawk_proof_verifications_total",
+				"mohawk_proof_verification_latency_seconds",
+			},
+			"ledger_metrics": []string{
+				"mohawk_ledger_events_total",
+				"mohawk_ledger_entries",
+			},
+			"ledger_state": map[string]interface{}{
+				"entries":  h.ledger.Len(),
+				"capacity": h.ledger.cap,
+			},
+		},
 	}
 
 	writeJSON(w, response)

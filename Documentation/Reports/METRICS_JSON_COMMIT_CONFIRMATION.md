@@ -25,17 +25,17 @@ To https://github.com/rwilliamspbg-ops/Sovereign_Map_Federated_Learning
 ## 📁 FILES COMMITTED (26 Total)
 
 ### GPU Benchmark Metrics (8 files)
-1. ✅ gpu-benchmark-baseline.json
-2. ✅ gpu-contention-5nodes.json
-3. ✅ gpu-contention-10nodes.json
-4. ✅ gpu-contention-20nodes.json
-5. ✅ gpu-contention-30nodes.json
-6. ✅ gpu-round-5nodes.json
-7. ✅ gpu-round-10nodes.json
-8. ✅ gpu-round-20nodes.json
+1. ✅ test-results/benchmarks/gpu-benchmark-baseline.json
+2. ✅ test-results/benchmarks/gpu-contention-5nodes.json
+3. ✅ test-results/benchmarks/gpu-contention-10nodes.json
+4. ✅ test-results/benchmarks/gpu-contention-20nodes.json
+5. ✅ test-results/benchmarks/gpu-contention-30nodes.json
+6. ✅ test-results/benchmarks/gpu-round-5nodes.json
+7. ✅ test-results/benchmarks/gpu-round-10nodes.json
+8. ✅ test-results/benchmarks/gpu-round-20nodes.json
 
 ### Comparative Performance Metrics (1 file)
-9. ✅ npu-gpu-cpu-comparison.json
+9. ✅ test-results/benchmarks/npu-gpu-cpu-comparison.json
 
 ### Test Results Metrics - Demo Simulations (6 files)
 10. ✅ test-results/demo-simulated/20260302-071637/metrics-full.json
@@ -254,14 +254,14 @@ daeae98  Testing Phase Completion & Results
 ### Key Files Location
 **Root (Documentation & Scripts):**
 - TESTING_PHASE_CLOSEOUT.md
-- cleanup-testing.ps1
+- tests/scripts/powershell/cleanup-testing.ps1
 - 14+ other files
 
 **Metrics (Root Level):**
-- gpu-benchmark-baseline.json
+- test-results/benchmarks/gpu-benchmark-baseline.json
 - gpu-contention-*.json
 - gpu-round-*.json
-- npu-gpu-cpu-comparison.json
+- test-results/benchmarks/npu-gpu-cpu-comparison.json
 
 **Test Results:**
 - test-results/demo-simulated/*/metrics-full.json

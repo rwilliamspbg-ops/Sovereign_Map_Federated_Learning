@@ -239,7 +239,7 @@ The Sovereign Map 1000-node federated learning system has successfully completed
    ```
 
 ### Recommended Cleanup Level
-- **Cleanup Script:** `cleanup-testing.ps1`
+- **Cleanup Script:** `tests/scripts/powershell/cleanup-testing.ps1`
 - **Default Level:** `selective` (keeps monitoring)
 - **Production Ready:** `full` (complete cleanup)
 

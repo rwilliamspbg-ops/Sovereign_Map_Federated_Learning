@@ -159,34 +159,48 @@ func (sc *SecureChannel) VerifySignature(peerID string, data, signature []byte) 
 	return nil
 }
 
-// establishSessionKey creates a shared session key using ECDH
-func (sc *SecureChannel) establishSessionKey(peerID string) ([]byte, error) {
-	sc.mu.Lock()
-	defer sc.mu.Unlock()
-
+// establishSessionKeyLocked creates a shared session key using ECDH.
+// Caller MUST hold sc.mu write-lock.
+func (sc *SecureChannel) establishSessionKeyLocked(peerID string) ([]byte, error) {
 	peerKey, exists := sc.peerKeys[peerID]
 	if !exists {
 		return nil, errors.New("peer public key not registered")
 	}
 
-	// ECDH key agreement
-	x, _ := peerKey.ScalarMult(peerKey.X, peerKey.Y, sc.privateKey.D.Bytes())
-	sharedSecret := x.Bytes()
+	// Use Go 1.20+ crypto/ecdh for proper ECDH key agreement (ScalarMult is deprecated).
+	ecdhPriv, err := sc.privateKey.ECDH()
+	if err != nil {
+		return nil, fmt.Errorf("ecdh from private key: %w", err)
+	}
+	ecdhPeer, err := peerKey.ECDH()
+	if err != nil {
+		return nil, fmt.Errorf("ecdh from peer public key: %w", err)
+	}
+	sharedBytes, err := ecdhPriv.ECDH(ecdhPeer)
+	if err != nil {
+		return nil, fmt.Errorf("ecdh key agreement: %w", err)
+	}
 
 	// Derive session key using SHA-256
-	sessionKey := sha256.Sum256(sharedSecret)
+	sessionKey := sha256.Sum256(sharedBytes)
 	sc.sessionKeys[peerID] = sessionKey[:]
 
 	return sessionKey[:], nil
 }
 
-// RotateSessionKey rotates the session key for a peer
+// establishSessionKey creates a shared session key using ECDH (public API, acquires lock).
+func (sc *SecureChannel) establishSessionKey(peerID string) ([]byte, error) {
+	sc.mu.Lock()
+	defer sc.mu.Unlock()
+	return sc.establishSessionKeyLocked(peerID)
+}
+
+// RotateSessionKey rotates the session key for a peer.
 func (sc *SecureChannel) RotateSessionKey(peerID string) error {
 	sc.mu.Lock()
 	defer sc.mu.Unlock()
-
 	delete(sc.sessionKeys, peerID)
-	_, err := sc.establishSessionKey(peerID)
+	_, err := sc.establishSessionKeyLocked(peerID)
 	return err
 }
 
@@ -230,22 +244,17 @@ func ImportPublicKey(pemData []byte) (*ecdsa.PublicKey, error) {
 	return ecdsaPub, nil
 }
 
-// createTLSConfig creates a secure TLS configuration
+// createTLSConfig creates a secure TLS 1.3-only configuration.
 func createTLSConfig() *tls.Config {
 	return &tls.Config{
-		MinVersion:               tls.VersionTLS13,
-		PreferServerCipherSuites: true,
-		CipherSuites: []uint16{
-			tls.TLS_AES_256_GCM_SHA384,
-			tls.TLS_CHACHA20_POLY1305_SHA256,
-			tls.TLS_AES_128_GCM_SHA256,
-		},
+		// Require TLS 1.3; cipher suites and session ticket settings
+		// below are handled automatically by the TLS 1.3 stack.
+		MinVersion: tls.VersionTLS13,
 		CurvePreferences: []tls.CurveID{
 			tls.X25519,
 			tls.CurveP256,
 		},
-		SessionTicketsDisabled: false,
-		ClientSessionCache:     tls.NewLRUClientSessionCache(128),
+		ClientSessionCache: tls.NewLRUClientSessionCache(128),
 	}
 }
 

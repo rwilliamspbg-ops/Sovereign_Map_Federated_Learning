@@ -419,6 +419,105 @@
       ],
       "title": "Process Memory Usage",
       "type": "timeseries"
+    },
+    {
+      "datasource": {
+        "type": "prometheus",
+        "uid": "$datasource"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "percent"
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 8,
+        "x": 0,
+        "y": 36
+      },
+      "id": 13,
+      "targets": [
+        {
+          "expr": "100 * (1 - (sum(rate(mohawk_proof_verifications_total{result=\"rejected\"}[5m])) / clamp_min(sum(rate(mohawk_proof_verifications_total[5m])), 0.001)))",
+          "legendFormat": "Acceptance Rate",
+          "refId": "A"
+        }
+      ],
+      "title": "Proof Acceptance Rate",
+      "type": "timeseries"
+    },
+    {
+      "datasource": {
+        "type": "prometheus",
+        "uid": "$datasource"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "ms"
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 8,
+        "x": 8,
+        "y": 36
+      },
+      "id": 14,
+      "targets": [
+        {
+          "expr": "1000 * histogram_quantile(0.5, sum by (le) (rate(mohawk_proof_verification_latency_seconds_bucket[5m])))",
+          "legendFormat": "p50",
+          "refId": "A"
+        },
+        {
+          "expr": "1000 * histogram_quantile(0.95, sum by (le) (rate(mohawk_proof_verification_latency_seconds_bucket[5m])))",
+          "legendFormat": "p95",
+          "refId": "B"
+        },
+        {
+          "expr": "1000 * histogram_quantile(0.99, sum by (le) (rate(mohawk_proof_verification_latency_seconds_bucket[5m])))",
+          "legendFormat": "p99",
+          "refId": "C"
+        }
+      ],
+      "title": "Proof Verification Latency Bands",
+      "type": "timeseries"
+    },
+    {
+      "datasource": {
+        "type": "prometheus",
+        "uid": "$datasource"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "short"
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 8,
+        "x": 16,
+        "y": 36
+      },
+      "id": 15,
+      "targets": [
+        {
+          "expr": "sum(rate(mohawk_ledger_events_total[5m]))",
+          "legendFormat": "Ledger events/s",
+          "refId": "A"
+        },
+        {
+          "expr": "max(mohawk_ledger_entries)",
+          "legendFormat": "Ledger entries",
+          "refId": "B"
+        }
+      ],
+      "title": "Ledger Volume",
+      "type": "timeseries"
     }
   ],
   "refresh": "10s",
@@ -486,6 +585,6 @@
   "timezone": "browser",
   "title": "Mohawk Observability Dashboard - Dynamic Nodes",
   "uid": "mohawk-observability",
-  "version": 2,
+  "version": 3,
   "weekStart": ""
 }

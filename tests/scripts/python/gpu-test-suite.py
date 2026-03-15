@@ -9,9 +9,9 @@ Tests PyTorch CUDA/GPU performance for:
 - zk-SNARK verification speedup on GPU
 
 Usage:
-    python gpu-test-suite.py --nodes 20 --rounds 50 --gpu
-    python gpu-test-suite.py --benchmark  # CPU vs GPU comparison
-    python gpu-test-suite.py --stress     # Maximum GPU contention
+    python tests/scripts/python/gpu-test-suite.py --nodes 20 --rounds 50 --gpu
+    python tests/scripts/python/gpu-test-suite.py --benchmark  # CPU vs GPU comparison
+    python tests/scripts/python/gpu-test-suite.py --stress     # Maximum GPU contention
 """
 
 import argparse

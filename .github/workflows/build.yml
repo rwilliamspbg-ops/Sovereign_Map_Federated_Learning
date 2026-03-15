@@ -42,6 +42,14 @@ jobs:
         with:
           python-version: '3.10'
 
+      - name: Set up Go
+        uses: actions/setup-go@44694675825211faa026b3c33043df3e48a5fa00
+        with:
+          go-version-file: go.mod
+
+      - name: Capability contract tests
+        run: go test ./internal/api -run TestCapabilitiesContractV1 -count=1
+
       - name: Build Docker images
         run: |
           docker compose -f docker-compose.200nodes.yml build --no-cache

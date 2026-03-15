@@ -22,8 +22,8 @@
   - [RESULTS.md](test-results/1000-node-npu/20260304-103652/RESULTS.md) - Detailed results
 
 #### Execution Scripts
-- 🐧 **[run-1000-node-npu-test.sh](run-1000-node-npu-test.sh)** - Linux/Mac test runner
-- 🪟 **[run-1000-node-npu-test.ps1](run-1000-node-npu-test.ps1)** - Windows PowerShell test runner
+- 🐧 **[tests/scripts/bash/run-1000-node-npu-test.sh](tests/scripts/bash/run-1000-node-npu-test.sh)** - Linux/Mac test runner
+- 🪟 **[tests/scripts/powershell/run-1000-node-npu-test.ps1](tests/scripts/powershell/run-1000-node-npu-test.ps1)** - Windows PowerShell test runner
 
 ---
 
@@ -48,8 +48,8 @@
     - [scenario-4-intensity.png](test-results/kubernetes-5000-node/plots/scenario-4-intensity.png) - Attack intensity analysis
 
 #### Execution Scripts
-- 🐍 **[kubernetes-5000-node-test.py](kubernetes-5000-node-test.py)** - Main test suite
-- 🐍 **[k8s-5000-node-local-test.py](k8s-5000-node-local-test.py)** - Local simulator
+- 🐍 **[tests/scripts/python/kubernetes-5000-node-test.py](tests/scripts/python/kubernetes-5000-node-test.py)** - Main test suite
+- 🐍 **[tests/scripts/python/k8s-5000-node-local-test.py](tests/scripts/python/k8s-5000-node-local-test.py)** - Local simulator
 - 📈 **[generate-k8s-5000-node-plots.py](generate-k8s-5000-node-plots.py)** - Visualization generator
 - ☸️ **[kubernetes-5000-node-manifests.yaml](kubernetes-5000-node-manifests.yaml)** - K8s deployment manifests
 
@@ -69,20 +69,20 @@
 - 📊 **[GPU_VALIDATION_COMPLETE.md](/Documentation/Testing/GPU_VALIDATION_COMPLETE.md)** - Validation report
 - 📊 **[GPU_ACCELERATION_GUIDE.md](/Documentation/Performance/GPU_ACCELERATION_GUIDE.md)** - Setup and usage guide
 - 📄 Raw JSON results:
-  - [gpu-benchmark-baseline.json](gpu-benchmark-baseline.json)
-  - [gpu-contention-5nodes.json](gpu-contention-5nodes.json)
-  - [gpu-contention-10nodes.json](gpu-contention-10nodes.json)
-  - [gpu-contention-20nodes.json](gpu-contention-20nodes.json)
-  - [gpu-contention-30nodes.json](gpu-contention-30nodes.json)
-  - [gpu-round-5nodes.json](gpu-round-5nodes.json)
-  - [gpu-round-10nodes.json](gpu-round-10nodes.json)
-  - [gpu-round-20nodes.json](gpu-round-20nodes.json)
+  - [test-results/benchmarks/gpu-benchmark-baseline.json](test-results/benchmarks/gpu-benchmark-baseline.json)
+  - [test-results/benchmarks/gpu-contention-5nodes.json](test-results/benchmarks/gpu-contention-5nodes.json)
+  - [test-results/benchmarks/gpu-contention-10nodes.json](test-results/benchmarks/gpu-contention-10nodes.json)
+  - [test-results/benchmarks/gpu-contention-20nodes.json](test-results/benchmarks/gpu-contention-20nodes.json)
+  - [test-results/benchmarks/gpu-contention-30nodes.json](test-results/benchmarks/gpu-contention-30nodes.json)
+  - [test-results/benchmarks/gpu-round-5nodes.json](test-results/benchmarks/gpu-round-5nodes.json)
+  - [test-results/benchmarks/gpu-round-10nodes.json](test-results/benchmarks/gpu-round-10nodes.json)
+  - [test-results/benchmarks/gpu-round-20nodes.json](test-results/benchmarks/gpu-round-20nodes.json)
 
 ### NPU Performance Analysis
 - 📊 **[NPU_PERFORMANCE_SCALING_COMPLETE.md](/Documentation/Performance/NPU_PERFORMANCE_SCALING_COMPLETE.md)** - NPU scaling analysis
 - 📊 **[NPU_GPU_CPU_PERFORMANCE_ANALYSIS.md](/Documentation/Performance/NPU_GPU_CPU_PERFORMANCE_ANALYSIS.md)** - Comparative analysis
 - 📊 **[GRAFANA_NPU_LAPTOP_FINAL.md](/Documentation/Deployment/GRAFANA_NPU_LAPTOP_FINAL.md)** - Grafana NPU monitoring
-- 📄 [npu-gpu-cpu-comparison.json](npu-gpu-cpu-comparison.json) - Raw comparison data
+- 📄 [test-results/benchmarks/npu-gpu-cpu-comparison.json](test-results/benchmarks/npu-gpu-cpu-comparison.json) - Raw comparison data
 
 ### TPM & Trust Tests
 - 📁 **[test-results/tpm-npu-full/](test-results/tpm-npu-full/)** - TPM+NPU integrated tests
@@ -105,8 +105,8 @@
 
 - 📈 **[analyze-demo-results.py](analyze-demo-results.py)** - Demo results analyzer
 - 📈 **[analyze-gpu-results.py](analyze-gpu-results.py)** - GPU results analyzer
-- 📈 **[generate-byzantine-plots.py](generate-byzantine-plots.py)** - Byzantine test plots
-- 📈 **[generate-byzantine-test-suite-plots.py](generate-byzantine-test-suite-plots.py)** - Suite visualization
+- 📈 **[tests/scripts/python/generate-byzantine-plots.py](tests/scripts/python/generate-byzantine-plots.py)** - Byzantine test plots
+- 📈 **[tests/scripts/python/generate-byzantine-test-suite-plots.py](tests/scripts/python/generate-byzantine-test-suite-plots.py)** - Suite visualization
 - 📈 **[generate-demo-report.py](generate-demo-report.py)** - Demo report generator
 - 📈 **[generate-k8s-5000-node-plots.py](generate-k8s-5000-node-plots.py)** - K8s plots generator
 
@@ -118,16 +118,16 @@
 - 🚀 **[genesis-launch.sh](genesis-launch.sh)** - One-command stack launch
 
 ### Test Runners
-- 🧪 **[run-test.sh](run-test.sh)** - General test runner (Linux)
-- 🧪 **[run-test.ps1](run-test.ps1)** - General test runner (PowerShell)
-- 🧪 **[run-test-python.py](run-test-python.py)** - Python test orchestrator
-- 🧪 **[run-full-test.ps1](run-full-test.ps1)** - Full test suite (PowerShell)
+- 🧪 **[tests/scripts/bash/run-test.sh](tests/scripts/bash/run-test.sh)** - General test runner (Linux)
+- 🧪 **[tests/scripts/powershell/run-test.ps1](tests/scripts/powershell/run-test.ps1)** - General test runner (PowerShell)
+- 🧪 **[tests/scripts/python/run-test-python.py](tests/scripts/python/run-test-python.py)** - Python test orchestrator
+- 🧪 **[tests/scripts/powershell/run-full-test.ps1](tests/scripts/powershell/run-full-test.ps1)** - Full test suite (PowerShell)
 
 ### Specialized Tests
 - 🐍 **[simulate-demo.py](simulate-demo.py)** - Demo simulator
-- 🐍 **[gpu-test-suite.py](gpu-test-suite.py)** - GPU test suite
-- 🐍 **[byzantine-stress-test-suite.py](byzantine-stress-test-suite.py)** - Byzantine stress tests
-- 🐍 **[npu-gpu-cpu-benchmark.py](npu-gpu-cpu-benchmark.py)** - Hardware acceleration benchmark
+- 🐍 **[tests/scripts/python/gpu-test-suite.py](tests/scripts/python/gpu-test-suite.py)** - GPU test suite
+- 🐍 **[tests/scripts/python/byzantine-stress-test-suite.py](tests/scripts/python/byzantine-stress-test-suite.py)** - Byzantine stress tests
+- 🐍 **[tests/scripts/python/npu-gpu-cpu-benchmark.py](tests/scripts/python/npu-gpu-cpu-benchmark.py)** - Hardware acceleration benchmark
 
 ### Monitoring & Analysis
 - 📊 **[monitor-demo.py](monitor-demo.py)** - Real-time demo monitoring
