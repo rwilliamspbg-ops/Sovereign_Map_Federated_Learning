@@ -10,6 +10,7 @@ function App() {
   const [health, setHealth] = useState(null)
   const [metricsSummary, setMetricsSummary] = useState(null)
   const [trustStatus, setTrustStatus] = useState(null)
+  const [policyHistory, setPolicyHistory] = useState([])
   const [founders, setFounders] = useState([])
   const [voiceQuery, setVoiceQuery] = useState('')
   const [voiceResponse, setVoiceResponse] = useState('')
@@ -34,6 +35,20 @@ function App() {
     return () => clearInterval(interval)
   }, [])
 
+  const fetchTrustSnapshot = async () => {
+    const trustRes = await fetch(`${TRUST_API_BASE}/trust_snapshot`)
+    if (!trustRes.ok) {
+      throw new Error(`Trust snapshot failed with ${trustRes.status}`)
+    }
+    const snapshot = await trustRes.json()
+    setTrustStatus(snapshot.trust_status || null)
+    setPolicyHistory(snapshot.policy_history || [])
+    if (!policyInitialized && snapshot.trust_status?.verification_policy) {
+      setPolicyDraft({ ...snapshot.trust_status.verification_policy })
+      setPolicyInitialized(true)
+    }
+  }
+
   const fetchData = async () => {
     setLoading(true);
     try {
@@ -56,19 +71,11 @@ function App() {
       setMetricsSummary(metrics);
       setFounders(foundersData);
 
-	  try {
-	    const trustRes = await fetch(`${TRUST_API_BASE}/trust_status`)
-	    if (trustRes.ok) {
-	      const trustData = await trustRes.json()
-	      setTrustStatus(trustData)
-	      if (!policyInitialized && trustData.verification_policy) {
-	        setPolicyDraft({ ...trustData.verification_policy })
-	        setPolicyInitialized(true)
-	      }
-	    }
-	  } catch (trustErr) {
-	    console.warn('Trust status unavailable:', trustErr)
-	  }
+    try {
+      await fetchTrustSnapshot()
+    } catch (trustErr) {
+      console.warn('Trust status unavailable:', trustErr)
+    }
 
       setError(null);
     } catch (err) {
@@ -163,6 +170,7 @@ function App() {
         verification_policy: result.verification_policy,
         fl_verification: result.fl_verification,
       }))
+      setPolicyHistory(result.policy_history || [])
       setPolicyDraft({ ...result.verification_policy })
       setPolicyMessage('Verification policy updated')
     } catch (err) {
@@ -190,6 +198,7 @@ function App() {
         health={health} 
         metricsSummary={metricsSummary} 
         trustStatus={trustStatus}
+        policyHistory={policyHistory}
         founders={founders} 
         voiceQuery={voiceQuery} 
         voiceResponse={voiceResponse} 

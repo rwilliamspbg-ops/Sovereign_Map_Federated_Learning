@@ -644,6 +644,58 @@ func TestGetVerificationPolicyEndpoint(t *testing.T) {
 	}
 }
 
+func TestGetTrustSnapshotIncludesPolicyHistory(t *testing.T) {
+	h := NewHandler(nil, nil, nil, nil)
+	chain := blockchain.NewBlockChain()
+	h.SetBlockchain(chain)
+
+	if err := chain.StateDB.Set("governance_verification_audit:proposal-1:1700000000", map[string]interface{}{
+		"proposal_id": "proposal-1",
+		"timestamp":   int64(1700000000),
+		"new_policy":  map[string]interface{}{"min_confidence_bps": uint32(8000)},
+	}); err != nil {
+		t.Fatalf("seed first history entry: %v", err)
+	}
+	if err := chain.StateDB.Set("api_verification_policy_audit:1700000100", map[string]interface{}{
+		"proposal_id": "api-direct",
+		"timestamp":   int64(1700000100),
+		"source":      "api",
+		"new_policy":  map[string]interface{}{"min_confidence_bps": uint32(9200)},
+	}); err != nil {
+		t.Fatalf("seed second history entry: %v", err)
+	}
+
+	mux := http.NewServeMux()
+	h.RegisterRoutes(mux)
+
+	req := httptest.NewRequest(http.MethodGet, "/api/v1/trust_snapshot", nil)
+	w := httptest.NewRecorder()
+	mux.ServeHTTP(w, req)
+
+	if w.Code != http.StatusOK {
+		t.Fatalf("status = %d, want 200", w.Code)
+	}
+
+	var payload map[string]interface{}
+	if err := json.Unmarshal(w.Body.Bytes(), &payload); err != nil {
+		t.Fatalf("json decode failed: %v", err)
+	}
+	if _, ok := payload["trust_status"].(map[string]interface{}); !ok {
+		t.Fatalf("trust_status missing: %v", payload)
+	}
+	history, ok := payload["policy_history"].([]interface{})
+	if !ok {
+		t.Fatalf("policy_history missing: %v", payload)
+	}
+	if len(history) != 2 {
+		t.Fatalf("policy_history len = %d, want 2", len(history))
+	}
+	first := history[0].(map[string]interface{})
+	if first["proposal_id"] != "api-direct" {
+		t.Fatalf("first history entry = %v, want api-direct first", first)
+	}
+}
+
 func TestUpdateVerificationPolicyEndpointRequiresAdmin(t *testing.T) {
 	configureProofAuthForTests(t)
 
@@ -704,5 +756,21 @@ func TestUpdateVerificationPolicyEndpoint(t *testing.T) {
 	}
 	if persisted["min_confidence_bps"] != uint32(9200) {
 		t.Fatalf("persisted min_confidence_bps = %v", persisted["min_confidence_bps"])
+	}
+
+	auditEntries := chain.StateDB.GetAll()
+	foundAudit := false
+	for key, value := range auditEntries {
+		if !strings.HasPrefix(key, "api_verification_policy_audit:") {
+			continue
+		}
+		entry, ok := value.(map[string]interface{})
+		if ok && entry["source"] == "api" {
+			foundAudit = true
+			break
+		}
+	}
+	if !foundAudit {
+		t.Fatal("expected api verification policy audit entry to be written")
 	}
 }

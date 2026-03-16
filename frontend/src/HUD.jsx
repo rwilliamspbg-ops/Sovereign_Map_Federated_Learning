@@ -9,6 +9,7 @@ export default function HUD({
   health,
   metricsSummary,
   trustStatus,
+  policyHistory,
   founders,
   voiceQuery,
   voiceResponse,
@@ -171,6 +172,23 @@ export default function HUD({
           </button>
 
           {policyMessage && <div className="policy-message">{policyMessage}</div>}
+
+        <div className="policy-history">
+          <h4>Policy History</h4>
+          {policyHistory && policyHistory.length > 0 ? (
+            <ul className="policy-history-list">
+              {policyHistory.slice(0, 6).map((entry, index) => (
+                <li key={entry.audit_key || index}>
+                  <div><strong>{entry.source || 'governance'}</strong> · {entry.proposal_id || 'unknown'}</div>
+                  <div>Confidence: {entry.new_policy?.min_confidence_bps ?? 'n/a'} bps</div>
+                  <div>At: {entry.timestamp ? new Date(Number(entry.timestamp) * 1000).toLocaleString() : 'unknown'}</div>
+                </li>
+              ))}
+            </ul>
+          ) : (
+            <div className="policy-history-empty">No verification policy history recorded yet.</div>
+          )}
+        </div>
         </div>
       </div>
 

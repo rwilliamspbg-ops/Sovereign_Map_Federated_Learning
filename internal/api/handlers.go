@@ -10,6 +10,7 @@ import (
 	"fmt"
 	"net/http"
 	"os"
+	"sort"
 	"strings"
 	"time"
 
@@ -269,6 +270,7 @@ func (h *Handler) RegisterRoutes(mux *http.ServeMux) {
 	mux.HandleFunc("/api/peers", h.GetPeers)
 	mux.HandleFunc("/api/network_status", h.GetNetworkStatus)
 	mux.HandleFunc("/api/trust_status", h.GetTrustStatus)
+	mux.HandleFunc("/api/trust_snapshot", h.GetTrustSnapshot)
 
 	// Versioned aliases
 	mux.HandleFunc("/api/v1/status", h.GetStatus)
@@ -278,6 +280,7 @@ func (h *Handler) RegisterRoutes(mux *http.ServeMux) {
 	mux.HandleFunc("/api/v1/peers", h.GetPeers)
 	mux.HandleFunc("/api/v1/network_status", h.GetNetworkStatus)
 	mux.HandleFunc("/api/v1/trust_status", h.GetTrustStatus)
+	mux.HandleFunc("/api/v1/trust_snapshot", h.GetTrustSnapshot)
 	mux.HandleFunc("/api/proof/verify", h.VerifyProof)
 	mux.HandleFunc("/api/v1/proof/verify", h.VerifyProof)
 	mux.HandleFunc("/api/proof/hybrid/verify", h.VerifyHybridProof)
@@ -474,7 +477,22 @@ func (h *Handler) GetTrustStatus(w http.ResponseWriter, r *http.Request) {
 	if !ensureGetMethod(w, r) {
 		return
 	}
+	writeJSON(w, h.buildTrustStatusPayload())
+}
 
+func (h *Handler) GetTrustSnapshot(w http.ResponseWriter, r *http.Request) {
+	if !ensureGetMethod(w, r) {
+		return
+	}
+
+	response := map[string]interface{}{
+		"trust_status":   h.buildTrustStatusPayload(),
+		"policy_history": h.getVerificationPolicyHistory(),
+	}
+	writeJSON(w, response)
+}
+
+func (h *Handler) buildTrustStatusPayload() map[string]interface{} {
 	response := map[string]interface{}{
 		"trust_mode":         "p2p-reputation",
 		"total_peers":        0,
@@ -512,7 +530,52 @@ func (h *Handler) GetTrustStatus(w http.ResponseWriter, r *http.Request) {
 		response["fl_verification"] = flVerificationPayload(verification)
 	}
 
-	writeJSON(w, response)
+	return response
+}
+
+func (h *Handler) getVerificationPolicyHistory() []map[string]interface{} {
+	if h.blockchain == nil {
+		return []map[string]interface{}{}
+	}
+
+	entries := h.blockchain.StateDB.GetAll()
+	history := make([]map[string]interface{}, 0)
+	for key, value := range entries {
+		if !strings.HasPrefix(key, "governance_verification_audit:") && !strings.HasPrefix(key, "api_verification_policy_audit:") {
+			continue
+		}
+		entry, ok := value.(map[string]interface{})
+		if !ok {
+			continue
+		}
+		copied := make(map[string]interface{}, len(entry)+1)
+		for k, v := range entry {
+			copied[k] = v
+		}
+		copied["audit_key"] = key
+		history = append(history, copied)
+	}
+
+	sort.Slice(history, func(i, j int) bool {
+		return auditTimestamp(history[i]) > auditTimestamp(history[j])
+	})
+
+	return history
+}
+
+func auditTimestamp(entry map[string]interface{}) int64 {
+	switch ts := entry["timestamp"].(type) {
+	case int64:
+		return ts
+	case int:
+		return int64(ts)
+	case uint64:
+		return int64(ts)
+	case float64:
+		return int64(ts)
+	default:
+		return 0
+	}
 }
 
 func verificationPolicyPayload(policy blockchain.VerificationPolicy) map[string]interface{} {
@@ -584,10 +647,22 @@ func (h *Handler) HandleVerificationPolicy(w http.ResponseWriter, r *http.Reques
 		return
 	}
 
+	ts := time.Now().Unix()
+	auditKey := fmt.Sprintf("api_verification_policy_audit:%d", ts)
+	_ = h.blockchain.StateDB.Set(auditKey, map[string]interface{}{
+		"proposal_id": "api-direct",
+		"action":      "set_verification_policy",
+		"source":      "api",
+		"actor_role":  strings.ToLower(strings.TrimSpace(r.Header.Get("X-API-Role"))),
+		"timestamp":   ts,
+		"new_policy":  verificationPolicyPayload(policy),
+	})
+
 	writeJSON(w, map[string]interface{}{
 		"status":              "updated",
 		"verification_policy": verificationPolicyPayload(policy),
 		"fl_verification":     flVerificationPayload(h.blockchain.GetFLVerificationMetrics()),
+		"policy_history":      h.getVerificationPolicyHistory(),
 	})
 }
 
@@ -747,6 +822,7 @@ func (h *Handler) GetCapabilities(w http.ResponseWriter, r *http.Request) {
 				"GET /api/v1/status",
 				"GET /api/v1/capabilities",
 				"GET /api/v1/verification_policy",
+				"GET /api/v1/trust_snapshot",
 			},
 			"auth_protected_endpoints": []string{
 				"POST /api/v1/proof/verify",
