@@ -8,14 +8,23 @@ export default function HUD({
   hudData,
   health,
   metricsSummary,
+  trustStatus,
   founders,
   voiceQuery,
   voiceResponse,
+  policyDraft,
+  policyToken,
+  policyRole,
+  policyMessage,
   loading,
   error,
   onTriggerFLRound,
   onCreateEnclave,
   onSubmitVoiceQuery,
+  onPolicyChange,
+  onPolicyTokenChange,
+  onPolicyRoleChange,
+  onSubmitVerificationPolicy,
   setVoiceQuery
 }) {
   return (
@@ -102,6 +111,66 @@ export default function HUD({
               <li>No founders detected in current epoch</li>
             )}
           </ul>
+        </div>
+
+        <div className="hud-section verification-panel">
+          <h3>🛡️ Verification Governance</h3>
+          <div className="stats-row">
+            <span>Trust Mode: <strong>{trustStatus?.trust_mode || 'Unavailable'}</strong></span>
+            <span>Verified Rounds: <strong>{trustStatus?.fl_verification?.verified_rounds ?? 'N/A'}</strong></span>
+            <span>Failed Rounds: <strong>{trustStatus?.fl_verification?.failed_rounds ?? 'N/A'}</strong></span>
+            <span>Avg Confidence: <strong>{trustStatus?.fl_verification?.average_confidence_bps ?? 'N/A'} bps</strong></span>
+          </div>
+
+          <div className="policy-grid">
+            <label>
+              <input type="checkbox" checked={!!policyDraft.require_proof} onChange={e => onPolicyChange('require_proof', e.target.checked)} />
+              Require Proof
+            </label>
+            <label>
+              <input type="checkbox" checked={!!policyDraft.reject_on_verification_failure} onChange={e => onPolicyChange('reject_on_verification_failure', e.target.checked)} />
+              Reject On Failure
+            </label>
+            <label>
+              <input type="checkbox" checked={!!policyDraft.allow_consensus_proof} onChange={e => onPolicyChange('allow_consensus_proof', e.target.checked)} />
+              Allow Consensus
+            </label>
+            <label>
+              <input type="checkbox" checked={!!policyDraft.allow_zk_proof} onChange={e => onPolicyChange('allow_zk_proof', e.target.checked)} />
+              Allow ZK
+            </label>
+            <label>
+              <input type="checkbox" checked={!!policyDraft.allow_tee_proof} onChange={e => onPolicyChange('allow_tee_proof', e.target.checked)} />
+              Allow TEE
+            </label>
+            <label className="policy-number">
+              Minimum Confidence (bps)
+              <input
+                type="number"
+                min="0"
+                max="10000"
+                value={policyDraft.min_confidence_bps ?? 0}
+                onChange={e => onPolicyChange('min_confidence_bps', e.target.value)}
+              />
+            </label>
+          </div>
+
+          <div className="policy-auth-grid">
+            <label>
+              Admin Role
+              <input className="api-input" type="text" value={policyRole} onChange={e => onPolicyRoleChange(e.target.value)} />
+            </label>
+            <label>
+              API Token
+              <input className="api-input" type="password" value={policyToken} onChange={e => onPolicyTokenChange(e.target.value)} placeholder="Bearer token" />
+            </label>
+          </div>
+
+          <button className="btn-primary" onClick={onSubmitVerificationPolicy} disabled={loading}>
+            Apply Verification Policy
+          </button>
+
+          {policyMessage && <div className="policy-message">{policyMessage}</div>}
         </div>
       </div>
 

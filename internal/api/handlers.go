@@ -36,6 +36,15 @@ type hybridVerifyRequest struct {
 	Encoding     string `json:"encoding,omitempty"`
 }
 
+type verificationPolicyRequest struct {
+	RequireProof                bool   `json:"require_proof"`
+	MinConfidenceBps            uint32 `json:"min_confidence_bps"`
+	RejectOnVerificationFailure bool   `json:"reject_on_verification_failure"`
+	AllowConsensusProof         bool   `json:"allow_consensus_proof"`
+	AllowZKProof                bool   `json:"allow_zk_proof"`
+	AllowTEEProof               bool   `json:"allow_tee_proof"`
+}
+
 // Handler provides HTTP endpoints for the federated learning system
 type Handler struct {
 	convergence *convergence.Detector
@@ -167,7 +176,7 @@ func loadExpectedToken() (string, error) {
 	return token, nil
 }
 
-func requireProofAuth(w http.ResponseWriter, r *http.Request) bool {
+func requireScopedAuth(w http.ResponseWriter, r *http.Request, envName string, defaultRoles string) bool {
 	authMode := strings.ToLower(strings.TrimSpace(os.Getenv("MOHAWK_API_AUTH_MODE")))
 	if authMode == "" {
 		authMode = "file-only"
@@ -198,12 +207,9 @@ func requireProofAuth(w http.ResponseWriter, r *http.Request) bool {
 		return true
 	}
 
-	allowedRolesRaw := strings.TrimSpace(os.Getenv("MOHAWK_API_PROOF_ALLOWED_ROLES"))
+	allowedRolesRaw := strings.TrimSpace(os.Getenv(envName))
 	if allowedRolesRaw == "" {
-		allowedRolesRaw = strings.TrimSpace(os.Getenv("MOHAWK_API_HYBRID_ALLOWED_ROLES"))
-	}
-	if allowedRolesRaw == "" {
-		allowedRolesRaw = "verifier,admin"
+		allowedRolesRaw = defaultRoles
 	}
 
 	allowedRoles := parseRoleList(allowedRolesRaw)
@@ -218,6 +224,21 @@ func requireProofAuth(w http.ResponseWriter, r *http.Request) bool {
 	}
 
 	return true
+}
+
+func requireProofAuth(w http.ResponseWriter, r *http.Request) bool {
+	allowedRolesRaw := strings.TrimSpace(os.Getenv("MOHAWK_API_PROOF_ALLOWED_ROLES"))
+	if allowedRolesRaw == "" {
+		allowedRolesRaw = strings.TrimSpace(os.Getenv("MOHAWK_API_HYBRID_ALLOWED_ROLES"))
+	}
+	if allowedRolesRaw == "" {
+		allowedRolesRaw = "verifier,admin"
+	}
+	return requireScopedAuth(w, r, "MOHAWK_API_PROOF_ALLOWED_ROLES", allowedRolesRaw)
+}
+
+func requirePolicyAuth(w http.ResponseWriter, r *http.Request) bool {
+	return requireScopedAuth(w, r, "MOHAWK_API_POLICY_ALLOWED_ROLES", "admin")
 }
 
 // NewHandler creates a new API handler with integrated backends
@@ -265,6 +286,8 @@ func (h *Handler) RegisterRoutes(mux *http.ServeMux) {
 	mux.HandleFunc("/api/v1/capabilities", h.GetCapabilities)
 	mux.HandleFunc("/api/ledger", h.GetLedger)
 	mux.HandleFunc("/api/v1/ledger", h.GetLedger)
+	mux.HandleFunc("/api/verification_policy", h.HandleVerificationPolicy)
+	mux.HandleFunc("/api/v1/verification_policy", h.HandleVerificationPolicy)
 }
 
 // HealthCheck returns basic health status
@@ -485,26 +508,87 @@ func (h *Handler) GetTrustStatus(w http.ResponseWriter, r *http.Request) {
 		verification := h.blockchain.GetFLVerificationMetrics()
 
 		response["trust_mode"] = "p2p-reputation+governed-proof-verification"
-		response["verification_policy"] = map[string]interface{}{
-			"require_proof":                  policy.RequireProof,
-			"min_confidence_bps":             policy.MinConfidenceBps,
-			"reject_on_verification_failure": policy.RejectOnVerificationFailure,
-			"allow_consensus_proof":          policy.AllowConsensusProof,
-			"allow_zk_proof":                 policy.AllowZKProof,
-			"allow_tee_proof":                policy.AllowTEEProof,
-		}
-		response["fl_verification"] = map[string]interface{}{
-			"total_rounds":           verification.TotalRounds,
-			"verified_rounds":        verification.VerifiedRounds,
-			"failed_rounds":          verification.FailedRounds,
-			"verified_ratio":         verification.VerifiedRatio,
-			"average_confidence_bps": verification.AverageConfidenceBps,
-			"last_round_id":          verification.LastRoundID,
-			"last_proof_type":        verification.LastProofType,
-		}
+		response["verification_policy"] = verificationPolicyPayload(policy)
+		response["fl_verification"] = flVerificationPayload(verification)
 	}
 
 	writeJSON(w, response)
+}
+
+func verificationPolicyPayload(policy blockchain.VerificationPolicy) map[string]interface{} {
+	return map[string]interface{}{
+		"require_proof":                  policy.RequireProof,
+		"min_confidence_bps":             policy.MinConfidenceBps,
+		"reject_on_verification_failure": policy.RejectOnVerificationFailure,
+		"allow_consensus_proof":          policy.AllowConsensusProof,
+		"allow_zk_proof":                 policy.AllowZKProof,
+		"allow_tee_proof":                policy.AllowTEEProof,
+	}
+}
+
+func flVerificationPayload(verification blockchain.FLVerificationMetrics) map[string]interface{} {
+	return map[string]interface{}{
+		"total_rounds":           verification.TotalRounds,
+		"verified_rounds":        verification.VerifiedRounds,
+		"failed_rounds":          verification.FailedRounds,
+		"verified_ratio":         verification.VerifiedRatio,
+		"average_confidence_bps": verification.AverageConfidenceBps,
+		"last_round_id":          verification.LastRoundID,
+		"last_proof_type":        verification.LastProofType,
+	}
+}
+
+func (h *Handler) HandleVerificationPolicy(w http.ResponseWriter, r *http.Request) {
+	if h.blockchain == nil {
+		http.Error(w, "blockchain backend unavailable", http.StatusServiceUnavailable)
+		return
+	}
+
+	switch r.Method {
+	case http.MethodGet:
+		writeJSON(w, map[string]interface{}{
+			"verification_policy": verificationPolicyPayload(h.blockchain.GetVerificationPolicy()),
+			"fl_verification":     flVerificationPayload(h.blockchain.GetFLVerificationMetrics()),
+		})
+		return
+	case http.MethodPost:
+		if !requirePolicyAuth(w, r) {
+			return
+		}
+	default:
+		methodNotAllowed(w)
+		return
+	}
+
+	var req verificationPolicyRequest
+	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+		http.Error(w, "invalid request body", http.StatusBadRequest)
+		return
+	}
+
+	policy := blockchain.VerificationPolicy{
+		RequireProof:                req.RequireProof,
+		MinConfidenceBps:            req.MinConfidenceBps,
+		RejectOnVerificationFailure: req.RejectOnVerificationFailure,
+		AllowConsensusProof:         req.AllowConsensusProof,
+		AllowZKProof:                req.AllowZKProof,
+		AllowTEEProof:               req.AllowTEEProof,
+	}
+	if err := h.blockchain.SetVerificationPolicy(policy); err != nil {
+		http.Error(w, err.Error(), http.StatusBadRequest)
+		return
+	}
+
+	if err := h.blockchain.StateDB.Set("verification_policy:active", verificationPolicyPayload(policy)); err != nil {
+		http.Error(w, "failed to persist verification policy", http.StatusInternalServerError)
+		return
+	}
+
+	writeJSON(w, map[string]interface{}{
+		"status":              "updated",
+		"verification_policy": verificationPolicyPayload(policy),
+		"fl_verification":     flVerificationPayload(h.blockchain.GetFLVerificationMetrics()),
+	})
 }
 
 func (h *Handler) VerifyProof(w http.ResponseWriter, r *http.Request) {
@@ -662,11 +746,13 @@ func (h *Handler) GetCapabilities(w http.ResponseWriter, r *http.Request) {
 				"GET /health",
 				"GET /api/v1/status",
 				"GET /api/v1/capabilities",
+				"GET /api/v1/verification_policy",
 			},
 			"auth_protected_endpoints": []string{
 				"POST /api/v1/proof/verify",
 				"POST /api/v1/proof/hybrid/verify",
 				"GET /api/v1/ledger",
+				"POST /api/v1/verification_policy",
 			},
 			"proof_payload": map[string]interface{}{
 				"fields":              []string{"proof", "encoding", "public_input"},
@@ -685,6 +771,7 @@ func (h *Handler) GetCapabilities(w http.ResponseWriter, r *http.Request) {
 				"default_token_file":        "/run/secrets/mohawk_api_token",
 				"roles_enforced_by_default": true,
 				"default_allowed_roles":     []string{"verifier", "admin"},
+				"policy_allowed_roles":      []string{"admin"},
 			},
 		},
 		"observability": map[string]interface{}{

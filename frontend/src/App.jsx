@@ -3,14 +3,28 @@ import HUD from './HUD'
 import './App.css'
 
 const API_BASE = 'http://localhost:8000'
+const TRUST_API_BASE = import.meta.env.VITE_TRUST_API_BASE || 'http://localhost:8082/api/v1'
 
 function App() {
   const [hudData, setHudData] = useState(null)
   const [health, setHealth] = useState(null)
   const [metricsSummary, setMetricsSummary] = useState(null)
+  const [trustStatus, setTrustStatus] = useState(null)
   const [founders, setFounders] = useState([])
   const [voiceQuery, setVoiceQuery] = useState('')
   const [voiceResponse, setVoiceResponse] = useState('')
+  const [policyDraft, setPolicyDraft] = useState({
+    require_proof: false,
+    min_confidence_bps: 7000,
+    reject_on_verification_failure: false,
+    allow_consensus_proof: true,
+    allow_zk_proof: true,
+    allow_tee_proof: true,
+  })
+  const [policyInitialized, setPolicyInitialized] = useState(false)
+  const [policyToken, setPolicyToken] = useState('')
+  const [policyRole, setPolicyRole] = useState('admin')
+  const [policyMessage, setPolicyMessage] = useState('')
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState(null)
 
@@ -23,7 +37,6 @@ function App() {
   const fetchData = async () => {
     setLoading(true);
     try {
-      // 1. Fetch all required data points
       const [hudRes, healthRes, metricsRes, foundersRes] = await Promise.all([
         fetch(`${API_BASE}/hud_data`),
         fetch(`${API_BASE}/health`),
@@ -31,7 +44,6 @@ function App() {
         fetch(`${API_BASE}/founders`)
       ]);
 
-      // 2. Parse the JSON results
       const [hud, healthData, metrics, foundersData] = await Promise.all([
         hudRes.json(),
         healthRes.json(),
@@ -39,11 +51,25 @@ function App() {
         foundersRes.json()
       ]);
 
-      // 3. Update state
       setHudData(hud);
       setHealth(healthData);
       setMetricsSummary(metrics);
       setFounders(foundersData);
+
+	  try {
+	    const trustRes = await fetch(`${TRUST_API_BASE}/trust_status`)
+	    if (trustRes.ok) {
+	      const trustData = await trustRes.json()
+	      setTrustStatus(trustData)
+	      if (!policyInitialized && trustData.verification_policy) {
+	        setPolicyDraft({ ...trustData.verification_policy })
+	        setPolicyInitialized(true)
+	      }
+	    }
+	  } catch (trustErr) {
+	    console.warn('Trust status unavailable:', trustErr)
+	  }
+
       setError(null);
     } catch (err) {
       console.error("Fetch error:", err);
@@ -100,6 +126,51 @@ function App() {
     }
   };
 
+  const updatePolicyField = (field, value) => {
+    setPolicyDraft(current => ({ ...current, [field]: value }))
+  }
+
+  const submitVerificationPolicy = async () => {
+    try {
+      setPolicyMessage('Submitting verification policy...')
+      const headers = {
+        'Content-Type': 'application/json',
+        'X-API-Role': policyRole || 'admin',
+      }
+      if (policyToken.trim()) {
+        headers.Authorization = `Bearer ${policyToken.trim()}`
+      }
+
+      const response = await fetch(`${TRUST_API_BASE}/verification_policy`, {
+        method: 'POST',
+        headers,
+        body: JSON.stringify({
+          ...policyDraft,
+          min_confidence_bps: Number(policyDraft.min_confidence_bps) || 0,
+        }),
+      })
+
+      if (!response.ok) {
+        const failure = await response.text()
+        setPolicyMessage(`Policy update failed: ${failure}`)
+        return
+      }
+
+      const result = await response.json()
+      setTrustStatus(current => ({
+        ...current,
+        trust_mode: 'p2p-reputation+governed-proof-verification',
+        verification_policy: result.verification_policy,
+        fl_verification: result.fl_verification,
+      }))
+      setPolicyDraft({ ...result.verification_policy })
+      setPolicyMessage('Verification policy updated')
+    } catch (err) {
+      console.error('Verification policy update error:', err)
+      setPolicyMessage('Verification policy update failed: backend unreachable')
+    }
+  }
+
   return (
     <div className="hud-container">
       <header className="hud-header">
@@ -118,14 +189,23 @@ function App() {
         hudData={hudData} 
         health={health} 
         metricsSummary={metricsSummary} 
+        trustStatus={trustStatus}
         founders={founders} 
         voiceQuery={voiceQuery} 
         voiceResponse={voiceResponse} 
+        policyDraft={policyDraft}
+        policyToken={policyToken}
+        policyRole={policyRole}
+        policyMessage={policyMessage}
         loading={loading} 
         error={error} 
         onTriggerFLRound={triggerFLRound} 
         onCreateEnclave={createEnclave}
         onSubmitVoiceQuery={submitVoiceQuery}
+        onPolicyChange={updatePolicyField}
+        onPolicyTokenChange={setPolicyToken}
+        onPolicyRoleChange={setPolicyRole}
+        onSubmitVerificationPolicy={submitVerificationPolicy}
         setVoiceQuery={setVoiceQuery}
       />
 

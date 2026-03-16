@@ -157,11 +157,11 @@ func TestCapabilitiesContractV1(t *testing.T) {
 		t.Fatalf("api.base_paths = %v, want %v", got, want)
 	}
 
-	if got, want := mustStringSlice(t, apiSection["open_endpoints"], "api.open_endpoints"), []string{"GET /health", "GET /api/v1/status", "GET /api/v1/capabilities"}; !reflect.DeepEqual(got, want) {
+	if got, want := mustStringSlice(t, apiSection["open_endpoints"], "api.open_endpoints"), []string{"GET /health", "GET /api/v1/status", "GET /api/v1/capabilities", "GET /api/v1/verification_policy"}; !reflect.DeepEqual(got, want) {
 		t.Fatalf("api.open_endpoints = %v, want %v", got, want)
 	}
 
-	if got, want := mustStringSlice(t, apiSection["auth_protected_endpoints"], "api.auth_protected_endpoints"), []string{"POST /api/v1/proof/verify", "POST /api/v1/proof/hybrid/verify", "GET /api/v1/ledger"}; !reflect.DeepEqual(got, want) {
+	if got, want := mustStringSlice(t, apiSection["auth_protected_endpoints"], "api.auth_protected_endpoints"), []string{"POST /api/v1/proof/verify", "POST /api/v1/proof/hybrid/verify", "GET /api/v1/ledger", "POST /api/v1/verification_policy"}; !reflect.DeepEqual(got, want) {
 		t.Fatalf("api.auth_protected_endpoints = %v, want %v", got, want)
 	}
 
@@ -616,5 +616,93 @@ func TestGetTrustStatusIncludesBlockchainVerificationState(t *testing.T) {
 	}
 	if got := verification["average_confidence_bps"]; got != float64(0) {
 		t.Fatalf("average_confidence_bps = %v, want 0", got)
+	}
+}
+
+func TestGetVerificationPolicyEndpoint(t *testing.T) {
+	h := NewHandler(nil, nil, nil, nil)
+	chain := blockchain.NewBlockChain()
+	h.SetBlockchain(chain)
+
+	mux := http.NewServeMux()
+	h.RegisterRoutes(mux)
+
+	req := httptest.NewRequest(http.MethodGet, "/api/v1/verification_policy", nil)
+	w := httptest.NewRecorder()
+	mux.ServeHTTP(w, req)
+
+	if w.Code != http.StatusOK {
+		t.Fatalf("status = %d, want 200", w.Code)
+	}
+
+	var payload map[string]interface{}
+	if err := json.Unmarshal(w.Body.Bytes(), &payload); err != nil {
+		t.Fatalf("json decode failed: %v", err)
+	}
+	if _, ok := payload["verification_policy"].(map[string]interface{}); !ok {
+		t.Fatalf("verification_policy missing: %v", payload)
+	}
+}
+
+func TestUpdateVerificationPolicyEndpointRequiresAdmin(t *testing.T) {
+	configureProofAuthForTests(t)
+
+	h := NewHandler(nil, nil, nil, nil)
+	chain := blockchain.NewBlockChain()
+	h.SetBlockchain(chain)
+
+	mux := http.NewServeMux()
+	h.RegisterRoutes(mux)
+
+	body := `{"require_proof":true,"min_confidence_bps":9200,"reject_on_verification_failure":true,"allow_consensus_proof":true,"allow_zk_proof":false,"allow_tee_proof":true}`
+	req := httptest.NewRequest(http.MethodPost, "/api/v1/verification_policy", strings.NewReader(body))
+	req.Header.Set("Content-Type", "application/json")
+	req.Header.Set("Authorization", "Bearer test-token")
+	req.Header.Set("X-API-Role", "verifier")
+	w := httptest.NewRecorder()
+	mux.ServeHTTP(w, req)
+
+	if w.Code != http.StatusForbidden {
+		t.Fatalf("status = %d, want 403", w.Code)
+	}
+}
+
+func TestUpdateVerificationPolicyEndpoint(t *testing.T) {
+	configureProofAuthForTests(t)
+
+	h := NewHandler(nil, nil, nil, nil)
+	chain := blockchain.NewBlockChain()
+	h.SetBlockchain(chain)
+
+	mux := http.NewServeMux()
+	h.RegisterRoutes(mux)
+
+	body := `{"require_proof":true,"min_confidence_bps":9200,"reject_on_verification_failure":true,"allow_consensus_proof":true,"allow_zk_proof":false,"allow_tee_proof":true}`
+	req := httptest.NewRequest(http.MethodPost, "/api/v1/verification_policy", strings.NewReader(body))
+	req.Header.Set("Content-Type", "application/json")
+	req.Header.Set("Authorization", "Bearer test-token")
+	req.Header.Set("X-API-Role", "admin")
+	w := httptest.NewRecorder()
+	mux.ServeHTTP(w, req)
+
+	if w.Code != http.StatusOK {
+		t.Fatalf("status = %d, want 200 body=%s", w.Code, w.Body.String())
+	}
+
+	policy := chain.GetVerificationPolicy()
+	if !policy.RequireProof || policy.MinConfidenceBps != 9200 || policy.AllowZKProof {
+		t.Fatalf("unexpected policy after update: %+v", policy)
+	}
+
+	value, err := chain.StateDB.Get("verification_policy:active")
+	if err != nil {
+		t.Fatalf("persisted policy missing: %v", err)
+	}
+	persisted, ok := value.(map[string]interface{})
+	if !ok {
+		t.Fatalf("persisted policy wrong type: %T", value)
+	}
+	if persisted["min_confidence_bps"] != uint32(9200) {
+		t.Fatalf("persisted min_confidence_bps = %v", persisted["min_confidence_bps"])
 	}
 }
