@@ -13,8 +13,7 @@ import numpy as np
 import time
 from datetime import datetime
 from pathlib import Path
-import sys
-from typing import Dict, List, Tuple
+from typing import List
 
 
 class MohawkNode:
@@ -626,7 +625,7 @@ def main():
 
     # Create and run test suite
     suite = ByzantineStressTestSuite(threshold_ratios=threshold_ratios)
-    results = suite.run_all_scenarios()
+    suite.run_all_scenarios()
 
     # Save results to JSON
     output_dir = Path("test-results/byzantine-stress-test-suite")
@@ -636,11 +635,11 @@ def main():
     results_file = output_dir / f"byzantine-test-suite-{timestamp}.json"
 
     with open(results_file, "w") as f:
-        json.dump(results, f, indent=2)
+        json.dump(suite.results, f, indent=2)
 
     print(f"\n[OK] Results saved to: {results_file}")
 
-    return results
+    return suite.results
 
 
 if __name__ == "__main__":

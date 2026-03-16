@@ -457,11 +457,15 @@ def run_flower_server():
         os.getenv("MIN_AVAILABLE_CLIENTS", str(min_fit_clients))
     )
     round_timeout = float(os.getenv("ROUND_TIMEOUT_SECONDS", "600"))
-    num_rounds = int(os.getenv("NUM_ROUNDS", "100"))
+    requested_num_rounds = int(os.getenv("NUM_ROUNDS", "100"))
+    # Continuous mode: treat non-positive NUM_ROUNDS as effectively unbounded.
+    num_rounds = requested_num_rounds if requested_num_rounds > 0 else 2147483647
     logger.info(
         f"FL config: num_rounds={num_rounds}, min_fit_clients={min_fit_clients}, "
         f"min_available_clients={min_available_clients}, round_timeout={round_timeout}s"
     )
+    if requested_num_rounds <= 0:
+        logger.info("FL config: continuous mode enabled (NUM_ROUNDS<=0)")
 
     strategy = ByzantineRobustFedAvg(
         fraction_fit=1.0,

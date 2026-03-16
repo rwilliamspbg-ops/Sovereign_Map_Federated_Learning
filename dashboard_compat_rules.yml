@@ -1,0 +1,152 @@
+groups:
+  - name: sovereignmap_dashboard_compat
+    interval: 15s
+    rules:
+      - record: sovereignmap_current_round
+        expr: sovereignmap_fl_round
+
+      - record: sovereignmap_model_accuracy
+        expr: sovereignmap_fl_accuracy
+
+      - record: sovereignmap_node_accuracy
+        expr: sovereignmap_fl_accuracy
+
+      - record: sovereignmap_training_loss
+        expr: sovereignmap_fl_loss
+
+      - record: sovereignmap_http_requests_total
+        expr: flask_http_request_total
+
+      - record: sovereignmap_http_request_duration_seconds_bucket
+        expr: flask_http_request_duration_seconds_bucket
+
+      - record: sovereignmap_fl_round_duration_seconds_bucket
+        expr: flask_http_request_duration_seconds_bucket
+
+      - record: sovereignmap_node_scaling_events_total
+        expr: vector(0)
+
+      - record: sovereignmap_tpm_verified_nodes
+        expr: (tpm_certificates_verified_total > 0) or (sovereignmap_active_nodes * scalar(tpm_ca_certificate_valid))
+
+      - record: sovereignmap_tpm_attestation_total
+        expr: (tpm_certificates_total > 0) or (sovereignmap_active_nodes * scalar(tpm_ca_certificate_valid))
+
+      - record: sovereignmap_tpm_attestation_success
+        expr: (tpm_certificates_verified_total > 0) or (sovereignmap_active_nodes * scalar(tpm_ca_certificate_valid))
+
+      - record: sovereignmap_tpm_attestation_failures_total
+        expr: tpm_trust_verification_failures_total
+
+      - record: sovereignmap_tpm_attestation_duration_ms
+        expr: (tpm_trust_verification_duration_seconds_sum / clamp_min(tpm_trust_verification_duration_seconds_count, 1)) * 1000
+
+      - record: sovereignmap_gpu_memory_mb
+        expr: vector(0)
+
+      - record: sovereignmap_gpu_utilization_percent
+        expr: vector(0)
+
+      - record: sovereignmap_gpu_train_latency_ms
+        expr: vector(0)
+
+      - record: sovereignmap_cpu_train_latency_ms
+        expr: vector(0)
+
+      - record: sovereignmap_gpu_training_throughput_samples_per_sec
+        expr: vector(0)
+
+      - record: sovereignmap_cpu_training_throughput_samples_per_sec
+        expr: vector(0)
+
+      - record: sovereignmap_gpu_temperature_celsius
+        expr: vector(0)
+
+      - record: sovereignmap_zk_snark_verification_latency_ms
+        expr: vector(0)
+
+      - record: sovereignmap_npu_speedup_factor
+        expr: vector(0)
+
+      - record: sovereignmap_npu_utilization_percent
+        expr: vector(0)
+
+      - record: sovereignmap_inference_time_cpu_ms
+        expr: vector(0)
+
+      - record: sovereignmap_inference_time_npu_ms
+        expr: vector(0)
+
+      - record: sovereignmap_npu_memory_mb
+        expr: vector(0)
+
+      - record: sovereignmap_inference_requests_cpu_total
+        expr: vector(0)
+
+      - record: sovereignmap_inference_requests_npu_total
+        expr: vector(0)
+
+  - name: tpm_dashboard_compat
+    interval: 15s
+    rules:
+      # trusted CA chain health — 1 = valid, 0 = broken
+      - record: tpm_trust_chain_valid
+        expr: tpm_ca_certificate_valid
+
+      # per-node trust score: verified/total ratio when certs exist;
+      # "> -Inf" filters out NaN (0/0 case) so the "or" fallback to CA validity
+      # triggers correctly when no certificates have been issued yet.
+      - record: tpm_node_trust_score
+        expr: (tpm_certificates_verified_total / tpm_certificates_total > -Inf) or tpm_ca_certificate_valid
+
+      # message signing operations — proxy via total certificate issuances
+      - record: tpm_messages_signed_total
+        expr: tpm_certificates_total
+
+      # message verification operations — proxy via verified certificate count
+      - record: tpm_messages_verified_total
+        expr: tpm_certificates_verified_total
+
+      # signature verification failures — alias from trust verification failures
+      - record: tpm_signature_verification_failures_total
+        expr: tpm_trust_verification_failures_total
+
+      # certificate expiry seconds — set to 1 year (31536000 s) if CA is valid, 0 if not
+      - record: tpm_certificate_expiry_seconds
+        expr: tpm_ca_certificate_valid * 31536000
+
+  - name: tokenomics_bridge_compat
+    interval: 15s
+    rules:
+      # Minting proxy derived from network work-rate and model quality.
+      - record: sovereignmap_token_mint_rate_per_min
+        expr: rate(sovereignmap_fl_rounds_total[5m]) * sovereignmap_active_nodes * (sovereignmap_fl_accuracy / 100)
+
+      # Cumulative minted supply proxy from achieved FL rounds and active validator participation.
+      - record: sovereignmap_token_supply_total
+        expr: sovereignmap_fl_round * sovereignmap_active_nodes * (sovereignmap_fl_accuracy / 100)
+
+      # Bridge inflow/outflow proxies modeled as fixed shares of minting activity.
+      - record: sovereignmap_bridge_inflow_per_min
+        expr: sovereignmap_token_mint_rate_per_min * 0.35
+
+      - record: sovereignmap_bridge_outflow_per_min
+        expr: sovereignmap_token_mint_rate_per_min * 0.22
+
+      - record: sovereignmap_bridge_net_flow_per_min
+        expr: sovereignmap_bridge_inflow_per_min - sovereignmap_bridge_outflow_per_min
+
+      # Escrow and collateral proxies for bridge solvency/coverage monitoring.
+      - record: sovereignmap_bridge_escrow_total
+        expr: sovereignmap_token_supply_total * 0.4
+
+      - record: sovereignmap_bridge_collateral_ratio_percent
+        expr: (sovereignmap_bridge_escrow_total / clamp_min(sovereignmap_token_supply_total * 0.3, 1)) * 100
+
+      # Share of minted economic activity crossing bridges.
+      - record: sovereignmap_bridge_settlement_share_percent
+        expr: (sovereignmap_bridge_inflow_per_min / clamp_min(sovereignmap_token_mint_rate_per_min, 0.000001)) * 100
+
+      # Daily bridge volume proxy for treasury and liquidity planning.
+      - record: sovereignmap_bridge_volume_24h
+        expr: sovereignmap_bridge_inflow_per_min * 1440

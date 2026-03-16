@@ -6,13 +6,11 @@ Executes comprehensive resilience testing at scale
 """
 
 import json
-import yaml
 import subprocess
 import time
 from datetime import datetime
 from pathlib import Path
 import numpy as np
-from typing import Dict, List, Tuple
 
 
 class KubernetesByzantineTestSuite:
@@ -39,15 +37,6 @@ class KubernetesByzantineTestSuite:
         """Create Kubernetes namespace for tests"""
         print(f"\n[SETUP] Creating namespace: {self.namespace}")
 
-        namespace_yaml = {
-            "apiVersion": "v1",
-            "kind": "Namespace",
-            "metadata": {
-                "name": self.namespace,
-                "labels": {"test": "byzantine-5000-node"},
-            },
-        }
-
         cmd = f"kubectl create namespace {self.namespace} --dry-run=client -o yaml | kubectl apply -f -"
         subprocess.run(cmd, shell=True, capture_output=True)
 
@@ -59,14 +48,6 @@ class KubernetesByzantineTestSuite:
     def create_configmap(self):
         """Create ConfigMap with test configuration"""
         print(f"\n[SETUP] Creating ConfigMap with test configuration")
-
-        config = {
-            "byzantine_ratio": 0.5,
-            "attack_type": "gradient_inversion",
-            "test_rounds": 10,
-            "trim_factor": 0.1,
-            "model_dim": 784,
-        }
 
         # Create ConfigMap using kubectl
         cmd = f"""
@@ -200,7 +181,7 @@ if __name__ == '__main__':
 """
 
         # Apply aggregator deployment
-        result = subprocess.run(
+        subprocess.run(
             f"kubectl apply -f - --namespace={self.namespace}",
             input=aggregator_yaml,
             shell=True,
@@ -213,13 +194,13 @@ if __name__ == '__main__':
         time.sleep(5)
 
         for i in range(30):
-            result = subprocess.run(
+            status_result = subprocess.run(
                 f"kubectl get deployment byzantine-aggregator -n {self.namespace} -o jsonpath='{{.status.readyReplicas}}'",
                 shell=True,
                 capture_output=True,
                 text=True,
             )
-            if result.stdout == "1":
+            if status_result.stdout == "1":
                 print(f"[OK] Aggregator service ready")
                 return True
             time.sleep(1)
@@ -234,7 +215,6 @@ if __name__ == '__main__':
         )
 
         num_malicious = int(node_count * byzantine_ratio)
-        num_honest = node_count - num_malicious
 
         deployment_yaml = f"""
 apiVersion: apps/v1
@@ -356,7 +336,7 @@ print(f'[NODE] {{node_id}} completed all rounds')
                     self.results["deployment"]["nodes_deployed"] = node_count
                     self.results["deployment"]["deployment_time"] = elapsed
                     return True
-            except:
+            except Exception:
                 pass
 
             time.sleep(1)
@@ -527,7 +507,7 @@ print(f'[NODE] {{node_id}} completed all rounds')
 
             # Test
             self.collect_metrics()
-            test_results = self.run_byzantine_resilience_test()
+            self.run_byzantine_resilience_test()
 
             # Summary
             self._generate_summary()

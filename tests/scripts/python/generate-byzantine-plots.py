@@ -9,7 +9,6 @@ import matplotlib.pyplot as plt
 import numpy as np
 from pathlib import Path
 import seaborn as sns
-from datetime import datetime
 
 # Set style
 sns.set_style("whitegrid")
@@ -307,7 +306,6 @@ def create_resilience_summary_plot(results):
 
     # Create horizontal bar chart
     y_pos = np.arange(len(verdict_names))
-    values = [1 if v == "PASS" else 0 for v in verdicts]
 
     bars = ax.barh(
         y_pos,

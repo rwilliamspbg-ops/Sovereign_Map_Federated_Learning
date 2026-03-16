@@ -398,7 +398,7 @@
               }
             ]
           },
-          "unit": "short"
+          "unit": "msamples"
         },
         "overrides": []
       },

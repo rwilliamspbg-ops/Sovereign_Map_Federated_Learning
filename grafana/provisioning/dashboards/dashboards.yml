@@ -10,13 +10,13 @@ providers:
     updateIntervalSeconds: 10
     options:
       path: /var/lib/grafana/dashboards
-  
-  - name: 'Genesis Launch'
+
+  - name: 'Sovereign Provisioned Dashboards'
     orgId: 1
-    folder: 'Genesis'
+    folder: 'Sovereign'
     type: file
     disableDeletion: false
     editable: true
-    updateIntervalSeconds: 5
+    updateIntervalSeconds: 10
     options:
       path: /etc/grafana/provisioning/dashboards

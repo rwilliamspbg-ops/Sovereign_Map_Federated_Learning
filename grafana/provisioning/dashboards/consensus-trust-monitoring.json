@@ -64,7 +64,26 @@
             ]
           },
           "unit": "short",
-          "mappings": []
+          "mappings": [
+            {
+              "type": "value",
+              "options": {
+                "1": {
+                  "text": "\u2705 Valid",
+                  "color": "green"
+                }
+              }
+            },
+            {
+              "type": "value",
+              "options": {
+                "0": {
+                  "text": "\u274c Broken",
+                  "color": "red"
+                }
+              }
+            }
+          ]
         },
         "overrides": []
       },
@@ -78,7 +97,8 @@
             "uid": "prometheus"
           }
         }
-      ]
+      ],
+      "description": "1 = trust chain healthy (CA valid). 0 = chain broken. Sourced from tpm_ca_certificate_valid."
     },
     {
       "id": 2,
@@ -137,7 +157,8 @@
             "uid": "prometheus"
           }
         }
-      ]
+      ],
+      "description": "Total number of TPM certificates that have been verified successfully."
     },
     {
       "id": 3,
@@ -196,7 +217,8 @@
             "uid": "prometheus"
           }
         }
-      ]
+      ],
+      "description": "Total certificates issued by the TPM Certificate Authority."
     },
     {
       "id": 4,
@@ -263,7 +285,8 @@
             "uid": "prometheus"
           }
         }
-      ]
+      ],
+      "description": "Average trust score across all nodes (0\u20131 where 1 = fully trusted). Derived from verified/total certificate ratio; falls back to CA validity when no certs issued yet."
     },
     {
       "id": 5,
@@ -316,7 +339,8 @@
             "uid": "prometheus"
           }
         }
-      ]
+      ],
+      "description": "Per-node trust score trend. 1.0 means all certificates for that node are verified. A drop indicates revocations or verification failures."
     },
     {
       "id": 6,
@@ -378,7 +402,8 @@
             "uid": "prometheus"
           }
         }
-      ]
+      ],
+      "description": "Rate of message signing and verification operations per second. High rates indicate active consensus participation."
     },
     {
       "id": 7,
@@ -440,7 +465,8 @@
             "uid": "prometheus"
           }
         }
-      ]
+      ],
+      "description": "Rate of trust verification failures per second. Any sustained rate above 0 warrants investigation."
     },
     {
       "id": 8,
@@ -502,7 +528,8 @@
             "uid": "prometheus"
           }
         }
-      ]
+      ],
+      "description": "p50 and p95 latency for TPM trust verification operations. Target: <50ms (0.05s)."
     },
     {
       "id": 9,
@@ -540,7 +567,7 @@
               "legend": false
             }
           },
-          "unit": "s",
+          "unit": "dtdurations",
           "mappings": []
         },
         "overrides": []
@@ -555,7 +582,8 @@
             "uid": "prometheus"
           }
         }
-      ]
+      ],
+      "description": "Seconds remaining until certificate expiry. Currently reflects the CA certificate lifetime (31,536,000 s = 1 year). Panels go red below 30 days."
     }
   ],
   "refresh": "10s",
@@ -577,5 +605,6 @@
   "timezone": "browser",
   "title": "Consensus Trust Monitoring",
   "uid": "consensus-trust-monitoring",
-  "version": 2
+  "version": 2,
+  "description": "Real-time TPM trust chain health, certificate lifecycle, node trust scores, and message signing/verification rates across the Sovereign Map network."
 }

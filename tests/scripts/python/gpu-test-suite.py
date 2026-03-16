@@ -17,12 +17,10 @@ Usage:
 import argparse
 import json
 import logging
-import os
-import sys
 import threading
 import time
 from datetime import datetime
-from typing import Dict, List, Tuple
+from typing import Dict
 
 import numpy as np
 import torch

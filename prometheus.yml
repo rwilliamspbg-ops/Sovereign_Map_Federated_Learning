@@ -7,6 +7,7 @@ global:
 
 rule_files:
   - 'tpm_alerts.yml'
+  - 'dashboard_compat_rules.yml'
 
 scrape_configs:
   - job_name: 'prometheus'

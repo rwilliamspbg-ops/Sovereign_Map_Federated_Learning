@@ -10,8 +10,6 @@ import numpy as np
 import time
 from datetime import datetime
 from pathlib import Path
-import sys
-from typing import Dict, List, Tuple
 
 
 class LocalKubernetesByzantineSimulator:
@@ -508,7 +506,7 @@ class LocalKubernetesByzantineSimulator:
 def main():
     """Main execution"""
     suite = LocalKubernetesByzantineSimulator()
-    results = suite.run_all_scenarios()
+    suite.run_all_scenarios()
     output_file = suite.save_results()
 
     print(f"\n[COMPLETE] 5000-node test suite finished successfully")

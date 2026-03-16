@@ -12,7 +12,7 @@ services:
       - FLASK_ENV=production
       - NODE_ID=0
       - NUM_NODES=100
-      - NUM_ROUNDS=${NUM_ROUNDS:-100}
+      - NUM_ROUNDS=${NUM_ROUNDS:-0}
       - FLASK_PORT=8000
       - PYTHONUNBUFFERED=1
       - DATABASE_URI=mongodb://${MONGO_USER:-admin}:${MONGO_PASSWORD:-CHANGE_ME_MONGO}@mongo:27017/sovereignmap?authSource=admin
@@ -29,10 +29,10 @@ services:
     restart: always
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
-      interval: 30s
+      interval: 15s
       timeout: 10s
       retries: 3
-      start_period: 30s
+      start_period: 10s
     networks:
       - sovereignmap
     volumes:
@@ -70,7 +70,7 @@ services:
     restart: always
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost/health"]
-      interval: 30s
+      interval: 15s
       timeout: 5s
       retries: 3
       start_period: 10s
@@ -102,7 +102,7 @@ services:
     restart: always
     healthcheck:
       test: ["CMD", "mongosh", "--eval", "db.adminCommand('ping')"]
-      interval: 30s
+      interval: 15s
       timeout: 10s
       retries: 3
     networks:
@@ -131,7 +131,7 @@ services:
     restart: always
     healthcheck:
       test: ["CMD", "redis-cli", "ping"]
-      interval: 30s
+      interval: 15s
       timeout: 5s
       retries: 3
     networks:
@@ -168,25 +168,29 @@ services:
       - sovereign-logs:/var/log/sovereign
     working_dir: /app
     command: >
-      bash -c "pip install --quiet cryptography && bash /app/tpm-bootstrap.sh echo done"
+      bash -c "pip install --quiet cryptography && chmod +x /app/tpm-bootstrap.sh && /app/tpm-bootstrap.sh"
     networks:
       - sovereignmap
     restart: "no"
 
-  node-agent:
+  node-agent-1:
     build:
       context: .
-      dockerfile: Dockerfile
+      dockerfile: Dockerfile.node-agent
     image: sovereignmap/node-agent:latest
     environment:
       - FL_SERVER_MODE=false
       - NODE_AGENT_MODE=true
       - BACKEND_URL=http://backend:8000
       - PYTHONUNBUFFERED=1
-      - NODE_PEER_ID=${NODE_ID:-node_agent}
+      - NODE_PEER_ID=node_agent_1
+      - NODE_ID=1
       - TPM_ENABLED=true
       - CERT_DIR=/etc/sovereign/certs
       - NUM_NODES=100
+      - AGGREGATOR_HOST=backend
+      - AGGREGATOR_PORT=8080
+    command: ["python", "-u", "src/client.py", "--node-id", "1", "--aggregator", "backend:8080"]
     depends_on:
       backend:
         condition: service_healthy
@@ -197,7 +201,113 @@ services:
     restart: always
     healthcheck:
       test: ["CMD", "pgrep", "-f", "python"]
-      interval: 30s
+      interval: 15s
+      timeout: 10s
+      retries: 3
+    networks:
+      - sovereignmap
+    volumes:
+      - ./src:/app/src:ro
+      - ./tpm_cert_manager.py:/app/tpm_cert_manager.py:ro
+      - ./secure_communication.py:/app/secure_communication.py:ro
+      - tpm-certs:/etc/sovereign/certs:ro
+      - sovereign-logs:/var/log/sovereign
+    logging:
+      driver: json-file
+      options:
+        max-size: "5m"
+        max-file: "2"
+    deploy:
+      resources:
+        limits:
+          cpus: '1'
+          memory: 1G
+        reservations:
+          cpus: '0.5'
+          memory: 512M
+
+  node-agent-2:
+    build:
+      context: .
+      dockerfile: Dockerfile.node-agent
+    image: sovereignmap/node-agent:latest
+    environment:
+      - FL_SERVER_MODE=false
+      - NODE_AGENT_MODE=true
+      - BACKEND_URL=http://backend:8000
+      - PYTHONUNBUFFERED=1
+      - NODE_PEER_ID=node_agent_2
+      - NODE_ID=2
+      - TPM_ENABLED=true
+      - CERT_DIR=/etc/sovereign/certs
+      - NUM_NODES=100
+      - AGGREGATOR_HOST=backend
+      - AGGREGATOR_PORT=8080
+    command: ["python", "-u", "src/client.py", "--node-id", "2", "--aggregator", "backend:8080"]
+    depends_on:
+      backend:
+        condition: service_healthy
+      mongo:
+        condition: service_healthy
+      tpm-ca:
+        condition: service_completed_successfully
+    restart: always
+    healthcheck:
+      test: ["CMD", "pgrep", "-f", "python"]
+      interval: 15s
+      timeout: 10s
+      retries: 3
+    networks:
+      - sovereignmap
+    volumes:
+      - ./src:/app/src:ro
+      - ./tpm_cert_manager.py:/app/tpm_cert_manager.py:ro
+      - ./secure_communication.py:/app/secure_communication.py:ro
+      - tpm-certs:/etc/sovereign/certs:ro
+      - sovereign-logs:/var/log/sovereign
+    logging:
+      driver: json-file
+      options:
+        max-size: "5m"
+        max-file: "2"
+    deploy:
+      resources:
+        limits:
+          cpus: '1'
+          memory: 1G
+        reservations:
+          cpus: '0.5'
+          memory: 512M
+
+  node-agent-3:
+    build:
+      context: .
+      dockerfile: Dockerfile.node-agent
+    image: sovereignmap/node-agent:latest
+    environment:
+      - FL_SERVER_MODE=false
+      - NODE_AGENT_MODE=true
+      - BACKEND_URL=http://backend:8000
+      - PYTHONUNBUFFERED=1
+      - NODE_PEER_ID=node_agent_3
+      - NODE_ID=3
+      - TPM_ENABLED=true
+      - CERT_DIR=/etc/sovereign/certs
+      - NUM_NODES=100
+      - AGGREGATOR_HOST=backend
+      - AGGREGATOR_PORT=8080
+    command: ["python", "-u", "src/client.py", "--node-id", "3", "--aggregator", "backend:8080"]
+    depends_on:
+      backend:
+        condition: service_healthy
+      mongo:
+        condition: service_healthy
+      tpm-ca:
+        condition: service_completed_successfully
+    restart: always
+    healthcheck:
+      test: ["CMD", "pgrep", "-f", "python"]
+      interval: 15s
       timeout: 10s
       retries: 3
     networks:
@@ -241,7 +351,7 @@ services:
     restart: always
     healthcheck:
       test: ["CMD", "wget", "--quiet", "--tries=1", "--spider", "http://localhost:9090/-/healthy"]
-      interval: 30s
+      interval: 15s
       timeout: 5s
       retries: 3
     networks:
@@ -280,7 +390,7 @@ services:
     restart: always
     healthcheck:
       test: ["CMD", "wget", "--quiet", "--tries=1", "--spider", "http://localhost:3000/api/health"]
-      interval: 30s
+      interval: 15s
       timeout: 5s
       retries: 3
     networks:
@@ -313,7 +423,7 @@ services:
     restart: always
     healthcheck:
       test: ["CMD", "wget", "--quiet", "--tries=1", "--spider", "http://localhost:9093/-/healthy"]
-      interval: 30s
+      interval: 15s
       timeout: 5s
       retries: 3
     networks:

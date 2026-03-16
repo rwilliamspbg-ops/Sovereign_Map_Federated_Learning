@@ -23,12 +23,10 @@ Usage:
 import argparse
 import json
 import logging
-import os
-import sys
 import threading
 import time
 from datetime import datetime
-from typing import Dict, List, Tuple, Optional
+from typing import Dict, Tuple
 
 import numpy as np
 import torch
@@ -80,7 +78,7 @@ class DeviceManager:
                     "memory"
                 ] = f"{torch.cuda.get_device_properties(0).total_memory / 1e9:.1f} GB"
                 devices["cuda"]["device_name"] = torch.cuda.get_device_name(0)
-            except:
+            except Exception:
                 devices["cuda"]["memory"] = "Unknown"
 
         # NPU (Huawei Ascend / AMD AI accelerator)
@@ -101,7 +99,7 @@ class DeviceManager:
                     "memory"
                 ] = f"{torch.npu.get_device_properties(0).total_memory / 1e9:.1f} GB"
                 devices["npu"]["device_name"] = torch.npu.get_device_name(0)
-            except:
+            except Exception:
                 devices["npu"]["memory"] = "Unknown"
 
         return devices
@@ -259,7 +257,7 @@ class DeviceTrainingBenchmark:
                     torch.npu.synchronize()
                 elif self.device_type == "cuda":
                     torch.cuda.synchronize()
-            except:
+            except Exception:
                 pass
 
             start = time.time()
@@ -270,7 +268,7 @@ class DeviceTrainingBenchmark:
                     torch.npu.synchronize()
                 elif self.device_type == "cuda":
                     torch.cuda.synchronize()
-            except:
+            except Exception:
                 pass
 
             elapsed = time.time() - start
