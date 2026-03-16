@@ -218,6 +218,21 @@ func (sce *SmartContractExecutor) applyGovernanceAction(contractAddr string, fun
 	if v, ok := asUint32(params["quality_weight"]); ok {
 		updated.QualityWeight = v
 	}
+	if v, ok := asUint64(params["max_attestation_age_blocks"]); ok {
+		updated.MaxAttestationAgeBlocks = v
+	}
+	if v, ok := asUint32(params["invalid_attestation_penalty"]); ok {
+		updated.InvalidAttestationPenalty = v
+	}
+	if v, ok := asUint32(params["invalid_attestation_slash_bps"]); ok {
+		updated.InvalidAttestationSlashBps = v
+	}
+	if v, ok := asUint32(params["stale_attestation_slash_bps"]); ok {
+		updated.StaleAttestationSlashBps = v
+	}
+	if v, ok := asUint32(params["max_consecutive_attestation_failures"]); ok {
+		updated.MaxConsecutiveAttestationFailures = v
+	}
 	if v, ok := asUint32(params["min_quality_score"]); ok {
 		updated.MinQualityScore = v
 	}
@@ -264,6 +279,27 @@ func asUint32(v interface{}) (uint32, bool) {
 			return 0, false
 		}
 		return uint32(n), true
+	default:
+		return 0, false
+	}
+}
+
+func asUint64(v interface{}) (uint64, bool) {
+	switch n := v.(type) {
+	case uint32:
+		return uint64(n), true
+	case uint64:
+		return n, true
+	case int:
+		if n < 0 {
+			return 0, false
+		}
+		return uint64(n), true
+	case float64:
+		if n < 0 {
+			return 0, false
+		}
+		return uint64(n), true
 	default:
 		return 0, false
 	}

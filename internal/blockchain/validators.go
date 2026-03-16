@@ -21,43 +21,57 @@ const (
 
 // ReputationPolicy controls governance-tunable reputation behavior.
 type ReputationPolicy struct {
-	SlashPenalty             uint32 `json:"slash_penalty"`
-	RewardGain               uint32 `json:"reward_gain"`
-	EpochRecovery            uint32 `json:"epoch_recovery"`
-	ReputationWeight         uint32 `json:"reputation_weight"`
-	AttestationWeight        uint32 `json:"attestation_weight"`
-	QualityWeight            uint32 `json:"quality_weight"`
-	MinQualityScore          uint32 `json:"min_quality_score"`
-	QualityPenalty           uint32 `json:"quality_penalty"`
-	MaxConsecutiveLowQuality uint32 `json:"max_consecutive_low_quality"`
+	SlashPenalty                      uint32 `json:"slash_penalty"`
+	RewardGain                        uint32 `json:"reward_gain"`
+	EpochRecovery                     uint32 `json:"epoch_recovery"`
+	ReputationWeight                  uint32 `json:"reputation_weight"`
+	AttestationWeight                 uint32 `json:"attestation_weight"`
+	QualityWeight                     uint32 `json:"quality_weight"`
+	MaxAttestationAgeBlocks           uint64 `json:"max_attestation_age_blocks"`
+	InvalidAttestationPenalty         uint32 `json:"invalid_attestation_penalty"`
+	InvalidAttestationSlashBps        uint32 `json:"invalid_attestation_slash_bps"`
+	StaleAttestationSlashBps          uint32 `json:"stale_attestation_slash_bps"`
+	MaxConsecutiveAttestationFailures uint32 `json:"max_consecutive_attestation_failures"`
+	MinQualityScore                   uint32 `json:"min_quality_score"`
+	QualityPenalty                    uint32 `json:"quality_penalty"`
+	MaxConsecutiveLowQuality          uint32 `json:"max_consecutive_low_quality"`
 }
 
 type ValidatorSetMetrics struct {
-	ValidatorCount      int    `json:"validator_count"`
-	TotalStake          uint64 `json:"total_stake"`
-	AverageReputation   uint32 `json:"average_reputation"`
-	AverageAttestation  uint32 `json:"average_attestation"`
-	AverageQuality      uint32 `json:"average_quality"`
-	LowReputationCount  int    `json:"low_reputation_count"`
-	LowAttestationCount int    `json:"low_attestation_count"`
-	JailedCount         int    `json:"jailed_count"`
+	ValidatorCount           int    `json:"validator_count"`
+	TotalStake               uint64 `json:"total_stake"`
+	AverageReputation        uint32 `json:"average_reputation"`
+	AverageAttestation       uint32 `json:"average_attestation"`
+	AverageQuality           uint32 `json:"average_quality"`
+	LowReputationCount       int    `json:"low_reputation_count"`
+	LowAttestationCount      int    `json:"low_attestation_count"`
+	StaleAttestationCount    int    `json:"stale_attestation_count"`
+	MissingAttestationCount  int    `json:"missing_attestation_count"`
+	TotalAttestationFailures uint64 `json:"total_attestation_failures"`
+	JailedCount              int    `json:"jailed_count"`
 }
 
 // Validator represents a consensus validator in the network
 type Validator struct {
-	NodeID             string `json:"node_id"`
-	StakedAmount       uint64 `json:"staked_amount"`
-	ReputationScore    uint32 `json:"reputation_score"`
-	AttestationScore   uint32 `json:"attestation_score"`
-	ParticipationScore uint32 `json:"participation_score"`
-	AccumulatedRewards uint64 `json:"accumulated_rewards"`
-	AccumulatedVotes   uint64 `json:"accumulated_votes"`
-	SlashCount         uint32 `json:"slash_count"`
-	LowQualityStreak   uint32 `json:"low_quality_streak"`
-	Jailed             bool   `json:"jailed"`
-	CommissionRate     uint32 `json:"commission_rate"` // basis points (0-10000)
-	LastActiveBlock    uint64 `json:"last_active_block"`
-	JailedUntilBlock   uint64 `json:"jailed_until_block"`
+	NodeID                         string `json:"node_id"`
+	StakedAmount                   uint64 `json:"staked_amount"`
+	ReputationScore                uint32 `json:"reputation_score"`
+	AttestationScore               uint32 `json:"attestation_score"`
+	ParticipationScore             uint32 `json:"participation_score"`
+	AccumulatedRewards             uint64 `json:"accumulated_rewards"`
+	AccumulatedVotes               uint64 `json:"accumulated_votes"`
+	SlashCount                     uint32 `json:"slash_count"`
+	LowQualityStreak               uint32 `json:"low_quality_streak"`
+	ConsecutiveAttestationFailures uint32 `json:"consecutive_attestation_failures"`
+	AttestationFailuresTotal       uint32 `json:"attestation_failures_total"`
+	AttestationStale               bool   `json:"attestation_stale"`
+	LastAttestationBlock           uint64 `json:"last_attestation_block"`
+	LastValidAttestationBlock      uint64 `json:"last_valid_attestation_block"`
+	LastAttestationEvidence        string `json:"last_attestation_evidence"`
+	Jailed                         bool   `json:"jailed"`
+	CommissionRate                 uint32 `json:"commission_rate"` // basis points (0-10000)
+	LastActiveBlock                uint64 `json:"last_active_block"`
+	JailedUntilBlock               uint64 `json:"jailed_until_block"`
 }
 
 // ValidatorSet manages active consensus validators
@@ -86,15 +100,20 @@ func NewValidatorSet() *ValidatorSet {
 		MaxValidators:   100,
 		MinStakeAmount:  1000000, // minimum stake to become validator
 		Policy: ReputationPolicy{
-			SlashPenalty:             500,
-			RewardGain:               50,
-			EpochRecovery:            25,
-			ReputationWeight:         60,
-			AttestationWeight:        25,
-			QualityWeight:            15,
-			MinQualityScore:          5000,
-			QualityPenalty:           200,
-			MaxConsecutiveLowQuality: 5,
+			SlashPenalty:                      500,
+			RewardGain:                        50,
+			EpochRecovery:                     25,
+			ReputationWeight:                  60,
+			AttestationWeight:                 25,
+			QualityWeight:                     15,
+			MaxAttestationAgeBlocks:           500,
+			InvalidAttestationPenalty:         350,
+			InvalidAttestationSlashBps:        100,
+			StaleAttestationSlashBps:          50,
+			MaxConsecutiveAttestationFailures: 3,
+			MinQualityScore:                   5000,
+			QualityPenalty:                    200,
+			MaxConsecutiveLowQuality:          5,
 		},
 	}
 }
@@ -352,7 +371,110 @@ func (vs *ValidatorSet) SetAttestationScore(nodeID string, score uint32) error {
 		return fmt.Errorf("validator not found: %s", nodeID)
 	}
 	v.AttestationScore = score
+	v.LastAttestationBlock = vs.EpochStartBlock
+	v.LastValidAttestationBlock = vs.EpochStartBlock
+	v.AttestationStale = false
 	return nil
+}
+
+// RecordAttestationEvidence records attestation proof results and applies policy penalties.
+func (vs *ValidatorSet) RecordAttestationEvidence(nodeID string, score uint32, evidenceRef string, blockHeight uint64, valid bool) error {
+	if score > maxReputationScore {
+		return fmt.Errorf("attestation score out of range: %d", score)
+	}
+
+	vs.mu.Lock()
+	defer vs.mu.Unlock()
+
+	v, exists := vs.Validators[nodeID]
+	if !exists {
+		return fmt.Errorf("validator not found: %s", nodeID)
+	}
+
+	v.LastAttestationBlock = blockHeight
+	v.LastAttestationEvidence = evidenceRef
+
+	if valid {
+		v.AttestationScore = score
+		v.LastValidAttestationBlock = blockHeight
+		v.AttestationStale = false
+		v.ConsecutiveAttestationFailures = 0
+		return nil
+	}
+
+	v.AttestationStale = true
+	v.AttestationFailuresTotal++
+	v.ConsecutiveAttestationFailures++
+	if score < minSelectionReputation {
+		v.AttestationScore = minSelectionReputation
+	} else {
+		v.AttestationScore = score
+	}
+
+	if v.ReputationScore > vs.Policy.InvalidAttestationPenalty {
+		v.ReputationScore -= vs.Policy.InvalidAttestationPenalty
+	} else {
+		v.ReputationScore = minSelectionReputation
+	}
+
+	vs.applySlash(v, vs.Policy.InvalidAttestationSlashBps)
+	if v.ConsecutiveAttestationFailures >= vs.Policy.MaxConsecutiveAttestationFailures {
+		v.Jailed = true
+		v.JailedUntilBlock = vs.EpochStartBlock + vs.EpochDuration
+	}
+
+	return nil
+}
+
+// EnforceAttestationFreshness applies stale-attestation policy at epoch/block boundaries.
+func (vs *ValidatorSet) EnforceAttestationFreshness(currentBlock uint64) []string {
+	vs.mu.Lock()
+	defer vs.mu.Unlock()
+
+	if vs.Policy.MaxAttestationAgeBlocks == 0 {
+		return nil
+	}
+
+	slashed := make([]string, 0)
+	for _, v := range vs.Validators {
+		if v.Jailed || v.StakedAmount < vs.MinStakeAmount {
+			continue
+		}
+
+		age := currentBlock
+		if v.LastValidAttestationBlock > 0 && currentBlock >= v.LastValidAttestationBlock {
+			age = currentBlock - v.LastValidAttestationBlock
+		}
+
+		if age > vs.Policy.MaxAttestationAgeBlocks {
+			if !v.AttestationStale {
+				vs.applySlash(v, vs.Policy.StaleAttestationSlashBps)
+				slashed = append(slashed, v.NodeID)
+			}
+			v.AttestationStale = true
+		}
+	}
+
+	return slashed
+}
+
+func (vs *ValidatorSet) applySlash(v *Validator, slashBps uint32) {
+	if v == nil || slashBps == 0 || v.StakedAmount == 0 {
+		return
+	}
+	slashAmount := v.StakedAmount * uint64(slashBps) / 10000
+	if slashAmount == 0 {
+		slashAmount = 1
+	}
+	if slashAmount > v.StakedAmount {
+		slashAmount = v.StakedAmount
+	}
+	v.StakedAmount -= slashAmount
+	if vs.TotalStake >= slashAmount {
+		vs.TotalStake -= slashAmount
+	} else {
+		vs.TotalStake = 0
+	}
 }
 
 // RecordParticipationQuality updates anti-gaming quality signals for a validator.
@@ -402,6 +524,18 @@ func (vs *ValidatorSet) SetReputationPolicy(policy ReputationPolicy) error {
 	if policy.MinQualityScore > maxReputationScore || policy.QualityPenalty > maxReputationScore {
 		return fmt.Errorf("policy quality values out of range")
 	}
+	if policy.InvalidAttestationPenalty > maxReputationScore {
+		return fmt.Errorf("invalid attestation penalty out of range")
+	}
+	if policy.InvalidAttestationSlashBps > 10000 || policy.StaleAttestationSlashBps > 10000 {
+		return fmt.Errorf("attestation slash bps out of range")
+	}
+	if policy.MaxAttestationAgeBlocks == 0 {
+		return fmt.Errorf("max attestation age blocks must be > 0")
+	}
+	if policy.MaxConsecutiveAttestationFailures == 0 {
+		return fmt.Errorf("max consecutive attestation failures must be > 0")
+	}
 	if policy.ReputationWeight+policy.AttestationWeight+policy.QualityWeight == 0 {
 		return fmt.Errorf("policy weights must sum to > 0")
 	}
@@ -448,6 +582,13 @@ func (vs *ValidatorSet) GetMetrics() ValidatorSetMetrics {
 		if v.AttestationScore < 4000 {
 			metrics.LowAttestationCount++
 		}
+		if v.AttestationStale {
+			metrics.StaleAttestationCount++
+		}
+		if v.LastValidAttestationBlock == 0 {
+			metrics.MissingAttestationCount++
+		}
+		metrics.TotalAttestationFailures += uint64(v.AttestationFailuresTotal)
 		if v.Jailed {
 			metrics.JailedCount++
 		}

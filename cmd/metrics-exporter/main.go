@@ -138,6 +138,18 @@ func validatorMetricsPrometheus(vs *blockchain.ValidatorSet, governance *governa
 	b.WriteString("# TYPE sovereign_validators_low_attestation_total gauge\n")
 	b.WriteString(fmt.Sprintf("sovereign_validators_low_attestation_total %d\n", metrics.LowAttestationCount))
 
+	b.WriteString("# HELP sovereign_validators_stale_attestation_total Validators with stale attestation state\n")
+	b.WriteString("# TYPE sovereign_validators_stale_attestation_total gauge\n")
+	b.WriteString(fmt.Sprintf("sovereign_validators_stale_attestation_total %d\n", metrics.StaleAttestationCount))
+
+	b.WriteString("# HELP sovereign_validators_missing_attestation_total Validators without a valid attestation yet\n")
+	b.WriteString("# TYPE sovereign_validators_missing_attestation_total gauge\n")
+	b.WriteString(fmt.Sprintf("sovereign_validators_missing_attestation_total %d\n", metrics.MissingAttestationCount))
+
+	b.WriteString("# HELP sovereign_validators_attestation_failures_total Total invalid attestation events\n")
+	b.WriteString("# TYPE sovereign_validators_attestation_failures_total gauge\n")
+	b.WriteString(fmt.Sprintf("sovereign_validators_attestation_failures_total %d\n", metrics.TotalAttestationFailures))
+
 	b.WriteString("# HELP sovereign_validators_jailed_total Jailed validators\n")
 	b.WriteString("# TYPE sovereign_validators_jailed_total gauge\n")
 	b.WriteString(fmt.Sprintf("sovereign_validators_jailed_total %d\n", metrics.JailedCount))

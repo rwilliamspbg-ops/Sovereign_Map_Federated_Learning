@@ -766,6 +766,8 @@ func TestValidatorMetricsAPI(t *testing.T) {
 	_ = validators.AddValidator("node_2", 1000000)
 	_ = validators.SetAttestationScore("node_1", 9000)
 	_ = validators.SetAttestationScore("node_2", 3000)
+	_ = validators.RecordAttestationEvidence("node_2", 2000, "evidence://invalid-node-2", 42, false)
+	_ = validators.EnforceAttestationFreshness(2000)
 
 	metrics := validators.GetMetrics()
 	if metrics.ValidatorCount != 2 {
@@ -773,5 +775,71 @@ func TestValidatorMetricsAPI(t *testing.T) {
 	}
 	if metrics.AverageAttestation == 0 || metrics.AverageReputation == 0 {
 		t.Fatalf("expected non-zero averages, got %+v", metrics)
+	}
+	if metrics.TotalAttestationFailures == 0 {
+		t.Fatalf("expected attestation failures to be tracked, got %+v", metrics)
+	}
+	if metrics.StaleAttestationCount == 0 {
+		t.Fatalf("expected stale attestation count to be tracked, got %+v", metrics)
+	}
+}
+
+func TestValidatorInvalidAttestationTriggersPenaltyAndSlash(t *testing.T) {
+	validators := NewValidatorSet()
+	if err := validators.AddValidator("node_1", 1000000); err != nil {
+		t.Fatalf("failed to add validator: %v", err)
+	}
+
+	vBefore, err := validators.GetValidator("node_1")
+	if err != nil {
+		t.Fatalf("failed to get validator: %v", err)
+	}
+	stakeBefore := vBefore.StakedAmount
+	repBefore := vBefore.ReputationScore
+
+	if err := validators.RecordAttestationEvidence("node_1", 1000, "evidence://node-1-invalid", 100, false); err != nil {
+		t.Fatalf("failed to record invalid attestation: %v", err)
+	}
+
+	vAfter, err := validators.GetValidator("node_1")
+	if err != nil {
+		t.Fatalf("failed to get validator: %v", err)
+	}
+
+	if vAfter.StakedAmount >= stakeBefore {
+		t.Fatalf("expected stake slash after invalid attestation, before=%d after=%d", stakeBefore, vAfter.StakedAmount)
+	}
+	if vAfter.ReputationScore >= repBefore {
+		t.Fatalf("expected reputation penalty after invalid attestation, before=%d after=%d", repBefore, vAfter.ReputationScore)
+	}
+	if vAfter.AttestationFailuresTotal == 0 || vAfter.ConsecutiveAttestationFailures == 0 {
+		t.Fatalf("expected attestation failure counters to increase, got %+v", vAfter)
+	}
+}
+
+func TestValidatorStaleAttestationEnforcement(t *testing.T) {
+	validators := NewValidatorSet()
+	if err := validators.AddValidator("node_1", 1000000); err != nil {
+		t.Fatalf("failed to add validator: %v", err)
+	}
+
+	if err := validators.RecordAttestationEvidence("node_1", 9000, "evidence://node-1-valid", 10, true); err != nil {
+		t.Fatalf("failed to record valid attestation: %v", err)
+	}
+
+	vBefore, _ := validators.GetValidator("node_1")
+	stakeBefore := vBefore.StakedAmount
+
+	slashed := validators.EnforceAttestationFreshness(600)
+	if len(slashed) == 0 {
+		t.Fatal("expected stale attestation enforcement to slash validator")
+	}
+
+	vAfter, _ := validators.GetValidator("node_1")
+	if !vAfter.AttestationStale {
+		t.Fatal("expected validator to be marked stale after enforcement")
+	}
+	if vAfter.StakedAmount >= stakeBefore {
+		t.Fatalf("expected stale slash to reduce stake, before=%d after=%d", stakeBefore, vAfter.StakedAmount)
 	}
 }
