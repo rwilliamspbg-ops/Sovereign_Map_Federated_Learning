@@ -10,9 +10,9 @@ All 11 Grafana dashboards are provisioned and integrated with Prometheus.
 
 - Applied a system-wide readability and visual hierarchy pass across all dashboards.
 - Standardized chart interaction and display defaults:
-   - `graphTooltip=1`
-   - Improved time series legends/tooltips
-   - Cleaner stat presentation and gauge readability
+  - `graphTooltip=1`
+  - Improved time series legends/tooltips
+  - Cleaner stat presentation and gauge readability
 - Added dashboard metadata tags: `enhanced`, `wow`, `readable`.
 
 ### 2. Tokenomics and Wallet Data Reliability
@@ -29,8 +29,8 @@ All 11 Grafana dashboards are provisioned and integrated with Prometheus.
 ### 3. Final Missing Panel Fix
 
 - Fixed Genesis Launch Overview `🏆 Network Status` panel query from invalid ternary syntax to valid PromQL:
-   - Before: `(sovereignmap_active_nodes > 0) ? 1 : 0`
-   - After: `max(sovereignmap_active_nodes > bool 0)`
+  - Before: `(sovereignmap_active_nodes > 0) ? 1 : 0`
+  - After: `max(sovereignmap_active_nodes > bool 0)`
 - Result: panel now returns data consistently.
 
 ### 4. Validation Outcome
@@ -43,7 +43,7 @@ All 11 Grafana dashboards are provisioned and integrated with Prometheus.
 ### Dashboard Files Provisioned
 
 | Dashboard | File | Size | Purpose |
-|-----------|------|------|---------|
+| --------- | ---- | ---- | ------- |
 | Overview | `sovereign-map-overview.json` | 10.3 KB | Active nodes count, current round, CPU/RAM, throughput |
 | Convergence | `sovereign-map-convergence.json` | 7.8 KB | Global accuracy, training loss, per-node validation |
 | Performance | `sovereign-map-performance.json` | 10.1 KB | CPU/RAM per container, latency, throughput |
@@ -57,7 +57,7 @@ All 11 Grafana dashboards are provisioned and integrated with Prometheus.
 
 **Location:** `grafana/provisioning/`
 
-```
+```text
 grafana/provisioning/
 ├── datasources/
 │   └── prometheus.yml          (Prometheus data source config)
@@ -75,18 +75,22 @@ grafana/provisioning/
 ### Key Features
 
 #### 1. **Dynamic Node Count Queries**
+
 All dashboards use `sum(sovereignmap_active_nodes)` instead of hardcoded values:
+
 - Shows **live, real-time active node count**
 - Updates every 10 seconds
 - Scales from 1 to 500+ nodes automatically
 
 #### 2. **Convergence Metrics**
+
 - Global model accuracy trend
 - Training loss trajectory (should decrease)
 - Per-node validation accuracy overlay
 - Identifies slow/fast converging nodes
 
 #### 3. **Performance Monitoring**
+
 - CPU utilization by container (stacked)
 - Memory usage by container (stacked)
 - HTTP request latency (p95, p99 percentiles)
@@ -94,18 +98,21 @@ All dashboards use `sum(sovereignmap_active_nodes)` instead of hardcoded values:
 - Color-coded thresholds (green/yellow/red)
 
 #### 4. **Scaling Events Timeline**
+
 - Bar chart showing node count changes over time
 - Scaling event rate (nodes added per minute)
 - Cumulative event counter
 - Identifies 20→40→60→80→100 transitions
 
 #### 5. **TPM Security Verification**
+
 - TPM-verified node count (stat card)
 - Attestation success rate (%)
 - Per-node attestation latency
 - Failed attestation attempts over time
 
 #### 6. **NPU Acceleration Metrics**
+
 - Speedup factor (3.8x baseline)
 - NPU utilization percentage
 - CPU vs NPU inference time comparison
@@ -134,28 +141,34 @@ grafana:
 ### Quick Start
 
 #### 1. **Start the Full Stack**
+
 ```bash
 cd Sovereign_Map_Federated_Learning
 docker compose -f docker-compose.production.yml up -d
 ```
 
 #### 2. **Access Grafana**
-- **URL:** http://localhost:3001
+
+- **URL:** <http://localhost:3001>
 - **Username:** admin (or `${GRAFANA_USER}`)
 - **Password:** sovereignmap (or `${GRAFANA_PASSWORD}`)
 
 #### 3. **Verify Prometheus Data Source**
+
 1. Navigate to **Configuration** → **Data Sources**
-2. Should see **Prometheus** (http://prometheus:9090)
+2. Should see **Prometheus** (<http://prometheus:9090>)
 3. Click **Test** to verify connectivity
 
 #### 4. **View Dashboards**
+
 All 6 dashboards auto-load in the **Sovereign** folder:
+
 1. Click **Home** → **Dashboards**
 2. Select folder **Sovereign**
 3. Open any dashboard
 
 #### 5. **Run Test While Monitoring**
+
 ```bash
 # Terminal 1: Start monitoring
 ./tests/scripts/bash/test-dashboard.sh
@@ -169,72 +182,94 @@ Dashboard metrics update in **real-time** as test executes.
 ### Metric Queries Reference
 
 #### Active Nodes (Dynamic)
+
 ```promql
 sum(sovereignmap_active_nodes)
 ```
+
 Shows total nodes scaling from 1 to 100+ in real-time.
 
 #### Model Accuracy
+
 ```promql
 sovereignmap_model_accuracy
 ```
+
 Global accuracy trajectory (0-100%).
 
 #### Training Loss
+
 ```promql
 sovereignmap_training_loss
 ```
+
 Loss value (should decrease over rounds).
 
 #### CPU Usage
+
 ```promql
 rate(process_cpu_seconds_total[5m]) * 100
 ```
+
 Per-container CPU % (stacked).
 
 #### Memory Usage
+
 ```promql
 process_resident_memory_bytes / 1024 / 1024
 ```
+
 Per-container memory in MB (stacked).
 
 #### HTTP Latency (p95, p99)
+
 ```promql
 histogram_quantile(0.95, sovereignmap_http_request_duration_seconds_bucket)
 histogram_quantile(0.99, sovereignmap_http_request_duration_seconds_bucket)
 ```
 
 #### Throughput
+
 ```promql
 rate(sovereignmap_http_requests_total[1m])
 ```
+
 Requests per second by endpoint.
 
 #### TPM Verified Nodes
+
 ```promql
 sum(sovereignmap_tpm_verified_nodes)
 ```
+
 Nodes with valid TPM attestation.
 
 #### TPM Success Rate
+
 ```promql
 (sum(sovereignmap_tpm_attestation_success) / sum(sovereignmap_tpm_attestation_total)) * 100
 ```
+
 Percentage of successful attestations.
 
 #### NPU Speedup
+
 ```promql
 sovereignmap_npu_speedup_factor
 ```
+
 Acceleration ratio (e.g., 3.8x).
 
 #### NPU Utilization
+
 ```promql
 sovereignmap_npu_utilization_percent
 ```
+
 NPU device utilization (0-100%).
 
 #### Inference Time Comparison
+
 ```promql
 sovereignmap_inference_time_cpu_ms     # CPU inference latency
 sovereignmap_inference_time_npu_ms     # NPU inference latency
@@ -243,7 +278,7 @@ sovereignmap_inference_time_npu_ms     # NPU inference latency
 ### Dashboard Refresh Rates
 
 | Component | Refresh Rate | Rationale |
-|-----------|--------------|-----------|
+| --------- | ------------ | --------- |
 | Overview | 10s | Real-time system state |
 | Convergence | 10s | Catch accuracy improvements |
 | Performance | 10s | Monitor resource usage |
@@ -254,6 +289,7 @@ sovereignmap_inference_time_npu_ms     # NPU inference latency
 ### Expected Behavior During 5000-Round Test
 
 **Timeline:**
+
 1. **T=0s:** Cluster starts with 20 nodes
    - Active Nodes: 20
    - CPU: ~40%
@@ -291,6 +327,7 @@ sovereignmap_inference_time_npu_ms     # NPU inference latency
 ### Troubleshooting
 
 #### Dashboards Not Loading
+
 ```bash
 # Check Grafana logs
 docker logs sovereignmap-grafana
@@ -300,16 +337,19 @@ docker inspect sovereignmap-grafana | grep -A 10 Mounts
 ```
 
 #### Prometheus Queries Returning No Data
+
 1. Check backend is running: `docker ps | grep backend`
 2. Verify metrics endpoint: `curl http://localhost:8000/metrics`
 3. Check Prometheus scrape config: `docker exec sovereignmap-prometheus cat /etc/prometheus/prometheus.yml`
 
 #### Dashboards Show Empty Panels
+
 1. Verify time range is recent (e.g., "Last 1 Hour")
 2. Check data source connectivity
 3. Run a test to generate metrics: `./tests/scripts/powershell/run-5000-round-test.ps1`
 
 #### Performance Issues
+
 - Reduce dashboard refresh rate (default 10s)
 - Limit time range to "Last 15 Minutes"
 - Close unused dashboard tabs
@@ -317,9 +357,11 @@ docker inspect sovereignmap-grafana | grep -A 10 Mounts
 ### Next Steps
 
 1. **Run Full Test Suite**
+
    ```bash
    ./tests/scripts/powershell/run-5000-round-test.ps1
    ```
+
    Monitor all 6 dashboards in real-time.
 
 2. **Customize Dashboards**
@@ -338,7 +380,7 @@ docker inspect sovereignmap-grafana | grep -A 10 Mounts
 
 ### Architecture Summary
 
-```
+```text
 ┌─────────────────────────────────────────┐
 │     Sovereign Map FL System             │
 ├─────────────────────────────────────────┤
