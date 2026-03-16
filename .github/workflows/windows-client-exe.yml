@@ -1,0 +1,49 @@
+name: Windows Client EXE Build
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [main]
+    paths:
+      - windows/**
+      - src/client.py
+      - .github/workflows/windows-client-exe.yml
+  pull_request:
+    branches: [main]
+    paths:
+      - windows/**
+      - src/client.py
+      - .github/workflows/windows-client-exe.yml
+
+permissions:
+  contents: read
+
+jobs:
+  build-windows-exe:
+    name: Build Windows Client EXE
+    if: github.event_name != 'pull_request' || github.actor != 'dependabot[bot]'
+    runs-on: windows-latest
+    timeout-minutes: 60
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd
+
+      - name: Set up Python 3.11
+        uses: actions/setup-python@a309ff8b426b58ec0e2a45f0f869d46889d02405
+        with:
+          python-version: '3.11'
+
+      - name: Build Windows executable (PyInstaller)
+        shell: pwsh
+        run: |
+          powershell -ExecutionPolicy Bypass -File windows/build_windows_client_exe.ps1 -OneDir
+
+      - name: Upload Windows client artifact
+        uses: actions/upload-artifact@65462800fd760344b1a7b4382951275a0abb4808
+        with:
+          name: sovereignmap-windows-client-exe
+          path: |
+            dist/SovereignMapClient/**
+            dist/SovereignMapClient.exe
+          if-no-files-found: error

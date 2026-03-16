@@ -196,6 +196,7 @@ output/
 *.out
 *.tmp
 /sovereign-node
+participants/
 
 # Test results
 test-results/
