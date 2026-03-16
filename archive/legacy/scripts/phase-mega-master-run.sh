@@ -43,7 +43,7 @@ echo "Step 6/6: Capturing Results and Committing..."
 
 # Step 7: Automated Cleanup
 echo "----------------------------------------------------------"
-read -p "🏁 Test Finished. Ready to destroy infrastructure? (y/n): " RUN_CLEANUP
+read -r -p "🏁 Test Finished. Ready to destroy infrastructure? (y/n): " RUN_CLEANUP
 if [[ $RUN_CLEANUP == "y" ]]; then
     ./phase-6-cleanup-aws.sh
 else
