@@ -334,7 +334,7 @@
     {
       "id": 6,
       "type": "timeseries",
-      "title": "\ud83d\udcc8 Accuracy & Loss Over Time",
+      "title": "\ud83d\udcc9 \ud83c\udfaf \ud83d\udcc8 Accuracy & Loss Over Time",
       "gridPos": {
         "x": 12,
         "y": 4,
@@ -397,7 +397,7 @@
     {
       "id": 7,
       "type": "timeseries",
-      "title": "\u23f1\ufe0f FL Round Duration",
+      "title": "\ud83d\udd04 \u23f1\ufe0f FL Round Duration",
       "gridPos": {
         "x": 0,
         "y": 12,
@@ -518,7 +518,8 @@
   "tags": [
     "network",
     "performance",
-    "health"
+    "health",
+    "enhanced"
   ],
   "templating": {
     "list": []
@@ -531,6 +532,6 @@
   "timezone": "browser",
   "title": "Network Performance Health",
   "uid": "network-performance-health",
-  "version": 2,
-  "description": "Live federated learning network health: active nodes, FL round progress, model accuracy, training loss, round throughput, and round-trip latency."
+  "version": 4,
+  "description": "\ud83d\udcca Network Performance & Health \u2014 FL progress, latency, throughput, accuracy, and network stability metrics."
 }

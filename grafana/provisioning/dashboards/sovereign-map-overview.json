@@ -15,7 +15,7 @@
       }
     ]
   },
-  "description": "Sovereign Map Federated Learning - System Overview with Dynamic Node Metrics",
+  "description": "\ud83c\udf10 System Overview \u2014 Network status, node participation, FL progress, and key metrics. Optimized for large-scale operations.",
   "editable": true,
   "fiscalYearStartMonth": 0,
   "graphTooltip": 0,
@@ -73,7 +73,7 @@
           "refId": "A"
         }
       ],
-      "title": "Active Nodes Count (Dynamic)",
+      "title": "\ud83c\udf10 Active Nodes Count (Dynamic)",
       "type": "piechart"
     },
     {
@@ -131,7 +131,7 @@
           "refId": "A"
         }
       ],
-      "title": "Current Training Round",
+      "title": "\ud83d\udd04 Current Training Round",
       "type": "stat"
     },
     {
@@ -229,7 +229,7 @@
           "refId": "A"
         }
       ],
-      "title": "System CPU Utilization",
+      "title": "\u2699\ufe0f System CPU Utilization",
       "type": "timeseries"
     },
     {
@@ -327,7 +327,7 @@
           "refId": "A"
         }
       ],
-      "title": "System Memory Usage",
+      "title": "\ud83d\udcbe System Memory Usage",
       "type": "timeseries"
     },
     {
@@ -415,7 +415,7 @@
           "refId": "A"
         }
       ],
-      "title": "HTTP Request Throughput",
+      "title": "\ud83d\ude80 HTTP Request Throughput",
       "type": "timeseries"
     }
   ],
@@ -425,7 +425,8 @@
   "tags": [
     "sovereign",
     "federated-learning",
-    "overview"
+    "overview",
+    "enhanced"
   ],
   "templating": {
     "list": []
@@ -450,6 +451,6 @@
   "timezone": "browser",
   "title": "Sovereign Map - Overview",
   "uid": "sovereign-overview",
-  "version": 1,
+  "version": 3,
   "weekStart": "sunday"
 }

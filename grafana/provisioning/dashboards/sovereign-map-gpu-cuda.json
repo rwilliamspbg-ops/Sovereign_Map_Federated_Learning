@@ -15,7 +15,7 @@
       }
     ]
   },
-  "description": "Sovereign Map - CUDA/GPU Acceleration Metrics",
+  "description": "\ud83c\udfae GPU/CUDA Acceleration \u2014 GPU memory, compute utilization, kernel efficiency, and throughput metrics.",
   "editable": true,
   "fiscalYearStartMonth": 0,
   "graphTooltip": 0,
@@ -78,7 +78,7 @@
           "refId": "A"
         }
       ],
-      "title": "GPU Memory Usage",
+      "title": "\ud83c\udfae \ud83d\udcbe GPU Memory Usage",
       "type": "stat"
     },
     {
@@ -154,7 +154,7 @@
           "refId": "A"
         }
       ],
-      "title": "GPU Utilization",
+      "title": "\ud83c\udfae GPU Utilization",
       "type": "stat"
     },
     {
@@ -247,7 +247,7 @@
           "refId": "B"
         }
       ],
-      "title": "GPU vs CPU Training Latency",
+      "title": "\u26a1 \u2699\ufe0f GPU vs CPU Training Latency",
       "type": "timeseries"
     },
     {
@@ -344,7 +344,7 @@
           "refId": "A"
         }
       ],
-      "title": "GPU Speedup Factor",
+      "title": "\ud83c\udfae GPU Speedup Factor",
       "type": "timeseries"
     },
     {
@@ -437,7 +437,7 @@
           "refId": "B"
         }
       ],
-      "title": "Training Throughput (GPU vs CPU)",
+      "title": "\ud83d\ude80 \u2699\ufe0f Training Throughput (GPU vs CPU)",
       "type": "timeseries"
     },
     {
@@ -503,7 +503,7 @@
           "refId": "A"
         }
       ],
-      "title": "GPU Temperature",
+      "title": "\ud83c\udfae GPU Temperature",
       "type": "stat"
     },
     {
@@ -600,7 +600,7 @@
           "refId": "A"
         }
       ],
-      "title": "zk-SNARK Verification Latency (Target: <10ms)",
+      "title": "\u26a1 zk-SNARK Verification Latency (Target: <10ms)",
       "type": "timeseries"
     }
   ],
@@ -611,7 +611,8 @@
     "sovereign",
     "gpu",
     "cuda",
-    "acceleration"
+    "acceleration",
+    "enhanced"
   ],
   "templating": {
     "list": []
@@ -635,6 +636,6 @@
   "timezone": "browser",
   "title": "Sovereign Map - GPU/CUDA Acceleration",
   "uid": "sovereign-gpu-acceleration",
-  "version": 1,
+  "version": 3,
   "weekStart": "sunday"
 }

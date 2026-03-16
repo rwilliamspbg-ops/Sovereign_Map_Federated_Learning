@@ -24,7 +24,7 @@
     {
       "id": 1,
       "type": "stat",
-      "title": "\ud83d\udd12 Trust Chain Valid",
+      "title": "\ud83d\udd10 \ud83d\udd12 Trust Chain Valid",
       "gridPos": {
         "x": 0,
         "y": 0,
@@ -223,7 +223,7 @@
     {
       "id": 4,
       "type": "stat",
-      "title": "\u2b50 Avg Node Trust Score",
+      "title": "\ud83d\udd10 \u2b50 Avg Node Trust Score",
       "gridPos": {
         "x": 18,
         "y": 0,
@@ -291,7 +291,7 @@
     {
       "id": 5,
       "type": "timeseries",
-      "title": "\u2b50 Node Trust Scores Over Time",
+      "title": "\ud83d\udd10 \u2b50 Node Trust Scores Over Time",
       "gridPos": {
         "x": 0,
         "y": 4,
@@ -408,7 +408,7 @@
     {
       "id": 7,
       "type": "timeseries",
-      "title": "\u26a0\ufe0f Trust Verification Failures",
+      "title": "\ud83d\udd10 \u26a0\ufe0f Trust Verification Failures",
       "gridPos": {
         "x": 0,
         "y": 12,
@@ -471,7 +471,7 @@
     {
       "id": 8,
       "type": "timeseries",
-      "title": "\u23f1\ufe0f Trust Verification Latency",
+      "title": "\ud83d\udd10 \u26a1 \u23f1\ufe0f Trust Verification Latency",
       "gridPos": {
         "x": 12,
         "y": 12,
@@ -592,7 +592,8 @@
   "tags": [
     "consensus",
     "trust",
-    "tpm"
+    "tpm",
+    "enhanced"
   ],
   "templating": {
     "list": []
@@ -605,6 +606,6 @@
   "timezone": "browser",
   "title": "Consensus Trust Monitoring",
   "uid": "consensus-trust-monitoring",
-  "version": 2,
-  "description": "Real-time TPM trust chain health, certificate lifecycle, node trust scores, and message signing/verification rates across the Sovereign Map network."
+  "version": 4,
+  "description": "\ud83d\udd17 Consensus & Trust \u2014 BFT consensus health, trust chain validation, message signing verification, and validator performance."
 }

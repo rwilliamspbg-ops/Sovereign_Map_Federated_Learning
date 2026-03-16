@@ -15,7 +15,7 @@
       }
     ]
   },
-  "description": "Sovereign Map Federated Learning - NPU/GPU Acceleration Metrics",
+  "description": "\u26a1 NPU Acceleration \u2014 Neural processing unit metrics, inference throughput, and model acceleration.",
   "editable": true,
   "fiscalYearStartMonth": 0,
   "graphTooltip": 0,
@@ -255,7 +255,7 @@
           "refId": "B"
         }
       ],
-      "title": "Inference Time: CPU vs NPU",
+      "title": "\u2699\ufe0f Inference Time: CPU vs NPU",
       "type": "timeseries"
     },
     {
@@ -343,7 +343,7 @@
           "refId": "A"
         }
       ],
-      "title": "NPU Memory Usage",
+      "title": "\ud83d\udcbe NPU Memory Usage",
       "type": "timeseries"
     },
     {
@@ -436,7 +436,7 @@
           "refId": "B"
         }
       ],
-      "title": "Inference Throughput: CPU vs NPU",
+      "title": "\ud83d\ude80 \u2699\ufe0f Inference Throughput: CPU vs NPU",
       "type": "timeseries"
     }
   ],
@@ -447,7 +447,8 @@
     "sovereign",
     "federated-learning",
     "acceleration",
-    "npu"
+    "npu",
+    "enhanced"
   ],
   "templating": {
     "list": []
@@ -472,6 +473,6 @@
   "timezone": "browser",
   "title": "Sovereign Map - NPU Acceleration",
   "uid": "sovereign-npu-acceleration",
-  "version": 1,
+  "version": 3,
   "weekStart": "sunday"
 }

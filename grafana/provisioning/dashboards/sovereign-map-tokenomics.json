@@ -107,7 +107,7 @@
           "refId": "A"
         }
       ],
-      "title": "Network Value Index",
+      "title": "\ud83d\udcb5 Network Value Index",
       "type": "stat",
       "description": "Composite index: model accuracy \u00d7 active validators / 10. Higher = more valuable and trusted network state."
     },
@@ -174,7 +174,7 @@
           "refId": "A"
         }
       ],
-      "title": "Settlement Velocity (Rounds/Hour Proxy)",
+      "title": "\u2705 Settlement Velocity (Rounds/Hour Proxy)",
       "type": "stat",
       "description": "Proxy for settlement throughput: FL rounds completed per minute \u00d7 60 = rounds/hour equivalent. Indicates how fast the network reaches consensus."
     },
@@ -241,7 +241,7 @@
           "refId": "A"
         }
       ],
-      "title": "Active Validator Set",
+      "title": "\ud83d\udc64 Active Validator Set",
       "type": "stat",
       "description": "Number of active validator (FL client) nodes currently participating in model aggregation."
     },
@@ -308,7 +308,7 @@
           "refId": "A"
         }
       ],
-      "title": "Model Quality Score",
+      "title": "\u2b50 Model Quality Score",
       "type": "stat",
       "description": "Global model accuracy as a quality indicator for the network. Used as a proxy for value of the underlying data contributions."
     },
@@ -509,7 +509,7 @@
           "refId": "C"
         }
       ],
-      "title": "Token Health Composite",
+      "title": "\ud83c\udfe6 Token Health Composite",
       "type": "timeseries",
       "description": "Composite token health: weighted blend of model accuracy, round stability (1 \u2212 loss/10), and node participation rate. Range 0\u20131."
     },
@@ -578,7 +578,7 @@
           "refId": "B"
         }
       ],
-      "title": "Stake Quality Mix (Proxy)",
+      "title": "\u2b50 Stake Quality Mix (Proxy)",
       "type": "piechart",
       "description": "Estimated stake quality distribution: productive stake (accuracy-weighted) vs slashable stake proxy (remainder). Ideally >90% productive."
     },
@@ -673,7 +673,7 @@
           "refId": "B"
         }
       ],
-      "title": "Emission Pressure vs Quality-Adjusted Emission",
+      "title": "\u2b50 Emission Pressure vs Quality-Adjusted Emission",
       "type": "timeseries",
       "description": "Emission pressure (raw round rate \u00d7 nodes) vs quality-adjusted emission (scaled by model accuracy). Divergence indicates low-quality rounds."
     },
@@ -740,7 +740,7 @@
           "refId": "A"
         }
       ],
-      "title": "Minting Rate (TOK/min)",
+      "title": "\ud83e\ude99 Minting Rate (TOK/min)",
       "type": "stat",
       "description": "Minting proxy per minute derived from FL round throughput, active validators, and model quality."
     },
@@ -807,7 +807,7 @@
           "refId": "A"
         }
       ],
-      "title": "Cumulative Minted Supply (TOK)",
+      "title": "\ud83e\ude99 Cumulative Minted Supply (TOK)",
       "type": "stat",
       "description": "Total minted token supply proxy accumulated from rounds and participation."
     },
@@ -874,7 +874,7 @@
           "refId": "A"
         }
       ],
-      "title": "Bridge Inflow (TOK/min)",
+      "title": "\ud83c\udf09 Bridge Inflow (TOK/min)",
       "type": "stat",
       "description": "Estimated per-minute bridge inflow based on minted economic activity."
     },
@@ -941,7 +941,7 @@
           "refId": "A"
         }
       ],
-      "title": "Bridge Outflow (TOK/min)",
+      "title": "\ud83c\udf09 Bridge Outflow (TOK/min)",
       "type": "stat",
       "description": "Estimated per-minute bridge outflow modeled from minting-linked bridge utilization."
     },
@@ -1036,7 +1036,7 @@
           "refId": "B"
         }
       ],
-      "title": "Bridge Net Flow and 24h Volume",
+      "title": "\ud83c\udf09 Bridge Net Flow and 24h Volume",
       "type": "timeseries",
       "description": "Net bridge flow indicates liquidity direction; 24h volume approximates total bridged activity over one day."
     },
@@ -1131,7 +1131,7 @@
           "refId": "B"
         }
       ],
-      "title": "Bridge Collateral and Settlement Share",
+      "title": "\ud83c\udf09 Bridge Collateral and Settlement Share",
       "type": "timeseries",
       "description": "Collateral ratio tracks escrow coverage vs required reserves; settlement share shows how much activity routes across bridges."
     },
@@ -1196,7 +1196,7 @@
           "refId": "B"
         }
       ],
-      "title": "Minted vs Escrowed Supply Mix",
+      "title": "\ud83e\ude99 Minted vs Escrowed Supply Mix",
       "type": "piechart",
       "description": "Composition of economic base between minted supply and bridge escrow allocation."
     },
@@ -1298,7 +1298,7 @@
           "refId": "C"
         }
       ],
-      "title": "Minting, Inflow, Outflow Traces",
+      "title": "\ud83e\ude99 Minting, Inflow, Outflow Traces",
       "type": "timeseries",
       "description": "Side-by-side trace of mint and bridge channels for operational treasury monitoring."
     }
@@ -1311,7 +1311,8 @@
     "federated-learning",
     "minting",
     "sovereign-map",
-    "tokenomics"
+    "tokenomics",
+    "enhanced"
   ],
   "templating": {
     "list": []
@@ -1324,7 +1325,7 @@
   "timezone": "browser",
   "title": "Sovereign Map Tokenomics",
   "uid": "sovereign-tokenomics",
-  "version": 1,
+  "version": 2,
   "weekStart": "",
-  "description": "Economic health of the Sovereign Map network across value, minting, emission, and cross-chain bridging: network value index, validator participation, model quality, token health, mint rate, supply growth, bridge inflow/outflow, bridge collateral coverage, settlement share, and escrow mix."
+  "description": "\ud83d\udcb0 Tokenomics & Economic Health \u2014 Network value, validator participation, minting, emissions, bridges, and collateral metrics optimized for scale."
 }

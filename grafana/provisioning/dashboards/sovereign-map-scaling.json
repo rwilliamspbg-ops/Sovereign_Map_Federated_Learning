@@ -15,7 +15,7 @@
       }
     ]
   },
-  "description": "Sovereign Map Federated Learning - Node Scaling Events Timeline",
+  "description": "\ud83d\udcc8 Node Scaling Events \u2014 Timeline of scaling operations, node provisioning, and cluster growth tracking.",
   "editable": true,
   "fiscalYearStartMonth": 0,
   "graphTooltip": 0,
@@ -111,7 +111,7 @@
           "refId": "A"
         }
       ],
-      "title": "Node Scaling Events Timeline",
+      "title": "\ud83d\udcc8 Node Scaling Events Timeline",
       "type": "timeseries"
     },
     {
@@ -200,7 +200,7 @@
           "refId": "A"
         }
       ],
-      "title": "Scaling Event Rate",
+      "title": "\ud83d\udcc8 Scaling Event Rate",
       "type": "timeseries"
     },
     {
@@ -288,7 +288,7 @@
           "refId": "A"
         }
       ],
-      "title": "Cumulative Scaling Events",
+      "title": "\ud83d\udcc8 Cumulative Scaling Events",
       "type": "timeseries"
     }
   ],
@@ -298,7 +298,8 @@
   "tags": [
     "sovereign",
     "federated-learning",
-    "scaling"
+    "scaling",
+    "enhanced"
   ],
   "templating": {
     "list": []
@@ -323,6 +324,6 @@
   "timezone": "browser",
   "title": "Sovereign Map - Node Scaling",
   "uid": "sovereign-scaling",
-  "version": 1,
+  "version": 3,
   "weekStart": "sunday"
 }

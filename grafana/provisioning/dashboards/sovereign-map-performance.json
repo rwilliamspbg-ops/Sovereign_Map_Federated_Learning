@@ -15,10 +15,10 @@
       }
     ]
   },
-  "description": "Sovereign Map Federated Learning - Performance Metrics (CPU, RAM, Throughput)",
+  "description": "\u26a1 Performance Metrics \u2014 CPU, memory, latency, and throughput tracking. Optimized for large-scale networks.",
   "editable": true,
   "fiscalYearStartMonth": 0,
-  "graphTooltip": 0,
+  "graphTooltip": 1,
   "id": null,
   "links": [],
   "liveNow": false,
@@ -28,11 +28,12 @@
         "type": "prometheus",
         "uid": "prometheus"
       },
-      "description": "CPU usage per container",
+      "description": "CPU usage per container - Aggregated across all nodes",
       "fieldConfig": {
         "defaults": {
           "color": {
-            "mode": "palette-classic"
+            "mode": "fixed",
+            "fixedColor": "#E74C3C"
           },
           "custom": {
             "axisCenteredZero": false,
@@ -41,20 +42,20 @@
             "axisPlacement": "auto",
             "barAlignment": 0,
             "drawStyle": "line",
-            "fillOpacity": 10,
-            "gradientMode": "none",
+            "fillOpacity": 20,
+            "gradientMode": "opacity",
             "hideFrom": {
               "tooltip": false,
               "viz": false,
               "legend": false
             },
-            "lineInterpolation": "linear",
-            "lineWidth": 2,
+            "lineInterpolation": "smooth",
+            "lineWidth": 3,
             "pointSize": 5,
             "scaleDistribution": {
               "type": "linear"
             },
-            "showPoints": "auto",
+            "showPoints": "never",
             "spanNulls": false,
             "stacking": {
               "group": "A",
@@ -71,16 +72,24 @@
             "mode": "absolute",
             "steps": [
               {
-                "color": "green",
+                "color": "#2ECC40",
                 "value": null
               },
               {
-                "color": "yellow",
-                "value": 75
+                "color": "#90EE90",
+                "value": 40
               },
               {
-                "color": "red",
-                "value": 90
+                "color": "#FFED6F",
+                "value": 70
+              },
+              {
+                "color": "#FDB462",
+                "value": 85
+              },
+              {
+                "color": "#FF5733",
+                "value": 95
               }
             ]
           },
@@ -118,7 +127,7 @@
           "refId": "A"
         }
       ],
-      "title": "CPU Usage by Container",
+      "title": "\u2699\ufe0f CPU Usage by Container",
       "type": "timeseries"
     },
     {
@@ -126,7 +135,7 @@
         "type": "prometheus",
         "uid": "prometheus"
       },
-      "description": "Memory usage per container (in MB)",
+      "description": "Memory usage per container - Aggregated across all nodes",
       "fieldConfig": {
         "defaults": {
           "color": {
@@ -406,7 +415,8 @@
   "tags": [
     "sovereign",
     "federated-learning",
-    "performance"
+    "performance",
+    "enhanced"
   ],
   "templating": {
     "list": []
@@ -431,6 +441,6 @@
   "timezone": "browser",
   "title": "Sovereign Map - Performance",
   "uid": "sovereign-performance",
-  "version": 1,
+  "version": 2,
   "weekStart": "sunday"
 }

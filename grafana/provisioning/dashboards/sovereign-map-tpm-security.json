@@ -26,7 +26,7 @@
       }
     ]
   },
-  "description": "Sovereign Map Federated Learning - TPM Trust & Security Verification",
+  "description": "\ud83d\udd10 TPM Security & Trust \u2014 Certificate lifecycle, trust chain health, signature verification, and node attestation.",
   "editable": true,
   "fiscalYearStartMonth": 0,
   "graphTooltip": 0,
@@ -108,7 +108,7 @@
           "refId": "A"
         }
       ],
-      "title": "TPM Verified Nodes",
+      "title": "\ud83d\udd10 TPM Verified Nodes",
       "type": "stat"
     },
     {
@@ -176,7 +176,7 @@
           "refId": "A"
         }
       ],
-      "title": "TPM Attestation Success Rate",
+      "title": "\ud83d\udd10 TPM Attestation Success Rate",
       "type": "stat"
     },
     {
@@ -273,7 +273,7 @@
           "refId": "A"
         }
       ],
-      "title": "TPM Attestation Latency by Node",
+      "title": "\ud83d\udd10 \u26a1 TPM Attestation Latency by Node",
       "type": "timeseries"
     },
     {
@@ -369,7 +369,7 @@
           "refId": "A"
         }
       ],
-      "title": "TPM Attestation Failures",
+      "title": "\ud83d\udd10 TPM Attestation Failures",
       "type": "timeseries"
     }
   ],
@@ -380,7 +380,8 @@
     "sovereign",
     "federated-learning",
     "security",
-    "tpm"
+    "tpm",
+    "enhanced"
   ],
   "templating": {
     "list": []
@@ -405,6 +406,6 @@
   "timezone": "browser",
   "title": "Sovereign Map - TPM Security",
   "uid": "sovereign-tpm-security",
-  "version": 1,
+  "version": 3,
   "weekStart": "sunday"
 }
