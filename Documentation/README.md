@@ -30,4 +30,4 @@ This folder centralizes repository documentation discovery.
 - [CI](CI)
 - [Reports](Reports)
 - [Project](Project)
-- [Misc](Misc)
+- [Archive](../archive)

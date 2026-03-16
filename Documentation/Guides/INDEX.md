@@ -16,7 +16,7 @@
 - Visualization scripts and execution commands
 
 ### 📊 Test Results Directory
-**Navigate results**: [`test-results/README.md`](./test-results/README.md)
+**Navigate results**: [`test-results/README.md`](../../test-results/README.md)
 - Directory structure overview
 - Featured test results with direct links
 - Search and discovery commands
@@ -34,9 +34,9 @@
 #### Quick Access
 - **Executive Summary**: [`1000-NODE-NPU-TEST-FINAL-SUMMARY.md`](/Documentation/Testing/1000-NODE-NPU-TEST-FINAL-SUMMARY.md) ⭐ **START HERE**
 - **Reproduction Guide**: [`1000-NODE-NPU-TEST-GUIDE.md`](/Documentation/Testing/1000-NODE-NPU-TEST-GUIDE.md)
-- **Test Results**: [`test-results/1000-node-npu/20260304-103652/RESULTS.md`](./test-results/1000-node-npu/20260304-103652/RESULTS.md)
-- **Test Index**: [`test-results/1000-node-npu/README.md`](./test-results/1000-node-npu/README.md)
-- **Visualization**: [`test-results/1000-node-npu/20260304-103652/plots/01-npu-performance-analysis.png`](./test-results/1000-node-npu/20260304-103652/plots/01-npu-performance-analysis.png)
+- **Test Results**: [`test-results/1000-node-npu/20260304-103652/RESULTS.md`](../../test-results/1000-node-npu/20260304-103652/RESULTS.md)
+- **Test Index**: [`test-results/1000-node-npu/README.md`](../../test-results/1000-node-npu/README.md)
+- **Visualization**: [`test-results/1000-node-npu/20260304-103652/plots/01-npu-performance-analysis.png`](../../test-results/1000-node-npu/20260304-103652/plots/01-npu-performance-analysis.png)
 
 #### Run the Test
 ```bash
@@ -54,14 +54,14 @@
 
 #### Quick Access
 - **Complete Report**: [`KUBERNETES_5000_NODE_REPORT.md`](/Documentation/Deployment/KUBERNETES_5000_NODE_REPORT.md) ⭐ **START HERE**
-- **Test Index**: [`test-results/kubernetes-5000-node/README.md`](./test-results/kubernetes-5000-node/README.md)
-- **Raw Data**: [`test-results/kubernetes-5000-node/k8s-5000-node-20260303-052718.json`](./test-results/kubernetes-5000-node/k8s-5000-node-20260303-052718.json)
-- **Visualizations**: [`test-results/kubernetes-5000-node/plots/`](./test-results/kubernetes-5000-node/plots/)
-  - [Master Summary](./test-results/kubernetes-5000-node/plots/master-summary.png)
-  - [5000-Node Stress](./test-results/kubernetes-5000-node/plots/scenario-1-5000node.png)
-  - [Linear Scaling](./test-results/kubernetes-5000-node/plots/scenario-2-scaling.png)
-  - [Byzantine Threshold](./test-results/kubernetes-5000-node/plots/scenario-3-threshold.png)
-  - [Attack Intensity](./test-results/kubernetes-5000-node/plots/scenario-4-intensity.png)
+- **Test Index**: [`test-results/kubernetes-5000-node/README.md`](../../test-results/kubernetes-5000-node/README.md)
+- **Raw Data**: [`test-results/kubernetes-5000-node/k8s-5000-node-20260303-052718.json`](../../test-results/kubernetes-5000-node/k8s-5000-node-20260303-052718.json)
+- **Visualizations**: [`test-results/kubernetes-5000-node/plots/`](../../test-results/kubernetes-5000-node/plots/)
+  - [Master Summary](../../test-results/kubernetes-5000-node/plots/master-summary.png)
+  - [5000-Node Stress](../../test-results/kubernetes-5000-node/plots/scenario-1-5000node.png)
+  - [Linear Scaling](../../test-results/kubernetes-5000-node/plots/scenario-2-scaling.png)
+  - [Byzantine Threshold](../../test-results/kubernetes-5000-node/plots/scenario-3-threshold.png)
+  - [Attack Intensity](../../test-results/kubernetes-5000-node/plots/scenario-4-intensity.png)
 
 #### Run the Test
 ```bash
@@ -105,15 +105,15 @@ Duration:     2.8 seconds
 3. **[KUBERNETES_5000_NODE_REPORT.md](/Documentation/Deployment/KUBERNETES_5000_NODE_REPORT.md)** - K8s test executive report
 
 ### Level 2: Technical Detail (For engineers and researchers)
-1. **[test-results/1000-node-npu/20260304-103652/RESULTS.md](./test-results/1000-node-npu/20260304-103652/RESULTS.md)** - Detailed NPU results
-2. **[test-results/kubernetes-5000-node/k8s-5000-node-20260303-052718.json](./test-results/kubernetes-5000-node/k8s-5000-node-20260303-052718.json)** - Raw K8s data
+1. **[test-results/1000-node-npu/20260304-103652/RESULTS.md](../../test-results/1000-node-npu/20260304-103652/RESULTS.md)** - Detailed NPU results
+2. **[test-results/kubernetes-5000-node/k8s-5000-node-20260303-052718.json](../../test-results/kubernetes-5000-node/k8s-5000-node-20260303-052718.json)** - Raw K8s data
 3. **[1000-NODE-NPU-TEST-GUIDE.md](/Documentation/Testing/1000-NODE-NPU-TEST-GUIDE.md)** - NPU reproduction guide
 
 ### Level 3: Infrastructure & Execution (For operators)
-1. **[docker-compose.1000nodes.yml](./docker-compose.1000nodes.yml)** - 1000-node orchestration
-2. **[kubernetes-5000-node-manifests.yaml](./kubernetes-5000-node-manifests.yaml)** - K8s manifests
-3. **[tests/scripts/bash/run-1000-node-npu-test.sh](./run-1000-node-npu-test.sh)** - NPU test runner
-4. **[tests/scripts/python/kubernetes-5000-node-test.py](./kubernetes-5000-node-test.py)** - K8s test suite
+1. **[docker-compose.1000nodes.yml](../../docker-compose.1000nodes.yml)** - 1000-node orchestration
+2. **[kubernetes-5000-node-manifests.yaml](../../kubernetes-5000-node-manifests.yaml)** - K8s manifests
+3. **[tests/scripts/bash/run-1000-node-npu-test.sh](../../tests/scripts/bash/run-1000-node-npu-test.sh)** - NPU test runner
+4. **[tests/scripts/python/kubernetes-5000-node-test.py](../../tests/scripts/python/kubernetes-5000-node-test.py)** - K8s test suite
 
 ---
 
@@ -122,7 +122,7 @@ Duration:     2.8 seconds
 ### Byzantine Stress Tests
 - **[BYZANTINE_STRESS_TEST_REPORT.md](/Documentation/Testing/BYZANTINE_STRESS_TEST_REPORT.md)** - Byzantine tolerance validation
 - **[BYZANTINE_STRESS_TEST_SUITE_REPORT.md](/Documentation/Testing/BYZANTINE_STRESS_TEST_SUITE_REPORT.md)** - Comprehensive suite
-- **[test-results/byzantine-stress-test/](./test-results/byzantine-stress-test/)** - Test data
+- **[test-results/byzantine-stress-test/](../../test-results/byzantine-stress-test/)** - Test data
 
 ### GPU Acceleration Tests
 - **[GPU_TESTING_COMPLETE.md](/Documentation/Testing/GPU_TESTING_COMPLETE.md)** - GPU test summary
@@ -138,13 +138,13 @@ Duration:     2.8 seconds
 ## 🚀 GETTING STARTED
 
 ### For New Users
-1. Read **[README.md](./README.md)** - Project overview and quick start
+1. Read **[README.md](../../README.md)** - Project overview and quick start
 2. Review **[ARTIFACTS.md](/Documentation/Reports/ARTIFACTS.md)** - Complete test artifacts catalog
-3. Explore **[test-results/README.md](./test-results/README.md)** - Navigate all results
+3. Explore **[test-results/README.md](../../test-results/README.md)** - Navigate all results
 
 ### For Developers
 1. Review **[ARCHITECTURE.md](/Documentation/Architecture/ARCHITECTURE.md)** - System architecture
-2. Check **[CONTRIBUTING.md](./CONTRIBUTING.md)** - Contribution guidelines
+2. Check **[CONTRIBUTING.md](../../CONTRIBUTING.md)** - Contribution guidelines
 3. Explore **[TEST_GUIDE.md](/Documentation/Testing/TEST_GUIDE.md)** - Testing guide
 
 ### For Operators

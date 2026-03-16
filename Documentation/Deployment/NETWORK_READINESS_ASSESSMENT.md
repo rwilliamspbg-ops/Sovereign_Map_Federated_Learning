@@ -30,9 +30,9 @@ The Sovereign Map Federated Learning network has achieved **production-ready sta
   - AutoRelay for automatic relay discovery and connection
 
 **Key Files:**
-- [`node/network/mesh.go`](node/network/mesh.go) - Mesh runtime (180 lines)
-- [`node/networking/nat_traversal.go`](node/networking/nat_traversal.go) - NAT service
-- [`cmd/sovereign-node/main.go`](cmd/sovereign-node/main.go) - Runtime integration
+- [`node/network/mesh.go`](../../node/network/mesh.go) - Mesh runtime (180 lines)
+- [`node/networking/nat_traversal.go`](../../node/networking/nat_traversal.go) - NAT service
+- [`cmd/sovereign-node/main.go`](../../cmd/sovereign-node/main.go) - Runtime integration
 
 **Configuration:**
 ```json
@@ -79,10 +79,10 @@ The Sovereign Map Federated Learning network has achieved **production-ready sta
   - Cache pruning for stale tiles
 
 **Key Files:**
-- [`storage/ipfs/ipfs_client.go`](storage/ipfs/ipfs_client.go) - IPFS client
-- [`storage/model_checkpoints/store.go`](storage/model_checkpoints/store.go) - Checkpoint storage
-- [`storage/map_tiles/tile_cache.go`](storage/map_tiles/tile_cache.go) - Tile cache
-- [`storage/map_tiles/tile_encoder.go`](storage/map_tiles/tile_encoder.go) - Tile generation
+- [`storage/ipfs/ipfs_client.go`](../../storage/ipfs/ipfs_client.go) - IPFS client
+- [`storage/model_checkpoints/store.go`](../../storage/model_checkpoints/store.go) - Checkpoint storage
+- [`storage/map_tiles/tile_cache.go`](../../storage/map_tiles/tile_cache.go) - Tile cache
+- [`storage/map_tiles/tile_encoder.go`](../../storage/map_tiles/tile_encoder.go) - Tile generation
 
 **Capabilities:**
 - ✅ Model checkpoint storage with SHA-256 digest verification
@@ -129,11 +129,11 @@ The Sovereign Map Federated Learning network has achieved **production-ready sta
   - Stale drone pruning
 
 **Key Files:**
-- [`sensors/camera/frame_capture.go`](sensors/camera/frame_capture.go) - Camera capture
-- [`sensors/slam/feature_extraction.go`](sensors/slam/feature_extraction.go) - Feature extraction
-- [`sensors/slam/orbslam_bridge.go`](sensors/slam/orbslam_bridge.go) - SLAM bridge
-- [`sensors/mobile/phone_client_api.go`](sensors/mobile/phone_client_api.go) - Mobile API
-- [`sensors/drone/telemetry_ingest.go`](sensors/drone/telemetry_ingest.go) - Drone ingestion
+- [`sensors/camera/frame_capture.go`](../../sensors/camera/frame_capture.go) - Camera capture
+- [`sensors/slam/feature_extraction.go`](../../sensors/slam/feature_extraction.go) - Feature extraction
+- [`sensors/slam/orbslam_bridge.go`](../../sensors/slam/orbslam_bridge.go) - SLAM bridge
+- [`sensors/mobile/phone_client_api.go`](../../sensors/mobile/phone_client_api.go) - Mobile API
+- [`sensors/drone/telemetry_ingest.go`](../../sensors/drone/telemetry_ingest.go) - Drone ingestion
 
 **Capabilities:**
 - ✅ Real-time camera frame capture from multiple sources
@@ -177,7 +177,7 @@ sovereign-node join \
 - ✅ Peer connectivity reporting
 
 **Key Files:**
-- [`cmd/sovereign-node/main.go`](cmd/sovereign-node/main.go) - Unified runtime
+- [`cmd/sovereign-node/main.go`](../../cmd/sovereign-node/main.go) - Unified runtime
 
 ---
 

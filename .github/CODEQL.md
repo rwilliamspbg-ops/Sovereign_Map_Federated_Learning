@@ -151,7 +151,7 @@ For languages requiring compilation:
 2. **Keep dependencies updated** - Many vulnerabilities come from dependencies
 3. **Enable branch protection** - Require CodeQL checks to pass before merging
 4. **Regular scans** - Weekly scans catch new vulnerability patterns
-5. **Security policy** - See [SECURITY.md](../SECURITY.md) for reporting vulnerabilities
+5. **Security policy** - See [SECURITY.md](SECURITY.md) for reporting vulnerabilities
 
 ## Resources
 
@@ -164,7 +164,7 @@ For languages requiring compilation:
 
 For questions about CodeQL configuration or security scanning:
 - Open an issue in this repository
-- Review [SECURITY.md](../SECURITY.md) for security-specific inquiries
+- Review [SECURITY.md](SECURITY.md) for security-specific inquiries
 - Check GitHub's [Code Scanning documentation](https://docs.github.com/en/code-security/code-scanning)
 
 ---

@@ -514,7 +514,7 @@ docker compose -f docker-compose.production.yml -f docker-compose.monitoring.yml
 **Documentation:**
 - Architecture: [ARCHITECTURE.md](/Documentation/Architecture/ARCHITECTURE.md)
 - Deployment: [DEPLOYMENT.md](/Documentation/Deployment/DEPLOYMENT.md)
-- Testing: [tests/docs/TEST_GUIDE.md](tests/docs/TEST_GUIDE.md)
+- Testing: [tests/docs/TEST_GUIDE.md](../../tests/docs/TEST_GUIDE.md)
 
 ---
 
