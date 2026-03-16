@@ -34,6 +34,19 @@ type Config struct {
 	NodeID         string
 }
 
+func withCORS(next http.Handler) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Set("Access-Control-Allow-Origin", "*")
+		w.Header().Set("Access-Control-Allow-Headers", "Content-Type, Authorization, X-API-Token, X-API-Role")
+		w.Header().Set("Access-Control-Allow-Methods", "GET, POST, OPTIONS")
+		if r.Method == http.MethodOptions {
+			w.WriteHeader(http.StatusNoContent)
+			return
+		}
+		next.ServeHTTP(w, r)
+	})
+}
+
 func main() {
 	log.Println("Sovereign-Mohawk Node Agent starting...")
 
@@ -100,7 +113,7 @@ func main() {
 	}
 
 	log.Printf("Node Agent API listening on %s", listenAddr)
-	if err := http.ListenAndServe(listenAddr, mux); err != nil {
+	if err := http.ListenAndServe(listenAddr, withCORS(mux)); err != nil {
 		log.Fatalf("API server failed: %v", err)
 	}
 }

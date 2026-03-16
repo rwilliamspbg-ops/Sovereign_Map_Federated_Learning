@@ -2,8 +2,8 @@ import { useState, useEffect } from 'react'
 import HUD from './HUD'
 import './App.css'
 
-const API_BASE = 'http://localhost:8000'
-const TRUST_API_BASE = import.meta.env.VITE_TRUST_API_BASE || 'http://localhost:8082/api/v1'
+const API_BASE = import.meta.env.VITE_HUD_API_BASE || (import.meta.env.DEV ? '/backend' : 'http://localhost:8000')
+const TRUST_API_BASE = import.meta.env.VITE_TRUST_API_BASE || (import.meta.env.DEV ? '/node-api/api/v1' : 'http://localhost:8082/api/v1')
 
 function App() {
   const [hudData, setHudData] = useState(null)
