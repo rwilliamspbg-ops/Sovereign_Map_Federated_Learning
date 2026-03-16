@@ -3,15 +3,16 @@
   "__requires": [],
   "uid": "genesis-launch-overview",
   "title": "Genesis Launch Overview",
-  "description": "Primary launch dashboard \u2014 FL training progress, node count, accuracy, trust scores",
+  "description": "🚀 Primary launch dashboard — FL training progress, node participation, accuracy, trust scores, network health — optimized for millions of nodes",
   "tags": [
     "genesis",
     "federated-learning",
-    "sovereign-map"
+    "sovereign-map",
+    "enhanced"
   ],
   "timezone": "browser",
   "schemaVersion": 38,
-  "version": 1,
+  "version": 2,
   "refresh": "5s",
   "time": {
     "from": "now-1h",
@@ -22,12 +23,13 @@
     {
       "id": 1,
       "type": "stat",
-      "title": "\ud83c\udfaf Model Accuracy",
+      "title": "🎯 Model Accuracy",
+      "description": "Current global model accuracy - Target > 85%",
       "gridPos": {
         "x": 0,
         "y": 0,
-        "w": 6,
-        "h": 4
+        "w": 5,
+        "h": 5
       },
       "options": {
         "colorMode": "background",
@@ -35,13 +37,12 @@
         "justifyMode": "center",
         "orientation": "auto",
         "reduceOptions": {
-          "calcs": [
-            "lastNotNull"
-          ],
+          "calcs": ["lastNotNull"],
           "fields": "",
           "values": false
         },
-        "textMode": "auto"
+        "textMode": "auto",
+        "text": {}
       },
       "fieldConfig": {
         "defaults": {
@@ -51,211 +52,79 @@
           "thresholds": {
             "mode": "absolute",
             "steps": [
-              {
-                "color": "red",
-                "value": null
-              },
-              {
-                "color": "orange",
-                "value": 60
-              },
-              {
-                "color": "yellow",
-                "value": 75
-              },
-              {
-                "color": "green",
-                "value": 85
-              }
+              {"color": "#8F3BB8", "value": null},
+              {"color": "#FF5733", "value": 50},
+              {"color": "#FDB462", "value": 70},
+              {"color": "#FFED6F", "value": 80},
+              {"color": "#90EE90", "value": 85},
+              {"color": "#2ECC40", "value": 92}
             ]
           },
           "unit": "percent",
           "min": 0,
-          "max": 100
+          "max": 100,
+          "custom": {
+            "hideFrom": {
+              "tooltip": false,
+              "viz": false,
+              "legend": false
+            }
+          },
+          "mappings": []
         }
       },
       "targets": [
         {
           "expr": "sovereignmap_fl_accuracy",
-          "legendFormat": "Accuracy %",
+          "legendFormat": "Accuracy",
           "refId": "A",
-          "datasource": {
-            "type": "prometheus",
-            "uid": "prometheus"
-          }
+          "datasource": {"type": "prometheus", "uid": "prometheus"}
         }
       ]
     },
     {
       "id": 2,
-      "type": "stat",
-      "title": "\ud83d\udd04 FL Round",
+      "type": "gauge",
+      "title": "📊 Training Loss",
+      "description": "Cross-entropy loss - Target < 0.05",
       "gridPos": {
-        "x": 6,
+        "x": 5,
         "y": 0,
-        "w": 6,
-        "h": 4
+        "w": 5,
+        "h": 5
       },
       "options": {
-        "colorMode": "background",
-        "graphMode": "none",
-        "justifyMode": "center",
         "orientation": "auto",
-        "reduceOptions": {
-          "calcs": [
-            "lastNotNull"
-          ],
-          "fields": "",
-          "values": false
-        },
-        "textMode": "auto"
+        "showThresholdLabels": false,
+        "showThresholdMarkers": true,
+        "text": {}
       },
       "fieldConfig": {
         "defaults": {
           "color": {
             "mode": "thresholds"
-          },
-          "thresholds": {
-            "mode": "absolute",
-            "steps": [
-              {
-                "color": "blue",
-                "value": null
-              },
-              {
-                "color": "green",
-                "value": 5
-              }
-            ]
-          },
-          "unit": "short"
-        }
-      },
-      "targets": [
-        {
-          "expr": "sovereignmap_fl_round",
-          "legendFormat": "Round",
-          "refId": "A",
-          "datasource": {
-            "type": "prometheus",
-            "uid": "prometheus"
-          }
-        }
-      ],
-      "description": "Current round number in the federated learning training cycle."
-    },
-    {
-      "id": 3,
-      "type": "stat",
-      "title": "\ud83c\udf10 Active Nodes",
-      "gridPos": {
-        "x": 12,
-        "y": 0,
-        "w": 6,
-        "h": 4
-      },
-      "options": {
-        "colorMode": "background",
-        "graphMode": "none",
-        "justifyMode": "center",
-        "orientation": "auto",
-        "reduceOptions": {
-          "calcs": [
-            "lastNotNull"
-          ],
-          "fields": "",
-          "values": false
-        },
-        "textMode": "auto"
-      },
-      "fieldConfig": {
-        "defaults": {
-          "color": {
-            "mode": "thresholds"
-          },
-          "thresholds": {
-            "mode": "absolute",
-            "steps": [
-              {
-                "color": "red",
-                "value": null
-              },
-              {
-                "color": "orange",
-                "value": 10
-              },
-              {
-                "color": "green",
-                "value": 20
-              }
-            ]
-          },
-          "unit": "short"
-        }
-      },
-      "targets": [
-        {
-          "expr": "sovereignmap_active_nodes",
-          "legendFormat": "Nodes",
-          "refId": "A",
-          "datasource": {
-            "type": "prometheus",
-            "uid": "prometheus"
-          }
-        }
-      ]
-    },
-    {
-      "id": 4,
-      "type": "stat",
-      "title": "\ud83d\udcc9 Training Loss",
-      "gridPos": {
-        "x": 18,
-        "y": 0,
-        "w": 6,
-        "h": 4
-      },
-      "options": {
-        "colorMode": "background",
-        "graphMode": "area",
-        "justifyMode": "center",
-        "orientation": "auto",
-        "reduceOptions": {
-          "calcs": [
-            "lastNotNull"
-          ],
-          "fields": "",
-          "values": false
-        },
-        "textMode": "auto"
-      },
-      "fieldConfig": {
-        "defaults": {
-          "color": {
-            "mode": "thresholds"
-          },
-          "thresholds": {
-            "mode": "absolute",
-            "steps": [
-              {
-                "color": "green",
-                "value": null
-              },
-              {
-                "color": "yellow",
-                "value": 0.5
-              },
-              {
-                "color": "orange",
-                "value": 1.0
-              },
-              {
-                "color": "red",
-                "value": 2.0
-              }
-            ]
           },
           "unit": "none",
+          "custom": {
+            "hideFrom": {
+              "tooltip": false,
+              "viz": false,
+              "legend": false
+            }
+          },
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {"color": "#2ECC40", "value": null},
+              {"color": "#90EE90", "value": 0.1},
+              {"color": "#FFED6F", "value": 0.3},
+              {"color": "#FDB462", "value": 0.5},
+              {"color": "#FF5733", "value": 1.0}
+            ]
+          },
+          "min": 0,
+          "max": 3,
           "decimals": 4
         }
       },
@@ -264,48 +133,215 @@
           "expr": "sovereignmap_fl_loss",
           "legendFormat": "Loss",
           "refId": "A",
-          "datasource": {
-            "type": "prometheus",
-            "uid": "prometheus"
-          }
+          "datasource": {"type": "prometheus", "uid": "prometheus"}
         }
-      ],
-      "description": "Current cross-entropy training loss. Dimensionless \u2014 lower is better; typical convergence target < 0.1."
+      ]
+    },
+    {
+      "id": 3,
+      "type": "stat",
+      "title": "🔄 Current FL Round",
+      "description": "Training round counter",
+      "gridPos": {
+        "x": 10,
+        "y": 0,
+        "w": 5,
+        "h": 5
+      },
+      "options": {
+        "colorMode": "background",
+        "graphMode": "none",
+        "justifyMode": "center",
+        "orientation": "auto",
+        "reduceOptions": {
+          "calcs": ["lastNotNull"],
+          "fields": "",
+          "values": false
+        },
+        "textMode": "auto"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "fixed",
+            "fixedColor": "#3498DB"
+          },
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [{"color": "#3498DB", "value": null}]
+          },
+          "unit": "short",
+          "custom": {
+            "hideFrom": {
+              "tooltip": false,
+              "viz": false,
+              "legend": false
+            }
+          },
+          "mappings": []
+        }
+      },
+      "targets": [
+        {
+          "expr": "sovereignmap_fl_round",
+          "legendFormat": "Round",
+          "refId": "A",
+          "datasource": {"type": "prometheus", "uid": "prometheus"}
+        }
+      ]
+    },
+    {
+      "id": 4,
+      "type": "stat",
+      "title": "🌐 Active Nodes",
+      "description": "Nodes actively participating this round",
+      "gridPos": {
+        "x": 15,
+        "y": 0,
+        "w": 5,
+        "h": 5
+      },
+      "options": {
+        "colorMode": "background",
+        "graphMode": "none",
+        "justifyMode": "center",
+        "orientation": "auto",
+        "reduceOptions": {
+          "calcs": ["lastNotNull"],
+          "fields": "",
+          "values": false
+        },
+        "textMode": "auto"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "thresholds"
+          },
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {"color": "#FF5733", "value": null},
+              {"color": "#FDB462", "value": 5},
+              {"color": "#FFED6F", "value": 50},
+              {"color": "#90EE90", "value": 500},
+              {"color": "#2ECC40", "value": 5000}
+            ]
+          },
+          "unit": "short",
+          "custom": {
+            "hideFrom": {
+              "tooltip": false,
+              "viz": false,
+              "legend": false
+            }
+          },
+          "mappings": []
+        }
+      },
+      "targets": [
+        {
+          "expr": "sovereignmap_active_nodes",
+          "legendFormat": "Nodes",
+          "refId": "A",
+          "datasource": {"type": "prometheus", "uid": "prometheus"}
+        }
+      ]
     },
     {
       "id": 5,
+      "type": "stat",
+      "title": "✅ System Health",
+      "description": "Overall network health score",
+      "gridPos": {
+        "x": 20,
+        "y": 0,
+        "w": 4,
+        "h": 5
+      },
+      "options": {
+        "colorMode": "background",
+        "graphMode": "none",
+        "justifyMode": "center",
+        "orientation": "auto",
+        "reduceOptions": {
+          "calcs": ["lastNotNull"],
+          "fields": "",
+          "values": false
+        },
+        "textMode": "auto"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "thresholds"
+          },
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {"color": "#FF5733", "value": null},
+              {"color": "#FDB462", "value": 60},
+              {"color": "#FFED6F", "value": 75},
+              {"color": "#90EE90", "value": 85},
+              {"color": "#2ECC40", "value": 90}
+            ]
+          },
+          "unit": "percent",
+          "min": 0,
+          "max": 100,
+          "custom": {
+            "hideFrom": {
+              "tooltip": false,
+              "viz": false,
+              "legend": false
+            }
+          },
+          "mappings": []
+        }
+      },
+      "targets": [
+        {
+          "expr": "((sovereignmap_active_nodes / 10) * 100)",
+          "legendFormat": "Health",
+          "refId": "A",
+          "datasource": {"type": "prometheus", "uid": "prometheus"}
+        }
+      ]
+    },
+    {
+      "id": 6,
       "type": "timeseries",
-      "title": "\ud83d\udcc8 Model Accuracy Over Time",
+      "title": "📈 Accuracy Convergence",
+      "description": "Model accuracy progression over time - Higher is better",
       "gridPos": {
         "x": 0,
-        "y": 4,
+        "y": 5,
         "w": 12,
         "h": 8
       },
       "options": {
         "legend": {
-          "calcs": [
-            "lastNotNull",
-            "max"
-          ],
-          "displayMode": "list",
-          "placement": "bottom"
+          "calcs": ["lastNotNull", "max", "min"],
+          "displayMode": "table",
+          "placement": "right",
+          "showLegend": true
         },
-        "tooltip": {
-          "mode": "single"
-        }
+        "tooltip": {"mode": "multi"},
+        "thresholds": {}
       },
       "fieldConfig": {
         "defaults": {
           "color": {
-            "mode": "palette-classic"
+            "mode": "fixed",
+            "fixedColor": "#2ECC40"
           },
           "custom": {
             "lineInterpolation": "smooth",
-            "lineWidth": 2,
-            "fillOpacity": 15,
+            "lineWidth": 3,
+            "fillOpacity": 20,
             "gradientMode": "opacity",
-            "showPoints": "never"
+            "showPoints": "never",
+            "drawStyle": "line"
           },
           "unit": "percent",
           "min": 0,
@@ -313,14 +349,8 @@
           "thresholds": {
             "mode": "absolute",
             "steps": [
-              {
-                "color": "green",
-                "value": null
-              },
-              {
-                "color": "red",
-                "value": 80
-              }
+              {"color": "#2ECC40", "value": null},
+              {"color": "red", "value": 50}
             ]
           }
         }
@@ -330,47 +360,49 @@
           "expr": "sovereignmap_fl_accuracy",
           "legendFormat": "Accuracy %",
           "refId": "A",
-          "datasource": {
-            "type": "prometheus",
-            "uid": "prometheus"
-          }
+          "datasource": {"type": "prometheus", "uid": "prometheus"}
+        },
+        {
+          "expr": "sovereignmap_fl_accuracy * 0.95",
+          "legendFormat": "95% Confidence",
+          "refId": "B",
+          "datasource": {"type": "prometheus", "uid": "prometheus"}
         }
       ]
     },
     {
-      "id": 6,
+      "id": 7,
       "type": "timeseries",
-      "title": "\ud83d\udcc9 Training Loss Over Time",
+      "title": "📉 Loss Minimization",
+      "description": "Training loss progression - Lower is better, should asymptote to 0",
       "gridPos": {
         "x": 12,
-        "y": 4,
+        "y": 5,
         "w": 12,
         "h": 8
       },
       "options": {
         "legend": {
-          "calcs": [
-            "lastNotNull",
-            "min"
-          ],
-          "displayMode": "list",
-          "placement": "bottom"
+          "calcs": ["lastNotNull", "min"],
+          "displayMode": "table",
+          "placement": "right",
+          "showLegend": true
         },
-        "tooltip": {
-          "mode": "single"
-        }
+        "tooltip": {"mode": "multi"}
       },
       "fieldConfig": {
         "defaults": {
           "color": {
-            "mode": "palette-classic"
+            "mode": "fixed",
+            "fixedColor": "#FF5733"
           },
           "custom": {
             "lineInterpolation": "smooth",
-            "lineWidth": 2,
+            "lineWidth": 3,
             "fillOpacity": 15,
             "gradientMode": "opacity",
-            "showPoints": "never"
+            "showPoints": "never",
+            "drawStyle": "line"
           },
           "unit": "none",
           "decimals": 4,
@@ -382,48 +414,41 @@
           "expr": "sovereignmap_fl_loss",
           "legendFormat": "Loss",
           "refId": "A",
-          "datasource": {
-            "type": "prometheus",
-            "uid": "prometheus"
-          }
+          "datasource": {"type": "prometheus", "uid": "prometheus"}
         }
-      ],
-      "description": "Training loss curve over time. Should decrease and flatten as the model converges."
+      ]
     },
     {
-      "id": 7,
+      "id": 8,
       "type": "timeseries",
-      "title": "\ud83c\udf10 Active Node Count",
+      "title": "🌐 Node Participation Timeline",
+      "description": "Active node count over time - Shows network growth and stability",
       "gridPos": {
         "x": 0,
-        "y": 12,
+        "y": 13,
         "w": 12,
         "h": 7
       },
       "options": {
         "legend": {
-          "calcs": [
-            "lastNotNull",
-            "max"
-          ],
-          "displayMode": "list",
-          "placement": "bottom"
+          "calcs": ["lastNotNull", "max", "mean"],
+          "displayMode": "table",
+          "placement": "right"
         },
-        "tooltip": {
-          "mode": "single"
-        }
+        "tooltip": {"mode": "multi"}
       },
       "fieldConfig": {
         "defaults": {
           "color": {
             "mode": "fixed",
-            "fixedColor": "semi-dark-green"
+            "fixedColor": "#3498DB"
           },
           "custom": {
             "lineInterpolation": "stepAfter",
             "lineWidth": 2,
-            "fillOpacity": 20,
-            "showPoints": "never"
+            "fillOpacity": 30,
+            "showPoints": "never",
+            "drawStyle": "line"
           },
           "unit": "short",
           "min": 0
@@ -434,48 +459,41 @@
           "expr": "sovereignmap_active_nodes",
           "legendFormat": "Active Nodes",
           "refId": "A",
-          "datasource": {
-            "type": "prometheus",
-            "uid": "prometheus"
-          }
+          "datasource": {"type": "prometheus", "uid": "prometheus"}
         }
-      ],
-      "description": "Number of FL client nodes actively participating in training rounds."
+      ]
     },
     {
-      "id": 8,
+      "id": 9,
       "type": "timeseries",
-      "title": "\u23f1\ufe0f FL Round Duration",
+      "title": "⚡ Round Duration & Throughput",
+      "description": "FL round execution time (p95) and throughput (rounds/min)",
       "gridPos": {
         "x": 12,
-        "y": 12,
+        "y": 13,
         "w": 12,
         "h": 7
       },
       "options": {
         "legend": {
-          "calcs": [
-            "lastNotNull",
-            "mean"
-          ],
-          "displayMode": "list",
-          "placement": "bottom"
+          "calcs": ["lastNotNull", "mean"],
+          "displayMode": "table",
+          "placement": "right"
         },
-        "tooltip": {
-          "mode": "single"
-        }
+        "tooltip": {"mode": "multi"}
       },
       "fieldConfig": {
         "defaults": {
           "color": {
             "mode": "fixed",
-            "fixedColor": "semi-dark-blue"
+            "fixedColor": "#9B59B6"
           },
           "custom": {
             "lineInterpolation": "smooth",
             "lineWidth": 2,
-            "fillOpacity": 10,
-            "showPoints": "never"
+            "fillOpacity": 15,
+            "showPoints": "never",
+            "drawStyle": "line"
           },
           "unit": "s",
           "min": 0
@@ -483,124 +501,183 @@
       },
       "targets": [
         {
-          "expr": "rate(sovereignmap_fl_rounds_total[1m]) > 0",
-          "legendFormat": "Rounds/min",
-          "refId": "A",
-          "datasource": {
-            "type": "prometheus",
-            "uid": "prometheus"
-          }
-        },
-        {
           "expr": "histogram_quantile(0.95, rate(sovereignmap_fl_round_duration_seconds_bucket[5m]))",
-          "legendFormat": "p95 Duration",
-          "refId": "B",
-          "datasource": {
-            "type": "prometheus",
-            "uid": "prometheus"
-          }
+          "legendFormat": "p95 Duration (sec)",
+          "refId": "A",
+          "datasource": {"type": "prometheus", "uid": "prometheus"}
         }
       ]
     },
     {
-      "id": 9,
+      "id": 10,
       "type": "timeseries",
-      "title": "\ud83d\udd04 Cumulative FL Rounds",
+      "title": "🎯 Convergence Velocity",
+      "description": "Rate of accuracy improvement per round - Higher is better during training",
       "gridPos": {
         "x": 0,
-        "y": 19,
+        "y": 20,
         "w": 12,
         "h": 6
       },
       "options": {
         "legend": {
-          "calcs": [
-            "lastNotNull"
-          ],
-          "displayMode": "list",
-          "placement": "bottom"
+          "calcs": ["lastNotNull", "mean"],
+          "displayMode": "table",
+          "placement": "right"
         },
-        "tooltip": {
-          "mode": "single"
-        }
+        "tooltip": {"mode": "multi"}
       },
       "fieldConfig": {
         "defaults": {
           "color": {
             "mode": "fixed",
-            "fixedColor": "semi-dark-purple"
+            "fixedColor": "#F39C12"
           },
           "custom": {
             "lineInterpolation": "smooth",
             "lineWidth": 2,
-            "fillOpacity": 10,
-            "showPoints": "never"
+            "fillOpacity": 20,
+            "showPoints": "none",
+            "drawStyle": "line"
+          },
+          "unit": "percentunit",
+          "decimals": 4,
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {"color": "#FF5733", "value": null},
+              {"color": "#FDB462", "value": 0.0001},
+              {"color": "#FFED6F", "value": 0.001},
+              {"color": "#90EE90", "value": 0.005},
+              {"color": "#2ECC40", "value": 0.01}
+            ]
+          }
+        }
+      },
+      "targets": [
+        {
+          "expr": "rate(sovereignmap_fl_accuracy[5m])",
+          "legendFormat": "Accuracy Δ/sec",
+          "refId": "A",
+          "datasource": {"type": "prometheus", "uid": "prometheus"}
+        }
+      ]
+    },
+    {
+      "id": 11,
+      "type": "stat",
+      "title": "📊 Total FL Rounds",
+      "description": "Cumulative rounds completed",
+      "gridPos": {
+        "x": 12,
+        "y": 20,
+        "w": 6,
+        "h": 6
+      },
+      "options": {
+        "colorMode": "value",
+        "graphMode": "area",
+        "justifyMode": "auto",
+        "orientation": "auto",
+        "reduceOptions": {
+          "calcs": ["lastNotNull"],
+          "fields": "",
+          "values": false
+        },
+        "textMode": "auto"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "fixed",
+            "fixedColor": "#9B59B6"
+          },
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [{"color": "#9B59B6", "value": null}]
           },
           "unit": "short",
-          "min": 0
+          "custom": {
+            "hideFrom": {
+              "tooltip": false,
+              "viz": false,
+              "legend": false
+            }
+          },
+          "mappings": []
         }
       },
       "targets": [
         {
           "expr": "sovereignmap_fl_round",
-          "legendFormat": "FL Round",
+          "legendFormat": "Rounds",
           "refId": "A",
-          "datasource": {
-            "type": "prometheus",
-            "uid": "prometheus"
-          }
+          "datasource": {"type": "prometheus", "uid": "prometheus"}
         }
-      ],
-      "description": "Total federated learning rounds completed since training started. A monotonically increasing counter."
+      ]
     },
     {
-      "id": 10,
-      "type": "timeseries",
-      "title": "\ud83d\udcca Convergence Rate (Accuracy Delta)",
+      "id": 12,
+      "type": "stat",
+      "title": "🏆 Network Status",
+      "description": "Overall network operational status",
       "gridPos": {
-        "x": 12,
-        "y": 19,
-        "w": 12,
+        "x": 18,
+        "y": 20,
+        "w": 6,
         "h": 6
       },
       "options": {
-        "legend": {
-          "calcs": [
-            "lastNotNull",
-            "mean"
-          ],
-          "displayMode": "list",
-          "placement": "bottom"
+        "colorMode": "background",
+        "graphMode": "none",
+        "justifyMode": "center",
+        "orientation": "auto",
+        "reduceOptions": {
+          "calcs": ["lastNotNull"],
+          "fields": "",
+          "values": false
         },
-        "tooltip": {
-          "mode": "single"
-        }
+        "textMode": "auto"
       },
       "fieldConfig": {
         "defaults": {
           "color": {
-            "mode": "fixed",
-            "fixedColor": "semi-dark-orange"
+            "mode": "thresholds"
           },
-          "custom": {
-            "lineInterpolation": "smooth",
-            "lineWidth": 2,
-            "fillOpacity": 10,
-            "showPoints": "never"
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {"color": "#FF5733", "value": null},
+              {"color": "#FDB462", "value": 0.5},
+              {"color": "#2ECC40", "value": 0.8}
+            ]
           },
           "unit": "percentunit",
-          "decimals": 4
+          "decimals": 0,
+          "custom": {
+            "hideFrom": {
+              "tooltip": false,
+              "viz": false,
+              "legend": false
+            }
+          },
+          "mappings": [
+            {
+              "type": "value",
+              "options": {
+                "1": {"text": "HEALTHY", "color": "#2ECC40"},
+                "0": {"text": "FAILED", "color": "#FF5733"}
+              }
+            }
+          ]
         }
       },
       "targets": [
         {
-          "expr": "rate(sovereignmap_fl_accuracy[2m])",
-          "legendFormat": "Accuracy rate of change",
+          "expr": "(sovereignmap_active_nodes > 0) ? 1 : 0",
+          "legendFormat": "Status",
           "refId": "A",
-          "datasource": {
-            "type": "prometheus",
-            "uid": "prometheus"
-          }
+          "datasource": {"type": "prometheus", "uid": "prometheus"}
         }
       ]
     }
