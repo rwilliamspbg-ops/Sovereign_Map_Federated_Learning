@@ -53,7 +53,9 @@ log_success() {
 log_header() {
     echo "" | tee -a "$LOG_FILE"
     echo -e "${MAGENTA}$1${NC}" | tee -a "$LOG_FILE"
-    echo -e "${MAGENTA}$(echo "$1" | sed 's/./=/g')${NC}" | tee -a "$LOG_FILE"
+    local underline
+    underline=${1//?/=}
+    echo -e "${MAGENTA}${underline}${NC}" | tee -a "$LOG_FILE"
 }
 
 ##############################################################################
@@ -109,7 +111,7 @@ pre_launch_checks() {
     # Check ports
     local ports=(8000 8080 9090 9093 3000 3001)
     for port in "${ports[@]}"; do
-        if lsof -Pi :$port -sTCP:LISTEN -t >/dev/null 2>&1; then
+        if lsof -Pi :"$port" -sTCP:LISTEN -t >/dev/null 2>&1; then
             log_warn "Port $port is already in use"
         else
             log_success "Port $port available"
@@ -239,14 +241,14 @@ launch_network() {
     sleep 5
     
     log_info "Deploying initial node set ($MIN_NODES nodes)..."
-    docker compose -f docker-compose.production.yml up -d --build --no-recreate --scale node-agent=$MIN_NODES mongo redis backend frontend node-agent 2>&1 | tee -a "$LOG_FILE"
+    docker compose -f docker-compose.production.yml up -d --build --no-recreate --scale node-agent="$MIN_NODES" mongo redis backend frontend node-agent 2>&1 | tee -a "$LOG_FILE"
     
     log_success "Initial nodes deployed"
     
     # Wait for network stabilization
     log_info "Waiting for network stabilization (30 seconds)..."
     for i in {30..1}; do
-        printf "\r  ⏳ $i seconds remaining..."
+        printf "\r  ⏳ %s seconds remaining..." "$i"
         sleep 1
     done
     echo ""
