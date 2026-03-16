@@ -121,6 +121,10 @@ Legacy documentation and development code from earlier phases.
 Kept for reference and historical context.
 ```
 
+### Recent Root Cleanup Archive
+
+- `archive/legacy/docs/ROOT_UNUSED_SCRIPTS_AND_YAML_INDEX_2026-03-16.md` - Index of root-level `.sh`/`.yml` files moved to archive during cleanup.
+
 ---
 
 ## 🎯 REFERENCE BY USE CASE
