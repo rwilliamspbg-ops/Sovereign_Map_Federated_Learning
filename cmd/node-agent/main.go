@@ -23,6 +23,8 @@ import (
 
 	"github.com/prometheus/client_golang/prometheus/promhttp"
 	"github.com/rwilliamspbg-ops/Sovereign_Map_Federated_Learning/internal/api"
+	"github.com/rwilliamspbg-ops/Sovereign_Map_Federated_Learning/internal/blockchain"
+	"github.com/rwilliamspbg-ops/Sovereign_Map_Federated_Learning/internal/tpm"
 	"github.com/rwilliamspbg-ops/Sovereign_Map_Federated_Learning/internal/wasmhost"
 )
 
@@ -79,7 +81,15 @@ func main() {
 		log.Printf("Theorem 5 Verification Status: %v", success)
 	}
 
+	chain := blockchain.NewBlockChain()
+	if os.Getenv("MOHAWK_ENABLE_TPM_VERIFIER") != "false" {
+		attestationManager := tpm.NewAttestationManager(256, 5*time.Minute, true)
+		chain.SetProofVerifier(tpm.NewTPMProofVerifier(attestationManager))
+		log.Printf("Node %s installed TPM-backed FL proof verifier", conf.NodeID)
+	}
+
 	handler := api.NewHandler(nil, nil, nil, nil)
+	handler.SetBlockchain(chain)
 	mux := http.NewServeMux()
 	mux.Handle("/metrics", promhttp.Handler())
 	handler.RegisterRoutes(mux)

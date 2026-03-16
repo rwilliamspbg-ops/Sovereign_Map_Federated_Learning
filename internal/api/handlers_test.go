@@ -11,6 +11,8 @@ import (
 	"strings"
 	"sync"
 	"testing"
+
+	"github.com/rwilliamspbg-ops/Sovereign_Map_Federated_Learning/internal/blockchain"
 )
 
 func mustStringSlice(t *testing.T, value interface{}, field string) []string {
@@ -553,5 +555,66 @@ func TestGetLedgerEndpointRejectsRoleMismatch(t *testing.T) {
 
 	if w.Code != http.StatusForbidden {
 		t.Fatalf("status = %d, want 403", w.Code)
+	}
+}
+
+func TestGetTrustStatusIncludesBlockchainVerificationState(t *testing.T) {
+	h := NewHandler(nil, nil, nil, nil)
+	chain := blockchain.NewBlockChain()
+	if err := chain.SetVerificationPolicy(blockchain.VerificationPolicy{
+		RequireProof:                true,
+		MinConfidenceBps:            9100,
+		RejectOnVerificationFailure: true,
+		AllowConsensusProof:         true,
+		AllowZKProof:                false,
+		AllowTEEProof:               true,
+	}); err != nil {
+		t.Fatalf("set verification policy: %v", err)
+	}
+	h.SetBlockchain(chain)
+
+	mux := http.NewServeMux()
+	h.RegisterRoutes(mux)
+
+	req := httptest.NewRequest(http.MethodGet, "/api/trust_status", nil)
+	w := httptest.NewRecorder()
+	mux.ServeHTTP(w, req)
+
+	if w.Code != http.StatusOK {
+		t.Fatalf("status = %d, want 200", w.Code)
+	}
+
+	var payload map[string]interface{}
+	if err := json.Unmarshal(w.Body.Bytes(), &payload); err != nil {
+		t.Fatalf("json decode failed: %v", err)
+	}
+
+	if payload["trust_mode"] != "p2p-reputation+governed-proof-verification" {
+		t.Fatalf("trust_mode = %v", payload["trust_mode"])
+	}
+
+	policy, ok := payload["verification_policy"].(map[string]interface{})
+	if !ok {
+		t.Fatalf("verification_policy missing: %v", payload)
+	}
+	if got := policy["require_proof"]; got != true {
+		t.Fatalf("require_proof = %v, want true", got)
+	}
+	if got := policy["min_confidence_bps"]; got != float64(9100) {
+		t.Fatalf("min_confidence_bps = %v, want 9100", got)
+	}
+	if got := policy["allow_zk_proof"]; got != false {
+		t.Fatalf("allow_zk_proof = %v, want false", got)
+	}
+
+	verification, ok := payload["fl_verification"].(map[string]interface{})
+	if !ok {
+		t.Fatalf("fl_verification missing: %v", payload)
+	}
+	if got := verification["total_rounds"]; got != float64(0) {
+		t.Fatalf("total_rounds = %v, want 0", got)
+	}
+	if got := verification["average_confidence_bps"]; got != float64(0) {
+		t.Fatalf("average_confidence_bps = %v, want 0", got)
 	}
 }

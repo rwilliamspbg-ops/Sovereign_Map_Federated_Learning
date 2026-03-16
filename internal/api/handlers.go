@@ -14,6 +14,7 @@ import (
 	"time"
 
 	internalproof "github.com/rwilliamspbg-ops/Sovereign_Map_Federated_Learning/internal"
+	"github.com/rwilliamspbg-ops/Sovereign_Map_Federated_Learning/internal/blockchain"
 	"github.com/rwilliamspbg-ops/Sovereign_Map_Federated_Learning/internal/convergence"
 	"github.com/rwilliamspbg-ops/Sovereign_Map_Federated_Learning/internal/hybrid"
 	"github.com/rwilliamspbg-ops/Sovereign_Map_Federated_Learning/internal/island"
@@ -42,6 +43,7 @@ type Handler struct {
 	metrics     *monitoring.Collector
 	p2pNetwork  *p2p.Network
 	ledger      *ProofLedger
+	blockchain  *blockchain.BlockChain
 }
 
 func writeJSON(w http.ResponseWriter, payload interface{}) {
@@ -227,6 +229,11 @@ func NewHandler(detector *convergence.Detector, islandMgr *island.Manager, colle
 		p2pNetwork:  network,
 		ledger:      NewProofLedger(0),
 	}
+}
+
+// SetBlockchain attaches an optional blockchain backend used by status endpoints.
+func (h *Handler) SetBlockchain(chain *blockchain.BlockChain) {
+	h.blockchain = chain
 }
 
 // RegisterRoutes sets up HTTP routes
@@ -471,6 +478,30 @@ func (h *Handler) GetTrustStatus(w http.ResponseWriter, r *http.Request) {
 		response["total_peers"] = len(peers)
 		response["active_peers"] = activePeers
 		response["average_reputation"] = avgReputation
+	}
+
+	if h.blockchain != nil {
+		policy := h.blockchain.GetVerificationPolicy()
+		verification := h.blockchain.GetFLVerificationMetrics()
+
+		response["trust_mode"] = "p2p-reputation+governed-proof-verification"
+		response["verification_policy"] = map[string]interface{}{
+			"require_proof":                  policy.RequireProof,
+			"min_confidence_bps":             policy.MinConfidenceBps,
+			"reject_on_verification_failure": policy.RejectOnVerificationFailure,
+			"allow_consensus_proof":          policy.AllowConsensusProof,
+			"allow_zk_proof":                 policy.AllowZKProof,
+			"allow_tee_proof":                policy.AllowTEEProof,
+		}
+		response["fl_verification"] = map[string]interface{}{
+			"total_rounds":           verification.TotalRounds,
+			"verified_rounds":        verification.VerifiedRounds,
+			"failed_rounds":          verification.FailedRounds,
+			"verified_ratio":         verification.VerifiedRatio,
+			"average_confidence_bps": verification.AverageConfidenceBps,
+			"last_round_id":          verification.LastRoundID,
+			"last_proof_type":        verification.LastProofType,
+		}
 	}
 
 	writeJSON(w, response)
