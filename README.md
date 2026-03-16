@@ -13,6 +13,28 @@
 [![Stars](https://img.shields.io/github/stars/rwilliamspbg-ops/Sovereign_Map_Federated_Learning?style=for-the-badge&logo=github&color=f08c00)](https://github.com/rwilliamspbg-ops/Sovereign_Map_Federated_Learning/stargazers)
 [![Forks](https://img.shields.io/github/forks/rwilliamspbg-ops/Sovereign_Map_Federated_Learning?style=for-the-badge&logo=github&color=e67700)](https://github.com/rwilliamspbg-ops/Sovereign_Map_Federated_Learning/network/members)
 
+## Platform Capabilities
+
+[![Federated Learning](https://img.shields.io/badge/Capability-Federated%20Learning-2f9e44?style=for-the-badge&logo=tensorflow&logoColor=white)](Documentation/Architecture/ARCHITECTURE.md)
+[![Blockchain Ledger](https://img.shields.io/badge/Capability-Blockchain%20Ledger-1864ab?style=for-the-badge&logo=blockchaindotcom&logoColor=white)](internal/blockchain/README.md)
+[![Governance Engine](https://img.shields.io/badge/Capability-Governance%20Engine-5f3dc4?style=for-the-badge&logo=openpolicyagent&logoColor=white)](Documentation/Project/ROADMAP.md)
+[![TPM Trust](https://img.shields.io/badge/Capability-TPM%20Trust%20Attestation-0b7285?style=for-the-badge&logo=letsencrypt&logoColor=white)](Documentation/Security/TPM_TRUST_GUIDE.md)
+[![Proof Verification](https://img.shields.io/badge/Capability-Proof%20Verification-c2255c?style=for-the-badge&logo=vercel&logoColor=white)](Documentation/Project/CAPABILITIES_SCHEMA_V1.md)
+[![Wallet and Staking](https://img.shields.io/badge/Capability-Wallet%20%26%20Staking-f08c00?style=for-the-badge&logo=bitcoin&logoColor=white)](docs/RELEASE_NOTES_v1.2.0.md)
+[![Observability Stack](https://img.shields.io/badge/Capability-Observability-1c7ed6?style=for-the-badge&logo=grafana&logoColor=white)](Documentation/DEPLOYMENT_INDEX.md)
+[![SDK Surface](https://img.shields.io/badge/Capability-TypeScript%20%2B%20Python%20SDKs-2b8a3e?style=for-the-badge&logo=typescript&logoColor=white)](packages/core/package.json)
+
+## Runtime Functions
+
+[![Node Agent API](https://img.shields.io/badge/Function-Node%20Agent%20API-364fc7?style=for-the-badge&logo=go&logoColor=white)](cmd/node-agent/main.go)
+[![Capabilities Contract](https://img.shields.io/badge/Function-Capabilities%20Contract-495057?style=for-the-badge&logo=json&logoColor=white)](capabilities.json)
+[![Verification Policy](https://img.shields.io/badge/Function-Verification%20Policy-862e9c?style=for-the-badge&logo=shield&logoColor=white)](config/llm_adapter_policy.json)
+[![Secure Channels](https://img.shields.io/badge/Function-Secure%20Communication-087f5b?style=for-the-badge&logo=openssl&logoColor=white)](secure_communication.py)
+[![Metrics Exporters](https://img.shields.io/badge/Function-Metrics%20Exporters-1971c2?style=for-the-badge&logo=prometheus&logoColor=white)](cmd/metrics-exporter/)
+[![Dashboard Provisioning](https://img.shields.io/badge/Function-Grafana%20Provisioning-e67700?style=for-the-badge&logo=grafana&logoColor=white)](grafana/provisioning/dashboards)
+[![Docker Deployment](https://img.shields.io/badge/Function-Docker%20Deploy-0c8599?style=for-the-badge&logo=docker&logoColor=white)](docker-compose.production.yml)
+[![Kubernetes Manifests](https://img.shields.io/badge/Function-Kubernetes%20Scale%20Profiles-0b7285?style=for-the-badge&logo=kubernetes&logoColor=white)](kubernetes-5000-node-manifests.yaml)
+
 ## CI and Security Gates
 
 [![Build and Test](https://img.shields.io/github/actions/workflow/status/rwilliamspbg-ops/Sovereign_Map_Federated_Learning/build.yml?branch=main&style=for-the-badge&logo=githubactions&label=Build%20and%20Test)](https://github.com/rwilliamspbg-ops/Sovereign_Map_Federated_Learning/actions/workflows/build.yml)
@@ -23,6 +45,11 @@
 [![Security Supply Chain](https://img.shields.io/github/actions/workflow/status/rwilliamspbg-ops/Sovereign_Map_Federated_Learning/security-supply-chain.yml?branch=main&style=for-the-badge&logo=snyk&label=Supply%20Chain)](https://github.com/rwilliamspbg-ops/Sovereign_Map_Federated_Learning/actions/workflows/security-supply-chain.yml)
 [![Secret Scan](https://img.shields.io/github/actions/workflow/status/rwilliamspbg-ops/Sovereign_Map_Federated_Learning/secret-scan.yml?branch=main&style=for-the-badge&logo=datadog&label=Secret%20Scan)](https://github.com/rwilliamspbg-ops/Sovereign_Map_Federated_Learning/actions/workflows/secret-scan.yml)
 [![Docs Link Check](https://img.shields.io/github/actions/workflow/status/rwilliamspbg-ops/Sovereign_Map_Federated_Learning/docs-link-check.yml?branch=main&style=for-the-badge&logo=readthedocs&label=Docs%20Links)](https://github.com/rwilliamspbg-ops/Sovereign_Map_Federated_Learning/actions/workflows/docs-link-check.yml)
+[![Observability CI](https://img.shields.io/github/actions/workflow/status/rwilliamspbg-ops/Sovereign_Map_Federated_Learning/observability-ci.yml?branch=main&style=for-the-badge&logo=grafana&label=Observability%20CI)](https://github.com/rwilliamspbg-ops/Sovereign_Map_Federated_Learning/actions/workflows/observability-ci.yml)
+[![HIL Tests](https://img.shields.io/github/actions/workflow/status/rwilliamspbg-ops/Sovereign_Map_Federated_Learning/hil-tests.yml?branch=main&style=for-the-badge&logo=pytest&label=HIL%20Tests)](https://github.com/rwilliamspbg-ops/Sovereign_Map_Federated_Learning/actions/workflows/hil-tests.yml)
+[![Docker Build](https://img.shields.io/github/actions/workflow/status/rwilliamspbg-ops/Sovereign_Map_Federated_Learning/docker-build.yml?branch=main&style=for-the-badge&logo=docker&label=Docker%20Build)](https://github.com/rwilliamspbg-ops/Sovereign_Map_Federated_Learning/actions/workflows/docker-build.yml)
+[![SDK Publish](https://img.shields.io/github/actions/workflow/status/rwilliamspbg-ops/Sovereign_Map_Federated_Learning/sdk-publish.yml?branch=main&style=for-the-badge&logo=npm&label=SDK%20Publish)](https://github.com/rwilliamspbg-ops/Sovereign_Map_Federated_Learning/actions/workflows/sdk-publish.yml)
+[![Windows Client EXE](https://img.shields.io/github/actions/workflow/status/rwilliamspbg-ops/Sovereign_Map_Federated_Learning/windows-client-exe.yml?branch=main&style=for-the-badge&logo=windows&label=Windows%20EXE)](https://github.com/rwilliamspbg-ops/Sovereign_Map_Federated_Learning/actions/workflows/windows-client-exe.yml)
 
 Sovereign Map is a sovereign intelligence coordination platform that combines federated learning, blockchain governance, trust attestation, and observability into one deployable stack.
 
