@@ -329,7 +329,7 @@ Expected performance on standard hardware (16GB RAM):
 After quickstart, explore:
 
 - **[Architecture](/Documentation/Architecture/ARCHITECTURE.md)** - System design deep dive
-- **[API Reference](Backend%20API.md)** - Endpoint documentation
+- **[API Reference](Backend API.md)** - Endpoint documentation
 - **[Testing](../Documentation/Testing/TEST_GUIDE.md)** - Test framework guide
 - **[Deployment](/Documentation/Deployment/DEPLOYMENT.md)** - Production deployment
 - **[Research](RESEARCH_FINDINGS.md)** - Byzantine analysis results

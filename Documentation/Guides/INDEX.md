@@ -36,7 +36,7 @@
 - **Reproduction Guide**: [`1000-NODE-NPU-TEST-GUIDE.md`](/Documentation/Testing/1000-NODE-NPU-TEST-GUIDE.md)
 - **Test Results**: [`test-results/1000-node-npu/20260304-103652/RESULTS.md`](../../test-results/1000-node-npu/20260304-103652/RESULTS.md)
 - **Test Index**: [`test-results/1000-node-npu/README.md`](../../test-results/1000-node-npu/README.md)
-- **Visualization**: [`test-results/1000-node-npu/20260304-103652/plots/01-npu-performance-analysis.png`](../../test-results/1000-node-npu/20260304-103652/plots/01-npu-performance-analysis.png)
+- **Visualization Summary**: [`test-results/1000-node-npu/20260304-103652/RESULTS.md`](../../test-results/1000-node-npu/20260304-103652/RESULTS.md)
 
 #### Run the Test
 ```bash
@@ -54,7 +54,7 @@
 
 #### Quick Access
 - **Complete Report**: [`KUBERNETES_5000_NODE_REPORT.md`](/Documentation/Deployment/KUBERNETES_5000_NODE_REPORT.md) ⭐ **START HERE**
-- **Test Index**: [`test-results/kubernetes-5000-node/README.md`](../../test-results/kubernetes-5000-node/README.md)
+- **Test Index**: [`test-results/kubernetes-5000-node/`](../../test-results/kubernetes-5000-node/)
 - **Raw Data**: [`test-results/kubernetes-5000-node/k8s-5000-node-20260303-052718.json`](../../test-results/kubernetes-5000-node/k8s-5000-node-20260303-052718.json)
 - **Visualizations**: [`test-results/kubernetes-5000-node/plots/`](../../test-results/kubernetes-5000-node/plots/)
   - [Master Summary](../../test-results/kubernetes-5000-node/plots/master-summary.png)
