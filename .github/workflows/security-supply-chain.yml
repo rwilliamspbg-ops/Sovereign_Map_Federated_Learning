@@ -22,7 +22,7 @@ jobs:
         run: docker build -f Dockerfile.backend.optimized -t sovereign-backend:ci .
 
       - name: Generate SBOM (CycloneDX)
-        uses: anchore/sbom-action@85f897d6f3eeb9d30980dc9f2138eb33cd6b2e8b
+        uses: anchore/sbom-action@57aae528053a48a3f6235f2d9461b05fbcb7366d
         with:
           image: sovereign-backend:ci
           format: cyclonedx-json
