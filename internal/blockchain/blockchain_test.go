@@ -843,3 +843,115 @@ func TestValidatorStaleAttestationEnforcement(t *testing.T) {
 		t.Fatalf("expected stale slash to reduce stake, before=%d after=%d", stakeBefore, vAfter.StakedAmount)
 	}
 }
+
+func TestBuildFLVerificationMetadataDefaults(t *testing.T) {
+	data := map[string]interface{}{
+		"round_id":   "r-101",
+		"model_hash": "model-hash-abc",
+	}
+
+	meta := BuildFLVerificationMetadata(data, 9, 1700000000)
+
+	if meta["proof_type"] != "consensus" {
+		t.Fatalf("expected default proof_type consensus, got %v", meta["proof_type"])
+	}
+	if meta["verification_passed"] != true {
+		t.Fatalf("expected default verification_passed true, got %v", meta["verification_passed"])
+	}
+	if meta["verification_confidence_bps"] != uint32(8000) {
+		t.Fatalf("expected default confidence 8000, got %v", meta["verification_confidence_bps"])
+	}
+	if meta["block_height"] != uint64(9) {
+		t.Fatalf("expected block height 9, got %v", meta["block_height"])
+	}
+}
+
+func TestBlockchainFLVerificationMetricsAggregation(t *testing.T) {
+	blockchain := NewBlockChain()
+	if err := blockchain.ValidatorSet.AddValidator("node_1", 1000000); err != nil {
+		t.Fatalf("failed to add validator: %v", err)
+	}
+
+	proposer := NewBlockProposer("node_1", blockchain)
+
+	b1, err := proposer.ProposeBlock("node_1", map[string]interface{}{
+		"round_id":                    "r-1",
+		"model_hash":                  "h1",
+		"verification_passed":         true,
+		"verification_confidence_bps": 9000,
+		"proof_type":                  "consensus",
+	})
+	if err != nil {
+		t.Fatalf("propose block 1 failed: %v", err)
+	}
+	if err := proposer.CommitBlock(b1); err != nil {
+		t.Fatalf("commit block 1 failed: %v", err)
+	}
+
+	b2, err := proposer.ProposeBlock("node_1", map[string]interface{}{
+		"round_id":                    "r-2",
+		"model_hash":                  "h2",
+		"verification_passed":         false,
+		"verification_confidence_bps": 4000,
+		"proof_type":                  "zk-proofs",
+	})
+	if err != nil {
+		t.Fatalf("propose block 2 failed: %v", err)
+	}
+	if err := proposer.CommitBlock(b2); err != nil {
+		t.Fatalf("commit block 2 failed: %v", err)
+	}
+
+	metrics := blockchain.GetFLVerificationMetrics()
+	if metrics.TotalRounds != 2 {
+		t.Fatalf("expected total rounds 2, got %+v", metrics)
+	}
+	if metrics.VerifiedRounds != 1 || metrics.FailedRounds != 1 {
+		t.Fatalf("expected 1 verified and 1 failed, got %+v", metrics)
+	}
+	if metrics.AverageConfidenceBps != 6500 {
+		t.Fatalf("expected average confidence 6500, got %+v", metrics)
+	}
+	if metrics.LastRoundID != "r-2" {
+		t.Fatalf("expected last round id r-2, got %+v", metrics)
+	}
+	if metrics.LastProofType != "zk-proofs" {
+		t.Fatalf("expected last proof type zk-proofs, got %+v", metrics)
+	}
+}
+
+func TestCommitBlockPersistsFLVerificationState(t *testing.T) {
+	blockchain := NewBlockChain()
+	if err := blockchain.ValidatorSet.AddValidator("node_1", 1000000); err != nil {
+		t.Fatalf("failed to add validator: %v", err)
+	}
+
+	proposer := NewBlockProposer("node_1", blockchain)
+	block, err := proposer.ProposeBlock("node_1", map[string]interface{}{
+		"round_id":                    "round-verify-1",
+		"model_hash":                  "hash-verify-1",
+		"verification_passed":         true,
+		"verification_confidence_bps": 8800,
+	})
+	if err != nil {
+		t.Fatalf("failed to propose block: %v", err)
+	}
+
+	if err := proposer.CommitBlock(block); err != nil {
+		t.Fatalf("failed to commit block: %v", err)
+	}
+
+	flKey := "fl_verification:round-verify-1"
+	stored, err := blockchain.StateDB.Get(flKey)
+	if err != nil {
+		t.Fatalf("expected verification state to exist, key=%s err=%v", flKey, err)
+	}
+
+	meta, ok := stored.(map[string]interface{})
+	if !ok {
+		t.Fatalf("expected verification state map, got %T", stored)
+	}
+	if meta["round_id"] != "round-verify-1" {
+		t.Fatalf("unexpected round id in verification state: %v", meta)
+	}
+}

@@ -10,6 +10,17 @@ import (
 	"time"
 )
 
+// FLVerificationMetrics summarizes on-chain FL verification outcomes.
+type FLVerificationMetrics struct {
+	TotalRounds          uint64  `json:"total_rounds"`
+	VerifiedRounds       uint64  `json:"verified_rounds"`
+	FailedRounds         uint64  `json:"failed_rounds"`
+	AverageConfidenceBps uint32  `json:"average_confidence_bps"`
+	LastRoundID          string  `json:"last_round_id"`
+	LastProofType        string  `json:"last_proof_type"`
+	VerifiedRatio        float64 `json:"verified_ratio"`
+}
+
 // TransactionType defines the type of transaction
 type TransactionType string
 
@@ -275,4 +286,115 @@ func ComputeMerkleRoot(transactions []Transaction) string {
 func hashData(data string) string {
 	hash := sha256.Sum256([]byte(data))
 	return hex.EncodeToString(hash[:])
+}
+
+// BuildFLVerificationMetadata derives verification metadata from FL transaction payload.
+func BuildFLVerificationMetadata(roundData map[string]interface{}, blockHeight uint64, ts int64) map[string]interface{} {
+	roundID := fmt.Sprintf("%v", roundData["round_id"])
+	proofType := asStringDefault(roundData["proof_type"], "consensus")
+	proofHash := asStringDefault(roundData["proof_hash"], "")
+	if proofHash == "" {
+		proofHash = asStringDefault(roundData["model_hash"], "")
+	}
+
+	confidenceBps := asUint32Default(roundData["verification_confidence_bps"], 8000)
+	verified := asBoolDefault(roundData["verification_passed"], true)
+
+	return map[string]interface{}{
+		"round_id":                    roundID,
+		"proof_type":                  proofType,
+		"proof_hash":                  proofHash,
+		"verification_passed":         verified,
+		"verification_confidence_bps": confidenceBps,
+		"submitted_at":                asInt64Default(roundData["timestamp"], ts),
+		"recorded_at":                 ts,
+		"block_height":                blockHeight,
+	}
+}
+
+// GetFLVerificationMetrics scans chain transactions to produce aggregate verification metrics.
+func (bc *BlockChain) GetFLVerificationMetrics() FLVerificationMetrics {
+	bc.mu.RLock()
+	defer bc.mu.RUnlock()
+
+	metrics := FLVerificationMetrics{}
+	var confidenceSum uint64
+
+	for _, block := range bc.Blocks {
+		for _, txn := range block.Transactions {
+			if txn.Type != TxTypeFlRound {
+				continue
+			}
+
+			metrics.TotalRounds++
+			roundID := fmt.Sprintf("%v", txn.Data["round_id"])
+			if roundID != "" {
+				metrics.LastRoundID = roundID
+			}
+
+			proofType := asStringDefault(txn.Data["proof_type"], "consensus")
+			metrics.LastProofType = proofType
+
+			if asBoolDefault(txn.Data["verification_passed"], true) {
+				metrics.VerifiedRounds++
+			} else {
+				metrics.FailedRounds++
+			}
+
+			confidenceSum += uint64(asUint32Default(txn.Data["verification_confidence_bps"], 8000))
+		}
+	}
+
+	if metrics.TotalRounds > 0 {
+		metrics.AverageConfidenceBps = uint32(confidenceSum / metrics.TotalRounds)
+		metrics.VerifiedRatio = float64(metrics.VerifiedRounds) / float64(metrics.TotalRounds)
+	}
+
+	return metrics
+}
+
+func asStringDefault(v interface{}, fallback string) string {
+	if s, ok := v.(string); ok && s != "" {
+		return s
+	}
+	return fallback
+}
+
+func asBoolDefault(v interface{}, fallback bool) bool {
+	if b, ok := v.(bool); ok {
+		return b
+	}
+	return fallback
+}
+
+func asUint32Default(v interface{}, fallback uint32) uint32 {
+	switch n := v.(type) {
+	case uint32:
+		return n
+	case uint64:
+		return uint32(n)
+	case int:
+		if n >= 0 {
+			return uint32(n)
+		}
+	case float64:
+		if n >= 0 {
+			return uint32(n)
+		}
+	}
+	return fallback
+}
+
+func asInt64Default(v interface{}, fallback int64) int64 {
+	switch n := v.(type) {
+	case int64:
+		return n
+	case int:
+		return int64(n)
+	case uint64:
+		return int64(n)
+	case float64:
+		return int64(n)
+	}
+	return fallback
 }

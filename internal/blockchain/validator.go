@@ -213,7 +213,7 @@ func (bv *BlockValidator) validateStateRoot(block *Block) error {
 
 	// Execute all transactions
 	for i, txn := range block.Transactions {
-		if err := bv.executeTransaction(&txn, tempState); err != nil {
+		if err := bv.executeTransaction(&txn, tempState, block.Header.Index); err != nil {
 			return fmt.Errorf("transaction %d execution failed: %w", i, err)
 		}
 	}
@@ -230,12 +230,15 @@ func (bv *BlockValidator) validateStateRoot(block *Block) error {
 }
 
 // executeTransaction applies a transaction to state
-func (bv *BlockValidator) executeTransaction(txn *Transaction, state *StateDatabase) error {
+func (bv *BlockValidator) executeTransaction(txn *Transaction, state *StateDatabase, blockHeight uint64) error {
 	switch txn.Type {
 	case TxTypeFlRound:
 		// Record FL round in state
 		flKey := fmt.Sprintf("fl_round:%s", txn.Data["round_id"])
 		state.Set(flKey, txn.Data)
+		verification := BuildFLVerificationMetadata(txn.Data, blockHeight, txn.Timestamp)
+		verificationKey := fmt.Sprintf("fl_verification:%s", txn.Data["round_id"])
+		state.Set(verificationKey, verification)
 
 	case TxTypeStake:
 		// Update validator stake
@@ -282,7 +285,7 @@ func (bv *BlockValidator) executeTransaction(txn *Transaction, state *StateDatab
 
 // validateProofs validates cryptographic proofs attached to block
 func (bv *BlockValidator) validateProofs(block *Block) error {
-	if block.ProofData == nil || len(block.ProofData) == 0 {
+	if len(block.ProofData) == 0 {
 		// Optional: proofs may not be required for all blocks
 		return nil
 	}

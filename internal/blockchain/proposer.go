@@ -85,6 +85,9 @@ func (bp *BlockProposer) computeProjectedStateRoot(txns []Transaction) string {
 		case TxTypeFlRound:
 			flKey := fmt.Sprintf("fl_round:%s", txn.Data["round_id"])
 			tempState.Set(flKey, txn.Data)
+			verification := BuildFLVerificationMetadata(txn.Data, bp.blockchain.Height()+1, txn.Timestamp)
+			verificationKey := fmt.Sprintf("fl_verification:%s", txn.Data["round_id"])
+			tempState.Set(verificationKey, verification)
 
 		case TxTypeStake:
 			stakeKey := fmt.Sprintf("stake:%s", txn.From)
@@ -130,6 +133,15 @@ func (bp *BlockProposer) CommitBlock(block *Block) error {
 	// Add block to chain
 	if err := bp.blockchain.AppendBlock(block); err != nil {
 		return fmt.Errorf("failed to append block: %w", err)
+	}
+
+	for i := range block.Transactions {
+		txn := &block.Transactions[i]
+		if txn.Type == TxTypeFlRound {
+			if err := bp.ProcessFlRoundTransaction(txn); err != nil {
+				return fmt.Errorf("failed to persist FL round transaction %s: %w", txn.ID, err)
+			}
+		}
 	}
 
 	// Record state snapshot
@@ -194,9 +206,15 @@ func (bp *BlockProposer) ProcessFlRoundTransaction(txn *Transaction) error {
 		return err
 	}
 
+	verification := BuildFLVerificationMetadata(txn.Data, bp.blockchain.Height(), txn.Timestamp)
+	verificationKey := fmt.Sprintf("fl_verification:%s", txn.Data["round_id"])
+	if err := bp.blockchain.StateDB.Set(verificationKey, verification); err != nil {
+		return err
+	}
+
 	// Update accuracy metrics if available
 	if accuracy, ok := txn.Data["accuracy"]; ok {
-		metricsKey := fmt.Sprintf("accuracy:latest")
+		metricsKey := "accuracy:latest"
 		bp.blockchain.StateDB.Set(metricsKey, accuracy)
 	}
 
@@ -233,15 +251,23 @@ func (bp *BlockProposer) DistributeFlRewards(blockHeight uint64, participatingNo
 
 // GetBlockStats returns statistics about the blockchain
 func (bp *BlockProposer) GetBlockStats() map[string]interface{} {
+	verification := bp.blockchain.GetFLVerificationMetrics()
 	return map[string]interface{}{
-		"height":          bp.blockchain.Height(),
-		"total_blocks":    bp.blockchain.Length(),
-		"pending_txns":    bp.blockchain.Mempool.Size(),
-		"validators":      bp.blockchain.ValidatorSet.Count(),
-		"total_stake":     bp.blockchain.ValidatorSet.TotalStake,
-		"state_root":      bp.blockchain.StateDB.ComputeRoot(),
-		"tip_hash":        bp.blockchain.Tip.Header.Hash,
-		"last_block_time": bp.blockchain.Tip.Header.Timestamp,
+		"height":                             bp.blockchain.Height(),
+		"total_blocks":                       bp.blockchain.Length(),
+		"pending_txns":                       bp.blockchain.Mempool.Size(),
+		"validators":                         bp.blockchain.ValidatorSet.Count(),
+		"total_stake":                        bp.blockchain.ValidatorSet.TotalStake,
+		"fl_total_rounds":                    verification.TotalRounds,
+		"fl_verified_rounds":                 verification.VerifiedRounds,
+		"fl_failed_rounds":                   verification.FailedRounds,
+		"fl_verification_ratio":              verification.VerifiedRatio,
+		"fl_avg_verification_confidence_bps": verification.AverageConfidenceBps,
+		"fl_last_round_id":                   verification.LastRoundID,
+		"fl_last_proof_type":                 verification.LastProofType,
+		"state_root":                         bp.blockchain.StateDB.ComputeRoot(),
+		"tip_hash":                           bp.blockchain.Tip.Header.Hash,
+		"last_block_time":                    bp.blockchain.Tip.Header.Timestamp,
 	}
 }
 
