@@ -474,5 +474,7 @@
   "title": "Sovereign Map - NPU Acceleration",
   "uid": "sovereign-npu-acceleration",
   "version": 3,
-  "weekStart": "sunday"
+  "weekStart": "sunday",
+  "folderTitle": "Sovereign Map",
+  "starred": true
 }

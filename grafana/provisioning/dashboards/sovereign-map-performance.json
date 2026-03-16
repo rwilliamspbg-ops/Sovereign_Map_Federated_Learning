@@ -442,5 +442,7 @@
   "title": "Sovereign Map - Performance",
   "uid": "sovereign-performance",
   "version": 2,
-  "weekStart": "sunday"
+  "weekStart": "sunday",
+  "folderTitle": "Sovereign Map",
+  "starred": true
 }

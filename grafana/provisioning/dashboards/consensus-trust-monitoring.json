@@ -607,5 +607,7 @@
   "title": "Consensus Trust Monitoring",
   "uid": "consensus-trust-monitoring",
   "version": 4,
-  "description": "\ud83d\udd17 Consensus & Trust \u2014 BFT consensus health, trust chain validation, message signing verification, and validator performance."
+  "description": "\ud83d\udd17 Consensus & Trust \u2014 BFT consensus health, trust chain validation, message signing verification, and validator performance.",
+  "folderTitle": "Sovereign Map",
+  "starred": true
 }

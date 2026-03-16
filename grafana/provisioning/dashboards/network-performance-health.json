@@ -533,5 +533,7 @@
   "title": "Network Performance Health",
   "uid": "network-performance-health",
   "version": 4,
-  "description": "\ud83d\udcca Network Performance & Health \u2014 FL progress, latency, throughput, accuracy, and network stability metrics."
+  "description": "\ud83d\udcca Network Performance & Health \u2014 FL progress, latency, throughput, accuracy, and network stability metrics.",
+  "folderTitle": "Sovereign Map",
+  "starred": true
 }

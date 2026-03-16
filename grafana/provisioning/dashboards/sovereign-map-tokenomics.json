@@ -1327,5 +1327,7 @@
   "uid": "sovereign-tokenomics",
   "version": 2,
   "weekStart": "",
-  "description": "\ud83d\udcb0 Tokenomics & Economic Health \u2014 Network value, validator participation, minting, emissions, bridges, and collateral metrics optimized for scale."
+  "description": "\ud83d\udcb0 Tokenomics & Economic Health \u2014 Network value, validator participation, minting, emissions, bridges, and collateral metrics optimized for scale.",
+  "folderTitle": "Sovereign Map",
+  "starred": true
 }

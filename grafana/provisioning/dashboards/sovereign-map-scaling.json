@@ -325,5 +325,7 @@
   "title": "Sovereign Map - Node Scaling",
   "uid": "sovereign-scaling",
   "version": 3,
-  "weekStart": "sunday"
+  "weekStart": "sunday",
+  "folderTitle": "Sovereign Map",
+  "starred": true
 }

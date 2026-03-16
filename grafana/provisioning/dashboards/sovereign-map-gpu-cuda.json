@@ -637,5 +637,7 @@
   "title": "Sovereign Map - GPU/CUDA Acceleration",
   "uid": "sovereign-gpu-acceleration",
   "version": 3,
-  "weekStart": "sunday"
+  "weekStart": "sunday",
+  "folderTitle": "Sovereign Map",
+  "starred": true
 }

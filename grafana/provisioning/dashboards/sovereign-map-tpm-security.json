@@ -407,5 +407,7 @@
   "title": "Sovereign Map - TPM Security",
   "uid": "sovereign-tpm-security",
   "version": 3,
-  "weekStart": "sunday"
+  "weekStart": "sunday",
+  "folderTitle": "Sovereign Map",
+  "starred": true
 }

@@ -3,7 +3,10 @@
     "list": [
       {
         "builtIn": 1,
-        "datasource": {"type": "grafana", "uid": "-- Grafana --"},
+        "datasource": {
+          "type": "grafana",
+          "uid": "-- Grafana --"
+        },
         "enable": true,
         "hide": true,
         "iconColor": "rgba(0, 211, 255, 1)",
@@ -12,7 +15,7 @@
       }
     ]
   },
-  "description": "🎯 Convergence Metrics — Model accuracy, loss trajectory, convergence velocity, and node-level performance distribution. Optimized for large-scale networks.",
+  "description": "\ud83c\udfaf Convergence Metrics \u2014 Model accuracy, loss trajectory, convergence velocity, and node-level performance distribution. Optimized for large-scale networks.",
   "editable": true,
   "fiscalYearStartMonth": 0,
   "graphTooltip": 1,
@@ -22,11 +25,31 @@
   "refresh": "10s",
   "schemaVersion": 38,
   "style": "dark",
-  "tags": ["sovereign", "federated-learning", "convergence", "enhanced"],
-  "templating": {"list": []},
-  "time": {"from": "now-1h", "to": "now"},
+  "tags": [
+    "sovereign",
+    "federated-learning",
+    "convergence",
+    "enhanced"
+  ],
+  "templating": {
+    "list": []
+  },
+  "time": {
+    "from": "now-1h",
+    "to": "now"
+  },
   "timepicker": {
-    "refresh_intervals": ["10s", "30s", "1m", "5m", "15m", "30m", "1h", "2h", "1d"]
+    "refresh_intervals": [
+      "10s",
+      "30s",
+      "1m",
+      "5m",
+      "15m",
+      "30m",
+      "1h",
+      "2h",
+      "1d"
+    ]
   },
   "timezone": "browser",
   "title": "Sovereign Map - Convergence Metrics",
@@ -35,51 +58,105 @@
   "weekStart": "sunday",
   "panels": [
     {
-      "datasource": {"type": "prometheus", "uid": "prometheus"},
+      "datasource": {
+        "type": "prometheus",
+        "uid": "prometheus"
+      },
       "description": "Current global model accuracy",
       "fieldConfig": {
         "defaults": {
-          "color": {"mode": "thresholds"},
-          "custom": {"hideFrom": {"tooltip": false, "viz": false, "legend": false}},
+          "color": {
+            "mode": "thresholds"
+          },
+          "custom": {
+            "hideFrom": {
+              "tooltip": false,
+              "viz": false,
+              "legend": false
+            }
+          },
           "mappings": [],
           "max": 100,
           "min": 0,
           "thresholds": {
             "mode": "absolute",
             "steps": [
-              {"color": "#FF5733", "value": null},
-              {"color": "#FDB462", "value": 60},
-              {"color": "#FFED6F", "value": 75},
-              {"color": "#90EE90", "value": 85},
-              {"color": "#2ECC40", "value": 92}
+              {
+                "color": "#FF5733",
+                "value": null
+              },
+              {
+                "color": "#FDB462",
+                "value": 60
+              },
+              {
+                "color": "#FFED6F",
+                "value": 75
+              },
+              {
+                "color": "#90EE90",
+                "value": 85
+              },
+              {
+                "color": "#2ECC40",
+                "value": 92
+              }
             ]
           },
           "unit": "percent"
         },
         "overrides": []
       },
-      "gridPos": {"h": 5, "w": 6, "x": 0, "y": 0},
+      "gridPos": {
+        "h": 5,
+        "w": 6,
+        "x": 0,
+        "y": 0
+      },
       "id": 10,
       "options": {
         "colorMode": "background",
         "graphMode": "area",
         "justifyMode": "center",
         "orientation": "auto",
-        "reduceOptions": {"calcs": ["lastNotNull"], "fields": "", "values": false},
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        },
         "textMode": "auto"
       },
       "pluginVersion": "10.2.0",
-      "targets": [{"expr": "sovereignmap_model_accuracy", "legendFormat": "Accuracy", "refId": "A"}],
-      "title": "🎯 Global Model Accuracy",
+      "targets": [
+        {
+          "expr": "sovereignmap_model_accuracy",
+          "legendFormat": "Accuracy",
+          "refId": "A"
+        }
+      ],
+      "title": "\ud83c\udfaf Global Model Accuracy",
       "type": "stat"
     },
     {
-      "datasource": {"type": "prometheus", "uid": "prometheus"},
+      "datasource": {
+        "type": "prometheus",
+        "uid": "prometheus"
+      },
       "description": "Current training loss value",
       "fieldConfig": {
         "defaults": {
-          "color": {"mode": "thresholds"},
-          "custom": {"hideFrom": {"tooltip": false, "viz": false, "legend": false}},
+          "color": {
+            "mode": "thresholds"
+          },
+          "custom": {
+            "hideFrom": {
+              "tooltip": false,
+              "viz": false,
+              "legend": false
+            }
+          },
           "mappings": [],
           "min": 0,
           "max": 3,
@@ -87,63 +164,132 @@
           "thresholds": {
             "mode": "absolute",
             "steps": [
-              {"color": "#2ECC40", "value": null},
-              {"color": "#90EE90", "value": 0.1},
-              {"color": "#FFED6F", "value": 0.3},
-              {"color": "#FDB462", "value": 0.5},
-              {"color": "#FF5733", "value": 1.0}
+              {
+                "color": "#2ECC40",
+                "value": null
+              },
+              {
+                "color": "#90EE90",
+                "value": 0.1
+              },
+              {
+                "color": "#FFED6F",
+                "value": 0.3
+              },
+              {
+                "color": "#FDB462",
+                "value": 0.5
+              },
+              {
+                "color": "#FF5733",
+                "value": 1.0
+              }
             ]
           },
           "unit": "none"
         },
         "overrides": []
       },
-      "gridPos": {"h": 5, "w": 6, "x": 6, "y": 0},
+      "gridPos": {
+        "h": 5,
+        "w": 6,
+        "x": 6,
+        "y": 0
+      },
       "id": 11,
       "options": {
         "colorMode": "background",
         "graphMode": "area",
         "justifyMode": "center",
         "orientation": "auto",
-        "reduceOptions": {"calcs": ["lastNotNull"], "fields": "", "values": false},
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        },
         "textMode": "auto"
       },
       "pluginVersion": "10.2.0",
-      "targets": [{"expr": "sovereignmap_training_loss", "legendFormat": "Loss", "refId": "A"}],
-      "title": "📉 Training Loss",
+      "targets": [
+        {
+          "expr": "sovereignmap_training_loss",
+          "legendFormat": "Loss",
+          "refId": "A"
+        }
+      ],
+      "title": "\ud83d\udcc9 Training Loss",
       "type": "stat"
     },
     {
-      "datasource": {"type": "prometheus", "uid": "prometheus"},
+      "datasource": {
+        "type": "prometheus",
+        "uid": "prometheus"
+      },
       "description": "Convergence target achievement (%)",
       "fieldConfig": {
         "defaults": {
-          "color": {"mode": "thresholds"},
-          "custom": {"hideFrom": {"tooltip": false, "viz": false, "legend": false}},
+          "color": {
+            "mode": "thresholds"
+          },
+          "custom": {
+            "hideFrom": {
+              "tooltip": false,
+              "viz": false,
+              "legend": false
+            }
+          },
           "mappings": [],
           "max": 100,
           "min": 0,
           "thresholds": {
             "mode": "absolute",
             "steps": [
-              {"color": "#FF5733", "value": null},
-              {"color": "#FDB462", "value": 25},
-              {"color": "#FFED6F", "value": 50},
-              {"color": "#90EE90", "value": 75},
-              {"color": "#2ECC40", "value": 90}
+              {
+                "color": "#FF5733",
+                "value": null
+              },
+              {
+                "color": "#FDB462",
+                "value": 25
+              },
+              {
+                "color": "#FFED6F",
+                "value": 50
+              },
+              {
+                "color": "#90EE90",
+                "value": 75
+              },
+              {
+                "color": "#2ECC40",
+                "value": 90
+              }
             ]
           },
           "unit": "percent"
         }
       },
-      "gridPos": {"h": 5, "w": 6, "x": 12, "y": 0},
+      "gridPos": {
+        "h": 5,
+        "w": 6,
+        "x": 12,
+        "y": 0
+      },
       "id": 12,
       "options": {
         "colorMode": "background",
         "graphMode": "none",
         "justifyMode": "center",
         "orientation": "auto",
-        "reduceOptions": {"calcs": ["lastNotNull"], "fields": "", "values": false},
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        },
         "textMode": "auto"
       },
       "targets": [
@@ -153,16 +299,27 @@
           "refId": "A"
         }
       ],
-      "title": "🎖️ Convergence Progress",
+      "title": "\ud83c\udf96\ufe0f Convergence Progress",
       "type": "stat"
     },
     {
-      "datasource": {"type": "prometheus", "uid": "prometheus"},
+      "datasource": {
+        "type": "prometheus",
+        "uid": "prometheus"
+      },
       "description": "Target: < 0.05. Shows how close we are to optimal convergence.",
       "fieldConfig": {
         "defaults": {
-          "color": {"mode": "thresholds"},
-          "custom": {"hideFrom": {"tooltip": false, "viz": false, "legend": false}},
+          "color": {
+            "mode": "thresholds"
+          },
+          "custom": {
+            "hideFrom": {
+              "tooltip": false,
+              "viz": false,
+              "legend": false
+            }
+          },
           "mappings": [],
           "max": 1,
           "min": 0,
@@ -170,24 +327,50 @@
           "thresholds": {
             "mode": "absolute",
             "steps": [
-              {"color": "#2ECC40", "value": null},
-              {"color": "#90EE90", "value": 0.05},
-              {"color": "#FFED6F", "value": 0.1},
-              {"color": "#FDB462", "value": 0.5},
-              {"color": "#FF5733", "value": 1.0}
+              {
+                "color": "#2ECC40",
+                "value": null
+              },
+              {
+                "color": "#90EE90",
+                "value": 0.05
+              },
+              {
+                "color": "#FFED6F",
+                "value": 0.1
+              },
+              {
+                "color": "#FDB462",
+                "value": 0.5
+              },
+              {
+                "color": "#FF5733",
+                "value": 1.0
+              }
             ]
           },
           "unit": "none"
         }
       },
-      "gridPos": {"h": 5, "w": 6, "x": 18, "y": 0},
+      "gridPos": {
+        "h": 5,
+        "w": 6,
+        "x": 18,
+        "y": 0
+      },
       "id": 13,
       "options": {
         "colorMode": "background",
         "graphMode": "none",
         "justifyMode": "center",
         "orientation": "auto",
-        "reduceOptions": {"calcs": ["lastNotNull"], "fields": "", "values": false},
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        },
         "textMode": "auto"
       },
       "targets": [
@@ -197,15 +380,21 @@
           "refId": "A"
         }
       ],
-      "title": "✅ Loss Target Status",
+      "title": "\u2705 Loss Target Status",
       "type": "stat"
     },
     {
-      "datasource": {"type": "prometheus", "uid": "prometheus"},
+      "datasource": {
+        "type": "prometheus",
+        "uid": "prometheus"
+      },
       "description": "Global model accuracy over training rounds - smooth convergence curve",
       "fieldConfig": {
         "defaults": {
-          "color": {"mode": "fixed", "fixedColor": "#2ECC40"},
+          "color": {
+            "mode": "fixed",
+            "fixedColor": "#2ECC40"
+          },
           "custom": {
             "axisCenteredZero": false,
             "axisColorMode": "text",
@@ -215,37 +404,70 @@
             "drawStyle": "line",
             "fillOpacity": 25,
             "gradientMode": "opacity",
-            "hideFrom": {"tooltip": false, "viz": false, "legend": false},
+            "hideFrom": {
+              "tooltip": false,
+              "viz": false,
+              "legend": false
+            },
             "lineInterpolation": "smooth",
             "lineWidth": 3,
             "pointSize": 5,
-            "scaleDistribution": {"type": "linear"},
+            "scaleDistribution": {
+              "type": "linear"
+            },
             "showPoints": "never",
             "spanNulls": false,
-            "stacking": {"group": "A", "mode": "none"},
-            "thresholdsStyle": {"mode": "off"}
+            "stacking": {
+              "group": "A",
+              "mode": "none"
+            },
+            "thresholdsStyle": {
+              "mode": "off"
+            }
           },
           "mappings": [],
           "max": 100,
           "min": 0,
           "thresholds": {
             "mode": "absolute",
-            "steps": [{"color": "green", "value": null}, {"color": "red", "value": 50}]
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              },
+              {
+                "color": "red",
+                "value": 50
+              }
+            ]
           },
           "unit": "percent"
         },
         "overrides": []
       },
-      "gridPos": {"h": 12, "w": 12, "x": 0, "y": 5},
+      "gridPos": {
+        "h": 12,
+        "w": 12,
+        "x": 0,
+        "y": 5
+      },
       "id": 1,
       "options": {
         "legend": {
-          "calcs": ["min", "mean", "max", "lastNotNull"],
+          "calcs": [
+            "min",
+            "mean",
+            "max",
+            "lastNotNull"
+          ],
           "displayMode": "table",
           "placement": "bottom",
           "showLegend": true
         },
-        "tooltip": {"mode": "multi", "sort": "none"}
+        "tooltip": {
+          "mode": "multi",
+          "sort": "none"
+        }
       },
       "pluginVersion": "10.2.0",
       "targets": [
@@ -260,15 +482,21 @@
           "refId": "B"
         }
       ],
-      "title": "📈 Global Model Accuracy",
+      "title": "\ud83d\udcc8 Global Model Accuracy",
       "type": "timeseries"
     },
     {
-      "datasource": {"type": "prometheus", "uid": "prometheus"},
+      "datasource": {
+        "type": "prometheus",
+        "uid": "prometheus"
+      },
       "description": "Training loss trajectory - should decrease monotonically towards 0",
       "fieldConfig": {
         "defaults": {
-          "color": {"mode": "fixed", "fixedColor": "#FF5733"},
+          "color": {
+            "mode": "fixed",
+            "fixedColor": "#FF5733"
+          },
           "custom": {
             "axisCenteredZero": false,
             "axisColorMode": "text",
@@ -278,39 +506,72 @@
             "drawStyle": "line",
             "fillOpacity": 20,
             "gradientMode": "opacity",
-            "hideFrom": {"tooltip": false, "viz": false, "legend": false},
+            "hideFrom": {
+              "tooltip": false,
+              "viz": false,
+              "legend": false
+            },
             "lineInterpolation": "smooth",
             "lineWidth": 3,
             "pointSize": 5,
-            "scaleDistribution": {"type": "linear"},
+            "scaleDistribution": {
+              "type": "linear"
+            },
             "showPoints": "never",
             "spanNulls": false,
-            "stacking": {"group": "A", "mode": "none"},
-            "thresholdsStyle": {"mode": "off"}
+            "stacking": {
+              "group": "A",
+              "mode": "none"
+            },
+            "thresholdsStyle": {
+              "mode": "off"
+            }
           },
           "mappings": [],
           "thresholds": {
             "mode": "absolute",
             "steps": [
-              {"color": "green", "value": null},
-              {"color": "yellow", "value": 0.5},
-              {"color": "red", "value": 1.0}
+              {
+                "color": "green",
+                "value": null
+              },
+              {
+                "color": "yellow",
+                "value": 0.5
+              },
+              {
+                "color": "red",
+                "value": 1.0
+              }
             ]
           },
           "unit": "none"
         },
         "overrides": []
       },
-      "gridPos": {"h": 12, "w": 12, "x": 12, "y": 5},
+      "gridPos": {
+        "h": 12,
+        "w": 12,
+        "x": 12,
+        "y": 5
+      },
       "id": 2,
       "options": {
         "legend": {
-          "calcs": ["min", "mean", "max", "lastNotNull"],
+          "calcs": [
+            "min",
+            "mean",
+            "max",
+            "lastNotNull"
+          ],
           "displayMode": "table",
           "placement": "bottom",
           "showLegend": true
         },
-        "tooltip": {"mode": "multi", "sort": "none"}
+        "tooltip": {
+          "mode": "multi",
+          "sort": "none"
+        }
       },
       "pluginVersion": "10.2.0",
       "targets": [
@@ -320,17 +581,26 @@
           "refId": "A"
         }
       ],
-      "title": "📉 Training Loss Trajectory",
+      "title": "\ud83d\udcc9 Training Loss Trajectory",
       "type": "timeseries"
     },
     {
-      "datasource": {"type": "prometheus", "uid": "prometheus"},
+      "datasource": {
+        "type": "prometheus",
+        "uid": "prometheus"
+      },
       "description": "Per-node accuracy aggregation - heatmap for large-scale networks",
       "fieldConfig": {
         "defaults": {
-          "color": {"mode": "thresholds"},
+          "color": {
+            "mode": "thresholds"
+          },
           "custom": {
-            "hideFrom": {"tooltip": false, "viz": false, "legend": false}
+            "hideFrom": {
+              "tooltip": false,
+              "viz": false,
+              "legend": false
+            }
           },
           "mappings": [],
           "max": 100,
@@ -338,27 +608,54 @@
           "thresholds": {
             "mode": "absolute",
             "steps": [
-              {"color": "#FF5733", "value": null},
-              {"color": "#FDB462", "value": 50},
-              {"color": "#FFED6F", "value": 70},
-              {"color": "#90EE90", "value": 85},
-              {"color": "#2ECC40", "value": 92}
+              {
+                "color": "#FF5733",
+                "value": null
+              },
+              {
+                "color": "#FDB462",
+                "value": 50
+              },
+              {
+                "color": "#FFED6F",
+                "value": 70
+              },
+              {
+                "color": "#90EE90",
+                "value": 85
+              },
+              {
+                "color": "#2ECC40",
+                "value": 92
+              }
             ]
           },
           "unit": "percent"
         },
         "overrides": []
       },
-      "gridPos": {"h": 10, "w": 24, "x": 0, "y": 17},
+      "gridPos": {
+        "h": 10,
+        "w": 24,
+        "x": 0,
+        "y": 17
+      },
       "id": 3,
       "options": {
         "legend": {
-          "calcs": ["mean", "max", "min"],
+          "calcs": [
+            "mean",
+            "max",
+            "min"
+          ],
           "displayMode": "table",
           "placement": "bottom",
           "showLegend": true
         },
-        "tooltip": {"mode": "multi", "sort": "none"}
+        "tooltip": {
+          "mode": "multi",
+          "sort": "none"
+        }
       },
       "pluginVersion": "10.2.0",
       "targets": [
@@ -378,53 +675,85 @@
           "refId": "C"
         }
       ],
-      "title": "📊 Per-Node Accuracy Distribution (aggregated for scale)",
+      "title": "\ud83d\udcca Per-Node Accuracy Distribution (aggregated for scale)",
       "type": "timeseries"
     },
     {
-      "datasource": {"type": "prometheus", "uid": "prometheus"},
+      "datasource": {
+        "type": "prometheus",
+        "uid": "prometheus"
+      },
       "description": "Convergence rate - how fast accuracy is improving per round",
       "fieldConfig": {
         "defaults": {
-          "color": {"mode": "fixed", "fixedColor": "#F39C12"},
+          "color": {
+            "mode": "fixed",
+            "fixedColor": "#F39C12"
+          },
           "custom": {
             "axisCenteredZero": false,
             "axisColorMode": "text",
-            "axisLabel": "Accuracy Δ / Round",
+            "axisLabel": "Accuracy \u0394 / Round",
             "axisPlacement": "auto",
             "barAlignment": 0,
             "drawStyle": "line",
             "fillOpacity": 15,
             "gradientMode": "opacity",
-            "hideFrom": {"tooltip": false, "viz": false, "legend": false},
+            "hideFrom": {
+              "tooltip": false,
+              "viz": false,
+              "legend": false
+            },
             "lineInterpolation": "smooth",
             "lineWidth": 2,
             "pointSize": 5,
-            "scaleDistribution": {"type": "linear"},
+            "scaleDistribution": {
+              "type": "linear"
+            },
             "showPoints": "never",
             "spanNulls": false,
-            "stacking": {"group": "A", "mode": "none"},
-            "thresholdsStyle": {"mode": "off"}
+            "stacking": {
+              "group": "A",
+              "mode": "none"
+            },
+            "thresholdsStyle": {
+              "mode": "off"
+            }
           },
           "mappings": [],
           "thresholds": {
             "mode": "absolute",
-            "steps": [{"color": "orange", "value": null}]
+            "steps": [
+              {
+                "color": "orange",
+                "value": null
+              }
+            ]
           },
           "unit": "percentunit",
           "decimals": 4
         }
       },
-      "gridPos": {"h": 8, "w": 12, "x": 0, "y": 27},
+      "gridPos": {
+        "h": 8,
+        "w": 12,
+        "x": 0,
+        "y": 27
+      },
       "id": 4,
       "options": {
         "legend": {
-          "calcs": ["mean", "max"],
+          "calcs": [
+            "mean",
+            "max"
+          ],
           "displayMode": "list",
           "placement": "bottom",
           "showLegend": true
         },
-        "tooltip": {"mode": "multi"}
+        "tooltip": {
+          "mode": "multi"
+        }
       },
       "targets": [
         {
@@ -433,53 +762,84 @@
           "refId": "A"
         }
       ],
-      "title": "⚡ Convergence Velocity",
+      "title": "\u26a1 Convergence Velocity",
       "type": "timeseries"
     },
     {
-      "datasource": {"type": "prometheus", "uid": "prometheus"},
+      "datasource": {
+        "type": "prometheus",
+        "uid": "prometheus"
+      },
       "description": "Loss improvement rate - how fast loss is decreasing",
       "fieldConfig": {
         "defaults": {
-          "color": {"mode": "fixed", "fixedColor": "#E74C3C"},
+          "color": {
+            "mode": "fixed",
+            "fixedColor": "#E74C3C"
+          },
           "custom": {
             "axisCenteredZero": true,
             "axisColorMode": "text",
-            "axisLabel": "Loss Δ / time",
+            "axisLabel": "Loss \u0394 / time",
             "axisPlacement": "auto",
             "barAlignment": 0,
             "drawStyle": "line",
             "fillOpacity": 15,
             "gradientMode": "opacity",
-            "hideFrom": {"tooltip": false, "viz": false, "legend": false},
+            "hideFrom": {
+              "tooltip": false,
+              "viz": false,
+              "legend": false
+            },
             "lineInterpolation": "smooth",
             "lineWidth": 2,
             "pointSize": 5,
-            "scaleDistribution": {"type": "linear"},
+            "scaleDistribution": {
+              "type": "linear"
+            },
             "showPoints": "never",
             "spanNulls": false,
-            "stacking": {"group": "A", "mode": "none"},
-            "thresholdsStyle": {"mode": "off"}
+            "stacking": {
+              "group": "A",
+              "mode": "none"
+            },
+            "thresholdsStyle": {
+              "mode": "off"
+            }
           },
           "mappings": [],
           "thresholds": {
             "mode": "absolute",
-            "steps": [{"color": "red", "value": null}]
+            "steps": [
+              {
+                "color": "red",
+                "value": null
+              }
+            ]
           },
           "unit": "none",
           "decimals": 5
         }
       },
-      "gridPos": {"h": 8, "w": 12, "x": 12, "y": 27},
+      "gridPos": {
+        "h": 8,
+        "w": 12,
+        "x": 12,
+        "y": 27
+      },
       "id": 5,
       "options": {
         "legend": {
-          "calcs": ["mean"],
+          "calcs": [
+            "mean"
+          ],
           "displayMode": "list",
           "placement": "bottom",
           "showLegend": true
         },
-        "tooltip": {"mode": "multi"}
+        "tooltip": {
+          "mode": "multi"
+        }
       },
       "targets": [
         {
@@ -488,8 +848,10 @@
           "refId": "A"
         }
       ],
-      "title": "📉 Loss Improvement Rate",
+      "title": "\ud83d\udcc9 Loss Improvement Rate",
       "type": "timeseries"
     }
-  ]
+  ],
+  "folderTitle": "Sovereign Map",
+  "starred": true
 }
