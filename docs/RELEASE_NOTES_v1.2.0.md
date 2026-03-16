@@ -1,4 +1,4 @@
-# Release Notes: v1.2.0 Wallet-Ready Testnet Package
+# Release Notes: v1.2.0 Sovereign Platform Testnet Package
 
 Release date: 2026-03-16
 Tag: v1.2.0
@@ -6,6 +6,7 @@ Commit: 2110f64
 
 ## Highlights
 
+- Repositioned release scope from wallet-only FL blockchain delivery to a sovereign coordination platform spanning intelligence, trust, governance, and economic rails.
 - Introduced a complete wallet-enabled blockchain core under internal/blockchain with transaction signing, transfer support, staking/unstaking, reward flows, and state-backed balances.
 - Added smart contract runtime and execution pipeline with governance, rewards, and registry contract support.
 - Integrated consensus and federated node flow with blockchain commit path and governance execution hooks.
@@ -31,6 +32,12 @@ Commit: 2110f64
 - Added wallet-aware FL node behavior for signed FL round transactions.
 - Added node pool orchestration tied to blockchain/consensus workflows.
 - Added integration tests across multi-node round execution.
+
+### Platform Expansion and Operations
+
+- Established clear platform-layer framing across intelligence, trust, governance, and economic modules.
+- Strengthened production observability alignment for rollout and runtime verification.
+- Standardized release language for sovereign infrastructure positioning.
 
 ### Observability and Operations
 

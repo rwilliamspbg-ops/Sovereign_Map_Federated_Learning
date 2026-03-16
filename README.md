@@ -1,8 +1,8 @@
 <!-- markdownlint-disable MD013 -->
 
-# Sovereign Map v1.2.0 - Wallet-Ready Federated Learning Blockchain
+# Sovereign Map v1.2.0 - Sovereign Intelligence Coordination Platform
 
-Sovereign Map combines federated learning, a blockchain execution layer, and governance controls for testnet-scale experimentation.
+Sovereign Map is a sovereign intelligence platform for coordinating AI, trust, policy, and economic exchange across distributed infrastructure. Federated learning, blockchain, and marketplace services are core modules, but the system is designed as a full operating layer for secure, autonomous networked systems.
 
 Intellectual Property Notice: This project implements the Sovereign Mohawk Protocol. Portions of this technology are Patent Pending (U.S. Provisional Patent Application Filed March 2026).
 
@@ -14,12 +14,23 @@ Intellectual Property Notice: This project implements the Sovereign Mohawk Proto
 
 ## What's New in v1.2.0
 
+- Platform framing extended from FL-only workflows to a full coordination fabric for compute, trust, policy, and value flows.
 - Wallet-enabled blockchain core with signed transactions, transfer/stake/unstake flows, and state-backed balances.
 - Smart contract VM and executor support for governance, rewards, and model registry paths.
 - Governance proposal and execution wiring in consensus, including policy updates.
 - Validator reputation plus attestation plus participation-quality scoring with anti-gaming controls.
 - Expanded metrics exporter coverage for validator policy and governance execution outcomes.
 - One-command testnet readiness gate for wallet-aware release validation.
+
+## Platform Scope
+
+Sovereign Map is intended to operate as a complete sovereign coordination stack:
+
+- Intelligence layer: federated training, distributed inference, convergence tracking, and model lifecycle controls.
+- Trust layer: TPM-style attestation, certificate-backed identity, node reputation, and secure channel policy enforcement.
+- Governance layer: proposal-driven protocol updates, auditable policy execution, and validator accountability.
+- Economic layer: wallets, staking, rewards, and marketplace-ready transaction rails.
+- Operations layer: production-grade observability, alerts, dashboards, scaling telemetry, and automated readiness checks.
 
 ## Quick Start
 
@@ -54,12 +65,12 @@ Readiness details and exit criteria are documented in [docs/TESTNET_WALLET_READI
 
 ## Architecture Summary
 
-- Federated learning orchestration and node pool management.
-- Wallet-aware blockchain transactions for FL rounds and token/state operations.
-- Contract execution runtime for governance and protocol policy updates.
-- Consensus coordinator with governance commit path.
-- TPM-inspired trust and certificate-based secure communication.
-- Monitoring stack with Prometheus, Grafana, and alerting rules.
+- Federated intelligence orchestration for training, validation, and distributed execution.
+- Blockchain-backed state, settlement, and contract-driven protocol behavior.
+- Governance runtime for policy proposals, approvals, and deterministic execution.
+- Trust and identity controls with TPM-inspired attestation and secure communication.
+- Economic rails for wallets, staking, rewards, and marketplace transactions.
+- Observability fabric with Prometheus, Grafana, alerting, and SLO-driven telemetry.
 
 ## Validation and Quality Gates
 

@@ -1,6 +1,6 @@
-# Testnet Wallet Readiness
+# Testnet Platform Readiness (Wallet and Governance)
 
-This document defines the minimum release gate for a wallet-enabled blockchain testnet deployment.
+This document defines the minimum release gate for a sovereign platform testnet deployment, including wallet, governance, and core consensus safety checks.
 
 ## One-Command Readiness
 
@@ -11,11 +11,14 @@ make testnet-wallet-readiness
 ```
 
 This executes:
+
 - Wallet-focused tests in blockchain package.
 - Full blockchain, node, and consensus test suites.
 - Build checks for wallet-enabled binaries.
 - Docker Compose config validation for testnet deployment profiles.
 - A markdown readiness report under `test-results/testnet-readiness/`.
+
+Readiness is intentionally broader than wallet plumbing: it is the baseline operational gate for platform integrity before public testnet rollout.
 
 ## Manual Equivalent
 
@@ -35,6 +38,7 @@ docker compose -f docker-compose.monitoring.yml config >/dev/null
 ## Exit Criteria
 
 Status is READY only when:
+
 - All mandatory test/build checks pass.
 - No readiness FAIL entries are present in the generated report.
 
