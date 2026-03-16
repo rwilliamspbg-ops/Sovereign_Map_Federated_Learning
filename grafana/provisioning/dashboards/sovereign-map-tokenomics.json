@@ -100,16 +100,12 @@
       "pluginVersion": "10.2.3",
       "targets": [
         {
-          "editorMode": "code",
-          "expr": "sovereignmap_fl_accuracy * sovereignmap_active_nodes / 10",
-          "legendFormat": "network_value_index",
-          "range": true,
+          "expr": "sovereignmap_token_supply_total",
           "refId": "A"
         }
       ],
-      "title": "\ud83d\udcb5 Network Value Index",
-      "type": "stat",
-      "description": "Composite index: model accuracy \u00d7 active validators / 10. Higher = more valuable and trusted network state."
+      "title": "\ud83d\udcb5 Total Token Supply",
+      "type": "stat"
     },
     {
       "datasource": {
@@ -130,16 +126,24 @@
                 "value": null
               },
               {
+                "color": "orange",
+                "value": 30
+              },
+              {
                 "color": "yellow",
-                "value": 0.5
+                "value": 50
+              },
+              {
+                "color": "lightgreen",
+                "value": 70
               },
               {
                 "color": "green",
-                "value": 2
+                "value": 90
               }
             ]
           },
-          "unit": "short"
+          "unit": "percent"
         },
         "overrides": []
       },
@@ -167,16 +171,12 @@
       "pluginVersion": "10.2.3",
       "targets": [
         {
-          "editorMode": "code",
-          "expr": "rate(sovereignmap_fl_rounds_total[5m]) * 60",
-          "legendFormat": "rounds_per_hour_proxy",
-          "range": true,
+          "expr": "sovereignmap_stake_participation_ratio * 100",
           "refId": "A"
         }
       ],
-      "title": "\u2705 Settlement Velocity (Rounds/Hour Proxy)",
-      "type": "stat",
-      "description": "Proxy for settlement throughput: FL rounds completed per minute \u00d7 60 = rounds/hour equivalent. Indicates how fast the network reaches consensus."
+      "title": "\ud83d\udc65 Stake Participation %",
+      "type": "stat"
     },
     {
       "datasource": {
@@ -193,16 +193,16 @@
             "mode": "absolute",
             "steps": [
               {
-                "color": "red",
+                "color": "green",
                 "value": null
               },
               {
                 "color": "yellow",
-                "value": 5
+                "value": 20
               },
               {
-                "color": "green",
-                "value": 10
+                "color": "red",
+                "value": 40
               }
             ]
           },
@@ -234,16 +234,76 @@
       "pluginVersion": "10.2.3",
       "targets": [
         {
-          "editorMode": "code",
-          "expr": "sovereignmap_active_nodes",
-          "legendFormat": "validators",
-          "range": true,
+          "expr": "sovereignmap_validators_count",
           "refId": "A"
         }
       ],
-      "title": "\ud83d\udc64 Active Validator Set",
-      "type": "stat",
-      "description": "Number of active validator (FL client) nodes currently participating in model aggregation."
+      "title": "\ud83d\udc64 Active Validators",
+      "type": "stat"
+    },
+    {
+      "datasource": {
+        "type": "prometheus",
+        "uid": "prometheus"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "thresholds"
+          },
+          "mappings": [],
+          "max": 100,
+          "min": 0,
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "#FF5733",
+                "value": null
+              },
+              {
+                "color": "#FFA500",
+                "value": 30
+              },
+              {
+                "color": "#2ECC40",
+                "value": 70
+              }
+            ]
+          },
+          "unit": "percent"
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 6,
+        "w": 6,
+        "x": 18,
+        "y": 0
+      },
+      "id": 4,
+      "options": {
+        "orientation": "auto",
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "showThresholdLabels": false,
+        "showThresholdMarkers": true,
+        "text": {}
+      },
+      "pluginVersion": "10.2.3",
+      "targets": [
+        {
+          "expr": "sovereignmap_model_accuracy * 100",
+          "refId": "A"
+        }
+      ],
+      "title": "\u2b50 Network Health %",
+      "type": "gauge"
     },
     {
       "datasource": {
@@ -260,30 +320,30 @@
             "mode": "absolute",
             "steps": [
               {
-                "color": "red",
+                "color": "#2ECC40",
                 "value": null
               },
               {
                 "color": "yellow",
-                "value": 70
+                "value": 100
               },
               {
-                "color": "green",
-                "value": 90
+                "color": "#FF5733",
+                "value": 500
               }
             ]
           },
-          "unit": "percent"
+          "unit": "short"
         },
         "overrides": []
       },
       "gridPos": {
         "h": 6,
         "w": 6,
-        "x": 18,
-        "y": 0
+        "x": 0,
+        "y": 6
       },
-      "id": 4,
+      "id": 5,
       "options": {
         "colorMode": "value",
         "graphMode": "area",
@@ -301,381 +361,12 @@
       "pluginVersion": "10.2.3",
       "targets": [
         {
-          "editorMode": "code",
-          "expr": "sovereignmap_fl_accuracy",
-          "legendFormat": "quality_score",
-          "range": true,
+          "expr": "sovereignmap_token_minting_rate",
           "refId": "A"
         }
       ],
-      "title": "\u2b50 Model Quality Score",
-      "type": "stat",
-      "description": "Global model accuracy as a quality indicator for the network. Used as a proxy for value of the underlying data contributions."
-    },
-    {
-      "datasource": {
-        "type": "prometheus",
-        "uid": "prometheus"
-      },
-      "fieldConfig": {
-        "defaults": {
-          "color": {
-            "mode": "palette-classic"
-          },
-          "custom": {
-            "axisBorderShow": false,
-            "axisCenteredZero": false,
-            "axisColorMode": "text",
-            "axisLabel": "Rounds",
-            "axisPlacement": "auto",
-            "drawStyle": "line",
-            "fillOpacity": 10,
-            "gradientMode": "none",
-            "hideFrom": {
-              "legend": false,
-              "tooltip": false,
-              "viz": false
-            },
-            "lineInterpolation": "smooth",
-            "lineWidth": 2,
-            "pointSize": 4,
-            "showPoints": "auto",
-            "spanNulls": true,
-            "stacking": {
-              "group": "A",
-              "mode": "none"
-            },
-            "thresholdsStyle": {
-              "mode": "off"
-            }
-          },
-          "mappings": [],
-          "thresholds": {
-            "mode": "absolute",
-            "steps": [
-              {
-                "color": "green",
-                "value": null
-              },
-              {
-                "color": "red",
-                "value": 80
-              }
-            ]
-          },
-          "unit": "short"
-        },
-        "overrides": []
-      },
-      "gridPos": {
-        "h": 8,
-        "w": 12,
-        "x": 0,
-        "y": 6
-      },
-      "id": 5,
-      "options": {
-        "legend": {
-          "calcs": [],
-          "displayMode": "list",
-          "placement": "bottom",
-          "showLegend": true
-        },
-        "tooltip": {
-          "mode": "single",
-          "sort": "none"
-        }
-      },
-      "pluginVersion": "10.2.3",
-      "targets": [
-        {
-          "editorMode": "code",
-          "expr": "sovereignmap_fl_round",
-          "legendFormat": "round",
-          "range": true,
-          "refId": "A"
-        },
-        {
-          "editorMode": "code",
-          "expr": "sovereignmap_fl_round * sovereignmap_active_nodes",
-          "legendFormat": "stake_weighted_round",
-          "range": true,
-          "refId": "B"
-        }
-      ],
-      "title": "Consensus Throughput and Stake-Weighted Activity",
-      "type": "timeseries",
-      "description": "FL round number (consensus height) and stake-weighted activity (rounds \u00d7 active nodes). Grows linearly during healthy operation."
-    },
-    {
-      "datasource": {
-        "type": "prometheus",
-        "uid": "prometheus"
-      },
-      "fieldConfig": {
-        "defaults": {
-          "color": {
-            "mode": "palette-classic"
-          },
-          "custom": {
-            "axisBorderShow": false,
-            "axisCenteredZero": false,
-            "axisColorMode": "text",
-            "axisLabel": "Score",
-            "axisPlacement": "auto",
-            "drawStyle": "line",
-            "fillOpacity": 15,
-            "gradientMode": "none",
-            "hideFrom": {
-              "legend": false,
-              "tooltip": false,
-              "viz": false
-            },
-            "lineInterpolation": "smooth",
-            "lineWidth": 2,
-            "pointSize": 4,
-            "showPoints": "auto",
-            "spanNulls": true,
-            "stacking": {
-              "group": "A",
-              "mode": "none"
-            },
-            "thresholdsStyle": {
-              "mode": "off"
-            }
-          },
-          "mappings": [],
-          "thresholds": {
-            "mode": "absolute",
-            "steps": [
-              {
-                "color": "green",
-                "value": null
-              },
-              {
-                "color": "orange",
-                "value": 60
-              },
-              {
-                "color": "red",
-                "value": 40
-              }
-            ]
-          },
-          "unit": "percentunit"
-        },
-        "overrides": []
-      },
-      "gridPos": {
-        "h": 8,
-        "w": 12,
-        "x": 12,
-        "y": 6
-      },
-      "id": 6,
-      "options": {
-        "legend": {
-          "calcs": [],
-          "displayMode": "list",
-          "placement": "bottom",
-          "showLegend": true
-        },
-        "tooltip": {
-          "mode": "single",
-          "sort": "none"
-        }
-      },
-      "pluginVersion": "10.2.3",
-      "targets": [
-        {
-          "editorMode": "code",
-          "expr": "(sovereignmap_fl_accuracy * 0.6) + ((100 - sovereignmap_fl_loss * 100) * 0.4)",
-          "legendFormat": "token_health_index",
-          "range": true,
-          "refId": "A"
-        },
-        {
-          "editorMode": "code",
-          "expr": "sovereignmap_fl_accuracy",
-          "legendFormat": "quality_component",
-          "range": true,
-          "refId": "B"
-        },
-        {
-          "editorMode": "code",
-          "expr": "100 - sovereignmap_fl_loss * 100",
-          "legendFormat": "stability_component",
-          "range": true,
-          "refId": "C"
-        }
-      ],
-      "title": "\ud83c\udfe6 Token Health Composite",
-      "type": "timeseries",
-      "description": "Composite token health: weighted blend of model accuracy, round stability (1 \u2212 loss/10), and node participation rate. Range 0\u20131."
-    },
-    {
-      "datasource": {
-        "type": "prometheus",
-        "uid": "prometheus"
-      },
-      "fieldConfig": {
-        "defaults": {
-          "color": {
-            "mode": "palette-classic"
-          },
-          "mappings": [],
-          "thresholds": {
-            "mode": "absolute",
-            "steps": [
-              {
-                "color": "green",
-                "value": null
-              },
-              {
-                "color": "red",
-                "value": 0
-              }
-            ]
-          },
-          "unit": "percentunit"
-        },
-        "overrides": []
-      },
-      "gridPos": {
-        "h": 8,
-        "w": 12,
-        "x": 0,
-        "y": 14
-      },
-      "id": 7,
-      "options": {
-        "legend": {
-          "calcs": [],
-          "displayMode": "list",
-          "placement": "bottom",
-          "showLegend": true
-        },
-        "pieType": "pie",
-        "tooltip": {
-          "mode": "single",
-          "sort": "none"
-        }
-      },
-      "pluginVersion": "10.2.3",
-      "targets": [
-        {
-          "editorMode": "code",
-          "expr": "sovereignmap_fl_accuracy",
-          "legendFormat": "productive_stake",
-          "range": true,
-          "refId": "A"
-        },
-        {
-          "editorMode": "code",
-          "expr": "100 - sovereignmap_fl_accuracy",
-          "legendFormat": "inactive_or_slashable",
-          "range": true,
-          "refId": "B"
-        }
-      ],
-      "title": "\u2b50 Stake Quality Mix (Proxy)",
-      "type": "piechart",
-      "description": "Estimated stake quality distribution: productive stake (accuracy-weighted) vs slashable stake proxy (remainder). Ideally >90% productive."
-    },
-    {
-      "datasource": {
-        "type": "prometheus",
-        "uid": "prometheus"
-      },
-      "fieldConfig": {
-        "defaults": {
-          "color": {
-            "mode": "palette-classic"
-          },
-          "custom": {
-            "axisBorderShow": false,
-            "axisCenteredZero": true,
-            "axisColorMode": "text",
-            "axisLabel": "Emission Index",
-            "axisPlacement": "auto",
-            "drawStyle": "line",
-            "fillOpacity": 10,
-            "gradientMode": "none",
-            "hideFrom": {
-              "legend": false,
-              "tooltip": false,
-              "viz": false
-            },
-            "lineInterpolation": "linear",
-            "lineWidth": 2,
-            "pointSize": 4,
-            "showPoints": "auto",
-            "spanNulls": true,
-            "stacking": {
-              "group": "A",
-              "mode": "none"
-            },
-            "thresholdsStyle": {
-              "mode": "off"
-            }
-          },
-          "mappings": [],
-          "thresholds": {
-            "mode": "absolute",
-            "steps": [
-              {
-                "color": "green",
-                "value": null
-              },
-              {
-                "color": "red",
-                "value": 0
-              }
-            ]
-          },
-          "unit": "short"
-        },
-        "overrides": []
-      },
-      "gridPos": {
-        "h": 8,
-        "w": 12,
-        "x": 12,
-        "y": 14
-      },
-      "id": 8,
-      "options": {
-        "legend": {
-          "calcs": [],
-          "displayMode": "list",
-          "placement": "bottom",
-          "showLegend": true
-        },
-        "tooltip": {
-          "mode": "single",
-          "sort": "none"
-        }
-      },
-      "pluginVersion": "10.2.3",
-      "targets": [
-        {
-          "editorMode": "code",
-          "expr": "rate(sovereignmap_fl_rounds_total[5m]) * sovereignmap_active_nodes",
-          "legendFormat": "base_emission_pressure",
-          "range": true,
-          "refId": "A"
-        },
-        {
-          "editorMode": "code",
-          "expr": "rate(sovereignmap_fl_rounds_total[5m]) * sovereignmap_active_nodes * (sovereignmap_fl_accuracy / 100)",
-          "legendFormat": "quality_adjusted_emission",
-          "range": true,
-          "refId": "B"
-        }
-      ],
-      "title": "\u2b50 Emission Pressure vs Quality-Adjusted Emission",
-      "type": "timeseries",
-      "description": "Emission pressure (raw round rate \u00d7 nodes) vs quality-adjusted emission (scaled by model accuracy). Divergence indicates low-quality rounds."
+      "title": "\ud83e\ude99 Minting Rate (TOK/min)",
+      "type": "stat"
     },
     {
       "datasource": {
@@ -692,20 +383,211 @@
             "mode": "absolute",
             "steps": [
               {
-                "color": "red",
+                "color": "green",
                 "value": null
               },
               {
                 "color": "yellow",
-                "value": 1
+                "value": 5000000
               },
               {
-                "color": "green",
-                "value": 5
+                "color": "red",
+                "value": 10000000
               }
             ]
           },
-          "unit": "ops"
+          "unit": "short"
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 6,
+        "w": 6,
+        "x": 6,
+        "y": 6
+      },
+      "id": 6,
+      "options": {
+        "colorMode": "value",
+        "graphMode": "area",
+        "justifyMode": "auto",
+        "orientation": "auto",
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "textMode": "auto"
+      },
+      "pluginVersion": "10.2.3",
+      "targets": [
+        {
+          "expr": "sovereignmap_token_supply_minted",
+          "refId": "A"
+        }
+      ],
+      "title": "\ud83e\ude99 Cumulative Minted Supply (TOK)",
+      "type": "stat"
+    },
+    {
+      "datasource": {
+        "type": "prometheus",
+        "uid": "prometheus"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "thresholds"
+          },
+          "mappings": [],
+          "max": 100,
+          "min": 0,
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "#FF5733",
+                "value": null
+              },
+              {
+                "color": "#FFA500",
+                "value": 40
+              },
+              {
+                "color": "#2ECC40",
+                "value": 70
+              }
+            ]
+          },
+          "unit": "percent"
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 6,
+        "w": 6,
+        "x": 12,
+        "y": 6
+      },
+      "id": 7,
+      "options": {
+        "orientation": "auto",
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "showThresholdLabels": false,
+        "showThresholdMarkers": true,
+        "text": {}
+      },
+      "pluginVersion": "10.2.3",
+      "targets": [
+        {
+          "expr": "(sovereignmap_token_supply_minted / sovereignmap_token_supply_total) * 100",
+          "refId": "A"
+        }
+      ],
+      "title": "\ud83d\udcca Supply Utilization %",
+      "type": "gauge"
+    },
+    {
+      "datasource": {
+        "type": "prometheus",
+        "uid": "prometheus"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "thresholds"
+          },
+          "mappings": [],
+          "max": 100,
+          "min": 0,
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "#FF5733",
+                "value": null
+              },
+              {
+                "color": "#FFA500",
+                "value": 30
+              },
+              {
+                "color": "#2ECC40",
+                "value": 60
+              }
+            ]
+          },
+          "unit": "percent"
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 6,
+        "w": 6,
+        "x": 18,
+        "y": 6
+      },
+      "id": 8,
+      "options": {
+        "orientation": "auto",
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "showThresholdLabels": false,
+        "showThresholdMarkers": true,
+        "text": {}
+      },
+      "pluginVersion": "10.2.3",
+      "targets": [
+        {
+          "expr": "sovereignmap_stake_concentration_gini",
+          "refId": "A"
+        }
+      ],
+      "title": "\ud83c\udfaf Stake Concentration (Gini)",
+      "type": "gauge"
+    },
+    {
+      "datasource": {
+        "type": "prometheus",
+        "uid": "prometheus"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "thresholds"
+          },
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              },
+              {
+                "color": "yellow",
+                "value": 100
+              },
+              {
+                "color": "red",
+                "value": 500
+              }
+            ]
+          },
+          "unit": "short"
         },
         "overrides": []
       },
@@ -713,7 +595,7 @@
         "h": 6,
         "w": 6,
         "x": 0,
-        "y": 22
+        "y": 12
       },
       "id": 9,
       "options": {
@@ -733,16 +615,12 @@
       "pluginVersion": "10.2.3",
       "targets": [
         {
-          "editorMode": "code",
-          "expr": "sovereignmap_token_mint_rate_per_min",
-          "legendFormat": "mint_rate",
-          "range": true,
+          "expr": "sovereignmap_bridge_inflow_rate",
           "refId": "A"
         }
       ],
-      "title": "\ud83e\ude99 Minting Rate (TOK/min)",
-      "type": "stat",
-      "description": "Minting proxy per minute derived from FL round throughput, active validators, and model quality."
+      "title": "\ud83c\udf09 Bridge Inflow (TOK/min)",
+      "type": "stat"
     },
     {
       "datasource": {
@@ -759,16 +637,16 @@
             "mode": "absolute",
             "steps": [
               {
-                "color": "red",
+                "color": "green",
                 "value": null
               },
               {
                 "color": "yellow",
-                "value": 1
+                "value": 100
               },
               {
-                "color": "green",
-                "value": 5
+                "color": "red",
+                "value": 500
               }
             ]
           },
@@ -780,7 +658,7 @@
         "h": 6,
         "w": 6,
         "x": 6,
-        "y": 22
+        "y": 12
       },
       "id": 10,
       "options": {
@@ -800,16 +678,12 @@
       "pluginVersion": "10.2.3",
       "targets": [
         {
-          "editorMode": "code",
-          "expr": "sovereignmap_token_supply_total",
-          "legendFormat": "minted_supply",
-          "range": true,
+          "expr": "sovereignmap_bridge_outflow_rate",
           "refId": "A"
         }
       ],
-      "title": "\ud83e\ude99 Cumulative Minted Supply (TOK)",
-      "type": "stat",
-      "description": "Total minted token supply proxy accumulated from rounds and participation."
+      "title": "\ud83c\udf09 Bridge Outflow (TOK/min)",
+      "type": "stat"
     },
     {
       "datasource": {
@@ -826,20 +700,20 @@
             "mode": "absolute",
             "steps": [
               {
-                "color": "red",
+                "color": "green",
                 "value": null
               },
               {
-                "color": "yellow",
-                "value": 1
+                "color": "lightgreen",
+                "value": 50000
               },
               {
-                "color": "green",
-                "value": 5
+                "color": "yellow",
+                "value": 100000
               }
             ]
           },
-          "unit": "ops"
+          "unit": "short"
         },
         "overrides": []
       },
@@ -847,7 +721,7 @@
         "h": 6,
         "w": 6,
         "x": 12,
-        "y": 22
+        "y": 12
       },
       "id": 11,
       "options": {
@@ -867,16 +741,76 @@
       "pluginVersion": "10.2.3",
       "targets": [
         {
-          "editorMode": "code",
-          "expr": "sovereignmap_bridge_inflow_per_min",
-          "legendFormat": "bridge_inflow",
-          "range": true,
+          "expr": "sovereignmap_bridge_total_collateral",
           "refId": "A"
         }
       ],
-      "title": "\ud83c\udf09 Bridge Inflow (TOK/min)",
-      "type": "stat",
-      "description": "Estimated per-minute bridge inflow based on minted economic activity."
+      "title": "\ud83d\udd12 Bridge Collateral (TOK)",
+      "type": "stat"
+    },
+    {
+      "datasource": {
+        "type": "prometheus",
+        "uid": "prometheus"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "thresholds"
+          },
+          "mappings": [],
+          "max": 100,
+          "min": 0,
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "#FF5733",
+                "value": null
+              },
+              {
+                "color": "#FFA500",
+                "value": 40
+              },
+              {
+                "color": "#2ECC40",
+                "value": 70
+              }
+            ]
+          },
+          "unit": "percent"
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 6,
+        "w": 6,
+        "x": 18,
+        "y": 12
+      },
+      "id": 12,
+      "options": {
+        "orientation": "auto",
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "showThresholdLabels": false,
+        "showThresholdMarkers": true,
+        "text": {}
+      },
+      "pluginVersion": "10.2.3",
+      "targets": [
+        {
+          "expr": "sovereignmap_bridge_collateral_ratio * 100",
+          "refId": "A"
+        }
+      ],
+      "title": "\ud83d\udd10 Collateral Health %",
+      "type": "gauge"
     },
     {
       "datasource": {
@@ -893,30 +827,30 @@
             "mode": "absolute",
             "steps": [
               {
-                "color": "red",
+                "color": "green",
                 "value": null
               },
               {
-                "color": "yellow",
-                "value": 1
+                "color": "lightgreen",
+                "value": 10
               },
               {
-                "color": "green",
-                "value": 5
+                "color": "yellow",
+                "value": 50
               }
             ]
           },
-          "unit": "ops"
+          "unit": "short"
         },
         "overrides": []
       },
       "gridPos": {
         "h": 6,
         "w": 6,
-        "x": 18,
-        "y": 22
+        "x": 0,
+        "y": 18
       },
-      "id": 12,
+      "id": 13,
       "options": {
         "colorMode": "value",
         "graphMode": "area",
@@ -934,16 +868,12 @@
       "pluginVersion": "10.2.3",
       "targets": [
         {
-          "editorMode": "code",
-          "expr": "sovereignmap_bridge_outflow_per_min",
-          "legendFormat": "bridge_outflow",
-          "range": true,
+          "expr": "sovereignmap_unique_wallets_count",
           "refId": "A"
         }
       ],
-      "title": "\ud83c\udf09 Bridge Outflow (TOK/min)",
-      "type": "stat",
-      "description": "Estimated per-minute bridge outflow modeled from minting-linked bridge utilization."
+      "title": "\ud83d\udcb3 Total Unique Wallets",
+      "type": "stat"
     },
     {
       "datasource": {
@@ -953,46 +883,23 @@
       "fieldConfig": {
         "defaults": {
           "color": {
-            "mode": "palette-classic"
-          },
-          "custom": {
-            "axisBorderShow": false,
-            "axisCenteredZero": false,
-            "axisColorMode": "text",
-            "axisLabel": "Bridge Flow",
-            "axisPlacement": "auto",
-            "drawStyle": "line",
-            "fillOpacity": 12,
-            "gradientMode": "none",
-            "hideFrom": {
-              "legend": false,
-              "tooltip": false,
-              "viz": false
-            },
-            "lineInterpolation": "smooth",
-            "lineWidth": 2,
-            "pointSize": 4,
-            "showPoints": "auto",
-            "spanNulls": true,
-            "stacking": {
-              "group": "A",
-              "mode": "none"
-            },
-            "thresholdsStyle": {
-              "mode": "off"
-            }
+            "mode": "thresholds"
           },
           "mappings": [],
           "thresholds": {
             "mode": "absolute",
             "steps": [
               {
-                "color": "green",
+                "color": "#FF5733",
                 "value": null
               },
               {
-                "color": "red",
-                "value": 0
+                "color": "#FFA500",
+                "value": 100
+              },
+              {
+                "color": "#2ECC40",
+                "value": 1000
               }
             ]
           },
@@ -1001,44 +908,35 @@
         "overrides": []
       },
       "gridPos": {
-        "h": 8,
-        "w": 12,
-        "x": 0,
-        "y": 28
+        "h": 6,
+        "w": 6,
+        "x": 6,
+        "y": 18
       },
-      "id": 13,
+      "id": 14,
       "options": {
-        "legend": {
-          "calcs": [],
-          "displayMode": "list",
-          "placement": "bottom",
-          "showLegend": true
+        "colorMode": "value",
+        "graphMode": "area",
+        "justifyMode": "auto",
+        "orientation": "auto",
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
         },
-        "tooltip": {
-          "mode": "single",
-          "sort": "none"
-        }
+        "textMode": "auto"
       },
       "pluginVersion": "10.2.3",
       "targets": [
         {
-          "editorMode": "code",
-          "expr": "sovereignmap_bridge_net_flow_per_min",
-          "legendFormat": "net_flow_per_min",
-          "range": true,
+          "expr": "sovereignmap_wallet_average_balance",
           "refId": "A"
-        },
-        {
-          "editorMode": "code",
-          "expr": "sovereignmap_bridge_volume_24h",
-          "legendFormat": "bridge_volume_24h",
-          "range": true,
-          "refId": "B"
         }
       ],
-      "title": "\ud83c\udf09 Bridge Net Flow and 24h Volume",
-      "type": "timeseries",
-      "description": "Net bridge flow indicates liquidity direction; 24h volume approximates total bridged activity over one day."
+      "title": "\ud83d\udcb0 Avg Wallet Balance (TOK)",
+      "type": "stat"
     },
     {
       "datasource": {
@@ -1048,34 +946,7 @@
       "fieldConfig": {
         "defaults": {
           "color": {
-            "mode": "palette-classic"
-          },
-          "custom": {
-            "axisBorderShow": false,
-            "axisCenteredZero": false,
-            "axisColorMode": "text",
-            "axisLabel": "Percent",
-            "axisPlacement": "auto",
-            "drawStyle": "line",
-            "fillOpacity": 12,
-            "gradientMode": "none",
-            "hideFrom": {
-              "legend": false,
-              "tooltip": false,
-              "viz": false
-            },
-            "lineInterpolation": "smooth",
-            "lineWidth": 2,
-            "pointSize": 4,
-            "showPoints": "auto",
-            "spanNulls": true,
-            "stacking": {
-              "group": "A",
-              "mode": "none"
-            },
-            "thresholdsStyle": {
-              "mode": "off"
-            }
+            "mode": "thresholds"
           },
           "mappings": [],
           "thresholds": {
@@ -1086,8 +957,77 @@
                 "value": null
               },
               {
+                "color": "yellow",
+                "value": 5
+              },
+              {
                 "color": "red",
-                "value": 0
+                "value": 10
+              }
+            ]
+          },
+          "unit": "short"
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 6,
+        "w": 6,
+        "x": 12,
+        "y": 18
+      },
+      "id": 15,
+      "options": {
+        "colorMode": "value",
+        "graphMode": "area",
+        "justifyMode": "auto",
+        "orientation": "auto",
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "textMode": "auto"
+      },
+      "pluginVersion": "10.2.3",
+      "targets": [
+        {
+          "expr": "sovereignmap_top_10_holder_concentration",
+          "refId": "A"
+        }
+      ],
+      "title": "\ud83d\udcca Top 10 Holders %",
+      "type": "stat"
+    },
+    {
+      "datasource": {
+        "type": "prometheus",
+        "uid": "prometheus"
+      },
+      "fieldColor": {
+        "defaults": {
+          "color": {
+            "mode": "thresholds"
+          },
+          "mappings": [],
+          "max": 100,
+          "min": 0,
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "#2ECC40",
+                "value": null
+              },
+              {
+                "color": "#FFA500",
+                "value": 50
+              },
+              {
+                "color": "#FF5733",
+                "value": 75
               }
             ]
           },
@@ -1096,109 +1036,34 @@
         "overrides": []
       },
       "gridPos": {
-        "h": 8,
-        "w": 12,
-        "x": 12,
-        "y": 28
+        "h": 6,
+        "w": 6,
+        "x": 18,
+        "y": 18
       },
-      "id": 14,
+      "id": 16,
       "options": {
-        "legend": {
-          "calcs": [],
-          "displayMode": "list",
-          "placement": "bottom",
-          "showLegend": true
+        "orientation": "auto",
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
         },
-        "tooltip": {
-          "mode": "single",
-          "sort": "none"
-        }
+        "showThresholdLabels": false,
+        "showThresholdMarkers": true,
+        "text": {}
       },
       "pluginVersion": "10.2.3",
       "targets": [
         {
-          "editorMode": "code",
-          "expr": "sovereignmap_bridge_collateral_ratio_percent",
-          "legendFormat": "collateral_ratio_%",
-          "range": true,
+          "expr": "sovereignmap_wallet_liquidity_ratio * 100",
           "refId": "A"
-        },
-        {
-          "editorMode": "code",
-          "expr": "sovereignmap_bridge_settlement_share_percent",
-          "legendFormat": "settlement_share_%",
-          "range": true,
-          "refId": "B"
         }
       ],
-      "title": "\ud83c\udf09 Bridge Collateral and Settlement Share",
-      "type": "timeseries",
-      "description": "Collateral ratio tracks escrow coverage vs required reserves; settlement share shows how much activity routes across bridges."
-    },
-    {
-      "datasource": {
-        "type": "prometheus",
-        "uid": "prometheus"
-      },
-      "fieldConfig": {
-        "defaults": {
-          "color": {
-            "mode": "palette-classic"
-          },
-          "mappings": [],
-          "thresholds": {
-            "mode": "absolute",
-            "steps": [
-              {
-                "color": "green",
-                "value": null
-              }
-            ]
-          },
-          "unit": "short"
-        },
-        "overrides": []
-      },
-      "gridPos": {
-        "h": 8,
-        "w": 12,
-        "x": 0,
-        "y": 36
-      },
-      "id": 15,
-      "options": {
-        "legend": {
-          "calcs": [],
-          "displayMode": "list",
-          "placement": "bottom",
-          "showLegend": true
-        },
-        "pieType": "pie",
-        "tooltip": {
-          "mode": "single",
-          "sort": "none"
-        }
-      },
-      "pluginVersion": "10.2.3",
-      "targets": [
-        {
-          "editorMode": "code",
-          "expr": "sovereignmap_token_supply_total",
-          "legendFormat": "minted_supply",
-          "range": true,
-          "refId": "A"
-        },
-        {
-          "editorMode": "code",
-          "expr": "sovereignmap_bridge_escrow_total",
-          "legendFormat": "bridge_escrow",
-          "range": true,
-          "refId": "B"
-        }
-      ],
-      "title": "\ud83e\ude99 Minted vs Escrowed Supply Mix",
-      "type": "piechart",
-      "description": "Composition of economic base between minted supply and bridge escrow allocation."
+      "title": "\ud83d\udca7 Network Liquidity %",
+      "type": "gauge"
     },
     {
       "datasource": {
@@ -1211,23 +1076,26 @@
             "mode": "palette-classic"
           },
           "custom": {
-            "axisBorderShow": false,
             "axisCenteredZero": false,
             "axisColorMode": "text",
-            "axisLabel": "TOK/min",
+            "axisLabel": "Tokens Minted per Minute",
             "axisPlacement": "auto",
+            "barAlignment": 0,
             "drawStyle": "line",
-            "fillOpacity": 12,
+            "fillOpacity": 20,
             "gradientMode": "none",
             "hideFrom": {
-              "legend": false,
               "tooltip": false,
-              "viz": false
+              "viz": false,
+              "legend": false
             },
             "lineInterpolation": "smooth",
             "lineWidth": 2,
-            "pointSize": 4,
-            "showPoints": "auto",
+            "pointSize": 5,
+            "scaleDistribution": {
+              "type": "linear"
+            },
+            "showPoints": "never",
             "spanNulls": true,
             "stacking": {
               "group": "A",
@@ -1244,14 +1112,96 @@
               {
                 "color": "green",
                 "value": null
-              },
-              {
-                "color": "red",
-                "value": 0
               }
             ]
+          }
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 12,
+        "x": 0,
+        "y": 24
+      },
+      "id": 17,
+      "options": {
+        "legend": {
+          "calcs": [
+            "last",
+            "max",
+            "min"
+          ],
+          "displayMode": "table",
+          "placement": "bottom",
+          "showLegend": true
+        },
+        "tooltip": {
+          "mode": "multi",
+          "sort": "none"
+        }
+      },
+      "pluginVersion": "10.2.3",
+      "targets": [
+        {
+          "expr": "rate(sovereignmap_token_minting_total[5m])",
+          "legendFormat": "Mint Rate",
+          "refId": "A"
+        }
+      ],
+      "title": "\ud83d\udcc8 Minting Rate Trend",
+      "type": "timeseries"
+    },
+    {
+      "datasource": {
+        "type": "prometheus",
+        "uid": "prometheus"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "palette-classic"
           },
-          "unit": "ops"
+          "custom": {
+            "axisCenteredZero": false,
+            "axisColorMode": "text",
+            "axisLabel": "Bridge Net Flow (TOK/min)",
+            "axisPlacement": "auto",
+            "barAlignment": 0,
+            "drawStyle": "line",
+            "fillOpacity": 20,
+            "gradientMode": "opacity",
+            "hideFrom": {
+              "tooltip": false,
+              "viz": false,
+              "legend": false
+            },
+            "lineInterpolation": "smooth",
+            "lineWidth": 2,
+            "pointSize": 5,
+            "scaleDistribution": {
+              "type": "linear"
+            },
+            "showPoints": "never",
+            "spanNulls": true,
+            "stacking": {
+              "group": "A",
+              "mode": "none"
+            },
+            "thresholdsStyle": {
+              "mode": "off"
+            }
+          },
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              }
+            ]
+          }
         },
         "overrides": []
       },
@@ -1259,15 +1209,90 @@
         "h": 8,
         "w": 12,
         "x": 12,
-        "y": 36
+        "y": 24
       },
-      "id": 16,
+      "id": 18,
       "options": {
         "legend": {
-          "calcs": [],
-          "displayMode": "list",
+          "calcs": [
+            "last",
+            "max",
+            "min"
+          ],
+          "displayMode": "table",
           "placement": "bottom",
           "showLegend": true
+        },
+        "tooltip": {
+          "mode": "multi",
+          "sort": "none"
+        }
+      },
+      "pluginVersion": "10.2.3",
+      "targets": [
+        {
+          "expr": "sovereignmap_bridge_inflow_rate - sovereignmap_bridge_outflow_rate",
+          "legendFormat": "Net Flow",
+          "refId": "A"
+        },
+        {
+          "expr": "sovereignmap_bridge_inflow_rate",
+          "legendFormat": "Inflow",
+          "refId": "B"
+        },
+        {
+          "expr": "sovereignmap_bridge_outflow_rate",
+          "legendFormat": "Outflow",
+          "refId": "C"
+        }
+      ],
+      "title": "\ud83c\udf09 Bridge Flow Analysis",
+      "type": "timeseries"
+    },
+    {
+      "datasource": {
+        "type": "prometheus",
+        "uid": "prometheus"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              }
+            ]
+          },
+          "color": {
+            "mode": "palette-classic"
+          }
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 12,
+        "x": 0,
+        "y": 32
+      },
+      "id": 19,
+      "options": {
+        "legend": {
+          "displayMode": "list",
+          "placement": "right",
+          "showLegend": true,
+          "values": []
+        },
+        "pieType": "donut",
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
         },
         "tooltip": {
           "mode": "single",
@@ -1277,33 +1302,217 @@
       "pluginVersion": "10.2.3",
       "targets": [
         {
-          "editorMode": "code",
-          "expr": "sovereignmap_token_mint_rate_per_min",
-          "legendFormat": "mint_rate",
-          "range": true,
+          "expr": "sovereignmap_token_supply_total - sovereignmap_token_supply_minted",
+          "legendFormat": "Unminted",
           "refId": "A"
         },
         {
-          "editorMode": "code",
-          "expr": "sovereignmap_bridge_inflow_per_min",
-          "legendFormat": "bridge_inflow",
-          "range": true,
+          "expr": "sovereignmap_token_supply_minted",
+          "legendFormat": "Circulating",
           "refId": "B"
         },
         {
-          "editorMode": "code",
-          "expr": "sovereignmap_bridge_outflow_per_min",
-          "legendFormat": "bridge_outflow",
-          "range": true,
+          "expr": "sovereignmap_token_escrow_total",
+          "legendFormat": "Escrowed",
           "refId": "C"
         }
       ],
-      "title": "\ud83e\ude99 Minting, Inflow, Outflow Traces",
-      "type": "timeseries",
-      "description": "Side-by-side trace of mint and bridge channels for operational treasury monitoring."
+      "title": "\ud83e\ude99 Supply Distribution",
+      "type": "piechart"
+    },
+    {
+      "datasource": {
+        "type": "prometheus",
+        "uid": "prometheus"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "custom": {
+            "axisCenteredZero": false,
+            "axisColorMode": "text",
+            "axisLabel": "Wallet Distribution",
+            "axisPlacement": "auto",
+            "barAlignment": 0,
+            "drawStyle": "bars",
+            "fillOpacity": 100,
+            "gradientMode": "none",
+            "hideFrom": {
+              "tooltip": false,
+              "viz": false,
+              "legend": false
+            },
+            "lineInterpolation": "linear",
+            "lineWidth": 1,
+            "pointSize": 5,
+            "scaleDistribution": {
+              "type": "linear"
+            },
+            "showPoints": "never",
+            "spanNulls": false,
+            "stacking": {
+              "group": "A",
+              "mode": "normal"
+            },
+            "thresholdsStyle": {
+              "mode": "off"
+            }
+          },
+          "color": {
+            "mode": "palette-classic"
+          },
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              }
+            ]
+          }
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 12,
+        "x": 12,
+        "y": 32
+      },
+      "id": 20,
+      "options": {
+        "legend": {
+          "calcs": [],
+          "displayMode": "list",
+          "placement": "right",
+          "showLegend": true
+        },
+        "tooltip": {
+          "mode": "multi",
+          "sort": "none"
+        }
+      },
+      "pluginVersion": "10.2.3",
+      "targets": [
+        {
+          "expr": "sovereignmap_wallets_by_balance_bucket_large",
+          "legendFormat": "Large (>100k TOK)",
+          "refId": "A"
+        },
+        {
+          "expr": "sovereignmap_wallets_by_balance_bucket_medium",
+          "legendFormat": "Medium (1k-100k TOK)",
+          "refId": "B"
+        },
+        {
+          "expr": "sovereignmap_wallets_by_balance_bucket_small",
+          "legendFormat": "Small (<1k TOK)",
+          "refId": "C"
+        }
+      ],
+      "title": "\ud83d\udcca Wallet Distribution by Balance",
+      "type": "timeseries"
+    },
+    {
+      "datasource": {
+        "type": "prometheus",
+        "uid": "prometheus"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "custom": {
+            "axisCenteredZero": false,
+            "axisColorMode": "text",
+            "axisLabel": "Total Supply (TOK)",
+            "axisPlacement": "auto",
+            "barAlignment": 0,
+            "drawStyle": "line",
+            "fillOpacity": 10,
+            "gradientMode": "scheme Purples",
+            "hideFrom": {
+              "tooltip": false,
+              "viz": false,
+              "legend": false
+            },
+            "lineInterpolation": "smooth",
+            "lineWidth": 3,
+            "pointSize": 5,
+            "scaleDistribution": {
+              "type": "linear"
+            },
+            "showPoints": "never",
+            "spanNulls": false,
+            "stacking": {
+              "group": "A",
+              "mode": "none"
+            },
+            "thresholdsStyle": {
+              "mode": "off"
+            }
+          },
+          "color": {
+            "mode": "palette-classic"
+          },
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              }
+            ]
+          }
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 24,
+        "x": 0,
+        "y": 40
+      },
+      "id": 21,
+      "options": {
+        "legend": {
+          "calcs": [
+            "last",
+            "max",
+            "min",
+            "mean"
+          ],
+          "displayMode": "table",
+          "placement": "bottom",
+          "showLegend": true
+        },
+        "tooltip": {
+          "mode": "multi",
+          "sort": "none"
+        }
+      },
+      "pluginVersion": "10.2.3",
+      "targets": [
+        {
+          "expr": "sovereignmap_token_supply_total",
+          "legendFormat": "Total Supply",
+          "refId": "A"
+        },
+        {
+          "expr": "sovereignmap_token_supply_minted",
+          "legendFormat": "Minted",
+          "refId": "B"
+        },
+        {
+          "expr": "sovereignmap_token_escrow_total",
+          "legendFormat": "Escrowed",
+          "refId": "C"
+        }
+      ],
+      "title": "\ud83d\udcc8 Total Supply & Circulation Trend",
+      "type": "timeseries"
     }
   ],
-  "refresh": "10s",
+  "refresh": "30s",
   "schemaVersion": 39,
   "style": "dark",
   "tags": [
@@ -1318,16 +1527,16 @@
     "list": []
   },
   "time": {
-    "from": "now-6h",
+    "from": "now-24h",
     "to": "now"
   },
   "timepicker": {},
   "timezone": "browser",
-  "title": "Sovereign Map Tokenomics",
+  "title": "\ud83d\udcb0 Tokenomics Intelligence Hub",
   "uid": "sovereign-tokenomics",
   "version": 2,
   "weekStart": "",
-  "description": "\ud83d\udcb0 Tokenomics & Economic Health \u2014 Network value, validator participation, minting, emissions, bridges, and collateral metrics optimized for scale.",
+  "description": "\ud83c\udfaf Comprehensive token economics, supply dynamics, holder distribution, and wallet analytics for millions of nodes",
   "folderTitle": "Sovereign Map",
   "starred": true
 }
