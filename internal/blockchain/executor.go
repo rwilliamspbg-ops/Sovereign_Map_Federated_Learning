@@ -175,7 +175,7 @@ func (sce *SmartContractExecutor) executeCall(txn *Transaction) error {
 }
 
 func (sce *SmartContractExecutor) applyGovernanceAction(contractAddr string, functionName string, result map[string]interface{}) error {
-	if sce.validators == nil || functionName != "executeProposal" {
+	if functionName != "executeProposal" {
 		return nil
 	}
 
@@ -188,10 +188,20 @@ func (sce *SmartContractExecutor) applyGovernanceAction(contractAddr string, fun
 	}
 
 	action, _ := result["action"].(string)
-	if action != "set_reputation_policy" {
+	switch action {
+	case "set_reputation_policy":
+		if sce.validators == nil {
+			return nil
+		}
+		return sce.applyReputationPolicy(result, contractAddr)
+	case "set_verification_policy":
+		return sce.applyVerificationPolicyToState(result, contractAddr)
+	default:
 		return nil
 	}
+}
 
+func (sce *SmartContractExecutor) applyReputationPolicy(result map[string]interface{}, contractAddr string) error {
 	params, ok := result["params"].(map[string]interface{})
 	if !ok {
 		return fmt.Errorf("missing governance params")
@@ -255,12 +265,68 @@ func (sce *SmartContractExecutor) applyGovernanceAction(contractAddr string, fun
 	auditKey := fmt.Sprintf("governance_policy_audit:%s:%d", proposalID, ts)
 	auditValue := map[string]interface{}{
 		"proposal_id": proposalID,
-		"action":      action,
+		"action":      "set_reputation_policy",
 		"timestamp":   ts,
 		"old_policy":  current,
 		"new_policy":  updated,
 	}
 	return sce.stateDB.Set(auditKey, auditValue)
+}
+
+// applyVerificationPolicyToState writes the governance-approved verification policy into
+// the state database. BlockProposer.RefreshVerificationPolicyFromState() reads this key
+// at the start of each block proposal to sync the active in-memory policy.
+func (sce *SmartContractExecutor) applyVerificationPolicyToState(result map[string]interface{}, contractAddr string) error {
+	params, ok := result["params"].(map[string]interface{})
+	if !ok {
+		return fmt.Errorf("missing governance params for set_verification_policy")
+	}
+
+	// Read current in-state policy as baseline (may be zero-value on first call).
+	baseline := map[string]interface{}{
+		"require_proof":                  false,
+		"min_confidence_bps":             float64(6000),
+		"reject_on_verification_failure": false,
+		"allow_consensus_proof":          true,
+		"allow_zk_proof":                 true,
+		"allow_tee_proof":                true,
+	}
+	if stored, err := sce.stateDB.Get("verification_policy:active"); err == nil {
+		if m, ok := stored.(map[string]interface{}); ok {
+			baseline = m
+		}
+	}
+
+	// Merge incoming governance params over the baseline.
+	updated := make(map[string]interface{}, len(baseline))
+	for k, v := range baseline {
+		updated[k] = v
+	}
+	for _, key := range []string{"require_proof", "reject_on_verification_failure", "allow_consensus_proof", "allow_zk_proof", "allow_tee_proof"} {
+		if v, exists := params[key]; exists {
+			updated[key] = v
+		}
+	}
+	if v, ok := asUint32(params["min_confidence_bps"]); ok {
+		updated["min_confidence_bps"] = float64(v)
+	}
+
+	if err := sce.stateDB.Set("verification_policy:active", updated); err != nil {
+		return err
+	}
+
+	proposalID, _ := result["proposal_id"].(string)
+	if proposalID == "" {
+		proposalID = "unknown"
+	}
+	ts := time.Now().Unix()
+	auditKey := fmt.Sprintf("governance_verification_audit:%s:%d", proposalID, ts)
+	return sce.stateDB.Set(auditKey, map[string]interface{}{
+		"proposal_id": proposalID,
+		"action":      "set_verification_policy",
+		"timestamp":   ts,
+		"new_policy":  updated,
+	})
 }
 
 func asUint32(v interface{}) (uint32, bool) {

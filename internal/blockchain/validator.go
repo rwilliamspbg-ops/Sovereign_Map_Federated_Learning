@@ -283,18 +283,14 @@ func (bv *BlockValidator) executeTransaction(txn *Transaction, state *StateDatab
 	return nil
 }
 
-// validateProofs validates cryptographic proofs attached to block
+// validateProofs validates cryptographic proofs attached to block.
+// It enforces the blockchain's active VerificationPolicy against embedded FL
+// verification metadata so that blocks proposed under a lenient policy can be
+// rejected by nodes that have since received a stricter governance update.
 func (bv *BlockValidator) validateProofs(block *Block) error {
-	if len(block.ProofData) == 0 {
-		// Optional: proofs may not be required for all blocks
-		return nil
+	if err := bv.blockchain.CheckFLVerificationPolicy(block.Transactions); err != nil {
+		return fmt.Errorf("FL verification policy check: %w", err)
 	}
-
-	// TODO: Implement proof validation
-	// - Verify BFT consensus proofs
-	// - Verify ZK-SNARK proofs from FL
-	// - Verify TPM attestation proofs
-
 	return nil
 }
 

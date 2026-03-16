@@ -955,3 +955,259 @@ func TestCommitBlockPersistsFLVerificationState(t *testing.T) {
 		t.Fatalf("unexpected round id in verification state: %v", meta)
 	}
 }
+
+// --- Phase 4 ZK Verification Hook Tests ---
+
+// alwaysFailVerifier is a test-only ProofVerifier that always returns failed.
+type alwaysFailVerifier struct{}
+
+func (v *alwaysFailVerifier) VerifyProof(req ProofVerificationRequest) (bool, uint32, error) {
+	return false, 0, nil
+}
+
+// fixedConfidenceVerifier is a test-only ProofVerifier that returns a fixed confidence.
+type fixedConfidenceVerifier struct{ confidence uint32 }
+
+func (v *fixedConfidenceVerifier) VerifyProof(req ProofVerificationRequest) (bool, uint32, error) {
+	return true, v.confidence, nil
+}
+
+// TestPermissiveProofVerifierPassthrough ensures the default verifier always passes.
+func TestPermissiveProofVerifierPassthrough(t *testing.T) {
+	pv := &PermissiveProofVerifier{}
+
+	// Empty proof → lower confidence but still passes.
+	passed, conf, err := pv.VerifyProof(ProofVerificationRequest{RoundID: "r1", ProofHash: "", ProofData: nil})
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+	if !passed {
+		t.Fatalf("expected permissive verifier to pass empty proof")
+	}
+	if conf == 0 {
+		t.Fatalf("expected non-zero confidence from permissive verifier")
+	}
+
+	// Non-empty proof → higher confidence.
+	passed2, conf2, err2 := pv.VerifyProof(ProofVerificationRequest{RoundID: "r2", ProofHash: "abc123"})
+	if err2 != nil || !passed2 {
+		t.Fatalf("expected permissive verifier to pass non-empty proof, err=%v passed=%v", err2, passed2)
+	}
+	if conf2 <= conf {
+		t.Fatalf("expected higher confidence for non-empty proof: conf=%d conf2=%d", conf, conf2)
+	}
+}
+
+// TestHardEnforcementRejectsFLRound tests that ProposeBlock returns an error
+// when RejectOnVerificationFailure=true and the installed verifier rejects the proof.
+func TestHardEnforcementRejectsFLRound(t *testing.T) {
+	bc := NewBlockChain()
+	if err := bc.ValidatorSet.AddValidator("v1", 1_000_000); err != nil {
+		t.Fatalf("add validator: %v", err)
+	}
+
+	// Install failing verifier and hard policy.
+	bc.SetProofVerifier(&alwaysFailVerifier{})
+	if err := bc.SetVerificationPolicy(VerificationPolicy{
+		RequireProof:                false,
+		MinConfidenceBps:            0,
+		RejectOnVerificationFailure: true,
+		AllowConsensusProof:         true,
+		AllowZKProof:                true,
+		AllowTEEProof:               true,
+	}); err != nil {
+		t.Fatalf("set policy: %v", err)
+	}
+
+	proposer := NewBlockProposer("v1", bc)
+	_, err := proposer.ProposeBlock("v1", map[string]interface{}{
+		"round_id":   "r-hard-1",
+		"model_hash": "hash-hard-1",
+		"proof_type": "consensus",
+	})
+	if err == nil {
+		t.Fatal("expected ProposeBlock to return error under hard enforcement with failing verifier")
+	}
+}
+
+// TestSoftEnforcementAllowsFLRoundWithFailedVerification tests that soft enforcement
+// allows a block to be proposed even when the verifier rejects the proof.
+func TestSoftEnforcementAllowsFLRoundWithFailedVerification(t *testing.T) {
+	bc := NewBlockChain()
+	if err := bc.ValidatorSet.AddValidator("v1", 1_000_000); err != nil {
+		t.Fatalf("add validator: %v", err)
+	}
+
+	// Install failing verifier but use soft (default) policy.
+	bc.SetProofVerifier(&alwaysFailVerifier{})
+	if err := bc.SetVerificationPolicy(VerificationPolicy{
+		RequireProof:                false,
+		MinConfidenceBps:            0,
+		RejectOnVerificationFailure: false, // soft
+		AllowConsensusProof:         true,
+		AllowZKProof:                true,
+		AllowTEEProof:               true,
+	}); err != nil {
+		t.Fatalf("set policy: %v", err)
+	}
+
+	proposer := NewBlockProposer("v1", bc)
+	block, err := proposer.ProposeBlock("v1", map[string]interface{}{
+		"round_id":   "r-soft-1",
+		"model_hash": "hash-soft-1",
+		"proof_type": "consensus",
+	})
+	if err != nil {
+		t.Fatalf("expected soft enforcement to allow block; got error: %v", err)
+	}
+	// verification_passed should be false in the FL transaction.
+	for _, txn := range block.Transactions {
+		if txn.Type == TxTypeFlRound {
+			if asBoolDefault(txn.Data["verification_passed"], true) {
+				t.Fatalf("expected verification_passed=false in soft-enforcement block, got %v", txn.Data)
+			}
+		}
+	}
+}
+
+// TestCheckFLVerificationPolicyEnforcement tests CheckFLVerificationPolicy directly.
+func TestCheckFLVerificationPolicyEnforcement(t *testing.T) {
+	bc := NewBlockChain()
+
+	softPolicy := VerificationPolicy{RejectOnVerificationFailure: false, MinConfidenceBps: 7000, AllowConsensusProof: true, AllowZKProof: true, AllowTEEProof: true}
+	hardPolicy := VerificationPolicy{RejectOnVerificationFailure: true, MinConfidenceBps: 7000, AllowConsensusProof: true, AllowZKProof: true, AllowTEEProof: true}
+
+	failedTxns := []Transaction{{
+		ID: "t1", Type: TxTypeFlRound, From: "v1", Timestamp: 1,
+		Signature: []byte("sig"),
+		Data: map[string]interface{}{
+			"round_id":                    "r1",
+			"verification_passed":         false,
+			"verification_confidence_bps": uint32(0),
+		},
+	}}
+	lowConfTxns := []Transaction{{
+		ID: "t2", Type: TxTypeFlRound, From: "v1", Timestamp: 1,
+		Signature: []byte("sig"),
+		Data: map[string]interface{}{
+			"round_id":                    "r2",
+			"verification_passed":         true,
+			"verification_confidence_bps": uint32(5000), // below 7000 threshold
+		},
+	}}
+
+	// Soft policy: no error regardless of outcome.
+	if err := bc.SetVerificationPolicy(softPolicy); err != nil {
+		t.Fatalf("set soft policy: %v", err)
+	}
+	if err := bc.CheckFLVerificationPolicy(failedTxns); err != nil {
+		t.Fatalf("soft policy should allow failed txns: %v", err)
+	}
+
+	// Hard policy: failed verification → error.
+	if err := bc.SetVerificationPolicy(hardPolicy); err != nil {
+		t.Fatalf("set hard policy: %v", err)
+	}
+	if err := bc.CheckFLVerificationPolicy(failedTxns); err == nil {
+		t.Fatal("expected error for verification_passed=false under hard enforcement")
+	}
+
+	// Hard policy: low confidence → error.
+	if err := bc.CheckFLVerificationPolicy(lowConfTxns); err == nil {
+		t.Fatalf("expected error for low confidence %d < %d under hard enforcement", 5000, 7000)
+	}
+
+	// Hard policy: passing txn → no error.
+	passingTxns := []Transaction{{
+		ID: "t3", Type: TxTypeFlRound, From: "v1", Timestamp: 1,
+		Signature: []byte("sig"),
+		Data: map[string]interface{}{
+			"round_id":                    "r3",
+			"verification_passed":         true,
+			"verification_confidence_bps": uint32(9000),
+		},
+	}}
+	if err := bc.CheckFLVerificationPolicy(passingTxns); err != nil {
+		t.Fatalf("expected no error for passing txn: %v", err)
+	}
+}
+
+// TestMinConfidenceGateRejectsBelowThreshold tests that a block proposer rejects an
+// FL round when the verifier's returned confidence falls below MinConfidenceBps under
+// hard enforcement.
+func TestMinConfidenceGateRejectsBelowThreshold(t *testing.T) {
+	bc := NewBlockChain()
+	if err := bc.ValidatorSet.AddValidator("v1", 1_000_000); err != nil {
+		t.Fatalf("add validator: %v", err)
+	}
+
+	// Verifier returns confident=true but low confidence value (4000 bps).
+	bc.SetProofVerifier(&fixedConfidenceVerifier{confidence: 4000})
+	if err := bc.SetVerificationPolicy(VerificationPolicy{
+		RequireProof:                false,
+		MinConfidenceBps:            8000, // requires 8000; verifier returns 4000
+		RejectOnVerificationFailure: true,
+		AllowConsensusProof:         true,
+		AllowZKProof:                true,
+		AllowTEEProof:               true,
+	}); err != nil {
+		t.Fatalf("set policy: %v", err)
+	}
+
+	proposer := NewBlockProposer("v1", bc)
+	_, err := proposer.ProposeBlock("v1", map[string]interface{}{
+		"round_id":   "r-lowconf-1",
+		"model_hash": "hash-lowconf-1",
+		"proof_type": "consensus",
+	})
+	if err == nil {
+		t.Fatal("expected ProposeBlock to fail when verifier confidence is below MinConfidenceBps")
+	}
+}
+
+// TestVerificationPolicyGovernanceUpdate tests that applyVerificationPolicyToState
+// writes the policy to the state DB and that RefreshVerificationPolicyFromState picks it up.
+func TestVerificationPolicyGovernanceUpdate(t *testing.T) {
+	bc := NewBlockChain()
+
+	// Write policy directly to state DB (simulating what executor.applyVerificationPolicyToState does).
+	policyMap := map[string]interface{}{
+		"require_proof":                  true,
+		"min_confidence_bps":             float64(9500),
+		"reject_on_verification_failure": true,
+		"allow_consensus_proof":          false,
+		"allow_zk_proof":                 true,
+		"allow_tee_proof":                false,
+	}
+	if err := bc.StateDB.Set("verification_policy:active", policyMap); err != nil {
+		t.Fatalf("seed policy state: %v", err)
+	}
+
+	// Before refresh, policy should still be the default.
+	before := bc.GetVerificationPolicy()
+	if before.RequireProof != false {
+		t.Fatalf("expected default RequireProof=false before refresh, got %v", before)
+	}
+
+	bc.RefreshVerificationPolicyFromState()
+
+	after := bc.GetVerificationPolicy()
+	if !after.RequireProof {
+		t.Fatalf("expected RequireProof=true after governance refresh, got %v", after)
+	}
+	if after.MinConfidenceBps != 9500 {
+		t.Fatalf("expected MinConfidenceBps=9500, got %d", after.MinConfidenceBps)
+	}
+	if !after.RejectOnVerificationFailure {
+		t.Fatalf("expected RejectOnVerificationFailure=true, got %v", after)
+	}
+	if after.AllowConsensusProof {
+		t.Fatalf("expected AllowConsensusProof=false, got %v", after)
+	}
+	if !after.AllowZKProof {
+		t.Fatalf("expected AllowZKProof=true, got %v", after)
+	}
+	if after.AllowTEEProof {
+		t.Fatalf("expected AllowTEEProof=false, got %v", after)
+	}
+}

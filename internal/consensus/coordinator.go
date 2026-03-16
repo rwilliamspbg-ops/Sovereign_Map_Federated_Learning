@@ -489,3 +489,66 @@ func (c *Coordinator) GetConsensusRound(proposalID string) (*ConsensusRound, err
 		ValidatorVotes: votes,
 	}, nil
 }
+
+// SubmitVerificationPolicyProposal creates a governance proposal to update the
+// FL proof verification policy (proof type gates, confidence threshold, enforcement mode).
+func (c *Coordinator) SubmitVerificationPolicyProposal(
+	ctx context.Context,
+	contractAddress string,
+	title string,
+	description string,
+	policy blockchain.VerificationPolicy,
+	minVotes uint64,
+) (string, error) {
+	c.mu.RLock()
+	exec := c.contractExec
+	nodeID := c.nodeID
+	c.mu.RUnlock()
+
+	if exec == nil {
+		return "", fmt.Errorf("contract executor not configured")
+	}
+	if contractAddress == "" {
+		return "", fmt.Errorf("contract address is required")
+	}
+	if minVotes == 0 {
+		minVotes = 1
+	}
+
+	proposalID := fmt.Sprintf("gov_verif_policy_%d", time.Now().UnixNano())
+	txn := &blockchain.Transaction{
+		ID:        proposalID,
+		Type:      blockchain.TxTypeSmartContract,
+		From:      nodeID,
+		Nonce:     0,
+		Gas:       300000,
+		GasPrice:  1,
+		Timestamp: time.Now().Unix(),
+		Signature: []byte("consensus-governance"),
+		Data: map[string]interface{}{
+			"call":             true,
+			"contract_address": contractAddress,
+			"function":         "createProposal",
+			"params": map[string]interface{}{
+				"title":       title,
+				"description": description,
+				"action":      "set_verification_policy",
+				"min_votes":   minVotes,
+				"params": map[string]interface{}{
+					"require_proof":                  policy.RequireProof,
+					"min_confidence_bps":             policy.MinConfidenceBps,
+					"reject_on_verification_failure": policy.RejectOnVerificationFailure,
+					"allow_consensus_proof":          policy.AllowConsensusProof,
+					"allow_zk_proof":                 policy.AllowZKProof,
+					"allow_tee_proof":                policy.AllowTEEProof,
+				},
+			},
+		},
+	}
+
+	if err := exec.ExecuteContractTransaction(txn); err != nil {
+		return "", fmt.Errorf("submit verification policy proposal: %w", err)
+	}
+
+	return proposalID, nil
+}

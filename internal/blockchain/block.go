@@ -6,6 +6,7 @@ import (
 	"crypto/sha256"
 	"encoding/hex"
 	"fmt"
+	"strings"
 	"sync"
 	"time"
 )
@@ -19,6 +20,42 @@ type FLVerificationMetrics struct {
 	LastRoundID          string  `json:"last_round_id"`
 	LastProofType        string  `json:"last_proof_type"`
 	VerifiedRatio        float64 `json:"verified_ratio"`
+}
+
+// VerificationPolicy defines governance-tunable gates for FL proof acceptance.
+type VerificationPolicy struct {
+	RequireProof                bool   `json:"require_proof"`
+	MinConfidenceBps            uint32 `json:"min_confidence_bps"`
+	RejectOnVerificationFailure bool   `json:"reject_on_verification_failure"`
+	AllowConsensusProof         bool   `json:"allow_consensus_proof"`
+	AllowZKProof                bool   `json:"allow_zk_proof"`
+	AllowTEEProof               bool   `json:"allow_tee_proof"`
+}
+
+// ProofVerificationRequest captures FL round verification context for pluggable verifiers.
+type ProofVerificationRequest struct {
+	RoundID   string
+	ModelHash string
+	ProofType string
+	ProofHash string
+	ProofData []byte
+	Payload   map[string]interface{}
+}
+
+// ProofVerifier allows custom ZK/TEE/consensus proof validation.
+type ProofVerifier interface {
+	VerifyProof(req ProofVerificationRequest) (bool, uint32, error)
+}
+
+// PermissiveProofVerifier is a default verifier used until a strict provider is configured.
+type PermissiveProofVerifier struct{}
+
+// VerifyProof returns a permissive result while still producing confidence metadata.
+func (v *PermissiveProofVerifier) VerifyProof(req ProofVerificationRequest) (bool, uint32, error) {
+	if req.ProofHash == "" && len(req.ProofData) == 0 {
+		return true, 6500, nil
+	}
+	return true, 9000, nil
 }
 
 // TransactionType defines the type of transaction
@@ -130,15 +167,17 @@ func (b *Block) ComputeHash() string {
 
 // BlockChain represents the full blockchain
 type BlockChain struct {
-	mu           sync.RWMutex
-	Blocks       []*Block
-	PendingTxns  []Transaction
-	blockIndex   map[string]*Block // hash -> block
-	StateDB      *StateDatabase
-	ValidatorSet *ValidatorSet
-	Mempool      *Mempool
-	GenesisBlock *Block
-	Tip          *Block
+	mu                 sync.RWMutex
+	Blocks             []*Block
+	PendingTxns        []Transaction
+	blockIndex         map[string]*Block // hash -> block
+	StateDB            *StateDatabase
+	ValidatorSet       *ValidatorSet
+	Mempool            *Mempool
+	VerificationPolicy VerificationPolicy
+	proofVerifier      ProofVerifier
+	GenesisBlock       *Block
+	Tip                *Block
 }
 
 // NewBlockChain creates a new blockchain instance
@@ -150,6 +189,15 @@ func NewBlockChain() *BlockChain {
 		StateDB:      NewStateDatabase(),
 		ValidatorSet: NewValidatorSet(),
 		Mempool:      NewMempool(),
+		VerificationPolicy: VerificationPolicy{
+			RequireProof:                false,
+			MinConfidenceBps:            6000,
+			RejectOnVerificationFailure: false,
+			AllowConsensusProof:         true,
+			AllowZKProof:                true,
+			AllowTEEProof:               true,
+		},
+		proofVerifier: &PermissiveProofVerifier{},
 	}
 	bc.createGenesisBlock()
 	return bc
@@ -288,6 +336,155 @@ func hashData(data string) string {
 	return hex.EncodeToString(hash[:])
 }
 
+// SetProofVerifier installs a custom verifier implementation.
+func (bc *BlockChain) SetProofVerifier(verifier ProofVerifier) {
+	bc.mu.Lock()
+	defer bc.mu.Unlock()
+	if verifier == nil {
+		bc.proofVerifier = &PermissiveProofVerifier{}
+		return
+	}
+	bc.proofVerifier = verifier
+}
+
+// SetVerificationPolicy updates active FL proof gates.
+func (bc *BlockChain) SetVerificationPolicy(policy VerificationPolicy) error {
+	if policy.MinConfidenceBps > 10000 {
+		return fmt.Errorf("min confidence bps out of range: %d", policy.MinConfidenceBps)
+	}
+	if !policy.AllowConsensusProof && !policy.AllowZKProof && !policy.AllowTEEProof {
+		return fmt.Errorf("at least one proof type must be allowed")
+	}
+
+	bc.mu.Lock()
+	defer bc.mu.Unlock()
+	bc.VerificationPolicy = policy
+	return nil
+}
+
+// GetVerificationPolicy returns the active verification policy.
+func (bc *BlockChain) GetVerificationPolicy() VerificationPolicy {
+	bc.mu.RLock()
+	defer bc.mu.RUnlock()
+	return bc.VerificationPolicy
+}
+
+// RefreshVerificationPolicyFromState syncs governance-applied policy from state database.
+func (bc *BlockChain) RefreshVerificationPolicyFromState() {
+	value, err := bc.StateDB.Get("verification_policy:active")
+	if err != nil {
+		return
+	}
+	policyMap, ok := value.(map[string]interface{})
+	if !ok {
+		return
+	}
+
+	current := bc.GetVerificationPolicy()
+	updated := current
+	updated.RequireProof = asBoolDefault(policyMap["require_proof"], current.RequireProof)
+	updated.MinConfidenceBps = asUint32Default(policyMap["min_confidence_bps"], current.MinConfidenceBps)
+	updated.RejectOnVerificationFailure = asBoolDefault(policyMap["reject_on_verification_failure"], current.RejectOnVerificationFailure)
+	updated.AllowConsensusProof = asBoolDefault(policyMap["allow_consensus_proof"], current.AllowConsensusProof)
+	updated.AllowZKProof = asBoolDefault(policyMap["allow_zk_proof"], current.AllowZKProof)
+	updated.AllowTEEProof = asBoolDefault(policyMap["allow_tee_proof"], current.AllowTEEProof)
+
+	_ = bc.SetVerificationPolicy(updated)
+}
+
+// EvaluateFLRoundVerification runs proof checks and policy gates, mutating roundData with verification fields.
+func (bc *BlockChain) EvaluateFLRoundVerification(roundData map[string]interface{}) error {
+	if roundData == nil {
+		return fmt.Errorf("round data is required")
+	}
+
+	bc.mu.RLock()
+	policy := bc.VerificationPolicy
+	verifier := bc.proofVerifier
+	bc.mu.RUnlock()
+
+	roundID := asStringDefault(roundData["round_id"], "")
+	modelHash := asStringDefault(roundData["model_hash"], "")
+	proofType := strings.ToLower(asStringDefault(roundData["proof_type"], "consensus"))
+	proofHash := asStringDefault(roundData["proof_hash"], "")
+
+	proofBytes := []byte{}
+	if raw, ok := roundData["consensus_proof"].([]byte); ok {
+		proofBytes = raw
+	}
+	if proofHash == "" && len(proofBytes) > 0 {
+		proofHash = hashData(string(proofBytes))
+	}
+
+	verified := true
+	reason := "ok"
+	confidenceBps := asUint32Default(roundData["verification_confidence_bps"], 8000)
+
+	if !policy.allowsProofType(proofType) {
+		verified = false
+		reason = "proof type not allowed"
+		confidenceBps = 0
+	}
+
+	if policy.RequireProof && proofHash == "" && len(proofBytes) == 0 {
+		verified = false
+		reason = "proof required but missing"
+		confidenceBps = 0
+	}
+
+	if verified && verifier != nil {
+		result, verifierConfidence, err := verifier.VerifyProof(ProofVerificationRequest{
+			RoundID:   roundID,
+			ModelHash: modelHash,
+			ProofType: proofType,
+			ProofHash: proofHash,
+			ProofData: proofBytes,
+			Payload:   roundData,
+		})
+		if err != nil {
+			verified = false
+			reason = fmt.Sprintf("proof verifier error: %v", err)
+			confidenceBps = 0
+		} else {
+			verified = result
+			confidenceBps = verifierConfidence
+			if !verified {
+				reason = "proof verification failed"
+			}
+		}
+	}
+
+	if verified && confidenceBps < policy.MinConfidenceBps {
+		verified = false
+		reason = fmt.Sprintf("confidence below policy minimum: %d < %d", confidenceBps, policy.MinConfidenceBps)
+	}
+
+	roundData["proof_type"] = proofType
+	roundData["proof_hash"] = proofHash
+	roundData["verification_passed"] = verified
+	roundData["verification_confidence_bps"] = confidenceBps
+	roundData["verification_reason"] = reason
+
+	if policy.RejectOnVerificationFailure && !verified {
+		return fmt.Errorf("verification rejected by policy: %s", reason)
+	}
+
+	return nil
+}
+
+func (p VerificationPolicy) allowsProofType(proofType string) bool {
+	switch strings.ToLower(proofType) {
+	case "consensus":
+		return p.AllowConsensusProof
+	case "zk", "zk-proof", "zk-proofs", "zkp":
+		return p.AllowZKProof
+	case "tee", "tpm", "attestation":
+		return p.AllowTEEProof
+	default:
+		return false
+	}
+}
+
 // BuildFLVerificationMetadata derives verification metadata from FL transaction payload.
 func BuildFLVerificationMetadata(roundData map[string]interface{}, blockHeight uint64, ts int64) map[string]interface{} {
 	roundID := fmt.Sprintf("%v", roundData["round_id"])
@@ -351,6 +548,31 @@ func (bc *BlockChain) GetFLVerificationMetrics() FLVerificationMetrics {
 	}
 
 	return metrics
+}
+
+// CheckFLVerificationPolicy validates the embedded verification metadata in FL round
+// transactions against the current active policy. Called by the block validator so
+// that any block received from a peer is checked against the local node's policy.
+func (bc *BlockChain) CheckFLVerificationPolicy(txns []Transaction) error {
+	policy := bc.GetVerificationPolicy()
+	if !policy.RejectOnVerificationFailure {
+		return nil
+	}
+	for _, txn := range txns {
+		if txn.Type != TxTypeFlRound {
+			continue
+		}
+		roundID := asStringDefault(txn.Data["round_id"], txn.ID)
+		passed := asBoolDefault(txn.Data["verification_passed"], true)
+		confidenceBps := asUint32Default(txn.Data["verification_confidence_bps"], 8000)
+		if !passed {
+			return fmt.Errorf("FL round %q: verification_passed=false, policy rejects", roundID)
+		}
+		if confidenceBps < policy.MinConfidenceBps {
+			return fmt.Errorf("FL round %q: confidence %d below policy minimum %d", roundID, confidenceBps, policy.MinConfidenceBps)
+		}
+	}
+	return nil
 }
 
 func asStringDefault(v interface{}, fallback string) string {
