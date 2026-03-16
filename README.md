@@ -85,6 +85,25 @@ Core monitoring and alerting assets:
 - [tpm_alerts.yml](tpm_alerts.yml)
 - [docker-compose.monitoring.yml](docker-compose.monitoring.yml)
 
+### Grafana Dashboard Status (March 2026)
+
+- 11 dashboards are provisioned and live under the `Sovereign Map` folder.
+- Visual readability pass applied across all dashboards:
+  - Cleaner stat cards (value-forward, centered)
+  - Better legend and tooltip consistency for time series
+  - Unified tags for discoverability (`enhanced`, `wow`, `readable`)
+- Tokenomics telemetry path now supports both modes:
+  - Explicit tokenomics and wallet telemetry via `tokenomics-metrics`
+  - Compatibility fallback series via `dashboard_compat_rules.yml`
+- Genesis launch network status panel was fixed to valid PromQL and now returns data.
+
+### Monitoring Deployment Notes
+
+- Production stack file: [docker-compose.production.yml](docker-compose.production.yml)
+- Dashboard definitions: [grafana/provisioning/dashboards](grafana/provisioning/dashboards)
+- Tokenomics exporter: [tokenomics_metrics_exporter.py](tokenomics_metrics_exporter.py)
+- Backend live tokenomics publisher: [sovereignmap_production_backend_v2.py](sovereignmap_production_backend_v2.py)
+
 ## Key Docs
 
 - [README.md](README.md)

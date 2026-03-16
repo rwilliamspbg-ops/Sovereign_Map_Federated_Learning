@@ -31,6 +31,7 @@ class TokenomicsMetricsExporter:
         self.source_file = source_file
         self.registry = CollectorRegistry()
         self._lock = Lock()
+        self._last_payload: Dict[str, Any] = {}
 
         self.mint_rate = Gauge(
             "tokenomics_mint_rate_per_min",
@@ -40,6 +41,11 @@ class TokenomicsMetricsExporter:
         self.token_supply_total = Gauge(
             "tokenomics_token_supply_total",
             "Total token supply",
+            registry=self.registry,
+        )
+        self.token_supply_minted = Gauge(
+            "tokenomics_token_supply_minted",
+            "Circulating minted token supply",
             registry=self.registry,
         )
         self.bridge_inflow = Gauge(
@@ -77,6 +83,56 @@ class TokenomicsMetricsExporter:
             "Bridge volume over trailing 24h",
             registry=self.registry,
         )
+        self.validator_count = Gauge(
+            "tokenomics_validator_count",
+            "Active validator count for the token economy",
+            registry=self.registry,
+        )
+        self.stake_participation_ratio = Gauge(
+            "tokenomics_stake_participation_ratio",
+            "Stake participation ratio as a 0-1 value",
+            registry=self.registry,
+        )
+        self.stake_concentration_gini = Gauge(
+            "tokenomics_stake_concentration_gini",
+            "Stake concentration gini coefficient as a 0-1 value",
+            registry=self.registry,
+        )
+        self.unique_wallets_count = Gauge(
+            "tokenomics_unique_wallets_count",
+            "Unique wallet count",
+            registry=self.registry,
+        )
+        self.wallet_average_balance = Gauge(
+            "tokenomics_wallet_average_balance",
+            "Average wallet balance",
+            registry=self.registry,
+        )
+        self.top_10_holder_concentration = Gauge(
+            "tokenomics_top_10_holder_concentration",
+            "Top 10 holder concentration as a 0-1 value",
+            registry=self.registry,
+        )
+        self.wallet_liquidity_ratio = Gauge(
+            "tokenomics_wallet_liquidity_ratio",
+            "Wallet liquidity ratio as a 0-1 value",
+            registry=self.registry,
+        )
+        self.wallets_by_balance_bucket_large = Gauge(
+            "tokenomics_wallets_by_balance_bucket_large",
+            "Wallet count in the large balance bucket",
+            registry=self.registry,
+        )
+        self.wallets_by_balance_bucket_medium = Gauge(
+            "tokenomics_wallets_by_balance_bucket_medium",
+            "Wallet count in the medium balance bucket",
+            registry=self.registry,
+        )
+        self.wallets_by_balance_bucket_small = Gauge(
+            "tokenomics_wallets_by_balance_bucket_small",
+            "Wallet count in the small balance bucket",
+            registry=self.registry,
+        )
         self.last_update_ts = Gauge(
             "tokenomics_last_update_timestamp_seconds",
             "Unix timestamp of last tokenomics update",
@@ -90,7 +146,25 @@ class TokenomicsMetricsExporter:
         except (TypeError, ValueError):
             return default
 
+    @staticmethod
+    def _safe_optional_float(data: Dict[str, Any], *keys: str) -> float | None:
+        for key in keys:
+            if key not in data:
+                continue
+            try:
+                return float(data[key])
+            except (TypeError, ValueError):
+                continue
+        return None
+
+    @staticmethod
+    def _set_if_present(gauge: Gauge, value: float | None, minimum: float = 0.0):
+        if value is None:
+            return
+        gauge.set(max(minimum, value))
+
     def _apply_payload(self, payload: Dict[str, Any]):
+        self._last_payload = dict(payload)
         mint_rate = self._safe_float(payload, "mint_rate_per_min")
         supply = self._safe_float(payload, "token_supply_total")
         inflow = self._safe_float(payload, "bridge_inflow_per_min")
@@ -103,6 +177,65 @@ class TokenomicsMetricsExporter:
             (inflow / mint_rate * 100.0) if mint_rate > 0 else 0.0,
         )
         volume_24h = self._safe_float(payload, "bridge_volume_24h", inflow * 1440.0)
+        minted_supply = self._safe_optional_float(
+            payload,
+            "token_supply_minted",
+            "circulating_supply",
+            "circulating_token_supply",
+        )
+        validator_count = self._safe_optional_float(
+            payload,
+            "validator_count",
+            "validators_count",
+            "active_validators",
+        )
+        stake_participation_ratio = self._safe_optional_float(
+            payload,
+            "stake_participation_ratio",
+            "validator_participation_ratio",
+        )
+        stake_concentration_gini = self._safe_optional_float(
+            payload,
+            "stake_concentration_gini",
+            "holder_concentration_gini",
+        )
+        unique_wallets_count = self._safe_optional_float(
+            payload,
+            "unique_wallets_count",
+            "wallet_count",
+            "unique_holders_count",
+        )
+        wallet_average_balance = self._safe_optional_float(
+            payload,
+            "wallet_average_balance",
+            "average_wallet_balance",
+            "avg_wallet_balance",
+        )
+        top_10_holder_concentration = self._safe_optional_float(
+            payload,
+            "top_10_holder_concentration",
+            "top_10_holder_concentration_ratio",
+        )
+        wallet_liquidity_ratio = self._safe_optional_float(
+            payload,
+            "wallet_liquidity_ratio",
+            "liquidity_ratio",
+        )
+        wallets_bucket_large = self._safe_optional_float(
+            payload,
+            "wallets_by_balance_bucket_large",
+            "wallet_balance_bucket_large",
+        )
+        wallets_bucket_medium = self._safe_optional_float(
+            payload,
+            "wallets_by_balance_bucket_medium",
+            "wallet_balance_bucket_medium",
+        )
+        wallets_bucket_small = self._safe_optional_float(
+            payload,
+            "wallets_by_balance_bucket_small",
+            "wallet_balance_bucket_small",
+        )
 
         self.mint_rate.set(max(0.0, mint_rate))
         self.token_supply_total.set(max(0.0, supply))
@@ -113,14 +246,41 @@ class TokenomicsMetricsExporter:
         self.bridge_collateral_ratio.set(max(0.0, collateral))
         self.bridge_settlement_share.set(max(0.0, settlement_share))
         self.bridge_volume_24h.set(max(0.0, volume_24h))
+        self._set_if_present(self.token_supply_minted, minted_supply)
+        self._set_if_present(self.validator_count, validator_count)
+        self._set_if_present(self.stake_participation_ratio, stake_participation_ratio)
+        self._set_if_present(self.stake_concentration_gini, stake_concentration_gini)
+        self._set_if_present(self.unique_wallets_count, unique_wallets_count)
+        self._set_if_present(self.wallet_average_balance, wallet_average_balance)
+        self._set_if_present(
+            self.top_10_holder_concentration, top_10_holder_concentration
+        )
+        self._set_if_present(self.wallet_liquidity_ratio, wallet_liquidity_ratio)
+        self._set_if_present(
+            self.wallets_by_balance_bucket_large, wallets_bucket_large
+        )
+        self._set_if_present(
+            self.wallets_by_balance_bucket_medium, wallets_bucket_medium
+        )
+        self._set_if_present(
+            self.wallets_by_balance_bucket_small, wallets_bucket_small
+        )
         self.last_update_ts.set(time.time())
+
+    def _persist_payload(self, payload: Dict[str, Any]):
+        directory = os.path.dirname(self.source_file)
+        if directory:
+            os.makedirs(directory, exist_ok=True)
+        with open(self.source_file, "w", encoding="utf-8") as handle:
+            json.dump(payload, handle, indent=2)
 
     def load_source_file(self):
         try:
             with open(self.source_file, "r", encoding="utf-8") as handle:
                 payload = json.load(handle)
             if isinstance(payload, dict):
-                self._apply_payload(payload)
+                with self._lock:
+                    self._apply_payload(payload)
         except FileNotFoundError:
             logger.warning("Tokenomics source file missing: %s", self.source_file)
         except json.JSONDecodeError as exc:
@@ -129,6 +289,7 @@ class TokenomicsMetricsExporter:
     def ingest_event(self, payload: Dict[str, Any]):
         with self._lock:
             self._apply_payload(payload)
+            self._persist_payload(self._last_payload)
 
     def generate_metrics(self) -> bytes:
         self.load_source_file()

@@ -26,10 +26,10 @@
       }
     ]
   },
-  "description": "\ud83d\udd10 TPM Security & Trust \u2014 Certificate lifecycle, trust chain health, signature verification, and node attestation.",
+  "description": "\u2728 \ud83d\udd10 TPM Security & Trust \u2014 Certificate lifecycle, trust chain health, signature verification, and node attestation.",
   "editable": true,
   "fiscalYearStartMonth": 0,
-  "graphTooltip": 0,
+  "graphTooltip": 1,
   "id": null,
   "links": [
     {
@@ -87,8 +87,8 @@
       "id": 1,
       "options": {
         "colorMode": "background",
-        "graphMode": "area",
-        "justifyMode": "auto",
+        "graphMode": "none",
+        "justifyMode": "center",
         "orientation": "auto",
         "reduceOptions": {
           "values": false,
@@ -98,7 +98,7 @@
           ]
         },
         "text": {},
-        "textMode": "auto"
+        "textMode": "value_and_name"
       },
       "pluginVersion": "10.2.0",
       "targets": [
@@ -155,8 +155,8 @@
       "id": 2,
       "options": {
         "colorMode": "background",
-        "graphMode": "area",
-        "justifyMode": "auto",
+        "graphMode": "none",
+        "justifyMode": "center",
         "orientation": "auto",
         "reduceOptions": {
           "values": false,
@@ -166,7 +166,7 @@
           ]
         },
         "text": {},
-        "textMode": "auto"
+        "textMode": "value_and_name"
       },
       "pluginVersion": "10.2.0",
       "targets": [
@@ -197,14 +197,14 @@
             "axisPlacement": "auto",
             "barAlignment": 0,
             "drawStyle": "line",
-            "fillOpacity": 10,
+            "fillOpacity": 15,
             "gradientMode": "none",
             "hideFrom": {
               "tooltip": false,
               "viz": false,
               "legend": false
             },
-            "lineInterpolation": "linear",
+            "lineInterpolation": "smooth",
             "lineWidth": 2,
             "pointSize": 5,
             "scaleDistribution": {
@@ -301,8 +301,8 @@
               "viz": false,
               "legend": false
             },
-            "lineInterpolation": "linear",
-            "lineWidth": 1,
+            "lineInterpolation": "smooth",
+            "lineWidth": 2,
             "pointSize": 5,
             "scaleDistribution": {
               "type": "linear"
@@ -381,13 +381,15 @@
     "federated-learning",
     "security",
     "tpm",
-    "enhanced"
+    "enhanced",
+    "wow",
+    "readable"
   ],
   "templating": {
     "list": []
   },
   "time": {
-    "from": "now-1h",
+    "from": "now-6h",
     "to": "now"
   },
   "timepicker": {
@@ -406,7 +408,7 @@
   "timezone": "browser",
   "title": "Sovereign Map - TPM Security",
   "uid": "sovereign-tpm-security",
-  "version": 3,
+  "version": 4,
   "weekStart": "sunday",
   "folderTitle": "Sovereign Map",
   "starred": true

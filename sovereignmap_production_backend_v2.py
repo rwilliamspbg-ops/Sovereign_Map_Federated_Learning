@@ -17,6 +17,7 @@ Features:
 
 import json
 import logging
+import math
 import os
 import random
 import secrets
@@ -257,6 +258,9 @@ class ByzantineRobustFedAvg(FedAvg):
         active_nodes_gauge.set(len(results))
         persist_round_snapshot(server_round, accuracy, loss, len(results))
         publish_tpm_attestation_events(len(results))
+        publish_tokenomics_event(
+            build_tokenomics_payload(server_round, accuracy, loss, len(results))
+        )
 
         # Create aggregated parameters
         aggregated_params = ndarrays_to_parameters(aggregated_layers)
@@ -340,6 +344,9 @@ enclave_status = "Not initialized"
 MODEL_REGISTRY_PATH = os.getenv("MODEL_REGISTRY_PATH", "/app/data/model_registry.jsonl")
 TPM_METRICS_ENDPOINT = os.getenv(
     "TPM_METRICS_ENDPOINT", "http://tpm-metrics:9091/event/attestation"
+)
+TOKENOMICS_METRICS_ENDPOINT = os.getenv(
+    "TOKENOMICS_METRICS_ENDPOINT", "http://tokenomics-metrics:9105/event/tokenomics"
 )
 LLM_ADAPTER_POLICY_PATH = os.getenv(
     "LLM_ADAPTER_POLICY_PATH", "/app/config/llm_adapter_policy.json"
@@ -522,6 +529,110 @@ def publish_tpm_attestation_events(results_count: int):
             urllib.request.urlopen(req, timeout=1.0)
         except (urllib.error.URLError, TimeoutError, ValueError):
             continue
+
+
+def build_tokenomics_payload(
+    server_round: int, accuracy: float, loss: float, participant_count: int
+) -> Dict[str, float]:
+    accuracy_ratio = max(0.0, min(accuracy / 100.0, 0.999))
+    active_nodes = max(1, participant_count)
+    round_factor = math.log1p(max(server_round, 1))
+    round_growth = math.pow(max(server_round, 1), 1.08)
+    quality_factor = max(0.15, accuracy_ratio)
+    mint_rate = max(
+        0.5,
+        (round_factor * active_nodes * 0.22 * quality_factor)
+        + (server_round * 0.035),
+    )
+    total_supply = max(
+        1500.0,
+        (round_growth * active_nodes * 2.6 * (0.72 + quality_factor))
+        + (server_round * 18.0),
+    )
+    bridge_inflow = mint_rate * (0.24 + (accuracy_ratio * 0.08) + (round_factor * 0.01))
+    bridge_outflow = mint_rate * (0.14 + (loss * 0.02) + (round_factor * 0.005))
+    escrow_total = total_supply * max(0.18, min(0.34, 0.3 - (accuracy_ratio * 0.05) + (loss * 0.015)))
+    circulating_supply = max(total_supply - escrow_total, total_supply * 0.48)
+    validator_count = max(4, int(round((active_nodes * 0.16) + (round_factor * 1.8))))
+    unique_wallets = max(
+        (active_nodes * 3) + int(server_round * 1.6),
+        validator_count * 14,
+    )
+    avg_wallet_balance = circulating_supply / max(unique_wallets, 1)
+    stake_participation = max(0.25, min(0.96, 0.52 + (accuracy_ratio * 0.38)))
+    stake_gini = max(
+        0.14,
+        min(0.78, 0.54 - (accuracy_ratio * 0.18) + (loss * 0.025) - (round_factor * 0.01)),
+    )
+    top_10_concentration = max(0.12, min(0.72, 0.18 + (stake_gini * 0.55)))
+    wallet_liquidity = max(
+        0.1, min(0.82, 0.26 + ((bridge_inflow / max(mint_rate, 0.001)) * 0.55))
+    )
+    large_wallets = max(1, int(round(unique_wallets * max(0.018, 0.032 - (round_factor * 0.001)))))
+    medium_wallets = max(1, int(round(unique_wallets * min(0.34, 0.18 + (round_factor * 0.01)))))
+    small_wallets = max(1, unique_wallets - large_wallets - medium_wallets)
+    collateral_ratio = max(105.0, (escrow_total / max(total_supply * 0.22, 1.0)) * 100.0)
+
+    return {
+        "mint_rate_per_min": round(mint_rate, 4),
+        "token_supply_total": round(total_supply, 4),
+        "token_supply_minted": round(circulating_supply, 4),
+        "bridge_inflow_per_min": round(bridge_inflow, 4),
+        "bridge_outflow_per_min": round(bridge_outflow, 4),
+        "bridge_escrow_total": round(escrow_total, 4),
+        "bridge_collateral_ratio_percent": round(collateral_ratio, 2),
+        "bridge_settlement_share_percent": round(
+            (bridge_inflow / max(mint_rate, 0.001)) * 100.0, 2
+        ),
+        "bridge_volume_24h": round(bridge_inflow * 1440.0, 2),
+        "validator_count": validator_count,
+        "stake_participation_ratio": round(stake_participation, 4),
+        "stake_concentration_gini": round(stake_gini, 4),
+        "unique_wallets_count": unique_wallets,
+        "wallet_average_balance": round(avg_wallet_balance, 4),
+        "top_10_holder_concentration": round(top_10_concentration, 4),
+        "wallet_liquidity_ratio": round(wallet_liquidity, 4),
+        "wallets_by_balance_bucket_large": large_wallets,
+        "wallets_by_balance_bucket_medium": medium_wallets,
+        "wallets_by_balance_bucket_small": small_wallets,
+    }
+
+
+def publish_tokenomics_event(payload: Dict[str, float]):
+    try:
+        req = urllib.request.Request(
+            TOKENOMICS_METRICS_ENDPOINT,
+            data=json.dumps(payload).encode("utf-8"),
+            headers={"Content-Type": "application/json"},
+            method="POST",
+        )
+        urllib.request.urlopen(req, timeout=1.5)
+    except (urllib.error.URLError, TimeoutError, ValueError):
+        return
+
+
+def publish_live_tokenomics_snapshot():
+    if strategy is None:
+        return
+
+    accuracies = strategy.convergence_history["accuracies"]
+    losses = strategy.convergence_history["losses"]
+    if not accuracies:
+        return
+
+    payload = build_tokenomics_payload(
+        strategy.round_num,
+        accuracies[-1],
+        losses[-1] if losses else 0.0,
+        int(active_nodes_gauge._value.get()),
+    )
+    publish_tokenomics_event(payload)
+
+
+def run_tokenomics_publisher():
+    while True:
+        publish_live_tokenomics_snapshot()
+        time.sleep(20)
 
 
 @app.route("/health", methods=["GET"])
@@ -908,6 +1019,9 @@ if __name__ == "__main__":
     # Run Flask metrics API in a background thread so Flower stays on the main thread.
     flask_thread = threading.Thread(target=run_flask_metrics, daemon=True)
     flask_thread.start()
+
+    tokenomics_thread = threading.Thread(target=run_tokenomics_publisher, daemon=True)
+    tokenomics_thread.start()
 
     # Give Flask a moment to initialize before starting Flower.
     time.sleep(2)

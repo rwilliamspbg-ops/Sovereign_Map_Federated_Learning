@@ -15,7 +15,7 @@
       }
     ]
   },
-  "description": "\ud83c\udfaf Convergence Metrics \u2014 Model accuracy, loss trajectory, convergence velocity, and node-level performance distribution. Optimized for large-scale networks.",
+  "description": "\u2728 \ud83c\udfaf Convergence Metrics \u2014 Model accuracy, loss trajectory, convergence velocity, and node-level performance distribution. Optimized for large-scale networks.",
   "editable": true,
   "fiscalYearStartMonth": 0,
   "graphTooltip": 1,
@@ -29,13 +29,15 @@
     "sovereign",
     "federated-learning",
     "convergence",
-    "enhanced"
+    "enhanced",
+    "wow",
+    "readable"
   ],
   "templating": {
     "list": []
   },
   "time": {
-    "from": "now-1h",
+    "from": "now-6h",
     "to": "now"
   },
   "timepicker": {
@@ -54,7 +56,7 @@
   "timezone": "browser",
   "title": "Sovereign Map - Convergence Metrics",
   "uid": "sovereign-convergence",
-  "version": 2,
+  "version": 3,
   "weekStart": "sunday",
   "panels": [
     {
@@ -116,7 +118,7 @@
       "id": 10,
       "options": {
         "colorMode": "background",
-        "graphMode": "area",
+        "graphMode": "none",
         "justifyMode": "center",
         "orientation": "auto",
         "reduceOptions": {
@@ -126,7 +128,7 @@
           "fields": "",
           "values": false
         },
-        "textMode": "auto"
+        "textMode": "value_and_name"
       },
       "pluginVersion": "10.2.0",
       "targets": [
@@ -199,7 +201,7 @@
       "id": 11,
       "options": {
         "colorMode": "background",
-        "graphMode": "area",
+        "graphMode": "none",
         "justifyMode": "center",
         "orientation": "auto",
         "reduceOptions": {
@@ -209,7 +211,7 @@
           "fields": "",
           "values": false
         },
-        "textMode": "auto"
+        "textMode": "value_and_name"
       },
       "pluginVersion": "10.2.0",
       "targets": [
@@ -290,7 +292,7 @@
           "fields": "",
           "values": false
         },
-        "textMode": "auto"
+        "textMode": "value_and_name"
       },
       "targets": [
         {
@@ -371,7 +373,7 @@
           "fields": "",
           "values": false
         },
-        "textMode": "auto"
+        "textMode": "value_and_name"
       },
       "targets": [
         {
@@ -600,7 +602,10 @@
               "tooltip": false,
               "viz": false,
               "legend": false
-            }
+            },
+            "lineInterpolation": "smooth",
+            "lineWidth": 2,
+            "fillOpacity": 15
           },
           "mappings": [],
           "max": 100,
@@ -747,7 +752,7 @@
             "mean",
             "max"
           ],
-          "displayMode": "list",
+          "displayMode": "table",
           "placement": "bottom",
           "showLegend": true
         },
@@ -833,7 +838,7 @@
           "calcs": [
             "mean"
           ],
-          "displayMode": "list",
+          "displayMode": "table",
           "placement": "bottom",
           "showLegend": true
         },

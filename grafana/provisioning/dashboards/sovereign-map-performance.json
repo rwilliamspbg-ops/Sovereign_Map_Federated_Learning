@@ -15,7 +15,7 @@
       }
     ]
   },
-  "description": "\u26a1 Performance Metrics \u2014 CPU, memory, latency, and throughput tracking. Optimized for large-scale networks.",
+  "description": "\u2728 \u26a1 Performance Metrics \u2014 CPU, memory, latency, and throughput tracking. Optimized for large-scale networks.",
   "editable": true,
   "fiscalYearStartMonth": 0,
   "graphTooltip": 1,
@@ -148,14 +148,14 @@
             "axisPlacement": "auto",
             "barAlignment": 0,
             "drawStyle": "line",
-            "fillOpacity": 10,
+            "fillOpacity": 15,
             "gradientMode": "none",
             "hideFrom": {
               "tooltip": false,
               "viz": false,
               "legend": false
             },
-            "lineInterpolation": "linear",
+            "lineInterpolation": "smooth",
             "lineWidth": 2,
             "pointSize": 5,
             "scaleDistribution": {
@@ -236,14 +236,14 @@
             "axisPlacement": "auto",
             "barAlignment": 0,
             "drawStyle": "line",
-            "fillOpacity": 10,
+            "fillOpacity": 15,
             "gradientMode": "none",
             "hideFrom": {
               "tooltip": false,
               "viz": false,
               "legend": false
             },
-            "lineInterpolation": "linear",
+            "lineInterpolation": "smooth",
             "lineWidth": 2,
             "pointSize": 5,
             "scaleDistribution": {
@@ -338,14 +338,14 @@
             "axisPlacement": "auto",
             "barAlignment": 0,
             "drawStyle": "line",
-            "fillOpacity": 10,
+            "fillOpacity": 15,
             "gradientMode": "none",
             "hideFrom": {
               "tooltip": false,
               "viz": false,
               "legend": false
             },
-            "lineInterpolation": "linear",
+            "lineInterpolation": "smooth",
             "lineWidth": 2,
             "pointSize": 5,
             "scaleDistribution": {
@@ -416,13 +416,15 @@
     "sovereign",
     "federated-learning",
     "performance",
-    "enhanced"
+    "enhanced",
+    "wow",
+    "readable"
   ],
   "templating": {
     "list": []
   },
   "time": {
-    "from": "now-1h",
+    "from": "now-6h",
     "to": "now"
   },
   "timepicker": {
@@ -441,7 +443,7 @@
   "timezone": "browser",
   "title": "Sovereign Map - Performance",
   "uid": "sovereign-performance",
-  "version": 2,
+  "version": 3,
   "weekStart": "sunday",
   "folderTitle": "Sovereign Map",
   "starred": true

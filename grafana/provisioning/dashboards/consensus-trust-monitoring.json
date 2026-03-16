@@ -17,7 +17,7 @@
   },
   "editable": true,
   "fiscalYearStartMonth": 0,
-  "graphTooltip": 0,
+  "graphTooltip": 1,
   "id": null,
   "links": [],
   "panels": [
@@ -33,7 +33,7 @@
       },
       "options": {
         "colorMode": "background",
-        "graphMode": "area",
+        "graphMode": "none",
         "justifyMode": "center",
         "orientation": "auto",
         "reduceOptions": {
@@ -43,7 +43,7 @@
           "fields": "",
           "values": false
         },
-        "textMode": "auto"
+        "textMode": "value_and_name"
       },
       "fieldConfig": {
         "defaults": {
@@ -112,7 +112,7 @@
       },
       "options": {
         "colorMode": "background",
-        "graphMode": "area",
+        "graphMode": "none",
         "justifyMode": "center",
         "orientation": "auto",
         "reduceOptions": {
@@ -122,7 +122,7 @@
           "fields": "",
           "values": false
         },
-        "textMode": "auto"
+        "textMode": "value_and_name"
       },
       "fieldConfig": {
         "defaults": {
@@ -172,7 +172,7 @@
       },
       "options": {
         "colorMode": "background",
-        "graphMode": "area",
+        "graphMode": "none",
         "justifyMode": "center",
         "orientation": "auto",
         "reduceOptions": {
@@ -182,7 +182,7 @@
           "fields": "",
           "values": false
         },
-        "textMode": "auto"
+        "textMode": "value_and_name"
       },
       "fieldConfig": {
         "defaults": {
@@ -232,7 +232,7 @@
       },
       "options": {
         "colorMode": "background",
-        "graphMode": "area",
+        "graphMode": "none",
         "justifyMode": "center",
         "orientation": "auto",
         "reduceOptions": {
@@ -242,7 +242,7 @@
           "fields": "",
           "values": false
         },
-        "textMode": "auto"
+        "textMode": "value_and_name"
       },
       "fieldConfig": {
         "defaults": {
@@ -300,12 +300,12 @@
       },
       "options": {
         "legend": {
-          "displayMode": "list",
+          "displayMode": "table",
           "placement": "bottom",
           "showLegend": true
         },
         "tooltip": {
-          "mode": "single",
+          "mode": "multi",
           "sort": "none"
         }
       },
@@ -316,13 +316,14 @@
           },
           "custom": {
             "lineWidth": 2,
-            "fillOpacity": 10,
+            "fillOpacity": 15,
             "spanNulls": false,
             "hideFrom": {
               "tooltip": false,
               "viz": false,
               "legend": false
-            }
+            },
+            "lineInterpolation": "smooth"
           },
           "unit": "percentunit",
           "mappings": []
@@ -354,12 +355,12 @@
       },
       "options": {
         "legend": {
-          "displayMode": "list",
+          "displayMode": "table",
           "placement": "bottom",
           "showLegend": true
         },
         "tooltip": {
-          "mode": "single",
+          "mode": "multi",
           "sort": "none"
         }
       },
@@ -370,13 +371,14 @@
           },
           "custom": {
             "lineWidth": 2,
-            "fillOpacity": 10,
+            "fillOpacity": 15,
             "spanNulls": false,
             "hideFrom": {
               "tooltip": false,
               "viz": false,
               "legend": false
-            }
+            },
+            "lineInterpolation": "smooth"
           },
           "unit": "ops",
           "mappings": []
@@ -417,12 +419,12 @@
       },
       "options": {
         "legend": {
-          "displayMode": "list",
+          "displayMode": "table",
           "placement": "bottom",
           "showLegend": true
         },
         "tooltip": {
-          "mode": "single",
+          "mode": "multi",
           "sort": "none"
         }
       },
@@ -433,13 +435,14 @@
           },
           "custom": {
             "lineWidth": 2,
-            "fillOpacity": 10,
+            "fillOpacity": 15,
             "spanNulls": false,
             "hideFrom": {
               "tooltip": false,
               "viz": false,
               "legend": false
-            }
+            },
+            "lineInterpolation": "smooth"
           },
           "unit": "ops",
           "mappings": []
@@ -480,12 +483,12 @@
       },
       "options": {
         "legend": {
-          "displayMode": "list",
+          "displayMode": "table",
           "placement": "bottom",
           "showLegend": true
         },
         "tooltip": {
-          "mode": "single",
+          "mode": "multi",
           "sort": "none"
         }
       },
@@ -496,13 +499,14 @@
           },
           "custom": {
             "lineWidth": 2,
-            "fillOpacity": 10,
+            "fillOpacity": 15,
             "spanNulls": false,
             "hideFrom": {
               "tooltip": false,
               "viz": false,
               "legend": false
-            }
+            },
+            "lineInterpolation": "smooth"
           },
           "unit": "s",
           "mappings": []
@@ -543,12 +547,12 @@
       },
       "options": {
         "legend": {
-          "displayMode": "list",
+          "displayMode": "table",
           "placement": "bottom",
           "showLegend": true
         },
         "tooltip": {
-          "mode": "single",
+          "mode": "multi",
           "sort": "none"
         }
       },
@@ -559,13 +563,14 @@
           },
           "custom": {
             "lineWidth": 2,
-            "fillOpacity": 10,
+            "fillOpacity": 15,
             "spanNulls": false,
             "hideFrom": {
               "tooltip": false,
               "viz": false,
               "legend": false
-            }
+            },
+            "lineInterpolation": "smooth"
           },
           "unit": "dtdurations",
           "mappings": []
@@ -593,7 +598,9 @@
     "consensus",
     "trust",
     "tpm",
-    "enhanced"
+    "enhanced",
+    "wow",
+    "readable"
   ],
   "templating": {
     "list": []
@@ -606,8 +613,8 @@
   "timezone": "browser",
   "title": "Consensus Trust Monitoring",
   "uid": "consensus-trust-monitoring",
-  "version": 4,
-  "description": "\ud83d\udd17 Consensus & Trust \u2014 BFT consensus health, trust chain validation, message signing verification, and validator performance.",
+  "version": 5,
+  "description": "\u2728 \ud83d\udd17 Consensus & Trust \u2014 BFT consensus health, trust chain validation, message signing verification, and validator performance.",
   "folderTitle": "Sovereign Map",
   "starred": true
 }

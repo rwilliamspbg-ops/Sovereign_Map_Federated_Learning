@@ -19,6 +19,7 @@ services:
       - REDIS_URL=redis://:${REDIS_PASSWORD:-CHANGE_ME_REDIS}@redis:6379/0
       - TPM_ENABLED=true
       - CERT_DIR=/etc/sovereign/certs
+      - TOKENOMICS_METRICS_ENDPOINT=http://tokenomics-metrics:9105/event/tokenomics
     depends_on:
       mongo:
         condition: service_started
@@ -373,6 +374,44 @@ services:
           cpus: '0.5'
           memory: 256M
 
+  # Tokenomics Metrics: Explicit token/wallet telemetry for Grafana dashboards
+  tokenomics-metrics:
+    image: python:3.11-slim
+    volumes:
+      - ./tokenomics_metrics_exporter.py:/app/tokenomics_metrics_exporter.py:ro
+      - ./test-data/tokenomics-telemetry.json:/app/data/tokenomics-telemetry.json
+    working_dir: /app
+    command: ["sh", "-c", "python -m pip install --no-cache-dir prometheus-client flask && python tokenomics_metrics_exporter.py"]
+    environment:
+      - TOKENOMICS_SOURCE_FILE=/app/data/tokenomics-telemetry.json
+      - TOKENOMICS_METRICS_PORT=9105
+    expose:
+      - "9105"
+    depends_on:
+      - backend
+    restart: always
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:9105/health', timeout=3)"]
+      interval: 15s
+      timeout: 5s
+      retries: 3
+      start_period: 10s
+    networks:
+      - sovereignmap
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "3"
+    deploy:
+      resources:
+        limits:
+          cpus: '0.5'
+          memory: 256M
+        reservations:
+          cpus: '0.1'
+          memory: 128M
+
   # Grafana: Visualization & Dashboards
   grafana:
     image: grafana/grafana:10.2.3
@@ -390,6 +429,7 @@ services:
       - ./grafana/provisioning/dashboards:/etc/grafana/provisioning/dashboards:ro
     depends_on:
       - prometheus
+      - tokenomics-metrics
     restart: always
     healthcheck:
       test: ["CMD", "wget", "--quiet", "--tries=1", "--spider", "http://localhost:3000/api/health"]

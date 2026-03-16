@@ -3,19 +3,21 @@
   "__requires": [],
   "uid": "genesis-launch-overview",
   "title": "Genesis Launch Overview",
-  "description": "\ud83d\ude80 Primary launch dashboard \u2014 FL training progress, node participation, accuracy, trust scores, network health \u2014 optimized for millions of nodes",
+  "description": "\u2728 \ud83d\ude80 Primary launch dashboard \u2014 FL training progress, node participation, accuracy, trust scores, network health \u2014 optimized for millions of nodes",
   "tags": [
     "genesis",
     "federated-learning",
     "sovereign-map",
-    "enhanced"
+    "enhanced",
+    "wow",
+    "readable"
   ],
   "timezone": "browser",
   "schemaVersion": 38,
-  "version": 2,
+  "version": 3,
   "refresh": "5s",
   "time": {
-    "from": "now-1h",
+    "from": "now-6h",
     "to": "now"
   },
   "timepicker": {},
@@ -33,7 +35,7 @@
       },
       "options": {
         "colorMode": "background",
-        "graphMode": "area",
+        "graphMode": "none",
         "justifyMode": "center",
         "orientation": "auto",
         "reduceOptions": {
@@ -43,7 +45,7 @@
           "fields": "",
           "values": false
         },
-        "textMode": "auto",
+        "textMode": "value_and_name",
         "text": {}
       },
       "fieldConfig": {
@@ -201,7 +203,7 @@
           "fields": "",
           "values": false
         },
-        "textMode": "auto"
+        "textMode": "value_and_name"
       },
       "fieldConfig": {
         "defaults": {
@@ -264,7 +266,7 @@
           "fields": "",
           "values": false
         },
-        "textMode": "auto"
+        "textMode": "value_and_name"
       },
       "fieldConfig": {
         "defaults": {
@@ -342,7 +344,7 @@
           "fields": "",
           "values": false
         },
-        "textMode": "auto"
+        "textMode": "value_and_name"
       },
       "fieldConfig": {
         "defaults": {
@@ -418,7 +420,7 @@
             "min"
           ],
           "displayMode": "table",
-          "placement": "right",
+          "placement": "bottom",
           "showLegend": true
         },
         "tooltip": {
@@ -497,7 +499,7 @@
             "min"
           ],
           "displayMode": "table",
-          "placement": "right",
+          "placement": "bottom",
           "showLegend": true
         },
         "tooltip": {
@@ -554,7 +556,8 @@
             "mean"
           ],
           "displayMode": "table",
-          "placement": "right"
+          "placement": "bottom",
+          "showLegend": true
         },
         "tooltip": {
           "mode": "multi"
@@ -567,7 +570,7 @@
             "fixedColor": "#3498DB"
           },
           "custom": {
-            "lineInterpolation": "stepAfter",
+            "lineInterpolation": "smooth",
             "lineWidth": 2,
             "fillOpacity": 30,
             "showPoints": "never",
@@ -607,7 +610,8 @@
             "mean"
           ],
           "displayMode": "table",
-          "placement": "right"
+          "placement": "bottom",
+          "showLegend": true
         },
         "tooltip": {
           "mode": "multi"
@@ -660,7 +664,8 @@
             "mean"
           ],
           "displayMode": "table",
-          "placement": "right"
+          "placement": "bottom",
+          "showLegend": true
         },
         "tooltip": {
           "mode": "multi"
@@ -733,8 +738,8 @@
       },
       "options": {
         "colorMode": "value",
-        "graphMode": "area",
-        "justifyMode": "auto",
+        "graphMode": "none",
+        "justifyMode": "center",
         "orientation": "auto",
         "reduceOptions": {
           "calcs": [
@@ -743,7 +748,7 @@
           "fields": "",
           "values": false
         },
-        "textMode": "auto"
+        "textMode": "value_and_name"
       },
       "fieldConfig": {
         "defaults": {
@@ -806,7 +811,7 @@
           "fields": "",
           "values": false
         },
-        "textMode": "auto"
+        "textMode": "value_and_name"
       },
       "fieldConfig": {
         "defaults": {
@@ -858,7 +863,7 @@
       },
       "targets": [
         {
-          "expr": "(sovereignmap_active_nodes > 0) ? 1 : 0",
+          "expr": "max(sovereignmap_active_nodes > bool 0)",
           "legendFormat": "Status",
           "refId": "A",
           "datasource": {
@@ -870,5 +875,6 @@
     }
   ],
   "folderTitle": "Sovereign Map",
-  "starred": true
+  "starred": true,
+  "graphTooltip": 1
 }

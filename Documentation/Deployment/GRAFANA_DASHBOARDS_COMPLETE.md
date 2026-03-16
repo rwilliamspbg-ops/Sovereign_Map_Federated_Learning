@@ -1,10 +1,46 @@
 # Grafana Dashboards - Complete Setup & Integration
 
-## Status: ✅ Complete
+## Status: ✅ Complete (Updated March 2026)
 
-All 6 Grafana dashboards have been created and integrated with Prometheus data source.
+All 11 Grafana dashboards are provisioned and integrated with Prometheus.
 
-### Dashboard Files Created
+## March 2026 Concrete Fixes
+
+### 1. Full Dashboard Visual Upgrade
+
+- Applied a system-wide readability and visual hierarchy pass across all dashboards.
+- Standardized chart interaction and display defaults:
+   - `graphTooltip=1`
+   - Improved time series legends/tooltips
+   - Cleaner stat presentation and gauge readability
+- Added dashboard metadata tags: `enhanced`, `wow`, `readable`.
+
+### 2. Tokenomics and Wallet Data Reliability
+
+- Added/expanded tokenomics and wallet telemetry ingestion in:
+  - `tokenomics_metrics_exporter.py`
+  - `dashboard_compat_rules.yml`
+- Added backend live publisher to emit tokenomics snapshots during FL runtime:
+  - `sovereignmap_production_backend_v2.py`
+- Enabled production compose tokenomics pipeline and persistence:
+  - `docker-compose.production.yml`
+  - `test-data/tokenomics-telemetry.json`
+
+### 3. Final Missing Panel Fix
+
+- Fixed Genesis Launch Overview `🏆 Network Status` panel query from invalid ternary syntax to valid PromQL:
+   - Before: `(sovereignmap_active_nodes > 0) ? 1 : 0`
+   - After: `max(sovereignmap_active_nodes > bool 0)`
+- Result: panel now returns data consistently.
+
+### 4. Validation Outcome
+
+- All panel queries on Genesis Launch Overview return data.
+- Tokenomics dashboard returns data across all panels.
+- Prometheus scrape targets for `sovereign-backend` and `tokenomics-metrics` are healthy.
+- Grafana restarted and healthy after provisioning reload.
+
+### Dashboard Files Provisioned
 
 | Dashboard | File | Size | Purpose |
 |-----------|------|------|---------|

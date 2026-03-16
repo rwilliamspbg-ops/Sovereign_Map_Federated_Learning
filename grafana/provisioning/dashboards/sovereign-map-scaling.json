@@ -15,10 +15,10 @@
       }
     ]
   },
-  "description": "\ud83d\udcc8 Node Scaling Events \u2014 Timeline of scaling operations, node provisioning, and cluster growth tracking.",
+  "description": "\u2728 \ud83d\udcc8 Node Scaling Events \u2014 Timeline of scaling operations, node provisioning, and cluster growth tracking.",
   "editable": true,
   "fiscalYearStartMonth": 0,
-  "graphTooltip": 0,
+  "graphTooltip": 1,
   "id": null,
   "links": [],
   "liveNow": false,
@@ -48,8 +48,8 @@
               "viz": false,
               "legend": false
             },
-            "lineInterpolation": "linear",
-            "lineWidth": 1,
+            "lineInterpolation": "smooth",
+            "lineWidth": 2,
             "pointSize": 5,
             "scaleDistribution": {
               "type": "linear"
@@ -95,7 +95,7 @@
             "last"
           ],
           "displayMode": "table",
-          "placement": "right",
+          "placement": "bottom",
           "showLegend": true
         },
         "tooltip": {
@@ -139,7 +139,7 @@
               "viz": false,
               "legend": false
             },
-            "lineInterpolation": "linear",
+            "lineInterpolation": "smooth",
             "lineWidth": 2,
             "pointSize": 6,
             "scaleDistribution": {
@@ -221,14 +221,14 @@
             "axisPlacement": "auto",
             "barAlignment": 0,
             "drawStyle": "line",
-            "fillOpacity": 10,
+            "fillOpacity": 15,
             "gradientMode": "none",
             "hideFrom": {
               "tooltip": false,
               "viz": false,
               "legend": false
             },
-            "lineInterpolation": "monotonic",
+            "lineInterpolation": "smooth",
             "lineWidth": 2,
             "pointSize": 5,
             "scaleDistribution": {
@@ -299,13 +299,15 @@
     "sovereign",
     "federated-learning",
     "scaling",
-    "enhanced"
+    "enhanced",
+    "wow",
+    "readable"
   ],
   "templating": {
     "list": []
   },
   "time": {
-    "from": "now-1h",
+    "from": "now-6h",
     "to": "now"
   },
   "timepicker": {
@@ -324,7 +326,7 @@
   "timezone": "browser",
   "title": "Sovereign Map - Node Scaling",
   "uid": "sovereign-scaling",
-  "version": 3,
+  "version": 4,
   "weekStart": "sunday",
   "folderTitle": "Sovereign Map",
   "starred": true
