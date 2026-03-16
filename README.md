@@ -74,6 +74,35 @@ Intellectual Property Notice: this repository implements parts of the Sovereign 
 - Economic layer: wallet-aware blockchain state, staking flows, reward path integration
 - Operations layer: Prometheus metrics, Grafana dashboards, alerting rules, reproducibility and governance CI gates
 
+## Capability and Function Coverage
+
+| Capability Domain | Primary Runtime Functions | Main Surfaces |
+| --- | --- | --- |
+| Federated Intelligence | Round coordination, convergence and model quality flow, distributed execution | `internal/convergence/`, `internal/node/`, `simulate-demo.py` |
+| Trust and Verification | Proof checks, trust status snapshots, verification policy enforcement | `internal/api/`, `internal/tpm/`, `capabilities.json` |
+| Governance and Policy | Proposal execution, policy updates, validator controls | `internal/blockchain/`, `internal/consensus/`, `Documentation/Project/ROADMAP.md` |
+| Economic Rails | Wallet-aware ledger, staking and rewards, transaction settlement | `internal/blockchain/`, `docs/RELEASE_NOTES_v1.2.0.md` |
+| Observability and Ops | Metrics export, SLO alerts, dashboards, operational checks | `cmd/metrics-exporter/`, `grafana/`, `prometheus.yml` |
+| Developer and Client Tooling | SDK package build/test flow, frontend and client integration | `packages/core/`, `packages/privacy/`, `frontend/`, `client/` |
+
+## Areas for Development
+
+1. Proof-system depth: strengthen ZK and hybrid verification backends with broader negative-path and adversarial coverage.
+2. Scale confidence: expand staged scale campaigns (10 -> 100 -> 1000+) with repeatable performance baselines.
+3. Policy automation: improve governance policy rollout and rollback safety with stronger contract/version migration checks.
+4. SDK maturity: add richer end-to-end SDK examples and conformance tests across TypeScript and Python surfaces.
+5. Operator hardening: expand production runbooks for incident response, token rotation cadence, and trust-event recovery.
+6. Multi-environment reproducibility: tighten parity between local/devcontainer/CI toolchain versions for deterministic outcomes.
+
+## Areas of Interest
+
+1. Byzantine resilience under mixed proof modes and changing trust assumptions.
+2. Reward fairness linked to verification confidence and real contribution quality.
+3. Attestation-aware scheduler strategies for secure model participation.
+4. Privacy-preserving aggregation and model update integrity in heterogeneous hardware environments.
+5. Explainable governance outcomes with auditable policy-to-behavior traceability.
+6. Cost-efficient observability for long-running, large-node federated deployments.
+
 ## Quick Start
 
 ### Prerequisites
