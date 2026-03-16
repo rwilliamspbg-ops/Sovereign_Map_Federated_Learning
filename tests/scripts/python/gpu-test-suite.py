@@ -73,9 +73,11 @@ class GPUInfo:
         """Check available accelerators"""
         devices = {
             "cuda": torch.cuda.is_available(),
-            "npu": hasattr(torch, "npu") and torch.npu.is_available()
-            if hasattr(torch, "npu")
-            else False,
+            "npu": (
+                hasattr(torch, "npu") and torch.npu.is_available()
+                if hasattr(torch, "npu")
+                else False
+            ),
             "cpu": True,
         }
         return devices

@@ -328,9 +328,9 @@ def hud_data():
             {
                 "last_audit_accuracy": f"{current_accuracy:.2f}%",
                 "bft_resilience": "55.5% Verified",
-                "dao_signatures": len(dao.founding_signatures)
-                if dao
-                else len(FOUNDERS),
+                "dao_signatures": (
+                    len(dao.founding_signatures) if dao else len(FOUNDERS)
+                ),
             }
         ),
         200,

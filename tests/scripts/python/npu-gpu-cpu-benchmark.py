@@ -68,9 +68,9 @@ class DeviceManager:
             "available": torch.cuda.is_available(),
             "name": "NVIDIA GPU (CUDA)",
             "priority": 2,
-            "device_count": torch.cuda.device_count()
-            if torch.cuda.is_available()
-            else 0,
+            "device_count": (
+                torch.cuda.device_count() if torch.cuda.is_available() else 0
+            ),
         }
         if devices["cuda"]["available"]:
             try:
@@ -546,9 +546,9 @@ def main():
         device = (
             args.device or "npu"
             if DeviceManager.detect_devices()["npu"]["available"]
-            else "cuda"
-            if DeviceManager.detect_devices()["cuda"]["available"]
-            else "cpu"
+            else (
+                "cuda" if DeviceManager.detect_devices()["cuda"]["available"] else "cpu"
+            )
         )
         logger.info(f"\nRunning contention test on {device.upper()}...")
         contention = NPUContentionTest(args.nodes, device)
