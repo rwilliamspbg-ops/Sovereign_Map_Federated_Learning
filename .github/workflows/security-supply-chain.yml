@@ -29,7 +29,7 @@ jobs:
           output-file: sbom-backend.cdx.json
 
       - name: Scan image with Trivy
-        uses: aquasecurity/trivy-action@ea7f5b0ea4e9037fe8f8f6a9db8f2de41f8bb9f0
+        uses: aquasecurity/trivy-action@57a97c7e7821a5776cebc9bb87c984fa69cba8f1
         with:
           image-ref: sovereign-backend:ci
           format: sarif
@@ -38,7 +38,7 @@ jobs:
           exit-code: 1
 
       - name: Upload Trivy SARIF
-        uses: github/codeql-action/upload-sarif@7fd9dc0f3f4f8f6e8bbbf38c3444b3248ce8b248
+        uses: github/codeql-action/upload-sarif@fd1ca02d0ddf5bf468c79e6ffb6ffb24f0ecba37
         with:
           sarif_file: trivy-results.sarif
 
