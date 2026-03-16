@@ -19,13 +19,23 @@ services:
       - MIN_AVAILABLE_CLIENTS=${MIN_AVAILABLE_CLIENTS:-10}
       - ROUND_TIMEOUT_SECONDS=${ROUND_TIMEOUT_SECONDS:-600}
       - TPM_METRICS_ENDPOINT=${TPM_METRICS_ENDPOINT:-http://tpm-metrics:9091/event/attestation}
+      - LLM_ADAPTER_POLICY_PATH=${LLM_ADAPTER_POLICY_PATH:-/app/config/llm_adapter_policy.json}
+      - JOIN_API_ADMIN_TOKEN=${JOIN_API_ADMIN_TOKEN:-local-dev-admin-token}
+      - JOIN_INVITES_PATH=${JOIN_INVITES_PATH:-/app/data/join_invites.json}
+      - JOIN_REGISTRATIONS_PATH=${JOIN_REGISTRATIONS_PATH:-/app/data/join_registrations.json}
+      - CERT_DIR=${CERT_DIR:-/app/data/certs}
+      - PUBLIC_AGGREGATOR_HOST=${PUBLIC_AGGREGATOR_HOST:-localhost}
+      - PUBLIC_AGGREGATOR_PORT=${PUBLIC_AGGREGATOR_PORT:-8080}
       - GEMINI_API_KEY=${GEMINI_API_KEY:-}
     ports:
       - "8000:8000"  # Flask metrics API
       - "8080:8080"  # Flower aggregator
     volumes:
       - ./sovereignmap_production_backend_v2.py:/app/sovereignmap_production_backend_v2.py:ro
+      - ./tpm_cert_manager.py:/app/tpm_cert_manager.py:ro
       - ./src:/app/src:ro
+      - ./config:/app/config:ro
+      - backend_data:/app/data
     networks:
       - sovereign-network
     healthcheck:
@@ -68,6 +78,11 @@ services:
       - AGGREGATOR_HOST=backend
       - AGGREGATOR_PORT=8080
       - BYZANTINE=${BYZANTINE:-false}
+      - LLM_ADAPTER_MODEL_FAMILY=${LLM_ADAPTER_MODEL_FAMILY:-llama-3.1}
+      - LLM_ADAPTER_MODEL_VERSION=${LLM_ADAPTER_MODEL_VERSION:-8b-instruct}
+      - LLM_ADAPTER_TOKENIZER_HASH=${LLM_ADAPTER_TOKENIZER_HASH:-local-dev-tokenizer-v1}
+      - LLM_ADAPTER_RANK=${LLM_ADAPTER_RANK:-16}
+      - LLM_ADAPTER_TARGET_MODULES=${LLM_ADAPTER_TARGET_MODULES:-q_proj,v_proj}
     command: >
       sh -c 'NODE_ID_VAL=$$(python -c "import os,re; raw=os.getenv(\"NODE_ID\") or os.getenv(\"HOSTNAME\",\"1\"); m=re.search(r\"(\\d+)$\", raw); print(m.group(1) if m else int((\"\".join(c for c in raw if c in \"0123456789abcdefABCDEF\")[:8] or \"1\"), 16) % 1000000)"); python -u src/client.py --node-id "$${NODE_ID_VAL}" --aggregator backend:8080'
     volumes:
@@ -112,6 +127,11 @@ services:
       - AGGREGATOR_HOST=backend
       - AGGREGATOR_PORT=8080
       - BYZANTINE=false
+      - LLM_ADAPTER_MODEL_FAMILY=${LLM_ADAPTER_MODEL_FAMILY:-llama-3.1}
+      - LLM_ADAPTER_MODEL_VERSION=${LLM_ADAPTER_MODEL_VERSION:-8b-instruct}
+      - LLM_ADAPTER_TOKENIZER_HASH=${LLM_ADAPTER_TOKENIZER_HASH:-local-dev-tokenizer-v1}
+      - LLM_ADAPTER_RANK=${LLM_ADAPTER_RANK:-16}
+      - LLM_ADAPTER_TARGET_MODULES=${LLM_ADAPTER_TARGET_MODULES:-q_proj,v_proj}
     command: >
       python -u src/client.py
       --node-id 2
@@ -152,6 +172,11 @@ services:
       - AGGREGATOR_HOST=backend
       - AGGREGATOR_PORT=8080
       - BYZANTINE=false
+      - LLM_ADAPTER_MODEL_FAMILY=${LLM_ADAPTER_MODEL_FAMILY:-llama-3.1}
+      - LLM_ADAPTER_MODEL_VERSION=${LLM_ADAPTER_MODEL_VERSION:-8b-instruct}
+      - LLM_ADAPTER_TOKENIZER_HASH=${LLM_ADAPTER_TOKENIZER_HASH:-local-dev-tokenizer-v1}
+      - LLM_ADAPTER_RANK=${LLM_ADAPTER_RANK:-16}
+      - LLM_ADAPTER_TARGET_MODULES=${LLM_ADAPTER_TARGET_MODULES:-q_proj,v_proj}
     command: >
       python -u src/client.py
       --node-id 3
@@ -190,6 +215,11 @@ services:
       - AGGREGATOR_HOST=backend
       - AGGREGATOR_PORT=8080
       - BYZANTINE=1
+      - LLM_ADAPTER_MODEL_FAMILY=${LLM_ADAPTER_MODEL_FAMILY:-llama-3.1}
+      - LLM_ADAPTER_MODEL_VERSION=${LLM_ADAPTER_MODEL_VERSION:-8b-instruct}
+      - LLM_ADAPTER_TOKENIZER_HASH=${LLM_ADAPTER_TOKENIZER_HASH:-local-dev-tokenizer-v1}
+      - LLM_ADAPTER_RANK=${LLM_ADAPTER_RANK:-16}
+      - LLM_ADAPTER_TARGET_MODULES=${LLM_ADAPTER_TARGET_MODULES:-q_proj,v_proj}
     command: >
       python -u src/client.py
       --node-id ${NODE_ID:-1}
@@ -373,6 +403,8 @@ services:
 # ========================================================================
 
 volumes:
+  backend_data:
+    driver: local
   prometheus-data:
     driver: local
   grafana-data:

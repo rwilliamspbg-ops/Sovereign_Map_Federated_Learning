@@ -1,0 +1,9 @@
+{
+  "enforce": true,
+  "model_family": "llama-3.1",
+  "model_version": "8b-instruct",
+  "tokenizer_hash": "local-dev-tokenizer-v1",
+  "allowed_adapter_ranks": [8, 16, 32],
+  "required_target_modules": ["q_proj", "v_proj"],
+  "max_reported_update_l2_norm": 1000000.0
+}

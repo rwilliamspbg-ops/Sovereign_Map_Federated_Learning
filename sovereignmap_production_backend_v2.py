@@ -19,12 +19,13 @@ import json
 import logging
 import os
 import random
+import secrets
 import threading
 import time
 import urllib.error
 import urllib.request
 from collections import defaultdict
-from typing import Dict, List, Optional, Tuple
+from typing import Any, Dict, List, Optional, Set, Tuple
 
 import ecdsa
 import numpy as np
@@ -44,6 +45,11 @@ from flwr.common import (
     ndarrays_to_parameters,
 )
 from flwr.server.client_manager import ClientManager
+
+try:
+    from tpm_cert_manager import TPMCertificateManager
+except Exception:
+    TPMCertificateManager = None
 
 # ============================================================================
 # LOGGING SETUP
@@ -186,7 +192,25 @@ class ByzantineRobustFedAvg(FedAvg):
         if not results:
             return None, {}
 
+        validated_results: List[Tuple[fl.server.client_proxy.ClientProxy, FitRes]] = []
+        rejected_by_reason: Dict[str, int] = defaultdict(int)
+        for client_proxy, fit_res in results:
+            accepted, reason = validate_llm_adapter_update(fit_res)
+            if accepted:
+                llm_policy_valid_updates_total.inc()
+                validated_results.append((client_proxy, fit_res))
+            else:
+                rejected_by_reason[reason] += 1
+                llm_policy_rejected_updates_total.labels(reason=reason).inc()
+
+        if not validated_results:
+            logger.warning(
+                "All client updates were rejected by LLM adapter policy", extra={"fl_round": server_round}
+            )
+            return None, {"accepted_updates": 0, "rejected_updates": len(results)}
+
         self.round_num = server_round
+        results = validated_results
 
         # Extract full model parameters with stake-weighting
         weights_list = []
@@ -241,6 +265,8 @@ class ByzantineRobustFedAvg(FedAvg):
             "accuracy": accuracy,
             "loss": loss,
             "num_participants": len(results),
+            "accepted_updates": len(results),
+            "rejected_updates": int(sum(rejected_by_reason.values())),
         }
 
         return aggregated_params, metrics_dict
@@ -296,6 +322,15 @@ model_registry_writes_total = Counter(
     "sovereignmap_model_registry_writes_total",
     "Total model registry write operations",
 )
+llm_policy_valid_updates_total = Counter(
+    "sovereignmap_llm_policy_valid_updates_total",
+    "Total FL updates accepted by LLM adapter policy validation",
+)
+llm_policy_rejected_updates_total = Counter(
+    "sovereignmap_llm_policy_rejected_updates_total",
+    "Total FL updates rejected by LLM adapter policy validation",
+    ["reason"],
+)
 
 # Global state
 dao = None
@@ -306,7 +341,149 @@ MODEL_REGISTRY_PATH = os.getenv("MODEL_REGISTRY_PATH", "/app/data/model_registry
 TPM_METRICS_ENDPOINT = os.getenv(
     "TPM_METRICS_ENDPOINT", "http://tpm-metrics:9091/event/attestation"
 )
+LLM_ADAPTER_POLICY_PATH = os.getenv(
+    "LLM_ADAPTER_POLICY_PATH", "/app/config/llm_adapter_policy.json"
+)
+JOIN_INVITES_PATH = os.getenv("JOIN_INVITES_PATH", "/app/data/join_invites.json")
+JOIN_REGISTRATIONS_PATH = os.getenv(
+    "JOIN_REGISTRATIONS_PATH", "/app/data/join_registrations.json"
+)
+JOIN_API_ADMIN_TOKEN = os.getenv("JOIN_API_ADMIN_TOKEN", "local-dev-admin-token")
+CERT_DIR = os.getenv("CERT_DIR", "/app/data/certs")
+PUBLIC_AGGREGATOR_HOST = os.getenv("PUBLIC_AGGREGATOR_HOST", "localhost")
+PUBLIC_AGGREGATOR_PORT = int(os.getenv("PUBLIC_AGGREGATOR_PORT", "8080"))
 registry_lock = threading.Lock()
+join_lock = threading.Lock()
+llm_adapter_policy: Dict[str, Any] = {}
+tpm_cert_manager = None
+
+
+def _ensure_parent_dir(file_path: str):
+    parent = os.path.dirname(file_path)
+    if parent:
+        os.makedirs(parent, exist_ok=True)
+
+
+def _load_json_file(file_path: str, default: Any) -> Any:
+    if not os.path.exists(file_path):
+        return default
+    try:
+        with open(file_path, "r", encoding="utf-8") as handle:
+            return json.load(handle)
+    except (OSError, json.JSONDecodeError):
+        return default
+
+
+def _save_json_file(file_path: str, payload: Any):
+    _ensure_parent_dir(file_path)
+    with open(file_path, "w", encoding="utf-8") as handle:
+        json.dump(payload, handle, indent=2)
+
+
+def _normalize_modules(value: str) -> Set[str]:
+    return {module.strip() for module in value.split(",") if module.strip()}
+
+
+def load_llm_adapter_policy() -> Dict[str, Any]:
+    global llm_adapter_policy
+    defaults = {
+        "enforce": True,
+        "model_family": "llama-3.1",
+        "model_version": "8b-instruct",
+        "tokenizer_hash": "local-dev-tokenizer-v1",
+        "allowed_adapter_ranks": [8, 16, 32],
+        "required_target_modules": ["q_proj", "v_proj"],
+        "max_reported_update_l2_norm": 1000000.0,
+    }
+    loaded = _load_json_file(LLM_ADAPTER_POLICY_PATH, {})
+    if isinstance(loaded, dict):
+        defaults.update(loaded)
+    llm_adapter_policy = defaults
+    return llm_adapter_policy
+
+
+def validate_llm_adapter_update(fit_res: FitRes) -> Tuple[bool, str]:
+    if not llm_adapter_policy:
+        load_llm_adapter_policy()
+
+    if not bool(llm_adapter_policy.get("enforce", True)):
+        return True, "policy_disabled"
+
+    metrics = fit_res.metrics or {}
+    model_family = str(metrics.get("llm_model_family", ""))
+    model_version = str(metrics.get("llm_model_version", ""))
+    tokenizer_hash = str(metrics.get("llm_tokenizer_hash", ""))
+    adapter_rank_raw = metrics.get("llm_adapter_rank", -1)
+    modules_raw = str(metrics.get("llm_target_modules", ""))
+    update_l2_raw = metrics.get("llm_reported_update_l2_norm", 0.0)
+
+    try:
+        adapter_rank = int(adapter_rank_raw)
+    except (TypeError, ValueError):
+        return False, "invalid_adapter_rank"
+
+    try:
+        update_l2 = float(update_l2_raw)
+    except (TypeError, ValueError):
+        return False, "invalid_update_norm"
+
+    required_family = str(llm_adapter_policy.get("model_family", ""))
+    required_version = str(llm_adapter_policy.get("model_version", ""))
+    required_tokenizer = str(llm_adapter_policy.get("tokenizer_hash", ""))
+    allowed_ranks = {
+        int(rank) for rank in llm_adapter_policy.get("allowed_adapter_ranks", [])
+    }
+    required_modules = {
+        str(module) for module in llm_adapter_policy.get("required_target_modules", [])
+    }
+    max_update_l2 = float(llm_adapter_policy.get("max_reported_update_l2_norm", 0.0))
+
+    if model_family != required_family:
+        return False, "model_family_mismatch"
+    if model_version != required_version:
+        return False, "model_version_mismatch"
+    if tokenizer_hash != required_tokenizer:
+        return False, "tokenizer_mismatch"
+    if adapter_rank not in allowed_ranks:
+        return False, "adapter_rank_not_allowed"
+    if update_l2 > max_update_l2:
+        return False, "update_norm_too_large"
+
+    reported_modules = _normalize_modules(modules_raw)
+    if required_modules and not required_modules.issubset(reported_modules):
+        return False, "required_target_modules_missing"
+
+    return True, "ok"
+
+
+def _get_cert_manager():
+    global tpm_cert_manager
+    if TPMCertificateManager is None:
+        raise RuntimeError("TPM certificate manager unavailable in this environment")
+    if tpm_cert_manager is None:
+        tpm_cert_manager = TPMCertificateManager(CERT_DIR)
+    return tpm_cert_manager
+
+
+def _authorized_join_admin(req: request) -> bool:
+    header_token = req.headers.get("X-Join-Admin-Token", "")
+    auth = req.headers.get("Authorization", "")
+    bearer = auth[7:] if auth.lower().startswith("bearer ") else ""
+    return JOIN_API_ADMIN_TOKEN in (header_token, bearer)
+
+
+def _next_join_node_id(registrations: List[Dict[str, Any]]) -> int:
+    used_ids = {int(entry.get("node_id", 0)) for entry in registrations}
+    for node_key in _get_cert_manager().trust_store.keys():
+        if node_key.startswith("node-"):
+            try:
+                used_ids.add(int(node_key.split("-")[1]))
+            except (IndexError, ValueError):
+                continue
+    candidate = 1
+    while candidate in used_ids:
+        candidate += 1
+    return candidate
 
 
 def persist_round_snapshot(
@@ -502,6 +679,156 @@ def model_registry_recent():
     return jsonify({"entries": entries, "count": len(entries)})
 
 
+@app.route("/llm_policy", methods=["GET"])
+def llm_policy_view():
+    """Return active adapter policy used for FL update validation."""
+    return jsonify(load_llm_adapter_policy())
+
+
+@app.route("/join/policy", methods=["GET"])
+def join_policy_view():
+    """Return policy info to help participants self-configure."""
+    policy = load_llm_adapter_policy().copy()
+    policy["aggregator_host"] = PUBLIC_AGGREGATOR_HOST
+    policy["aggregator_port"] = PUBLIC_AGGREGATOR_PORT
+    return jsonify(policy)
+
+
+@app.route("/join/invite", methods=["POST"])
+def create_join_invite():
+    """Admin-only endpoint that mints short-lived invite codes."""
+    if not _authorized_join_admin(request):
+        return jsonify({"error": "unauthorized"}), 401
+
+    payload = request.get_json(silent=True) or {}
+    participant_name = str(payload.get("participant_name", "participant")).strip() or "participant"
+    max_uses = int(payload.get("max_uses", 1))
+    expires_in_hours = int(payload.get("expires_in_hours", 24))
+
+    invite_code = secrets.token_urlsafe(24)
+    invite_hash = secrets.token_hex(8) + "-" + secrets.token_hex(8)
+    now = int(time.time())
+    expires_at = now + max(1, expires_in_hours) * 3600
+
+    with join_lock:
+        invites = _load_json_file(JOIN_INVITES_PATH, [])
+        invites.append(
+            {
+                "invite_id": invite_hash,
+                "invite_code": invite_code,
+                "participant_name": participant_name,
+                "max_uses": max(1, max_uses),
+                "used": 0,
+                "created_at": now,
+                "expires_at": expires_at,
+                "revoked": False,
+            }
+        )
+        _save_json_file(JOIN_INVITES_PATH, invites)
+
+    return jsonify(
+        {
+            "invite_code": invite_code,
+            "invite_id": invite_hash,
+            "participant_name": participant_name,
+            "expires_at": expires_at,
+            "max_uses": max(1, max_uses),
+        }
+    )
+
+
+@app.route("/join/register", methods=["POST"])
+def register_join_participant():
+    """Exchange an invite code for a node ID and certificate bundle."""
+    payload = request.get_json(silent=True) or {}
+    invite_code = str(payload.get("invite_code", "")).strip()
+    participant_name = str(payload.get("participant_name", "participant")).strip() or "participant"
+
+    if not invite_code:
+        return jsonify({"error": "invite_code is required"}), 400
+
+    with join_lock:
+        invites = _load_json_file(JOIN_INVITES_PATH, [])
+        registrations = _load_json_file(JOIN_REGISTRATIONS_PATH, [])
+
+        invite = next((item for item in invites if item.get("invite_code") == invite_code), None)
+        if invite is None:
+            return jsonify({"error": "invalid_invite"}), 400
+        if invite.get("revoked"):
+            return jsonify({"error": "invite_revoked"}), 400
+        if int(time.time()) > int(invite.get("expires_at", 0)):
+            return jsonify({"error": "invite_expired"}), 400
+        if int(invite.get("used", 0)) >= int(invite.get("max_uses", 1)):
+            return jsonify({"error": "invite_exhausted"}), 400
+
+        node_id = _next_join_node_id(registrations)
+        node_name = str(payload.get("node_name", f"{participant_name}-node-{node_id}"))
+
+        cert_manager = _get_cert_manager()
+        cert_path, key_path = cert_manager.generate_node_cert(node_id, node_name)
+        cert_manager.verify_node_certificate(node_id)
+
+        with open(cert_path, "r", encoding="utf-8") as cert_handle:
+            cert_pem = cert_handle.read()
+        with open(key_path, "r", encoding="utf-8") as key_handle:
+            key_pem = key_handle.read()
+        with open(cert_manager.ca_cert_path, "r", encoding="utf-8") as ca_handle:
+            ca_pem = ca_handle.read()
+
+        invite["used"] = int(invite.get("used", 0)) + 1
+
+        registration = {
+            "participant_name": participant_name,
+            "node_name": node_name,
+            "node_id": node_id,
+            "invite_id": invite.get("invite_id"),
+            "registered_at": int(time.time()),
+            "status": "active",
+        }
+        registrations.append(registration)
+        _save_json_file(JOIN_INVITES_PATH, invites)
+        _save_json_file(JOIN_REGISTRATIONS_PATH, registrations)
+
+    return jsonify(
+        {
+            "registration": registration,
+            "aggregator": {
+                "host": PUBLIC_AGGREGATOR_HOST,
+                "port": PUBLIC_AGGREGATOR_PORT,
+                "address": f"{PUBLIC_AGGREGATOR_HOST}:{PUBLIC_AGGREGATOR_PORT}",
+            },
+            "certificates": {
+                "node_cert_pem": cert_pem,
+                "node_key_pem": key_pem,
+                "ca_cert_pem": ca_pem,
+            },
+            "llm_policy": load_llm_adapter_policy(),
+        }
+    )
+
+
+@app.route("/join/registrations", methods=["GET"])
+def list_join_registrations():
+    """Admin-only endpoint listing currently registered participants."""
+    if not _authorized_join_admin(request):
+        return jsonify({"error": "unauthorized"}), 401
+    registrations = _load_json_file(JOIN_REGISTRATIONS_PATH, [])
+    return jsonify({"count": len(registrations), "registrations": registrations})
+
+
+@app.route("/join/revoke/<int:node_id>", methods=["POST"])
+def revoke_join_participant(node_id: int):
+    """Admin-only endpoint to revoke a participant certificate."""
+    if not _authorized_join_admin(request):
+        return jsonify({"error": "unauthorized"}), 401
+
+    cert_manager = _get_cert_manager()
+    revoked = cert_manager.revoke_node_certificate(node_id)
+    if not revoked:
+        return jsonify({"status": "error", "message": "node certificate not found"}), 404
+    return jsonify({"status": "ok", "node_id": node_id, "revoked": True})
+
+
 @app.route("/status", methods=["GET"])
 def status():
     """Get server status."""
@@ -572,6 +899,7 @@ def run_flask_metrics():
 if __name__ == "__main__":
     # Initialize DAO
     dao = MockDAO()
+    load_llm_adapter_policy()
 
     logger.info("Sovereign Maps Backend v1.0.0 - Starting dual-mode server")
     logger.info("- Flower aggregator: 0.0.0.0:8080")

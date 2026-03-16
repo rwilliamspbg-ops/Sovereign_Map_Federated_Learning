@@ -1,0 +1,31 @@
+services:
+  participant-node-agent:
+    build:
+      context: .
+      dockerfile: Dockerfile.node-agent
+    environment:
+      - PYTHONUNBUFFERED=1
+      - ENABLE_DP=${ENABLE_DP:-false}
+      - LOCAL_EPOCHS=${LOCAL_EPOCHS:-1}
+      - BATCH_SIZE=${BATCH_SIZE:-16}
+      - MAX_SAMPLES_PER_NODE=${MAX_SAMPLES_PER_NODE:-120}
+      - LLM_ADAPTER_MODEL_FAMILY=${LLM_ADAPTER_MODEL_FAMILY:-llama-3.1}
+      - LLM_ADAPTER_MODEL_VERSION=${LLM_ADAPTER_MODEL_VERSION:-8b-instruct}
+      - LLM_ADAPTER_TOKENIZER_HASH=${LLM_ADAPTER_TOKENIZER_HASH:-local-dev-tokenizer-v1}
+      - LLM_ADAPTER_RANK=${LLM_ADAPTER_RANK:-16}
+      - LLM_ADAPTER_TARGET_MODULES=${LLM_ADAPTER_TARGET_MODULES:-q_proj,v_proj}
+    command: >
+      python -u src/client.py
+      --node-id ${NODE_ID:-1}
+      --aggregator ${AGGREGATOR_HOST:-backend}:${AGGREGATOR_PORT:-8080}
+    volumes:
+      - ./src:/app/src:ro
+      - ${PARTICIPANT_CERT_DIR:-./participants/local-participant/certs}:/app/certs:ro
+    networks:
+      - sovereign-network
+    restart: unless-stopped
+
+networks:
+  sovereign-network:
+    external: true
+    name: sovereign-network

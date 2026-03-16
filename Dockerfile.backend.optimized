@@ -49,6 +49,7 @@ COPY archive/legacy/code/spatial_threat_analyzer.py ./spatial_threat_analyzer.py
 COPY archive/legacy/code/sovereign_federation_backend.py ./sovereign_federation_backend.py
 COPY archive/legacy/code/sovereignmap_production_backend.py ./sovereignmap_production_backend.py
 COPY sovereignmap_production_backend_v2.py ./sovereignmap_production_backend_v2.py
+COPY tpm_cert_manager.py ./tpm_cert_manager.py
 COPY src/ ./src/
 COPY config/ ./config/
 

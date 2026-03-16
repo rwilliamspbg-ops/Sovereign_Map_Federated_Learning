@@ -75,6 +75,15 @@ class SovereignClient(fl.client.NumPyClient):
         self.local_epochs = int(os.getenv("LOCAL_EPOCHS", "1"))
         self.enable_dp = os.getenv("ENABLE_DP", "false").lower() in ("1", "true", "yes")
         self.max_samples_per_node = int(os.getenv("MAX_SAMPLES_PER_NODE", "120"))
+        self.llm_model_family = os.getenv("LLM_ADAPTER_MODEL_FAMILY", "llama-3.1")
+        self.llm_model_version = os.getenv("LLM_ADAPTER_MODEL_VERSION", "8b-instruct")
+        self.llm_tokenizer_hash = os.getenv(
+            "LLM_ADAPTER_TOKENIZER_HASH", "local-dev-tokenizer-v1"
+        )
+        self.llm_adapter_rank = int(os.getenv("LLM_ADAPTER_RANK", "16"))
+        self.llm_target_modules = os.getenv(
+            "LLM_ADAPTER_TARGET_MODULES", "q_proj,v_proj"
+        )
         self.trainloader = self._load_data(node_id)
         self.optimizer = torch.optim.SGD(self.model.parameters(), lr=0.01)
 
@@ -278,6 +287,9 @@ class SovereignClient(fl.client.NumPyClient):
                 logger.debug(f"Node {self.node_id}: Could not get epsilon: {e}")
 
         updated_params = self.get_parameters(config)
+        update_l2_norm = float(
+            np.sqrt(sum(float(np.square(param).sum()) for param in updated_params))
+        )
 
         # Byzantine attack: invert parameters
         if self.byzantine:
@@ -289,6 +301,12 @@ class SovereignClient(fl.client.NumPyClient):
             "byzantine": self.byzantine,
             "avg_loss": float(np.mean(loss_history)) if loss_history else 0.0,
             "device": str(self.device),
+            "llm_model_family": self.llm_model_family,
+            "llm_model_version": self.llm_model_version,
+            "llm_tokenizer_hash": self.llm_tokenizer_hash,
+            "llm_adapter_rank": self.llm_adapter_rank,
+            "llm_target_modules": self.llm_target_modules,
+            "llm_reported_update_l2_norm": update_l2_norm,
         }
         if epsilon is not None:
             metrics["epsilon"] = float(epsilon)
