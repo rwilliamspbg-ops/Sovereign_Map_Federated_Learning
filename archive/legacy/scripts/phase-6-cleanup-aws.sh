@@ -11,6 +11,7 @@ echo "=========================================="
 
 # 1. Load Configuration
 if [ -f "aws-config.env" ]; then
+    # shellcheck disable=SC1091
     source aws-config.env
 else
     echo "❌ Error: aws-config.env not found. Manual cleanup may be required."
@@ -44,10 +45,10 @@ echo "Step 2: Running Terraform Destroy..."
 terraform -chdir=terraform destroy -auto-approve
 
 # 5. Clean up S3 (Optional - Keeps the results bucket unless specified)
-read -p "❓ Do you want to delete the S3 bucket ($S3_BUCKET) and all test results? (y/n): " DELETE_S3
+read -r -p "❓ Do you want to delete the S3 bucket ($S3_BUCKET) and all test results? (y/n): " DELETE_S3
 if [[ $DELETE_S3 == "y" ]]; then
     echo "🗑️  Deleting S3 bucket contents..."
-    aws s3 rb s3://$S3_BUCKET --force
+    aws s3 rb s3://"$S3_BUCKET" --force
     echo "✓ S3 bucket removed."
 fi
 
