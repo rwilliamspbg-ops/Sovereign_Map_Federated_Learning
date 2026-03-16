@@ -1,0 +1,278 @@
+// Copyright 2026 Sovereign-Mohawk Core Team
+// Licensed under the Apache License, Version 2.0
+package blockchain
+
+import (
+	"crypto/sha256"
+	"encoding/hex"
+	"fmt"
+	"sync"
+	"time"
+)
+
+// TransactionType defines the type of transaction
+type TransactionType string
+
+const (
+	TxTypeFlRound       TransactionType = "fl_round"
+	TxTypeStake         TransactionType = "stake"
+	TxTypeUnstake       TransactionType = "unstake"
+	TxTypeReward        TransactionType = "reward"
+	TxTypeSmartContract TransactionType = "smart_contract"
+	TxTypeCheckpoint    TransactionType = "checkpoint"
+	TxTypeTransfer      TransactionType = "transfer" // token transfer between wallets
+)
+
+// Transaction represents an on-chain transaction
+type Transaction struct {
+	ID        string                 `json:"id"`
+	Type      TransactionType        `json:"type"`
+	From      string                 `json:"from"`
+	To        string                 `json:"to,omitempty"`
+	Nonce     uint64                 `json:"nonce"`
+	Amount    uint64                 `json:"amount"`
+	Gas       uint64                 `json:"gas"`
+	GasPrice  uint64                 `json:"gas_price"`
+	Data      map[string]interface{} `json:"data"`
+	Timestamp int64                  `json:"timestamp"`
+	Signature []byte                 `json:"signature"`
+}
+
+// Validate checks if transaction is valid
+func (t *Transaction) Validate() error {
+	if t.ID == "" {
+		return fmt.Errorf("transaction missing ID")
+	}
+	if t.From == "" {
+		return fmt.Errorf("transaction missing From address")
+	}
+	if t.Timestamp == 0 {
+		return fmt.Errorf("transaction missing timestamp")
+	}
+	if len(t.Signature) == 0 {
+		return fmt.Errorf("transaction missing signature")
+	}
+	return nil
+}
+
+// Hash returns the transaction hash
+func (t *Transaction) Hash() string {
+	data := fmt.Sprintf("%s:%s:%s:%d:%d:%d",
+		t.ID, t.Type, t.From, t.Nonce, t.Amount, t.Timestamp)
+	hash := sha256.Sum256([]byte(data))
+	return hex.EncodeToString(hash[:])
+}
+
+// BlockHeader contains block metadata
+type BlockHeader struct {
+	Index        uint64 `json:"index"`
+	Timestamp    int64  `json:"timestamp"`
+	PreviousHash string `json:"previous_hash"`
+	Hash         string `json:"hash"`
+	Nonce        uint64 `json:"nonce"`
+	ValidatorID  string `json:"validator_id"`
+	Difficulty   uint32 `json:"difficulty"`
+	Version      uint32 `json:"version"`
+}
+
+// Block represents a blockchain block
+type Block struct {
+	Header       BlockHeader       `json:"header"`
+	Transactions []Transaction     `json:"transactions"`
+	MerkleRoot   string            `json:"merkle_root"`
+	StateRoot    string            `json:"state_root"`
+	ProofData    map[string][]byte `json:"proof_data"`
+}
+
+// Validate checks if block is valid
+func (b *Block) Validate() error {
+	if b.Header.Index == 0 && b.Header.PreviousHash != "" {
+		return fmt.Errorf("genesis block must have empty previous hash")
+	}
+	if b.Header.Hash == "" {
+		return fmt.Errorf("block missing hash")
+	}
+	if b.Header.ValidatorID == "" {
+		return fmt.Errorf("block missing validator ID")
+	}
+	// Validate all transactions
+	for i, txn := range b.Transactions {
+		if err := txn.Validate(); err != nil {
+			return fmt.Errorf("transaction %d invalid: %w", i, err)
+		}
+	}
+	return nil
+}
+
+// ComputeHash computes the block hash
+func (b *Block) ComputeHash() string {
+	data := fmt.Sprintf("%d:%d:%s:%s:%s",
+		b.Header.Index,
+		b.Header.Timestamp,
+		b.Header.PreviousHash,
+		b.MerkleRoot,
+		b.StateRoot,
+	)
+	hash := sha256.Sum256([]byte(data))
+	return hex.EncodeToString(hash[:])
+}
+
+// BlockChain represents the full blockchain
+type BlockChain struct {
+	mu           sync.RWMutex
+	Blocks       []*Block
+	PendingTxns  []Transaction
+	blockIndex   map[string]*Block // hash -> block
+	StateDB      *StateDatabase
+	ValidatorSet *ValidatorSet
+	Mempool      *Mempool
+	GenesisBlock *Block
+	Tip          *Block
+}
+
+// NewBlockChain creates a new blockchain instance
+func NewBlockChain() *BlockChain {
+	bc := &BlockChain{
+		Blocks:       make([]*Block, 0),
+		PendingTxns:  make([]Transaction, 0),
+		blockIndex:   make(map[string]*Block),
+		StateDB:      NewStateDatabase(),
+		ValidatorSet: NewValidatorSet(),
+		Mempool:      NewMempool(),
+	}
+	bc.createGenesisBlock()
+	return bc
+}
+
+// createGenesisBlock initializes the genesis block
+func (bc *BlockChain) createGenesisBlock() {
+	genesis := &Block{
+		Header: BlockHeader{
+			Index:        0,
+			Timestamp:    time.Now().Unix(),
+			PreviousHash: "",
+			ValidatorID:  "genesis",
+			Difficulty:   1,
+			Version:      1,
+		},
+		Transactions: []Transaction{},
+		MerkleRoot:   "genesis",
+		StateRoot:    bc.StateDB.ComputeRoot(),
+	}
+	genesis.Header.Hash = genesis.ComputeHash()
+
+	bc.mu.Lock()
+	defer bc.mu.Unlock()
+	bc.Blocks = append(bc.Blocks, genesis)
+	bc.blockIndex[genesis.Header.Hash] = genesis
+	bc.GenesisBlock = genesis
+	bc.Tip = genesis
+}
+
+// AppendBlock adds a new block to the chain
+func (bc *BlockChain) AppendBlock(block *Block) error {
+	if err := block.Validate(); err != nil {
+		return err
+	}
+
+	bc.mu.Lock()
+	defer bc.mu.Unlock()
+
+	// Verify previous hash
+	if block.Header.PreviousHash != bc.Tip.Header.Hash {
+		return fmt.Errorf("block previous hash does not match chain tip")
+	}
+
+	// Update block index and append to chain
+	bc.Blocks = append(bc.Blocks, block)
+	bc.blockIndex[block.Header.Hash] = block
+	bc.Tip = block
+
+	// Remove transactions from mempool
+	txnMap := make(map[string]bool)
+	for _, txn := range block.Transactions {
+		txnMap[txn.ID] = true
+	}
+	newPending := make([]Transaction, 0)
+	for _, txn := range bc.PendingTxns {
+		if !txnMap[txn.ID] {
+			newPending = append(newPending, txn)
+		}
+	}
+	bc.PendingTxns = newPending
+
+	return nil
+}
+
+// GetBlock retrieves a block by hash
+func (bc *BlockChain) GetBlock(hash string) (*Block, error) {
+	bc.mu.RLock()
+	defer bc.mu.RUnlock()
+
+	block, exists := bc.blockIndex[hash]
+	if !exists {
+		return nil, fmt.Errorf("block not found: %s", hash)
+	}
+	return block, nil
+}
+
+// GetBlockByHeight retrieves a block by height (index)
+func (bc *BlockChain) GetBlockByHeight(index uint64) (*Block, error) {
+	bc.mu.RLock()
+	defer bc.mu.RUnlock()
+
+	if index >= uint64(len(bc.Blocks)) {
+		return nil, fmt.Errorf("block height out of range: %d", index)
+	}
+	return bc.Blocks[index], nil
+}
+
+// Height returns the current blockchain height
+func (bc *BlockChain) Height() uint64 {
+	bc.mu.RLock()
+	defer bc.mu.RUnlock()
+	if len(bc.Blocks) == 0 {
+		return 0
+	}
+	return bc.Blocks[len(bc.Blocks)-1].Header.Index
+}
+
+// Length returns the number of blocks in chain
+func (bc *BlockChain) Length() int {
+	bc.mu.RLock()
+	defer bc.mu.RUnlock()
+	return len(bc.Blocks)
+}
+
+// ComputeMerkleRoot computes the Merkle root of transactions
+func ComputeMerkleRoot(transactions []Transaction) string {
+	if len(transactions) == 0 {
+		return hashData("")
+	}
+
+	hashes := make([][]byte, len(transactions))
+	for i, txn := range transactions {
+		hash := sha256.Sum256([]byte(txn.Hash()))
+		hashes[i] = hash[:]
+	}
+
+	for len(hashes) > 1 {
+		if len(hashes)%2 != 0 {
+			hashes = append(hashes, hashes[len(hashes)-1])
+		}
+		newHashes := make([][]byte, 0)
+		for i := 0; i < len(hashes); i += 2 {
+			combined := append(hashes[i], hashes[i+1]...)
+			hash := sha256.Sum256(combined)
+			newHashes = append(newHashes, hash[:])
+		}
+		hashes = newHashes
+	}
+
+	return hex.EncodeToString(hashes[0])
+}
+
+func hashData(data string) string {
+	hash := sha256.Sum256([]byte(data))
+	return hex.EncodeToString(hash[:])
+}

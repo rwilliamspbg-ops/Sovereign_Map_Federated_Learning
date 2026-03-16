@@ -3,7 +3,7 @@
 
 .PHONY: all build test clean deploy logs help \
         test-200-bft setup-200-test clean-200-test benchmark-200 \
-	chaos-test partition-test generate-data smoke
+	chaos-test partition-test generate-data smoke testnet-wallet-readiness
 
 COMPOSE ?= docker compose
 
@@ -212,6 +212,10 @@ smoke:
 	@docker compose -f docker-compose.production.yml config >/dev/null
 	@docker compose -f docker-compose.1000nodes.yml config >/dev/null
 	@echo "✅ Smoke checks passed"
+
+testnet-wallet-readiness:
+	@echo "🧪 Running testnet wallet readiness checks..."
+	@bash scripts/testnet-wallet-readiness.sh
 
 # =============================================================================
 # Results & Reporting

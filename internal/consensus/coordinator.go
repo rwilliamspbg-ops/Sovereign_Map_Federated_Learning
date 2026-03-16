@@ -22,6 +22,8 @@ import (
 	"fmt"
 	"sync"
 	"time"
+
+	"github.com/rwilliamspbg-ops/Sovereign_Map_Federated_Learning/internal/blockchain"
 )
 
 // ModelProposal represents a proposed model update for consensus
@@ -52,6 +54,17 @@ const (
 	Aborted
 )
 
+// ConsensusRound represents a single round of model consensus
+type ConsensusRound struct {
+	RoundNumber    int
+	ProposerID     string
+	ProposalID     string
+	ModelWeights   []byte
+	Metrics        map[string]float64
+	CommitTime     time.Time
+	ValidatorVotes []*Vote
+}
+
 // Coordinator manages distributed consensus for model aggregation
 type Coordinator struct {
 	mu                   sync.RWMutex
@@ -63,6 +76,15 @@ type Coordinator struct {
 	totalNodes           int
 	timeout              time.Duration
 	convergenceThreshold float64
+
+	// Blockchain integration (NEW)
+	blockchain      *blockchain.BlockChain
+	blockchainState *blockchain.StateDatabase
+	blockProposer   *blockchain.BlockProposer
+	contractExec    *blockchain.SmartContractExecutor
+	validators      *blockchain.ValidatorSet
+	mempool         *blockchain.Mempool
+	roundNumber     int
 }
 
 // NewCoordinator creates a new consensus coordinator
@@ -80,7 +102,48 @@ func NewCoordinator(nodeID string, totalNodes int, timeout time.Duration) *Coord
 		totalNodes:           totalNodes,
 		timeout:              timeout,
 		convergenceThreshold: 0.01,
+
+		// Initialize blockchain components (NEW)
+		blockchain:      &blockchain.BlockChain{},
+		blockchainState: blockchain.NewStateDatabase(),
+		validators:      blockchain.NewValidatorSet(),
+		mempool:         blockchain.NewMempool(),
+		roundNumber:     0,
 	}
+}
+
+// SetupBlockchainIntegration configures blockchain components (NEW)
+func (c *Coordinator) SetupBlockchainIntegration(proposer *blockchain.BlockProposer) error {
+	c.mu.Lock()
+	defer c.mu.Unlock()
+
+	if proposer == nil {
+		return fmt.Errorf("block proposer cannot be nil")
+	}
+
+	c.blockProposer = proposer
+	return nil
+}
+
+// SetupContractExecutor configures a smart contract executor for governance actions.
+func (c *Coordinator) SetupContractExecutor(executor *blockchain.SmartContractExecutor) error {
+	c.mu.Lock()
+	defer c.mu.Unlock()
+
+	if executor == nil {
+		return fmt.Errorf("contract executor cannot be nil")
+	}
+
+	c.contractExec = executor
+	return nil
+}
+
+// RegisterValidator adds a node as a validator in the blockchain (NEW)
+func (c *Coordinator) RegisterValidator(nodeID string, stake uint64) error {
+	c.mu.Lock()
+	defer c.mu.Unlock()
+
+	return c.validators.Stake(nodeID, stake)
 }
 
 // ProposeModel submits a new model update for consensus
@@ -167,7 +230,219 @@ func (c *Coordinator) CommitModel(ctx context.Context, proposalID string) error 
 	}
 
 	c.state = Committed
+
+	// NEW: Create blockchain block for this consensus round
+	if c.blockProposer != nil && c.proposals[proposalID] != nil {
+		proposal := c.proposals[proposalID]
+		c.roundNumber++
+
+		// Prepare FL round data for blockchain
+		roundData := map[string]interface{}{
+			"round":               c.roundNumber,
+			"proposer":            proposal.ProposerID,
+			"weights_hash":        fmt.Sprintf("%x", proposal.Weights),
+			"approval_vote_count": approvalCount,
+			"total_votes":         len(votes),
+			"timestamp":           time.Now().Unix(),
+		}
+
+		// Propose and commit block asynchronously
+		go func() {
+			// ProposeBlock includes FL round transaction and other mempool transactions
+			if block, err := c.blockProposer.ProposeBlock(c.nodeID, roundData); err == nil && block != nil {
+				// Commit block to blockchain
+				if err := c.blockProposer.CommitBlock(block); err != nil {
+					fmt.Printf("Error committing block: %v\n", err)
+					return
+				}
+
+				// Get participating node IDs from votes
+				participatingNodes := make([]string, 0, len(votes))
+				for _, vote := range votes {
+					participatingNodes = append(participatingNodes, vote.NodeID)
+				}
+
+				// Distribute rewards to participating validators
+				blockHeight := uint64(c.roundNumber)
+				baseReward := uint64(10000) // 10K tokens per round
+				if err := c.blockProposer.DistributeFlRewards(blockHeight, participatingNodes, baseReward); err != nil {
+					fmt.Printf("Error distributing rewards: %v\n", err)
+				}
+			} else if err != nil {
+				fmt.Printf("Error proposing block: %v\n", err)
+			}
+		}()
+	}
+
 	return nil
+}
+
+// CommitGovernanceProposal finalizes consensus and executes a governance proposal via contract executor.
+func (c *Coordinator) CommitGovernanceProposal(ctx context.Context, consensusProposalID string, contractAddress string, governanceProposalID string) error {
+	c.mu.Lock()
+	defer c.mu.Unlock()
+
+	votes, exists := c.votes[consensusProposalID]
+	if !exists {
+		return fmt.Errorf("proposal %s not found", consensusProposalID)
+	}
+
+	approvalCount := 0
+	for _, vote := range votes {
+		if vote.Approve {
+			approvalCount++
+		}
+	}
+
+	if approvalCount < c.quorumSize {
+		c.state = Aborted
+		return fmt.Errorf("consensus not reached: insufficient votes")
+	}
+	if c.contractExec == nil {
+		return fmt.Errorf("contract executor not configured")
+	}
+
+	txn := &blockchain.Transaction{
+		ID:        fmt.Sprintf("gov_exec_%s_%d", governanceProposalID, time.Now().UnixNano()),
+		Type:      blockchain.TxTypeSmartContract,
+		From:      c.nodeID,
+		Nonce:     0,
+		Gas:       300000,
+		GasPrice:  1,
+		Timestamp: time.Now().Unix(),
+		Signature: []byte("consensus-governance"),
+		Data: map[string]interface{}{
+			"call":             true,
+			"contract_address": contractAddress,
+			"function":         "executeProposal",
+			"params": map[string]interface{}{
+				"proposal_id": governanceProposalID,
+			},
+		},
+	}
+
+	if err := c.contractExec.ExecuteContractTransaction(txn); err != nil {
+		return fmt.Errorf("execute governance proposal: %w", err)
+	}
+
+	c.state = Committed
+	return nil
+}
+
+// SubmitGovernancePolicyProposal creates a governance proposal transaction for policy updates.
+func (c *Coordinator) SubmitGovernancePolicyProposal(
+	ctx context.Context,
+	contractAddress string,
+	title string,
+	description string,
+	policy blockchain.ReputationPolicy,
+	minVotes uint64,
+) (string, error) {
+	c.mu.RLock()
+	exec := c.contractExec
+	nodeID := c.nodeID
+	c.mu.RUnlock()
+
+	if exec == nil {
+		return "", fmt.Errorf("contract executor not configured")
+	}
+	if contractAddress == "" {
+		return "", fmt.Errorf("contract address is required")
+	}
+	if minVotes == 0 {
+		minVotes = 1
+	}
+
+	proposalID := fmt.Sprintf("gov_policy_%d", time.Now().UnixNano())
+	txn := &blockchain.Transaction{
+		ID:        proposalID,
+		Type:      blockchain.TxTypeSmartContract,
+		From:      nodeID,
+		Nonce:     0,
+		Gas:       300000,
+		GasPrice:  1,
+		Timestamp: time.Now().Unix(),
+		Signature: []byte("consensus-governance"),
+		Data: map[string]interface{}{
+			"call":             true,
+			"contract_address": contractAddress,
+			"function":         "createProposal",
+			"params": map[string]interface{}{
+				"title":       title,
+				"description": description,
+				"action":      "set_reputation_policy",
+				"min_votes":   minVotes,
+				"params": map[string]interface{}{
+					"slash_penalty":               policy.SlashPenalty,
+					"reward_gain":                 policy.RewardGain,
+					"epoch_recovery":              policy.EpochRecovery,
+					"reputation_weight":           policy.ReputationWeight,
+					"attestation_weight":          policy.AttestationWeight,
+					"quality_weight":              policy.QualityWeight,
+					"min_quality_score":           policy.MinQualityScore,
+					"quality_penalty":             policy.QualityPenalty,
+					"max_consecutive_low_quality": policy.MaxConsecutiveLowQuality,
+				},
+			},
+		},
+	}
+
+	if err := exec.ExecuteContractTransaction(txn); err != nil {
+		return "", fmt.Errorf("submit governance policy proposal: %w", err)
+	}
+
+	return proposalID, nil
+}
+
+// CastGovernanceVote submits a governance vote transaction.
+func (c *Coordinator) CastGovernanceVote(
+	ctx context.Context,
+	contractAddress string,
+	voterID string,
+	governanceProposalID string,
+	support bool,
+) error {
+	c.mu.RLock()
+	exec := c.contractExec
+	c.mu.RUnlock()
+
+	if exec == nil {
+		return fmt.Errorf("contract executor not configured")
+	}
+	if contractAddress == "" || voterID == "" || governanceProposalID == "" {
+		return fmt.Errorf("contract address, voter id, and proposal id are required")
+	}
+
+	txn := &blockchain.Transaction{
+		ID:        fmt.Sprintf("gov_vote_%s_%d", voterID, time.Now().UnixNano()),
+		Type:      blockchain.TxTypeSmartContract,
+		From:      voterID,
+		Nonce:     0,
+		Gas:       200000,
+		GasPrice:  1,
+		Timestamp: time.Now().Unix(),
+		Signature: []byte("consensus-governance"),
+		Data: map[string]interface{}{
+			"call":             true,
+			"contract_address": contractAddress,
+			"function":         "vote",
+			"params": map[string]interface{}{
+				"proposal_id": governanceProposalID,
+				"support":     support,
+			},
+		},
+	}
+
+	if err := exec.ExecuteContractTransaction(txn); err != nil {
+		return fmt.Errorf("cast governance vote: %w", err)
+	}
+
+	return nil
+}
+
+// CommitGovernancePolicy commits consensus and executes policy proposal.
+func (c *Coordinator) CommitGovernancePolicy(ctx context.Context, consensusProposalID string, contractAddress string, governanceProposalID string) error {
+	return c.CommitGovernanceProposal(ctx, consensusProposalID, contractAddress, governanceProposalID)
 }
 
 // GetState returns the current consensus state
@@ -185,4 +460,27 @@ func (c *Coordinator) Reset() {
 	c.proposals = make(map[string]*ModelProposal)
 	c.votes = make(map[string][]*Vote)
 	c.state = Proposing
+	// Note: roundNumber is NOT reset - it increments monotonically
+}
+
+// GetConsensusRound constructs a ConsensusRound from current consensus state (NEW)
+func (c *Coordinator) GetConsensusRound(proposalID string) (*ConsensusRound, error) {
+	c.mu.RLock()
+	defer c.mu.RUnlock()
+
+	proposal, exists := c.proposals[proposalID]
+	if !exists {
+		return nil, fmt.Errorf("proposal %s not found", proposalID)
+	}
+
+	votes := c.votes[proposalID]
+
+	return &ConsensusRound{
+		RoundNumber:    c.roundNumber,
+		ProposerID:     proposal.ProposerID,
+		ProposalID:     proposalID,
+		ModelWeights:   proposal.Weights,
+		CommitTime:     time.Now(),
+		ValidatorVotes: votes,
+	}, nil
 }
