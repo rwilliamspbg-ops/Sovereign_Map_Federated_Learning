@@ -23,19 +23,27 @@ jobs:
         uses: actions/setup-node@53b83947a5a98c8d113130e565377fae1a50d02f
         with:
           node-version: '20'
+          cache: npm
+          cache-dependency-path: |
+            package-lock.json
+            packages/core/package-lock.json
+            packages/privacy/package-lock.json
+            frontend/package-lock.json
 
-      - name: Enable Corepack
+      - name: Install root and package dependencies
         run: |
-          corepack enable
-          corepack prepare yarn@4.1.0 --activate
+          npm ci
+          npm --prefix packages/core ci
+          npm --prefix packages/privacy ci
 
-      - name: Install dependencies
-        run: yarn install
-        env:
-          YARN_ENABLE_IMMUTABLE_INSTALLS: false
+      - name: Build SDK packages
+        run: npm run build:libs
 
-      - name: Build frontend packages
-        run: yarn workspaces foreach -A --exclude "@sovereignmap/frontend" run build
+      - name: Install frontend dependencies
+        run: npm --prefix frontend ci
+
+      - name: Build frontend
+        run: npm --prefix frontend run build
 
       - name: Set up Python
         uses: actions/setup-python@a309ff8b426b58ec0e2a45f0f869d46889d02405
@@ -71,7 +79,7 @@ jobs:
       - name: Install Python dependencies
         run: |
           python -m pip install --upgrade pip
-          pip install numpy pandas matplotlib  # Add any other libs you need
+          pip install -r requirements.txt
 
       - name: Run Consensus Verification
         run: python3 verify_consensus.py

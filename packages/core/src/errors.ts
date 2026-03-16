@@ -22,13 +22,14 @@ export class SovereignMapError extends Error {
   }
 
   toJSON() {
+		const causeMessage = this.cause instanceof Error ? this.cause.message : undefined;
     return {
       name: this.name,
       message: this.message,
       code: this.code,
       timestamp: this.timestamp.toISOString(),
       stack: this.stack,
-      cause: this.cause?.message
+      cause: causeMessage
     };
   }
 }

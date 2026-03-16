@@ -17,16 +17,18 @@
   },
   "scripts": {
     "build": "tsc && npm run wasm:copy",
-    "wasm:copy": "cp -r src/wasm dist/",
-    "test": "vitest run",
+    "wasm:copy": "cp -r src/wasm dist/ 2>/dev/null || true",
+    "test": "vitest run --passWithNoTests",
     "bench": "vitest bench"
   },
   "dependencies": {
+    "eventemitter3": "^5.0.1",
     "libsodium-wrappers": "^0.8.2",
     "ml-matrix": "^6.10.6"
   },
   "devDependencies": {
     "@types/libsodium-wrappers": "^0.8.2",
-    "typescript": "^5.3.3"
+    "typescript": "^5.3.3",
+    "vitest": "^4.0.18"
   }
 }

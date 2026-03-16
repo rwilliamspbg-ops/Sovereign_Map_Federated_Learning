@@ -77,6 +77,10 @@ export interface SyncStats {
 export interface FLRound {
   id: string;
   globalModelHash: string;
+  round?: number;
+  modelParams?: {
+    weightCount?: number;
+  };
   trainingConfig: {
     epochs: number;
     batchSize: number;
@@ -139,6 +143,7 @@ export interface MetricsSnapshot {
 
 // Event types
 export interface NodeEvents {
+  ready: NodeStatus;
   stateChange: { from: NodeState; to: NodeState };
   privacyBudgetUpdate: { remaining: number; total: number };
   connectivityLost: void;

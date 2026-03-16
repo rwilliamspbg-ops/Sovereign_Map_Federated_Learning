@@ -5,11 +5,11 @@ import type { Logger } from 'pino';
 
 import { createLogger } from './logger.js';
 import { NetworkClient } from './network.js';
-import type { NodeEvents } from './protocol.js';
 import {
   SovereignMapError,
   NodeInitializationError,
-  PrivacyBudgetExceededError
+  PrivacyBudgetExceededError,
+  ConsensusError
 } from './errors.js';
 import type {
   NodeConfig,
@@ -22,13 +22,14 @@ import type {
   RoundResult,
   AggregatorConfig,
   MetricsSnapshot,
+  NodeEvents,
   HardwareCapabilities,
   PrivacyStatus,
   IslandStatus
 } from './types.js';
 
 // Re-export types
-export { NodeConfig, NodeStatus };
+export type { NodeConfig, NodeStatus };
 
 /**
  * Node operational states
@@ -61,32 +62,32 @@ export const NodeConfigSchema = z.object({
     epsilon: z.number().min(0.1).max(10.0).default(1.0),
     delta: z.number().min(1e-10).max(1e-3).default(1e-5),
     mechanism: z.enum(['gaussian', 'laplace']).default('gaussian')
-  }).default({}),
+  }).default({ epsilon: 1.0, delta: 1e-5, mechanism: 'gaussian' }),
   hardware: z.object({
     npuTops: z.number().min(0).default(0),
     tpmAvailable: z.boolean().default(false),
     maxMemoryMB: z.number().min(512).default(4096),
     cpuCores: z.number().min(1).default(4)
-  }).default({}),
+  }).default({ npuTops: 0, tpmAvailable: false, maxMemoryMB: 4096, cpuCores: 4 }),
   network: z.object({
     bootstrapPeers: z.array(z.string()).default([]),
     maxConnections: z.number().min(10).max(1000).default(50),
     enableRelay: z.boolean().default(true)
-  }).default({}),
+  }).default({ bootstrapPeers: [], maxConnections: 50, enableRelay: true }),
   islandMode: z.object({
     enabled: z.boolean().default(true),
     storagePath: z.string().default('./island-storage'),
     maxOfflineHours: z.number().min(1).max(168).default(24)
-  }).default({}),
+  }).default({ enabled: true, storagePath: './island-storage', maxOfflineHours: 24 }),
   consensus: z.object({
     enabled: z.boolean().default(true),
     aggregatorTier: z.enum(['none', 'edge', 'regional', 'global']).default('none'),
     maxAggregationChildren: z.number().min(0).max(200).default(0)
-  }).default({}),
+  }).default({ enabled: true, aggregatorTier: 'none', maxAggregationChildren: 0 }),
   logging: z.object({
     level: z.enum(['trace', 'debug', 'info', 'warn', 'error']).default('info'),
     pretty: z.boolean().default(false)
-  }).default({})
+  }).default({ level: 'info', pretty: false })
 });
 
 /**

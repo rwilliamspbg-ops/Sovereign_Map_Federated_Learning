@@ -6,10 +6,9 @@ import { EventEmitter } from 'eventemitter3';
 import type { Logger } from 'pino';
 import { createLibp2p, Libp2pOptions } from 'libp2p';
 import { tcp } from '@libp2p/tcp';
-import { mplex } from '@libp2p/mplex';
-import { noise } from '@libp2p/noise';
+import { yamux } from '@chainsafe/libp2p-yamux';
+import { noise } from '@chainsafe/libp2p-noise';
 import { multiaddr } from '@multiformats/multiaddr';
-import type { PeerId } from '@libp2p/interface-peer-id';
 
 export interface NetworkTopology {
   type: 'mesh' | 'star' | 'hybrid';
@@ -53,15 +52,9 @@ export class NetworkClient extends EventEmitter {
     try {
       const options: Libp2pOptions = {
         transports: [tcp()],
-        connectionEncryption: [noise()],
-        streamMuxers: [mplex()],
-        peerDiscovery: [],
-        relay: this.config.enableRelay ? {
-          enabled: true,
-          hop: {
-            enabled: false
-          }
-        } : undefined
+        connectionEncrypters: [noise()],
+        streamMuxers: [yamux()],
+        peerDiscovery: []
       };
 
       this.node = await createLibp2p(options);

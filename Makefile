@@ -207,6 +207,8 @@ smoke:
 	@PKGS=$$(go list ./... | grep -Ev '(/node_modules/|/sensors/camera$$|/sensors/slam$$|/storage/map_tiles$$)'); \
 		go test -short $$PKGS
 	@npm ci
+	@npm --prefix frontend ci
+	@npm --prefix frontend run build
 	@npm --prefix packages/core ci
 	@npm --prefix packages/privacy ci
 	@docker compose -f docker-compose.production.yml config >/dev/null

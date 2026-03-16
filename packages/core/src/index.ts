@@ -26,12 +26,15 @@
  */
 
 // Core exports
-export { SovereignNode, NodeConfig, NodeState, NodeStatus } from './node.js';
-export { NetworkClient, NetworkTopology, NetworkStatus } from './network.js';
-export { ProtocolMessage, MessageType } from './protocol.js';
+export { SovereignNode, NodeState } from './node.js';
+export type { NodeConfig, NodeStatus } from './node.js';
+export { NetworkClient } from './network.js';
+export type { NetworkTopology, NetworkStatus } from './network.js';
+export { MessageType } from './protocol.js';
+export type { ProtocolMessage } from './protocol.js';
 
 // Type exports
-export {
+export type {
   MapUpdate,
   PrivatizedUpdate,
   SubmissionResult,
@@ -39,7 +42,7 @@ export {
   FLRound,
   RoundResult,
   AggregatorConfig,
-  NodeMetrics,
+  MetricsSnapshot,
   PrivacyStatus,
   IslandStatus
 } from './types.js';
@@ -62,4 +65,5 @@ export const SGP001_VERSION = '1.0.0';
 export const MIN_NODE_VERSION = '18.0.0';
 
 // Logger
-export { createLogger, Logger } from './logger.js';
+export { createLogger } from './logger.js';
+export type { Logger } from './logger.js';

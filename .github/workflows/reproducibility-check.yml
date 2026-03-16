@@ -38,6 +38,7 @@ jobs:
           cache: npm
           cache-dependency-path: |
             package-lock.json
+            frontend/package-lock.json
             packages/core/package-lock.json
             packages/privacy/package-lock.json
 

@@ -19,7 +19,12 @@ jobs:
       - uses: actions/setup-node@53b83947a5a98c8d113130e565377fae1a50d02f
         with:
           node-version: '20'
-      - run: npm install
+          cache: npm
+          cache-dependency-path: |
+            package-lock.json
+            packages/core/package-lock.json
+            packages/privacy/package-lock.json
+      - run: npm ci
       - run: npm run build:libs
       - run: npm run test:ci
 
@@ -51,7 +56,12 @@ jobs:
         with:
           node-version: '20'
           registry-url: 'https://registry.npmjs.org'
-      - run: npm install
+          cache: npm
+          cache-dependency-path: |
+            package-lock.json
+            packages/core/package-lock.json
+            packages/privacy/package-lock.json
+      - run: npm ci
         if: steps.npm_token.outputs.present == 'true'
       - run: npm run build:libs
         if: steps.npm_token.outputs.present == 'true'

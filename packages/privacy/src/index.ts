@@ -196,12 +196,12 @@ export class PrivacyEngine extends EventEmitter<{
       timestamp: Date.now(),
     });
     
-    return sodium.to_hex(sodium.crypto_generichash(32, data));
+    return sodium.to_hex(sodium.crypto_generichash(32, data, null));
   }
   
   private hashNoise(noise: Float64Array): string {
     const bytes = new Uint8Array(noise.buffer);
-    return sodium.to_hex(sodium.crypto_generichash(32, bytes));
+    return sodium.to_hex(sodium.crypto_generichash(32, bytes, null));
   }
   
   async destroy(): Promise<void> {
