@@ -26,6 +26,8 @@ cd Sovereign_Map_Federated_Learning
 - **Full Guide**: [GENESIS_LAUNCH_GUIDE.md](/Documentation/Deployment/GENESIS_LAUNCH_GUIDE.md) (comprehensive documentation)
 - **Architecture**: [ARCHITECTURE.md](/Documentation/Architecture/ARCHITECTURE.md) (system design)
 - **Reproducibility**: [REPRODUCIBLE_SETUP.md](/Documentation/Guides/REPRODUCIBLE_SETUP.md) (clone and smoke-check workflow)
+- **Participant Local Join**: [PARTICIPANT_JOIN_LOCAL.md](/Documentation/Deployment/PARTICIPANT_JOIN_LOCAL.md)
+- **Windows EXE Client**: [WINDOWS_CLIENT_EXE.md](/Documentation/Deployment/WINDOWS_CLIENT_EXE.md)
 
 **Contributing:** See [CONTRIBUTING.md](CONTRIBUTING.md) for PR checklist, CodeQL guardrails, and branch protection recommendations.
 
@@ -41,6 +43,13 @@ cd Sovereign_Map_Federated_Learning
   - [IMPLEMENTATION_SUMMARY.md](/Documentation/Architecture/IMPLEMENTATION_SUMMARY.md)
   - [OPENCV_INSTALL.md](/Documentation/Guides/OPENCV_INSTALL.md)
   - [ROADMAP.md](/Documentation/Project/ROADMAP.md)
+- Post-v1.1.0 upgrade stream completed for:
+  - Real tokenomics telemetry exporter and compatibility rules
+  - Event-driven TPM attestation/message metrics ingestion
+  - FL SLO alert rules and observability CI guardrails
+  - Model registry persistence endpoint and channel overlay launcher
+  - Local participant onboarding API (invite/register/revoke) with cert issuance
+  - Windows FL client launcher and automated EXE build pipeline
 
 ---
 
@@ -60,6 +69,9 @@ cd Sovereign_Map_Federated_Learning
 [![Reproducibility Check](https://github.com/rwilliamspbg-ops/Sovereign_Map_Federated_Learning/actions/workflows/reproducibility-check.yml/badge.svg?branch=main)](https://github.com/rwilliamspbg-ops/Sovereign_Map_Federated_Learning/actions/workflows/reproducibility-check.yml)
 [![Test Artifacts Review](https://github.com/rwilliamspbg-ops/Sovereign_Map_Federated_Learning/actions/workflows/test-artifacts-review.yml/badge.svg?branch=main)](https://github.com/rwilliamspbg-ops/Sovereign_Map_Federated_Learning/actions/workflows/test-artifacts-review.yml)
 [![Secret Scan](https://github.com/rwilliamspbg-ops/Sovereign_Map_Federated_Learning/actions/workflows/secret-scan.yml/badge.svg?branch=main)](https://github.com/rwilliamspbg-ops/Sovereign_Map_Federated_Learning/actions/workflows/secret-scan.yml)
+[![Security Supply Chain](https://github.com/rwilliamspbg-ops/Sovereign_Map_Federated_Learning/actions/workflows/security-supply-chain.yml/badge.svg?branch=main)](https://github.com/rwilliamspbg-ops/Sovereign_Map_Federated_Learning/actions/workflows/security-supply-chain.yml)
+[![Observability CI](https://github.com/rwilliamspbg-ops/Sovereign_Map_Federated_Learning/actions/workflows/observability-ci.yml/badge.svg?branch=main)](https://github.com/rwilliamspbg-ops/Sovereign_Map_Federated_Learning/actions/workflows/observability-ci.yml)
+[![Windows Client EXE Build](https://github.com/rwilliamspbg-ops/Sovereign_Map_Federated_Learning/actions/workflows/windows-client-exe.yml/badge.svg?branch=main)](https://github.com/rwilliamspbg-ops/Sovereign_Map_Federated_Learning/actions/workflows/windows-client-exe.yml)
 [![Workflow Action Pin Check](https://github.com/rwilliamspbg-ops/Sovereign_Map_Federated_Learning/actions/workflows/workflow-action-pin-check.yml/badge.svg?branch=main)](https://github.com/rwilliamspbg-ops/Sovereign_Map_Federated_Learning/actions/workflows/workflow-action-pin-check.yml)
 [![Governance Check](https://github.com/rwilliamspbg-ops/Sovereign_Map_Federated_Learning/actions/workflows/governance-check.yml/badge.svg?branch=main)](https://github.com/rwilliamspbg-ops/Sovereign_Map_Federated_Learning/actions/workflows/governance-check.yml)
 
@@ -569,6 +581,8 @@ func main() {
 	agg.StartServer(":8080")
 	
 	// Start metrics API on port 8000
+  - **Participant Local Join**: [PARTICIPANT_JOIN_LOCAL.md](/Documentation/Deployment/PARTICIPANT_JOIN_LOCAL.md)
+  - **Windows EXE Client**: [WINDOWS_CLIENT_EXE.md](/Documentation/Deployment/WINDOWS_CLIENT_EXE.md)
 	metrics.StartAPI(":8000")
 	
 	// Run convergence tracking loop

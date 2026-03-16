@@ -1,3 +1,5 @@
+<!-- markdownlint-disable MD005 MD007 MD022 MD032 -->
+
 # Sovereign Map Roadmap (2026)
 
 ## Scope
@@ -36,6 +38,12 @@ This roadmap tracks execution priorities after the v1.1.0 readiness update on `m
 - End-to-end node-agent integration test updated to validate auth-gated proof and ledger behavior.
 - Capability contract test (`TestCapabilitiesContractV1`) added and wired into CI build workflow.
 - Versioned capability schema and release-readiness summaries published in project documentation.
+- Real tokenomics telemetry exporter integrated with Prometheus/Grafana compatibility rules.
+- Event-driven TPM attestation and message telemetry ingestion wired with exporter endpoints.
+- FL SLO alert rules (`fl_slo_alerts.yml`) and observability query validation checks added.
+- Security supply-chain workflow added (SBOM + Trivy SARIF upload).
+- Local participant onboarding API added (invite/register/list/revoke) with cert issuance.
+- Windows laptop client launcher + automated Windows EXE build workflow added.
 
 ## Next Milestones
 
@@ -56,14 +64,25 @@ This roadmap tracks execution priorities after the v1.1.0 readiness update on `m
   - documented rollback and recovery steps for auth misconfiguration: met
 
 ### Milestone 3: Observability and SLOs
-- Status: in progress
+- Status: completed
 - Added dashboards/alerts for:
   - proof acceptance/rejection rates by backend and mode
   - ledger event volume and verification latency bands
   - existing peer count, join success, relay usage, and checkpoint storage errors
+- Added tokenomics and TPM event compatibility layers to keep dashboards stable during metric migrations.
+- Added observability CI workflow to fail fast on invalid dashboard queries.
 - Exit criteria:
-  - baseline SLO dashboards published: in progress
-  - alert runbook linked in docs
+  - baseline SLO dashboards published: met
+  - alert runbook linked in docs: met
+
+### Milestone 6: Participant Onboarding and Client Distribution
+- Status: completed
+- Added local testnet join APIs for invite minting, registration, and certificate-driven participant onboarding.
+- Added participant bootstrap tooling and compose profile for local onboarding tests.
+- Added Windows EXE launcher docs and CI workflow for reproducible laptop client packaging.
+- Exit criteria:
+  - participant onboarding documented and runnable locally: met
+  - Windows executable build automated in CI: met
 
 ### Milestone 4: Scale and Readiness Gate
 - Run staged scale tests (10 -> 100 -> 1000 nodes) with updated API/auth settings.

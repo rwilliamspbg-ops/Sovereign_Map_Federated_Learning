@@ -16,6 +16,8 @@ This folder centralizes repository documentation discovery.
 - [Project/RELEASE_READINESS_2026-03-15.md](Project/RELEASE_READINESS_2026-03-15.md)
 - [Project/TEST_FILE_RELOCATION_ADDENDUM_2026-03-15.md](Project/TEST_FILE_RELOCATION_ADDENDUM_2026-03-15.md)
 - [Security/API_AUTH_TOKEN_ROTATION_RUNBOOK.md](Security/API_AUTH_TOKEN_ROTATION_RUNBOOK.md)
+- [Deployment/PARTICIPANT_JOIN_LOCAL.md](Deployment/PARTICIPANT_JOIN_LOCAL.md)
+- [Deployment/WINDOWS_CLIENT_EXE.md](Deployment/WINDOWS_CLIENT_EXE.md)
 
 ## Topic Folders
 
