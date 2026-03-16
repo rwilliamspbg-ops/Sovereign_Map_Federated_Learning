@@ -2,13 +2,27 @@
 
 # Sovereign Map
 
-[![Release](https://img.shields.io/github/v/release/rwilliamspbg-ops/Sovereign_Map_Federated_Learning?display_name=tag)](https://github.com/rwilliamspbg-ops/Sovereign_Map_Federated_Learning/releases)
-[![Build and Test](https://github.com/rwilliamspbg-ops/Sovereign_Map_Federated_Learning/actions/workflows/build.yml/badge.svg?branch=main)](https://github.com/rwilliamspbg-ops/Sovereign_Map_Federated_Learning/actions/workflows/build.yml)
-[![Lint Code Base](https://github.com/rwilliamspbg-ops/Sovereign_Map_Federated_Learning/actions/workflows/lint.yml/badge.svg?branch=main)](https://github.com/rwilliamspbg-ops/Sovereign_Map_Federated_Learning/actions/workflows/lint.yml)
-[![Reproducibility Check](https://github.com/rwilliamspbg-ops/Sovereign_Map_Federated_Learning/actions/workflows/reproducibility-check.yml/badge.svg?branch=main)](https://github.com/rwilliamspbg-ops/Sovereign_Map_Federated_Learning/actions/workflows/reproducibility-check.yml)
-[![Governance Check](https://github.com/rwilliamspbg-ops/Sovereign_Map_Federated_Learning/actions/workflows/governance-check.yml/badge.svg?branch=main)](https://github.com/rwilliamspbg-ops/Sovereign_Map_Federated_Learning/actions/workflows/governance-check.yml)
-[![CodeQL Security Analysis](https://github.com/rwilliamspbg-ops/Sovereign_Map_Federated_Learning/actions/workflows/codeql-analysis.yml/badge.svg?branch=main)](https://github.com/rwilliamspbg-ops/Sovereign_Map_Federated_Learning/actions/workflows/codeql-analysis.yml)
-[![Docs Link Check](https://github.com/rwilliamspbg-ops/Sovereign_Map_Federated_Learning/actions/workflows/docs-link-check.yml/badge.svg?branch=main)](https://github.com/rwilliamspbg-ops/Sovereign_Map_Federated_Learning/actions/workflows/docs-link-check.yml)
+## Live Project Pulse
+
+[![Release](https://img.shields.io/github/v/release/rwilliamspbg-ops/Sovereign_Map_Federated_Learning?display_name=tag&style=for-the-badge&logo=github&color=0b7285)](https://github.com/rwilliamspbg-ops/Sovereign_Map_Federated_Learning/releases)
+[![Last Commit](https://img.shields.io/github/last-commit/rwilliamspbg-ops/Sovereign_Map_Federated_Learning?style=for-the-badge&logo=git&color=1c7ed6)](https://github.com/rwilliamspbg-ops/Sovereign_Map_Federated_Learning/commits/main)
+[![Repo Size](https://img.shields.io/github/repo-size/rwilliamspbg-ops/Sovereign_Map_Federated_Learning?style=for-the-badge&logo=files&color=2b8a3e)](https://github.com/rwilliamspbg-ops/Sovereign_Map_Federated_Learning)
+[![Contributors](https://img.shields.io/github/contributors/rwilliamspbg-ops/Sovereign_Map_Federated_Learning?style=for-the-badge&logo=github&color=087f5b)](https://github.com/rwilliamspbg-ops/Sovereign_Map_Federated_Learning/graphs/contributors)
+[![Issues](https://img.shields.io/github/issues/rwilliamspbg-ops/Sovereign_Map_Federated_Learning?style=for-the-badge&logo=github&color=364fc7)](https://github.com/rwilliamspbg-ops/Sovereign_Map_Federated_Learning/issues)
+[![Pull Requests](https://img.shields.io/github/issues-pr/rwilliamspbg-ops/Sovereign_Map_Federated_Learning?style=for-the-badge&logo=github&color=5f3dc4)](https://github.com/rwilliamspbg-ops/Sovereign_Map_Federated_Learning/pulls)
+[![Stars](https://img.shields.io/github/stars/rwilliamspbg-ops/Sovereign_Map_Federated_Learning?style=for-the-badge&logo=github&color=f08c00)](https://github.com/rwilliamspbg-ops/Sovereign_Map_Federated_Learning/stargazers)
+[![Forks](https://img.shields.io/github/forks/rwilliamspbg-ops/Sovereign_Map_Federated_Learning?style=for-the-badge&logo=github&color=e67700)](https://github.com/rwilliamspbg-ops/Sovereign_Map_Federated_Learning/network/members)
+
+## CI and Security Gates
+
+[![Build and Test](https://img.shields.io/github/actions/workflow/status/rwilliamspbg-ops/Sovereign_Map_Federated_Learning/build.yml?branch=main&style=for-the-badge&logo=githubactions&label=Build%20and%20Test)](https://github.com/rwilliamspbg-ops/Sovereign_Map_Federated_Learning/actions/workflows/build.yml)
+[![Lint Code Base](https://img.shields.io/github/actions/workflow/status/rwilliamspbg-ops/Sovereign_Map_Federated_Learning/lint.yml?branch=main&style=for-the-badge&logo=eslint&label=Lint)](https://github.com/rwilliamspbg-ops/Sovereign_Map_Federated_Learning/actions/workflows/lint.yml)
+[![Reproducibility Check](https://img.shields.io/github/actions/workflow/status/rwilliamspbg-ops/Sovereign_Map_Federated_Learning/reproducibility-check.yml?branch=main&style=for-the-badge&logo=dependabot&label=Reproducibility)](https://github.com/rwilliamspbg-ops/Sovereign_Map_Federated_Learning/actions/workflows/reproducibility-check.yml)
+[![Governance Check](https://img.shields.io/github/actions/workflow/status/rwilliamspbg-ops/Sovereign_Map_Federated_Learning/governance-check.yml?branch=main&style=for-the-badge&logo=buffer&label=Governance)](https://github.com/rwilliamspbg-ops/Sovereign_Map_Federated_Learning/actions/workflows/governance-check.yml)
+[![CodeQL Security Analysis](https://img.shields.io/github/actions/workflow/status/rwilliamspbg-ops/Sovereign_Map_Federated_Learning/codeql-analysis.yml?branch=main&style=for-the-badge&logo=github&label=CodeQL)](https://github.com/rwilliamspbg-ops/Sovereign_Map_Federated_Learning/actions/workflows/codeql-analysis.yml)
+[![Security Supply Chain](https://img.shields.io/github/actions/workflow/status/rwilliamspbg-ops/Sovereign_Map_Federated_Learning/security-supply-chain.yml?branch=main&style=for-the-badge&logo=snyk&label=Supply%20Chain)](https://github.com/rwilliamspbg-ops/Sovereign_Map_Federated_Learning/actions/workflows/security-supply-chain.yml)
+[![Secret Scan](https://img.shields.io/github/actions/workflow/status/rwilliamspbg-ops/Sovereign_Map_Federated_Learning/secret-scan.yml?branch=main&style=for-the-badge&logo=datadog&label=Secret%20Scan)](https://github.com/rwilliamspbg-ops/Sovereign_Map_Federated_Learning/actions/workflows/secret-scan.yml)
+[![Docs Link Check](https://img.shields.io/github/actions/workflow/status/rwilliamspbg-ops/Sovereign_Map_Federated_Learning/docs-link-check.yml?branch=main&style=for-the-badge&logo=readthedocs&label=Docs%20Links)](https://github.com/rwilliamspbg-ops/Sovereign_Map_Federated_Learning/actions/workflows/docs-link-check.yml)
 
 Sovereign Map is a sovereign intelligence coordination platform that combines federated learning, blockchain governance, trust attestation, and observability into one deployable stack.
 
@@ -100,3 +114,55 @@ make testnet-wallet-readiness
 ## Contributing
 
 All changes that affect runtime behavior, security posture, CI gates, or deployment defaults must include documentation updates in the same PR. See [CONTRIBUTING.md](CONTRIBUTING.md).
+
+## Contribution Paths
+
+### For Developers
+
+- Core protocol and consensus implementation:
+  - `internal/blockchain/`
+  - `internal/consensus/`
+  - `internal/node/`
+- API and trust features:
+  - `internal/api/`
+  - `cmd/node-agent/`
+  - `tpm_cert_manager.py`
+- SDK and client surfaces:
+  - `packages/core/`
+  - `packages/privacy/`
+  - `frontend/`
+  - `client/python-sdk/`
+- Recommended local validation before PR:
+  - `npm ci`
+  - `npm run build:libs`
+  - `npm run test:ci`
+  - `go test ./internal/... -count=1`
+  - `python3 scripts/check_active_doc_links.py`
+
+### For Researchers
+
+- Federated learning behavior, convergence, and robustness experiments:
+  - `internal/convergence/`
+  - `simulate-demo.py`
+  - `verify_consensus.py`
+  - `results/`
+- Trust and security evaluation areas:
+  - `internal/tpm/`
+  - `secure_communication.py`
+  - `Documentation/Security/`
+- Performance and scale studies:
+  - `Documentation/Testing/`
+  - `Documentation/Performance/`
+  - `generate-k8s-5000-node-plots.py`
+- Research contribution expectations:
+  - Document methodology, assumptions, and reproducibility steps.
+  - Include raw artifacts and summaries under `results/` and `Documentation/Reports/`.
+  - Add or update runbooks when findings change operator guidance.
+
+### How to Submit High-Impact PRs
+
+1. Open an issue that defines the problem, constraints, and expected measurable outcome.
+2. Link code changes to tests and a reproducible validation command set.
+3. Update README and impacted docs in the same PR.
+4. Include baseline vs improved metrics when changing performance, trust, or model quality behavior.
+5. Use the repository PR template at `.github/pull_request_template.md`.

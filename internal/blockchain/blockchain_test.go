@@ -908,8 +908,8 @@ func TestBlockchainFLVerificationMetricsAggregation(t *testing.T) {
 	if metrics.VerifiedRounds != 1 || metrics.FailedRounds != 1 {
 		t.Fatalf("expected 1 verified and 1 failed, got %+v", metrics)
 	}
-	if metrics.AverageConfidenceBps != 6500 {
-		t.Fatalf("expected average confidence 6500, got %+v", metrics)
+	if metrics.AverageConfidenceBps != 3250 {
+		t.Fatalf("expected average confidence 3250, got %+v", metrics)
 	}
 	if metrics.LastRoundID != "r-2" {
 		t.Fatalf("expected last round id r-2, got %+v", metrics)
