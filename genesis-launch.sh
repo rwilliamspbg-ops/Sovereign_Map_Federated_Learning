@@ -22,7 +22,7 @@ LAUNCH_TIME=$(date +%s)
 LAUNCH_DATE=$(date '+%Y-%m-%d %H:%M:%S')
 LOG_FILE="genesis-launch-${LAUNCH_TIME}.log"
 NETWORK_NAME="sovereign-genesis"
-DEFAULT_NODE_COUNT=15
+DEFAULT_NODE_COUNT=3
 MIN_NODES="${MIN_NODES:-$DEFAULT_NODE_COUNT}"
 TARGET_NODES="${TARGET_NODES:-$MIN_NODES}"
 
@@ -56,6 +56,10 @@ log_header() {
     local underline
     underline=${1//?/=}
     echo -e "${MAGENTA}${underline}${NC}" | tee -a "$LOG_FILE"
+}
+
+get_node_services() {
+    docker compose -f docker-compose.production.yml config --services | grep '^node-agent' || true
 }
 
 ##############################################################################
@@ -232,16 +236,33 @@ EOF
 launch_network() {
     log_header "🚀 LAUNCHING NODE NETWORK"
 
+    local available_nodes
+    local desired_nodes
+    local node_services
+
+    mapfile -t node_services < <(get_node_services)
+    available_nodes=${#node_services[@]}
+    if [ "$available_nodes" -eq 0 ]; then
+        log_error "No node-agent services found in docker-compose.production.yml"
+        return 1
+    fi
+
+    desired_nodes=$MIN_NODES
+    if [ "$desired_nodes" -gt "$available_nodes" ]; then
+        log_warn "Requested MIN_NODES=$desired_nodes but only $available_nodes node services are defined; using $available_nodes"
+        desired_nodes=$available_nodes
+    fi
+
     # Clear stale compose state for core services before startup
-    docker compose -f docker-compose.production.yml rm -fsv backend frontend node-agent mongo redis >/dev/null 2>&1 || true
+    docker compose -f docker-compose.production.yml rm -fsv backend frontend mongo redis "${node_services[@]}" >/dev/null 2>&1 || true
     
     log_info "Starting Sovereign Map backend..."
     docker compose -f docker-compose.production.yml up -d --build --no-recreate backend 2>&1 | tee -a "$LOG_FILE"
     
     sleep 5
     
-    log_info "Deploying initial node set ($MIN_NODES nodes)..."
-    docker compose -f docker-compose.production.yml up -d --build --no-recreate --scale node-agent="$MIN_NODES" mongo redis backend frontend node-agent 2>&1 | tee -a "$LOG_FILE"
+    log_info "Deploying initial node set ($desired_nodes nodes)..."
+    docker compose -f docker-compose.production.yml up -d --build --no-recreate mongo redis backend frontend "${node_services[@]:0:$desired_nodes}" 2>&1 | tee -a "$LOG_FILE"
     
     log_success "Initial nodes deployed"
     
@@ -274,12 +295,12 @@ monitor_health() {
     # Check node count
     local active_nodes
     active_nodes=$(docker ps --filter "name=node-agent" --format "{{.Names}}" | wc -l)
-    log_info "Active nodes: $active_nodes / $MIN_NODES"
-    
-    if [ "$active_nodes" -ge "$MIN_NODES" ]; then
-        log_success "Minimum node count reached"
+    log_info "Active nodes: $active_nodes"
+
+    if [ "$active_nodes" -gt 0 ]; then
+        log_success "Node agents are running"
     else
-        log_warn "Node count below minimum threshold"
+        log_warn "No node agents are running"
     fi
     
     # Check FL metrics
@@ -325,7 +346,7 @@ display_dashboard() {
     echo -e "${YELLOW}🔧 MANAGEMENT COMMANDS:${NC}"
     echo ""
     echo -e "  View logs:         ${GREEN}docker compose logs -f${NC}"
-    echo -e "  Scale nodes:       ${GREEN}docker compose -f docker-compose.production.yml up -d --scale node-agent=$MIN_NODES${NC}"
+    echo -e "  Start node agents: ${GREEN}docker compose -f docker-compose.production.yml up -d node-agent-1 node-agent-2 node-agent-3${NC}"
     echo -e "  Stop network:      ${GREEN}docker compose -f docker-compose.production.yml down --remove-orphans${NC}"
     echo -e "  Restart services:  ${GREEN}docker compose -f docker-compose.production.yml restart${NC}"
     echo ""

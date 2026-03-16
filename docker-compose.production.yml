@@ -200,7 +200,7 @@ services:
         condition: service_completed_successfully
     restart: always
     healthcheck:
-      test: ["CMD", "pgrep", "-f", "python"]
+      test: ["CMD-SHELL", "test -r /proc/1/comm && grep -qi python /proc/1/comm"]
       interval: 15s
       timeout: 10s
       retries: 3
@@ -253,7 +253,7 @@ services:
         condition: service_completed_successfully
     restart: always
     healthcheck:
-      test: ["CMD", "pgrep", "-f", "python"]
+      test: ["CMD-SHELL", "test -r /proc/1/comm && grep -qi python /proc/1/comm"]
       interval: 15s
       timeout: 10s
       retries: 3
@@ -306,7 +306,7 @@ services:
         condition: service_completed_successfully
     restart: always
     healthcheck:
-      test: ["CMD", "pgrep", "-f", "python"]
+      test: ["CMD-SHELL", "test -r /proc/1/comm && grep -qi python /proc/1/comm"]
       interval: 15s
       timeout: 10s
       retries: 3
