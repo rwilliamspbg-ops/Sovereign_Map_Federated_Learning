@@ -11,7 +11,7 @@ This guide tests self-serve participant onboarding locally using the Join API an
 
 ```bash
 export JOIN_API_ADMIN_TOKEN=local-dev-admin-token
-export PUBLIC_AGGREGATOR_HOST=backend
+export PUBLIC_AGGREGATOR_HOST=host.docker.internal
 export PUBLIC_AGGREGATOR_PORT=8080
 
 ./scripts/run_channel.sh dev

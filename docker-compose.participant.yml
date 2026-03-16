@@ -21,6 +21,8 @@ services:
     volumes:
       - ./src:/app/src:ro
       - ${PARTICIPANT_CERT_DIR:-./participants/local-participant/certs}:/app/certs:ro
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
     networks:
       - sovereign-network
     restart: unless-stopped
