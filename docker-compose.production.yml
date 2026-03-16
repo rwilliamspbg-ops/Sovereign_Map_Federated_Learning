@@ -442,6 +442,49 @@ services:
           cpus: '0.5'
           memory: 256M
 
+  # TPM Metrics Exporter: TPM Certificate & Attestation Event Metrics
+  tpm-metrics:
+    image: python:3.11-slim
+    container_name: sovereign-tpm-metrics
+    volumes:
+      - ./tpm_metrics_exporter.py:/app/tpm_metrics_exporter.py:ro
+      - ./tpm_cert_manager.py:/app/tpm_cert_manager.py:ro
+      - tpm-certs:/etc/sovereign/certs
+    working_dir: /app
+    command: ["sh", "-c", "python -m pip install --no-cache-dir prometheus-client flask cryptography && python tpm_metrics_exporter.py"]
+    ports:
+      - "9091:9091"
+    networks:
+      - sovereignmap
+    depends_on:
+      - backend
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:9091/health', timeout=3)"]
+      interval: 15s
+      timeout: 5s
+      retries: 3
+      start_period: 10s
+    restart: unless-stopped
+    security_opt:
+      - no-new-privileges:true
+    cap_drop:
+      - ALL
+    tmpfs:
+      - /tmp
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
+    deploy:
+      resources:
+        limits:
+          cpus: '0.5'
+          memory: 256M
+        reservations:
+          cpus: '0.25'
+          memory: 128M
+
 networks:
   sovereignmap:
     driver: bridge
