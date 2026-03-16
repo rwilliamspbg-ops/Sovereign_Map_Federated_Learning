@@ -3,11 +3,12 @@
 # Sovereign Map Roadmap (2026)
 
 ## Scope
-This roadmap tracks execution priorities after the v1.1.0 readiness update on `main`.
+This roadmap tracks execution priorities for the current `v1.2.0` platform baseline on `main`.
 
-## Release Finalized
-- Version `v1.1.0` tagged from `92fbdb85da5dc455fcb0ff3e309d97fe6e6c5a91`.
-- Release published: `https://github.com/rwilliamspbg-ops/Sovereign_Map_Federated_Learning/releases/tag/v1.1.0`.
+## Current Release Baseline
+- Version `v1.2.0` published on 2026-03-16.
+- Release notes: `docs/RELEASE_NOTES_v1.2.0.md`.
+- Current readiness summary: `Documentation/Project/RELEASE_READINESS_2026-03-16.md`.
 
 ## Completed
 - P2P mesh runtime connected to libp2p default transports (TCP + QUIC).
@@ -44,6 +45,14 @@ This roadmap tracks execution priorities after the v1.1.0 readiness update on `m
 - Security supply-chain workflow added (SBOM + Trivy SARIF upload).
 - Local participant onboarding API added (invite/register/list/revoke) with cert issuance.
 - Windows laptop client launcher + automated Windows EXE build workflow added.
+
+## Completed in v1.2.0 Cycle (2026-03)
+- Wallet-enabled blockchain core integrated with FL/coordinator pathways.
+- Smart contract runtime and governance execution hooks wired through consensus flow.
+- Validator trust/reputation controls expanded with policy-aware metrics.
+- Testnet wallet readiness gate standardized for release operations.
+- Root npm build/test workflow paths corrected to build both SDK packages (`privacy`, `core`) in CI.
+- SDK publish and reproducibility workflows aligned to lockfile-driven npm installs.
 
 ## Next Milestones
 
@@ -84,6 +93,16 @@ This roadmap tracks execution priorities after the v1.1.0 readiness update on `m
   - participant onboarding documented and runnable locally: met
   - Windows executable build automated in CI: met
 
+### Milestone 7: CI and Documentation Reliability
+- Status: completed
+- Standardized root project status reporting and badge surface in `README.md`.
+- Updated roadmap and release-readiness documentation to reflect `v1.2.0` baseline and workflow behavior.
+- Corrected npm workflow assumptions in CI so package build/test jobs use repository lockfiles and deterministic install paths.
+- Exit criteria:
+  - root status docs and roadmap aligned with current release: met
+  - sdk build/test CI paths verified against local baseline commands: met
+  - documentation index points to current readiness artifacts: met
+
 ### Milestone 4: Scale and Readiness Gate
 - Run staged scale tests (10 -> 100 -> 1000 nodes) with updated API/auth settings.
 - Validate throughput, convergence, and stability at each stage.
@@ -107,4 +126,4 @@ This roadmap tracks execution priorities after the v1.1.0 readiness update on `m
 ## Tracking
 - Issue labels recommended: `roadmap`, `integration`, `performance`, `observability`, `testnet`.
 - Additional labels recommended for current stream: `api`, `auth`, `ledger`, `hybrid-proof`.
-- Keep this document aligned with `README.md` and release notes.
+- Keep this document aligned with `README.md`, current readiness summaries, and release notes.

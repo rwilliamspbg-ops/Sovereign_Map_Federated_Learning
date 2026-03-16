@@ -13,6 +13,8 @@ This folder centralizes repository documentation discovery.
 ## Latest Project and Security Docs
 
 - [Project/CAPABILITIES_SCHEMA_V1.md](Project/CAPABILITIES_SCHEMA_V1.md)
+- [Project/ROADMAP.md](Project/ROADMAP.md)
+- [Project/RELEASE_READINESS_2026-03-16.md](Project/RELEASE_READINESS_2026-03-16.md)
 - [Project/RELEASE_READINESS_2026-03-15.md](Project/RELEASE_READINESS_2026-03-15.md)
 - [Project/ROOT_RUNTIME_FILES_KEEP_LIST_2026-03-16.md](Project/ROOT_RUNTIME_FILES_KEEP_LIST_2026-03-16.md)
 - [Project/TEST_FILE_RELOCATION_ADDENDUM_2026-03-15.md](Project/TEST_FILE_RELOCATION_ADDENDUM_2026-03-15.md)
