@@ -28,6 +28,11 @@ func NewBlockProposer(nodeID string, bc *BlockChain) *BlockProposer {
 
 // ProposeBlock creates and proposes a new block
 func (bp *BlockProposer) ProposeBlock(validatorID string, roundData map[string]interface{}) (*Block, error) {
+	bp.blockchain.RefreshVerificationPolicyFromState()
+	if err := bp.blockchain.EvaluateFLRoundVerification(roundData); err != nil {
+		return nil, fmt.Errorf("FL verification gate failed: %w", err)
+	}
+
 	// Get pending transactions from mempool
 	selectedTxns := bp.blockchain.Mempool.GetTransactionsForBlock(1000)
 
@@ -177,6 +182,8 @@ func (bp *BlockProposer) HandleFLRound(
 		"model_hash":      modelHash,
 		"accuracy":        accuracy,
 		"timestamp":       time.Now().Unix(),
+		"proof_type":      "consensus",
+		"proof_hash":      hashData(string(consensusProof)),
 		"consensus_proof": consensusProof,
 	}
 
@@ -221,7 +228,8 @@ func (bp *BlockProposer) ProcessFlRoundTransaction(txn *Transaction) error {
 	return nil
 }
 
-// DistributeFlRewards distributes rewards to participating nodes based on FL contribution
+// DistributeFlRewards distributes rewards to participating nodes based on FL contribution.
+// Each node receives an equal share of baseReward.
 func (bp *BlockProposer) DistributeFlRewards(blockHeight uint64, participatingNodes []string, baseReward uint64) error {
 	rewardPerNode := baseReward / uint64(len(participatingNodes))
 
@@ -244,6 +252,64 @@ func (bp *BlockProposer) DistributeFlRewards(blockHeight uint64, participatingNo
 	validators := bp.blockchain.ValidatorSet.SelectValidators(1)
 	if len(validators) > 0 {
 		bp.blockchain.ValidatorSet.DistributeRewards(blockHeight, baseReward/10, []string{validators[0].NodeID})
+	}
+
+	return nil
+}
+
+// DistributeFlRewardsVerificationWeighted distributes FL rewards scaled by the
+// verification confidence recorded for the given roundID.  Nodes whose round
+// carries a high-confidence proof receive proportionally more; rounds with very
+// low confidence (e.g. failed TEE attestation) receive a reduced payout while
+// still honouring the minimum-reward guarantee.
+//
+// Reward formula: perNode = (baseReward * confidenceBps / 10000) / len(nodes)
+// Minimum perNode is always 1 to prevent zero payouts.
+func (bp *BlockProposer) DistributeFlRewardsVerificationWeighted(blockHeight uint64, roundID string, participatingNodes []string, baseReward uint64) error {
+	if len(participatingNodes) == 0 {
+		return nil
+	}
+
+	// Default to 80 % confidence if the state key is missing (e.g. genesis round).
+	confidenceBps := uint64(8000)
+	if val, err := bp.blockchain.StateDB.Get(fmt.Sprintf("fl_verification:%s", roundID)); err == nil {
+		if data, ok := val.(map[string]interface{}); ok {
+			switch cv := data["verification_confidence_bps"].(type) {
+			case uint32:
+				confidenceBps = uint64(cv)
+			case float64:
+				confidenceBps = uint64(cv)
+			case int:
+				confidenceBps = uint64(cv)
+			}
+		}
+	}
+
+	// Scale base reward by confidence and split across nodes.
+	scaledReward := (baseReward * confidenceBps) / 10000
+	if scaledReward == 0 {
+		scaledReward = 1
+	}
+	rewardPerNode := scaledReward / uint64(len(participatingNodes))
+	if rewardPerNode == 0 {
+		rewardPerNode = 1
+	}
+
+	for _, nodeID := range participatingNodes {
+		rewardKey := fmt.Sprintf("fl_reward:%s", nodeID)
+		currentReward := uint64(0)
+		if val, err := bp.blockchain.StateDB.Get(rewardKey); err == nil {
+			currentReward = val.(uint64)
+		}
+		if err := bp.blockchain.StateDB.Set(rewardKey, currentReward+rewardPerNode); err != nil {
+			return err
+		}
+	}
+
+	// Validator commission: 10 % of the scaled round reward.
+	validators := bp.blockchain.ValidatorSet.SelectValidators(1)
+	if len(validators) > 0 {
+		bp.blockchain.ValidatorSet.DistributeRewards(blockHeight, scaledReward/10, []string{validators[0].NodeID})
 	}
 
 	return nil

@@ -67,6 +67,8 @@ func main() {
 	_ = validatorSet.RecordParticipationQuality("node_2", 7200)
 	_ = validatorSet.RecordParticipationQuality("node_3", 5800)
 
+	flChain := seedDemoFLChain()
+
 	http.HandleFunc("/metrics/scheduler", func(w http.ResponseWriter, _ *http.Request) {
 		w.Header().Set("Content-Type", "text/plain; version=0.0.4")
 		_, _ = w.Write([]byte(schedulerMetrics.Prometheus(*nodeID)))
@@ -80,6 +82,11 @@ func main() {
 	http.HandleFunc("/metrics/validators", func(w http.ResponseWriter, _ *http.Request) {
 		w.Header().Set("Content-Type", "text/plain; version=0.0.4")
 		_, _ = w.Write([]byte(validatorMetricsPrometheus(validatorSet, governanceMetrics)))
+	})
+
+	http.HandleFunc("/metrics/blockchain", func(w http.ResponseWriter, _ *http.Request) {
+		w.Header().Set("Content-Type", "text/plain; version=0.0.4")
+		_, _ = w.Write([]byte(blockchainMetricsPrometheus(flChain)))
 	})
 
 	http.HandleFunc("/event/governance", func(w http.ResponseWriter, r *http.Request) {
@@ -173,6 +180,60 @@ func validatorMetricsPrometheus(vs *blockchain.ValidatorSet, governance *governa
 	b.WriteString("# HELP sovereign_governance_failures_total Failed governance executions observed by exporter\n")
 	b.WriteString("# TYPE sovereign_governance_failures_total counter\n")
 	b.WriteString(fmt.Sprintf("sovereign_governance_failures_total %d\n", failures))
+
+	return b.String()
+}
+
+// seedDemoFLChain creates a small blockchain pre-loaded with FL verification rounds
+// for the metrics exporter demo.  In production this would be replaced by a live
+// chain reference shared with the node agent or sync component.
+func seedDemoFLChain() *blockchain.BlockChain {
+	bc := blockchain.NewBlockChain()
+	proposer := blockchain.NewBlockProposer("metrics-node", bc)
+
+	// Seed three FL rounds with varying proof confidence levels.
+	rounds := []map[string]interface{}{
+		{"round_id": "demo-round-1", "model_hash": "a1b2c3", "proof_type": "consensus"},
+		{"round_id": "demo-round-2", "model_hash": "d4e5f6", "proof_type": "consensus"},
+		{"round_id": "demo-round-3", "model_hash": "g7h8i9", "proof_type": "consensus"},
+	}
+	for _, rd := range rounds {
+		blk, err := proposer.ProposeBlock("validator-0", rd)
+		if err != nil {
+			continue
+		}
+		_ = proposer.CommitBlock(blk)
+	}
+	return bc
+}
+
+// blockchainMetricsPrometheus serialises FL verification chain metrics in
+// Prometheus text format.  This endpoint complements /metrics/validators by
+// exposing chain-level proof-of-correctness observability.
+func blockchainMetricsPrometheus(bc *blockchain.BlockChain) string {
+	m := bc.GetFLVerificationMetrics()
+
+	var b strings.Builder
+
+	b.WriteString("# HELP sovereign_fl_rounds_total Total FL rounds committed on chain\n")
+	b.WriteString("# TYPE sovereign_fl_rounds_total gauge\n")
+	b.WriteString(fmt.Sprintf("sovereign_fl_rounds_total %d\n", m.TotalRounds))
+
+	b.WriteString("# HELP sovereign_fl_rounds_verified FL rounds that passed proof verification\n")
+	b.WriteString("# TYPE sovereign_fl_rounds_verified gauge\n")
+	b.WriteString(fmt.Sprintf("sovereign_fl_rounds_verified %d\n", m.VerifiedRounds))
+
+	b.WriteString("# HELP sovereign_fl_rounds_failed FL rounds that failed proof verification\n")
+	b.WriteString("# TYPE sovereign_fl_rounds_failed gauge\n")
+	b.WriteString(fmt.Sprintf("sovereign_fl_rounds_failed %d\n", m.FailedRounds))
+
+	b.WriteString("# HELP sovereign_fl_verification_ratio Ratio of verified to total FL rounds (0-1)\n")
+	b.WriteString("# TYPE sovereign_fl_verification_ratio gauge\n")
+	b.WriteString(fmt.Sprintf("sovereign_fl_verification_ratio %.4f\n", m.VerifiedRatio))
+
+	b.WriteString("# HELP sovereign_fl_avg_confidence_bps Average FL proof confidence in basis points\n")
+	b.WriteString("# TYPE sovereign_fl_avg_confidence_bps gauge\n")
+	b.WriteString(fmt.Sprintf("sovereign_fl_avg_confidence_bps %d\n", m.AverageConfidenceBps))
 
 	return b.String()
 }

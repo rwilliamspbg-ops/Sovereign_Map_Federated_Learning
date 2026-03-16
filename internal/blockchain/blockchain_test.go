@@ -1211,3 +1211,127 @@ func TestVerificationPolicyGovernanceUpdate(t *testing.T) {
 		t.Fatalf("expected AllowTEEProof=false, got %v", after)
 	}
 }
+
+// TestDistributeFlRewardsVerificationWeightedDefault verifies that when no
+// fl_verification state key is present, the function defaults to 80 % confidence
+// and distributes (baseReward * 0.80 / numNodes) per node.
+func TestDistributeFlRewardsVerificationWeightedDefault(t *testing.T) {
+	bc := NewBlockChain()
+	proposer := NewBlockProposer("test-node", bc)
+
+	nodes := []string{"node-a", "node-b"}
+	const baseReward = uint64(10000)
+
+	if err := proposer.DistributeFlRewardsVerificationWeighted(1, "nonexistent-round", nodes, baseReward); err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+
+	// Default confidence = 8000 bps → scaled = 8000; per node = 8000/2 = 4000
+	expected := uint64(4000)
+	for _, nodeID := range nodes {
+		val, err := bc.StateDB.Get(fmt.Sprintf("fl_reward:%s", nodeID))
+		if err != nil {
+			t.Fatalf("state key missing for %s: %v", nodeID, err)
+		}
+		got, ok := val.(uint64)
+		if !ok {
+			t.Fatalf("unexpected type for fl_reward:%s", nodeID)
+		}
+		if got != expected {
+			t.Errorf("node %s: expected reward %d, got %d", nodeID, expected, got)
+		}
+	}
+}
+
+// TestDistributeFlRewardsVerificationWeightedHighConfidence verifies that a round
+// with 9500 bps confidence produces a proportionally higher per-node reward.
+func TestDistributeFlRewardsVerificationWeightedHighConfidence(t *testing.T) {
+	bc := NewBlockChain()
+	proposer := NewBlockProposer("test-node", bc)
+
+	roundID := "high-conf-round"
+	if err := bc.StateDB.Set("fl_verification:"+roundID, map[string]interface{}{
+		"verification_confidence_bps": uint32(9500),
+	}); err != nil {
+		t.Fatalf("seed state: %v", err)
+	}
+
+	nodes := []string{"node-x"}
+	const baseReward = uint64(10000)
+
+	if err := proposer.DistributeFlRewardsVerificationWeighted(1, roundID, nodes, baseReward); err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+
+	// 9500 bps → scaledReward = 9500; 1 node → perNode = 9500
+	expected := uint64(9500)
+	val, err := bc.StateDB.Get("fl_reward:node-x")
+	if err != nil {
+		t.Fatalf("state key missing: %v", err)
+	}
+	got := val.(uint64)
+	if got != expected {
+		t.Errorf("expected reward %d, got %d", expected, got)
+	}
+}
+
+// TestDistributeFlRewardsVerificationWeightedLowConfidence verifies that a round
+// with 2500 bps confidence yields a reduced per-node reward.
+func TestDistributeFlRewardsVerificationWeightedLowConfidence(t *testing.T) {
+	bc := NewBlockChain()
+	proposer := NewBlockProposer("test-node", bc)
+
+	roundID := "low-conf-round"
+	if err := bc.StateDB.Set("fl_verification:"+roundID, map[string]interface{}{
+		"verification_confidence_bps": uint32(2500),
+	}); err != nil {
+		t.Fatalf("seed state: %v", err)
+	}
+
+	nodes := []string{"node-y", "node-z"}
+	const baseReward = uint64(10000)
+
+	if err := proposer.DistributeFlRewardsVerificationWeighted(1, roundID, nodes, baseReward); err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+
+	// 2500 bps → scaledReward = 2500; 2 nodes → perNode = 1250
+	expected := uint64(1250)
+	for _, nodeID := range nodes {
+		val, err := bc.StateDB.Get(fmt.Sprintf("fl_reward:%s", nodeID))
+		if err != nil {
+			t.Fatalf("state key missing for %s: %v", nodeID, err)
+		}
+		got := val.(uint64)
+		if got != expected {
+			t.Errorf("node %s: expected reward %d, got %d", nodeID, expected, got)
+		}
+	}
+}
+
+// TestDistributeFlRewardsVerificationWeightedAccumulates verifies that repeated
+// reward distributions accumulate correctly in state.
+func TestDistributeFlRewardsVerificationWeightedAccumulates(t *testing.T) {
+	bc := NewBlockChain()
+	proposer := NewBlockProposer("test-node", bc)
+
+	nodes := []string{"node-acc"}
+	const baseReward = uint64(10000)
+
+	for i := 0; i < 3; i++ {
+		if err := proposer.DistributeFlRewardsVerificationWeighted(uint64(i+1), "nonexistent", nodes, baseReward); err != nil {
+			t.Fatalf("round %d: unexpected error: %v", i, err)
+		}
+	}
+
+	// default 80 % → 8000 per node per round; 3 rounds → 24000
+	expected := uint64(24000)
+	val, err := bc.StateDB.Get("fl_reward:node-acc")
+	if err != nil {
+		t.Fatalf("state key missing: %v", err)
+	}
+	got := val.(uint64)
+	if got != expected {
+		t.Errorf("expected accumulated reward %d, got %d", expected, got)
+	}
+}
