@@ -891,9 +891,8 @@ func TestBlockchainFLVerificationMetricsAggregation(t *testing.T) {
 	b2, err := proposer.ProposeBlock("node_1", map[string]interface{}{
 		"round_id":                    "r-2",
 		"model_hash":                  "h2",
-		"verification_passed":         false,
+		"proof_type":                  "unknown-proof",
 		"verification_confidence_bps": 4000,
-		"proof_type":                  "zk-proofs",
 	})
 	if err != nil {
 		t.Fatalf("propose block 2 failed: %v", err)
@@ -915,8 +914,8 @@ func TestBlockchainFLVerificationMetricsAggregation(t *testing.T) {
 	if metrics.LastRoundID != "r-2" {
 		t.Fatalf("expected last round id r-2, got %+v", metrics)
 	}
-	if metrics.LastProofType != "zk-proofs" {
-		t.Fatalf("expected last proof type zk-proofs, got %+v", metrics)
+	if metrics.LastProofType != "unknown-proof" {
+		t.Fatalf("expected last proof type unknown-proof, got %+v", metrics)
 	}
 }
 

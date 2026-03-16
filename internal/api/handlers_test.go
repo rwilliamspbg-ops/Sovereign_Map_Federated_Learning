@@ -157,7 +157,7 @@ func TestCapabilitiesContractV1(t *testing.T) {
 		t.Fatalf("api.base_paths = %v, want %v", got, want)
 	}
 
-	if got, want := mustStringSlice(t, apiSection["open_endpoints"], "api.open_endpoints"), []string{"GET /health", "GET /api/v1/status", "GET /api/v1/capabilities", "GET /api/v1/verification_policy"}; !reflect.DeepEqual(got, want) {
+	if got, want := mustStringSlice(t, apiSection["open_endpoints"], "api.open_endpoints"), []string{"GET /health", "GET /api/v1/status", "GET /api/v1/capabilities", "GET /api/v1/verification_policy", "GET /api/v1/trust_snapshot"}; !reflect.DeepEqual(got, want) {
 		t.Fatalf("api.open_endpoints = %v, want %v", got, want)
 	}
 
