@@ -16,6 +16,12 @@ cd Sovereign_Map_Federated_Learning
 ./genesis-launch.sh
 ```
 
+Default launch scale is 15 nodes. To override for a one-off run:
+
+```bash
+MIN_NODES=25 ./genesis-launch.sh
+```
+
 **Access Dashboards:**
 - **Genesis Launch Overview**: [http://localhost:3001/d/genesis-launch-overview](http://localhost:3001/d/genesis-launch-overview)
 - **Network Performance**: [http://localhost:3001/d/network-performance-health](http://localhost:3001/d/network-performance-health)

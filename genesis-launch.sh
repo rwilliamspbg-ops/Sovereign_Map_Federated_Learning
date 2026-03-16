@@ -22,8 +22,9 @@ LAUNCH_TIME=$(date +%s)
 LAUNCH_DATE=$(date '+%Y-%m-%d %H:%M:%S')
 LOG_FILE="genesis-launch-${LAUNCH_TIME}.log"
 NETWORK_NAME="sovereign-genesis"
-MIN_NODES=20
-TARGET_NODES=100
+DEFAULT_NODE_COUNT=15
+MIN_NODES="${MIN_NODES:-$DEFAULT_NODE_COUNT}"
+TARGET_NODES="${TARGET_NODES:-$MIN_NODES}"
 
 ##############################################################################
 # Logging Functions
@@ -322,7 +323,7 @@ display_dashboard() {
     echo -e "${YELLOW}🔧 MANAGEMENT COMMANDS:${NC}"
     echo ""
     echo -e "  View logs:         ${GREEN}docker compose logs -f${NC}"
-    echo -e "  Scale nodes:       ${GREEN}docker compose -f docker-compose.production.yml up -d --scale node-agent=50${NC}"
+    echo -e "  Scale nodes:       ${GREEN}docker compose -f docker-compose.production.yml up -d --scale node-agent=$MIN_NODES${NC}"
     echo -e "  Stop network:      ${GREEN}docker compose -f docker-compose.production.yml down --remove-orphans${NC}"
     echo -e "  Restart services:  ${GREEN}docker compose -f docker-compose.production.yml restart${NC}"
     echo ""
@@ -441,7 +442,7 @@ elif [ "$CMD" == "status" ]; then
 elif [ "$CMD" == "dashboard" ]; then
     display_dashboard
     echo "Press Enter to exit..."
-    read
+    read -r
 else
     main
 fi
