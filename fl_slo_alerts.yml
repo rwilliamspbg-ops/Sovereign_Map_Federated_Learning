@@ -1,0 +1,53 @@
+groups:
+  - name: fl_slo_alerts
+    interval: 15s
+    rules:
+      - alert: FLRoundStalled
+        expr: increase(sovereignmap_fl_rounds_total[10m]) < 1
+        for: 10m
+        labels:
+          severity: critical
+          service: federated-learning
+        annotations:
+          summary: "FL rounds are stalled"
+          description: "No federated learning round has completed in the last 10 minutes."
+
+      - alert: FLAccuracyDegraded
+        expr: sovereignmap_fl_accuracy < 80
+        for: 5m
+        labels:
+          severity: warning
+          service: federated-learning
+        annotations:
+          summary: "FL accuracy below SLO"
+          description: "Model accuracy is below 80% for more than 5 minutes."
+
+      - alert: FLClientParticipationLow
+        expr: sovereignmap_active_nodes < 5
+        for: 5m
+        labels:
+          severity: warning
+          service: federated-learning
+        annotations:
+          summary: "FL client participation low"
+          description: "Active FL clients are below minimum participation threshold (5)."
+
+      - alert: FLRoundDurationHighP95
+        expr: histogram_quantile(0.95, rate(sovereignmap_fl_round_duration_seconds_bucket[5m])) > 30
+        for: 10m
+        labels:
+          severity: warning
+          service: federated-learning
+        annotations:
+          summary: "FL p95 round duration high"
+          description: "p95 FL round duration is above 30s for 10 minutes."
+
+      - alert: BridgeCollateralRatioLow
+        expr: sovereignmap_bridge_collateral_ratio_percent < 110
+        for: 10m
+        labels:
+          severity: warning
+          service: tokenomics
+        annotations:
+          summary: "Bridge collateral ratio below policy"
+          description: "Bridge collateral ratio dropped below 110%."

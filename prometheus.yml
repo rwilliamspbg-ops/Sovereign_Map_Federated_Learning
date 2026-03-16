@@ -8,6 +8,7 @@ global:
 rule_files:
   - 'tpm_alerts.yml'
   - 'dashboard_compat_rules.yml'
+  - 'fl_slo_alerts.yml'
 
 scrape_configs:
   - job_name: 'prometheus'
@@ -23,6 +24,12 @@ scrape_configs:
   - job_name: 'tpm-metrics'
     static_configs:
       - targets: ['tpm-metrics:9091']
+    metrics_path: '/metrics'
+    scrape_interval: 10s
+
+  - job_name: 'tokenomics-metrics'
+    static_configs:
+      - targets: ['tokenomics-metrics:9105']
     metrics_path: '/metrics'
     scrape_interval: 10s
 

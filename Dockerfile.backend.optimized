@@ -33,11 +33,12 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     ca-certificates \
     && rm -rf /var/lib/apt/lists/*
 
-# Copy Python dependencies from builder (significantly smaller image)
-COPY --from=builder /root/.local /root/.local
+# Copy Python dependencies from builder into non-root accessible location.
+COPY --from=builder /root/.local /opt/python
 
 # Set environment variables for Python optimization
-ENV PATH=/root/.local/bin:$PATH \
+ENV PATH=/opt/python/bin:$PATH \
+    PYTHONPATH=/opt/python/lib/python3.11/site-packages \
     PYTHONUNBUFFERED=1 \
     PYTHONDONTWRITEBYTECODE=1 \
     PYTHONOPTIMIZE=2
@@ -52,9 +53,13 @@ COPY src/ ./src/
 COPY config/ ./config/
 
 # Create data directory
-RUN mkdir -p /app/data && chmod 755 /app/data
+RUN mkdir -p /app/data \
+    && chmod 755 /app/data \
+    && useradd --system --create-home --uid 10001 appuser \
+    && chown -R appuser:appuser /app
 
-# Keep root runtime so Python can resolve packages installed under /root/.local.
+# Run as non-root for runtime hardening.
+USER appuser
 
 # Health check with proper error handling
 HEALTHCHECK --interval=30s --timeout=10s --start-period=20s --retries=3 \

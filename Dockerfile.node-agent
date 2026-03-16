@@ -18,8 +18,12 @@ RUN pip install --no-cache-dir \
 
 COPY src/ ./src/
 
+RUN useradd --system --create-home --uid 10001 appuser && chown -R appuser:appuser /app
+
 ENV PYTHONUNBUFFERED=1
 ENV PYTHONDONTWRITEBYTECODE=1
+
+USER appuser
 
 # Default command can be overridden by docker-compose command.
 CMD ["python", "-u", "src/client.py", "--node-id", "1", "--aggregator", "backend:8080"]

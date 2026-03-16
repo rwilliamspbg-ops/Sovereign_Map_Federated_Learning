@@ -18,6 +18,7 @@ services:
       - MIN_FIT_CLIENTS=${MIN_FIT_CLIENTS:-10}
       - MIN_AVAILABLE_CLIENTS=${MIN_AVAILABLE_CLIENTS:-10}
       - ROUND_TIMEOUT_SECONDS=${ROUND_TIMEOUT_SECONDS:-600}
+      - TPM_METRICS_ENDPOINT=${TPM_METRICS_ENDPOINT:-http://tpm-metrics:9091/event/attestation}
       - GEMINI_API_KEY=${GEMINI_API_KEY:-}
     ports:
       - "8000:8000"  # Flask metrics API
@@ -34,6 +35,12 @@ services:
       retries: 3
       start_period: 10s
     restart: on-failure
+    security_opt:
+      - no-new-privileges:true
+    cap_drop:
+      - ALL
+    tmpfs:
+      - /tmp
     logging:
       driver: "json-file"
       options:
@@ -75,6 +82,12 @@ services:
     healthcheck:
       disable: true
     restart: unless-stopped
+    security_opt:
+      - no-new-privileges:true
+    cap_drop:
+      - ALL
+    tmpfs:
+      - /tmp
     logging:
       driver: "json-file"
       options:
@@ -216,6 +229,7 @@ services:
       - ./prometheus.yml:/etc/prometheus/prometheus.yml:ro
       - ./tpm_alerts.yml:/etc/prometheus/tpm_alerts.yml:ro
       - ./dashboard_compat_rules.yml:/etc/prometheus/dashboard_compat_rules.yml:ro
+      - ./fl_slo_alerts.yml:/etc/prometheus/fl_slo_alerts.yml:ro
     command:
       - '--config.file=/etc/prometheus/prometheus.yml'
       - '--storage.tsdb.path=/prometheus'
@@ -256,6 +270,48 @@ services:
       retries: 3
       start_period: 10s
     restart: unless-stopped
+    security_opt:
+      - no-new-privileges:true
+    cap_drop:
+      - ALL
+    tmpfs:
+      - /tmp
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
+
+  tokenomics-metrics:
+    image: python:3.11-slim
+    container_name: sovereign-tokenomics-metrics
+    volumes:
+      - ./tokenomics_metrics_exporter.py:/app/tokenomics_metrics_exporter.py:ro
+      - ./test-data/tokenomics-telemetry.json:/app/data/tokenomics-telemetry.json:ro
+    working_dir: /app
+    command: ["sh", "-c", "python -m pip install --no-cache-dir prometheus-client flask && python tokenomics_metrics_exporter.py"]
+    environment:
+      - TOKENOMICS_SOURCE_FILE=/app/data/tokenomics-telemetry.json
+      - TOKENOMICS_METRICS_PORT=9105
+    ports:
+      - "9105:9105"
+    networks:
+      - sovereign-network
+    depends_on:
+      - backend
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:9105/health', timeout=3)"]
+      interval: 15s
+      timeout: 5s
+      retries: 3
+      start_period: 10s
+    restart: unless-stopped
+    security_opt:
+      - no-new-privileges:true
+    cap_drop:
+      - ALL
+    tmpfs:
+      - /tmp
     logging:
       driver: "json-file"
       options:

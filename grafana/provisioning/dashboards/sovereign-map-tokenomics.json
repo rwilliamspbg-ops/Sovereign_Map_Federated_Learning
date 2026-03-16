@@ -12,6 +12,17 @@
         "iconColor": "rgba(0, 211, 255, 1)",
         "name": "Annotations & Alerts",
         "type": "dashboard"
+      },
+      {
+        "name": "FL Round Milestones",
+        "enable": true,
+        "iconColor": "rgba(255, 170, 0, 1)",
+        "expr": "changes(sovereignmap_fl_round[5m]) > 0",
+        "datasource": {
+          "type": "prometheus",
+          "uid": "prometheus"
+        },
+        "type": "dashboard"
       }
     ]
   },
@@ -19,7 +30,18 @@
   "fiscalYearStartMonth": 0,
   "graphTooltip": 0,
   "id": null,
-  "links": [],
+  "links": [
+    {
+      "title": "Testnet Runbook",
+      "url": "https://github.com/rwilliamspbg-ops/Sovereign_Map_Federated_Learning/blob/main/README.md",
+      "targetBlank": true
+    },
+    {
+      "title": "Prometheus Alerts",
+      "url": "http://localhost:9090/alerts",
+      "targetBlank": true
+    }
+  ],
   "liveNow": false,
   "panels": [
     {

@@ -3,13 +3,11 @@ TPM Trust Metrics Exporter for Prometheus
 Exports certificate, trust chain, and security metrics to Prometheus
 """
 
-import json
 import logging
 import time
 from datetime import datetime
-from pathlib import Path
-from typing import Dict, Optional
-from threading import Thread
+from typing import Dict
+from threading import Lock
 
 from prometheus_client import (
     Counter,
@@ -19,7 +17,7 @@ from prometheus_client import (
     generate_latest,
     CONTENT_TYPE_LATEST,
 )
-from flask import Flask, Response
+from flask import Flask, Response, request
 from tpm_cert_manager import TPMCertificateManager, NodeAuthenticator
 
 logging.basicConfig(level=logging.INFO)
@@ -33,6 +31,7 @@ class TPMMetricsExporter:
         self.node_id = node_id
         self.cert_manager = TPMCertificateManager(cert_dir)
         self.authenticator = NodeAuthenticator(node_id, self.cert_manager)
+        self._event_lock = Lock()
 
         # Create registry
         self.registry = CollectorRegistry()
@@ -137,6 +136,35 @@ class TPMMetricsExporter:
             "tpm_node_certificate_revoked",
             "Is node certificate revoked (1=revoked, 0=valid)",
             ["node_id"],
+            registry=self.registry,
+        )
+
+        # Event-driven attestation metrics
+        self.node_attestation_events_total = Counter(
+            "tpm_node_attestation_events_total",
+            "Total node attestation events by result",
+            ["node_id", "result"],
+            registry=self.registry,
+        )
+
+        self.node_last_attestation_timestamp_seconds = Gauge(
+            "tpm_node_last_attestation_timestamp_seconds",
+            "Unix timestamp of most recent attestation event",
+            ["node_id"],
+            registry=self.registry,
+        )
+
+        self.node_attestation_latency_ms = Gauge(
+            "tpm_node_attestation_latency_ms",
+            "Most recent attestation latency in milliseconds",
+            ["node_id"],
+            registry=self.registry,
+        )
+
+        self.message_events_total = Counter(
+            "tpm_message_events_total",
+            "Total message-level trust events by result",
+            ["from_node_id", "to_node_id", "result"],
             registry=self.registry,
         )
 
@@ -259,6 +287,58 @@ class TPMMetricsExporter:
         """Record a verification failure."""
         self.trust_verification_failures.inc()
 
+    def record_attestation_event(
+        self, node_id: int, success: bool, latency_ms: float = 0.0
+    ):
+        """Record a per-node attestation event from runtime components."""
+        result = "success" if success else "failure"
+        node_id_str = str(node_id)
+        with self._event_lock:
+            self.node_attestation_events_total.labels(
+                node_id=node_id_str, result=result
+            ).inc()
+            self.node_last_attestation_timestamp_seconds.labels(
+                node_id=node_id_str
+            ).set(time.time())
+            self.node_attestation_latency_ms.labels(node_id=node_id_str).set(
+                max(0.0, float(latency_ms))
+            )
+
+            # Keep legacy aggregate metrics in sync for existing dashboards.
+            if success:
+                self.certs_verified.inc()
+            else:
+                self.trust_verification_failures.inc()
+
+    def record_message_event(
+        self,
+        from_node_id: int,
+        to_node_id: int,
+        success: bool,
+        latency_ms: float = 0.0,
+        signed: bool = True,
+    ):
+        """Record message signing/verification event and latency."""
+        result = "success" if success else "failure"
+        from_node = str(from_node_id)
+        to_node = str(to_node_id)
+
+        with self._event_lock:
+            self.message_events_total.labels(
+                from_node_id=from_node, to_node_id=to_node, result=result
+            ).inc()
+            if signed:
+                self.messages_signed_total.labels(node_id=from_node).inc()
+            if success:
+                self.messages_verified_total.labels(
+                    node_id=to_node, from_node_id=from_node
+                ).inc()
+            else:
+                self.signature_verification_failures.labels(
+                    from_node_id=from_node
+                ).inc()
+            self.message_verification_time.observe(max(0.0, float(latency_ms)) / 1000.0)
+
     def get_metrics(self) -> bytes:
         """Get metrics in Prometheus format."""
         self.update_metrics()
@@ -307,6 +387,47 @@ def create_metrics_app(node_id: int, cert_dir: str = "/etc/sovereign/certs") -> 
             "node_id": node_id,
             "certificates_loaded": len(exporter.cert_manager.trust_store),
         }
+
+    @app.route("/event/attestation", methods=["POST"])
+    def event_attestation():
+        """Ingest attestation events from backend or node agents."""
+        payload = request.get_json(silent=True) or {}
+        try:
+            event_node_id = int(payload.get("node_id", node_id))
+            success = bool(payload.get("success", True))
+            latency_ms = float(payload.get("latency_ms", 0.0))
+            exporter.record_attestation_event(
+                node_id=event_node_id, success=success, latency_ms=latency_ms
+            )
+            return {"status": "ok", "event": "attestation", "node_id": event_node_id}
+        except (TypeError, ValueError) as exc:
+            return {"status": "error", "error": str(exc)}, 400
+
+    @app.route("/event/message", methods=["POST"])
+    def event_message():
+        """Ingest message trust events from backend or node agents."""
+        payload = request.get_json(silent=True) or {}
+        try:
+            from_node_id = int(payload.get("from_node_id", node_id))
+            to_node_id = int(payload.get("to_node_id", node_id))
+            success = bool(payload.get("success", True))
+            signed = bool(payload.get("signed", True))
+            latency_ms = float(payload.get("latency_ms", 0.0))
+            exporter.record_message_event(
+                from_node_id=from_node_id,
+                to_node_id=to_node_id,
+                success=success,
+                latency_ms=latency_ms,
+                signed=signed,
+            )
+            return {
+                "status": "ok",
+                "event": "message",
+                "from_node_id": from_node_id,
+                "to_node_id": to_node_id,
+            }
+        except (TypeError, ValueError) as exc:
+            return {"status": "error", "error": str(exc)}, 400
 
     return app, exporter
 

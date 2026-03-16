@@ -30,16 +30,16 @@ groups:
         expr: (tpm_certificates_verified_total > 0) or (sovereignmap_active_nodes * scalar(tpm_ca_certificate_valid))
 
       - record: sovereignmap_tpm_attestation_total
-        expr: (tpm_certificates_total > 0) or (sovereignmap_active_nodes * scalar(tpm_ca_certificate_valid))
+        expr: sum(tpm_node_attestation_events_total) or (tpm_certificates_total > 0) or (sovereignmap_active_nodes * scalar(tpm_ca_certificate_valid))
 
       - record: sovereignmap_tpm_attestation_success
-        expr: (tpm_certificates_verified_total > 0) or (sovereignmap_active_nodes * scalar(tpm_ca_certificate_valid))
+        expr: sum(tpm_node_attestation_events_total{result="success"}) or (tpm_certificates_verified_total > 0) or (sovereignmap_active_nodes * scalar(tpm_ca_certificate_valid))
 
       - record: sovereignmap_tpm_attestation_failures_total
-        expr: tpm_trust_verification_failures_total
+        expr: sum(tpm_node_attestation_events_total{result="failure"}) or tpm_trust_verification_failures_total
 
       - record: sovereignmap_tpm_attestation_duration_ms
-        expr: (tpm_trust_verification_duration_seconds_sum / clamp_min(tpm_trust_verification_duration_seconds_count, 1)) * 1000
+        expr: avg(tpm_node_attestation_latency_ms) or ((tpm_trust_verification_duration_seconds_sum / clamp_min(tpm_trust_verification_duration_seconds_count, 1)) * 1000)
 
       - record: sovereignmap_gpu_memory_mb
         expr: vector(0)
@@ -120,33 +120,33 @@ groups:
     rules:
       # Minting proxy derived from network work-rate and model quality.
       - record: sovereignmap_token_mint_rate_per_min
-        expr: rate(sovereignmap_fl_rounds_total[5m]) * sovereignmap_active_nodes * (sovereignmap_fl_accuracy / 100)
+        expr: tokenomics_mint_rate_per_min or ((rate(sovereignmap_fl_rounds_total[5m]) * sovereignmap_active_nodes * (sovereignmap_fl_accuracy / 100)) unless on() tokenomics_mint_rate_per_min)
 
       # Cumulative minted supply proxy from achieved FL rounds and active validator participation.
       - record: sovereignmap_token_supply_total
-        expr: sovereignmap_fl_round * sovereignmap_active_nodes * (sovereignmap_fl_accuracy / 100)
+        expr: tokenomics_token_supply_total or ((sovereignmap_fl_round * sovereignmap_active_nodes * (sovereignmap_fl_accuracy / 100)) unless on() tokenomics_token_supply_total)
 
       # Bridge inflow/outflow proxies modeled as fixed shares of minting activity.
       - record: sovereignmap_bridge_inflow_per_min
-        expr: sovereignmap_token_mint_rate_per_min * 0.35
+        expr: tokenomics_bridge_inflow_per_min or ((sovereignmap_token_mint_rate_per_min * 0.35) unless on() tokenomics_bridge_inflow_per_min)
 
       - record: sovereignmap_bridge_outflow_per_min
-        expr: sovereignmap_token_mint_rate_per_min * 0.22
+        expr: tokenomics_bridge_outflow_per_min or ((sovereignmap_token_mint_rate_per_min * 0.22) unless on() tokenomics_bridge_outflow_per_min)
 
       - record: sovereignmap_bridge_net_flow_per_min
-        expr: sovereignmap_bridge_inflow_per_min - sovereignmap_bridge_outflow_per_min
+        expr: tokenomics_bridge_net_flow_per_min or ((sovereignmap_bridge_inflow_per_min - sovereignmap_bridge_outflow_per_min) unless on() tokenomics_bridge_net_flow_per_min)
 
       # Escrow and collateral proxies for bridge solvency/coverage monitoring.
       - record: sovereignmap_bridge_escrow_total
-        expr: sovereignmap_token_supply_total * 0.4
+        expr: tokenomics_bridge_escrow_total or ((sovereignmap_token_supply_total * 0.4) unless on() tokenomics_bridge_escrow_total)
 
       - record: sovereignmap_bridge_collateral_ratio_percent
-        expr: (sovereignmap_bridge_escrow_total / clamp_min(sovereignmap_token_supply_total * 0.3, 1)) * 100
+        expr: tokenomics_bridge_collateral_ratio_percent or (((sovereignmap_bridge_escrow_total / clamp_min(sovereignmap_token_supply_total * 0.3, 1)) * 100) unless on() tokenomics_bridge_collateral_ratio_percent)
 
       # Share of minted economic activity crossing bridges.
       - record: sovereignmap_bridge_settlement_share_percent
-        expr: (sovereignmap_bridge_inflow_per_min / clamp_min(sovereignmap_token_mint_rate_per_min, 0.000001)) * 100
+        expr: tokenomics_bridge_settlement_share_percent or (((sovereignmap_bridge_inflow_per_min / clamp_min(sovereignmap_token_mint_rate_per_min, 0.000001)) * 100) unless on() tokenomics_bridge_settlement_share_percent)
 
       # Daily bridge volume proxy for treasury and liquidity planning.
       - record: sovereignmap_bridge_volume_24h
-        expr: sovereignmap_bridge_inflow_per_min * 1440
+        expr: tokenomics_bridge_volume_24h or ((sovereignmap_bridge_inflow_per_min * 1440) unless on() tokenomics_bridge_volume_24h)
