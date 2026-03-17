@@ -1,0 +1,114 @@
+name: SDK Release Channels
+
+permissions:
+  contents: write
+
+on:
+  workflow_dispatch:
+    inputs:
+      version:
+        description: SDK version to manage (e.g., 0.2.0, 1.0.0-beta.1)
+        required: true
+        type: string
+      channel:
+        description: Release channel
+        required: true
+        type: choice
+        options:
+          - latest
+          - next
+          - stable
+
+jobs:
+  manage-channels:
+    name: Manage Release Channels
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+
+      - uses: actions/setup-node@53b83947a5a98c8d113130e565377fae1a50d02f
+        with:
+          node-version: '22'
+          registry-url: 'https://registry.npmjs.org'
+
+      - name: Validate NPM token
+        run: |
+          if [ -z "${{ secrets.NPM_TOKEN }}" ]; then
+            echo "❌ NPM_TOKEN is required for managing dist-tags"
+            exit 1
+          fi
+        env:
+          NPM_TOKEN: ${{ secrets.NPM_TOKEN }}
+
+      - name: Check version exists
+        run: |
+          npm view @sovereignmap/core@${{ github.event.inputs.version }} version || {
+            echo "❌ Version ${{ github.event.inputs.version }} not found on npm"
+            exit 1
+          }
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+
+      - name: Manage release channel (${{ github.event.inputs.channel }})
+        run: bash scripts/release-channels.sh ${{ github.event.inputs.version }} ${{ github.event.inputs.channel }}
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+
+      - name: Verify channel tags
+        run: |
+          echo "📋 Current npm dist-tags for @sovereignmap/core:"
+          npm dist-tag ls @sovereignmap/core || echo "  (package not published)"
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+
+      - name: Create deployment
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const deployment = await github.rest.repos.createDeployment({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              ref: 'main',
+              environment: 'npm-${{ github.event.inputs.channel }}',
+              description: 'SDK v${{ github.event.inputs.version }} tagged as ${{ github.event.inputs.channel }}',
+              production_environment: true,
+              auto_merge: false
+            });
+            
+            await github.rest.repos.createDeploymentStatus({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              deployment_id: deployment.data.id,
+              state: 'success',
+              description: 'Successfully updated npm dist-tag'
+            });
+
+      - name: Comment on commit
+        if: success()
+        uses: actions/github-script@v7
+        with:
+          script: |
+            github.rest.issues.createComment({
+              issue_number: context.issue.number || 0,
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              body: `✅ **Release Channel Updated**\n\n- **Package**: @sovereignmap/core\n- **Version**: ${{ github.event.inputs.version }}\n- **Channel**: \`${{ github.event.inputs.channel }}\`\n- **Status**: Live on npm\n\nUsers can now install with:\n\`\`\`bash\nnpm install @sovereignmap/core@${{ github.event.inputs.channel }}\n\`\`\``
+            });
+
+      - name: Print summary
+        if: success()
+        run: |
+          echo "✅ Release channel management complete"
+          echo ""
+          echo "📦 SDK packages tagged as '${{ github.event.inputs.channel }}':"
+          echo "  - @sovereignmap/core@${{ github.event.inputs.version }}"
+          echo "  - @sovereignmap/privacy@${{ github.event.inputs.version }}"
+          echo "  - @sovereignmap/consensus@${{ github.event.inputs.version }}"
+          echo "  - @sovereignmap/island@${{ github.event.inputs.version }}"
+          echo ""
+          echo "📥 Install command:"
+          echo "  npm install @sovereignmap/core@${{ github.event.inputs.channel }}"

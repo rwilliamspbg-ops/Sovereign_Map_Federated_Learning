@@ -85,22 +85,24 @@ jobs:
         env:
           NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-      - name: Create GitHub Release (if not from release event)
+      - name: Generate Software Bill of Materials (SBOM)
+        if: steps.npm_token.outputs.present == 'true'
+        run: npm run sdk:sbom
+      - name: Generate Release Notes
+        if: steps.npm_token.outputs.present == 'true'
+        id: release_notes
+        run: bash scripts/generate-release-notes.sh ${{ steps.version.outputs.sdk_version }} | tee /tmp/release-notes.md
+      - name: Create GitHub Release with SBOM
         if: steps.npm_token.outputs.present == 'true' && github.event_name == 'push'
-        uses: actions/create-release@c38ae29b2ad1d289889c5606da477cdca7bcd914
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        uses: softprops/action-gh-release@v1
         with:
           tag_name: v${{ steps.version.outputs.sdk_version }}
-          release_name: v${{ steps.version.outputs.sdk_version }}
-          body: |
-            SDK release published to npm
-            
-            Packages:
-            - @sovereignmap/core@${{ steps.version.outputs.sdk_version }}
-            - @sovereignmap/privacy@${{ steps.version.outputs.sdk_version }}
-            - @sovereignmap/consensus@${{ steps.version.outputs.sdk_version }}
-            - @sovereignmap/island@${{ steps.version.outputs.sdk_version }}
+          name: v${{ steps.version.outputs.sdk_version }}
+          body_path: /tmp/release-notes.md
+          files: |
+            .sbom/*.json
           draft: false
           prerelease: contains(steps.version.outputs.sdk_version, 'alpha') || contains(steps.version.outputs.sdk_version, 'beta')
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 

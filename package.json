@@ -15,6 +15,10 @@
     "changeset:status": "changeset status",
     "sdk:version": "npm run test:ci && npm run changeset:version && npm run build:libs",
     "sdk:publish": "npm --prefix packages/privacy publish --access public && npm --prefix packages/consensus publish --access public && npm --prefix packages/island publish --access public && npm --prefix packages/core publish --access public",
+    "sdk:sbom": "bash scripts/generate-sbom.sh",
+    "sdk:channels": "bash scripts/release-channels.sh",
+    "sdk:release-notes": "bash scripts/generate-release-notes.sh",
+    "sdk:release": "npm run sdk:version && npm run sdk:publish && npm run sdk:sbom && npm run sdk:release-notes $npm_package_version",
     "nodes:burst": "bash scripts/burst-scale-with-certs.sh",
     "nodes:burst:25": "bash scripts/burst-scale-with-certs.sh 25 docker-compose.dev.yml",
     "nodes:burst:50": "bash scripts/burst-scale-with-certs.sh 50 docker-compose.dev.yml",
@@ -61,6 +65,7 @@
   "devDependencies": {
     "@changesets/changelog-git": "^0.2.1",
     "@changesets/cli": "^2.30.0",
-    "@changesets/types": "^6.1.0"
+    "@changesets/types": "^6.1.0",
+    "cyclonedx-npm": "^1.0.0"
   }
 }
