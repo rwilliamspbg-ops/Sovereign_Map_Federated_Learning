@@ -423,7 +423,9 @@ describe('SovereignNode lifecycle branches', () => {
 
     await node.becomeAggregator({ tier: 'edge' });
     const aggregateHandler = mockAggregatorOn.mock.calls.find((c) => c[0] === 'aggregate')?.[1];
-    expect(aggregateHandler).toBeTruthy();
+    if (!aggregateHandler) {
+      throw new Error('Aggregate handler not registered');
+    }
 
     await aggregateHandler([{ id: 1 }, { id: 2 }]);
     expect(node.generateAggregationProof).toHaveBeenCalled();
