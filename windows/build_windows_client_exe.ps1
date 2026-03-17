@@ -1,10 +1,10 @@
-$ErrorActionPreference = "Stop"
-
 param(
   [string]$VenvDir = ".venv-windows-client",
   [string]$ExeName = "SovereignMapClient",
   [switch]$OneDir
 )
+
+$ErrorActionPreference = "Stop"
 
 Write-Host "Building Windows client EXE..."
 
