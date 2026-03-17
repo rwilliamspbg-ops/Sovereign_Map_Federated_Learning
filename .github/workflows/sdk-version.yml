@@ -80,6 +80,8 @@ jobs:
       
       - name: Create version commit and PR
         if: success()
+        id: create_pr
+        continue-on-error: true
         uses: peter-evans/create-pull-request@c5a7806660adbe173f04e3e038b0ccdcd758773c
         with:
           commit-message: 'chore(release): Sovereign Map SDK v${{ steps.version.outputs.core_version }}'
@@ -98,6 +100,16 @@ jobs:
           branch: release/version-bump
           delete-branch: true
           labels: 'release,automation'
+
+      - name: Report PR creation status
+        if: always()
+        run: |
+          if [ "${{ steps.create_pr.outcome }}" = "success" ]; then
+            echo "✅ Version PR created successfully"
+          else
+            echo "⚠️ Version PR step failed but workflow is non-blocking"
+            echo "   Run 'npx changeset version' locally and open a release PR if needed"
+          fi
 
   # After merge, this will be triggered by the publish workflow
   notify:
