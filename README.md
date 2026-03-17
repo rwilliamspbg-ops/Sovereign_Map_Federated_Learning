@@ -56,7 +56,7 @@
 [![SDK Build](https://img.shields.io/github/actions/workflow/status/rwilliamspbg-ops/Sovereign_Map_Federated_Learning/build.yml?branch=main&style=for-the-badge&logo=github&label=SDK%20Build)](https://github.com/rwilliamspbg-ops/Sovereign_Map_Federated_Learning/actions/workflows/build.yml)
 [![Core Coverage](https://img.shields.io/badge/Coverage%20%40core-100%25-blue?style=for-the-badge&logo=codecov)](packages/core/)
 [![Privacy Coverage](https://img.shields.io/badge/Coverage%20%40privacy-100%25-blue?style=for-the-badge&logo=codecov)](packages/privacy/)
-[![Consensus Coverage](https://img.shields.io/badge/Coverage%20%40consensus-91.13%25-green?style=for-the-badge&logo=codecov)](packages/consensus/)
+[![Consensus Coverage](https://img.shields.io/badge/Coverage%20%40consensus-100%25-blue?style=for-the-badge&logo=codecov)](packages/consensus/)
 [![Island Coverage](https://img.shields.io/badge/Coverage%20%40island-100%25-blue?style=for-the-badge&logo=codecov)](packages/island/)
 [![SDK Security Scanning](https://img.shields.io/github/actions/workflow/status/rwilliamspbg-ops/Sovereign_Map_Federated_Learning/sdk-security.yml?branch=main&style=for-the-badge&logo=snyk&label=SDK%20Security)](https://github.com/rwilliamspbg-ops/Sovereign_Map_Federated_Learning/actions/workflows/sdk-security.yml)
 [![SDK Supply Chain](https://img.shields.io/github/actions/workflow/status/rwilliamspbg-ops/Sovereign_Map_Federated_Learning/sdk-provenance.yml?branch=main&style=for-the-badge&logo=sigstore&label=SLSA%20L2)](https://github.com/rwilliamspbg-ops/Sovereign_Map_Federated_Learning/actions/workflows/sdk-provenance.yml)
@@ -81,7 +81,7 @@ Intellectual Property Notice: this repository implements parts of the Sovereign 
 
 - Current release: [v1.2.0](https://github.com/rwilliamspbg-ops/Sovereign_Map_Federated_Learning/releases/tag/v1.2.0)
 - Default branch: `main`
-- **SDK Coverage**: Core 100% lines, Privacy 100%, Island 100% lines, Consensus 91.13%
+- **SDK Coverage**: Core 100% lines, Privacy 100%, Island 100% lines, Consensus 100% lines
 - **Workflow Status**: All CI gates passing; SHA-pinned GitHub Actions; TypeScript compilation fully typed
 - **Security**: SLSA L2 provenance, CodeQL analysis, supply chain scanning all green
 - CI baseline: npm-based SDK build/test workflows are aligned with repository lockfiles
