@@ -64,6 +64,15 @@
 [![API Stability](https://img.shields.io/badge/API%20Stability-3%20Tiers-blue?style=for-the-badge&logo=contractsaregoverned)](SDK_API_STABILITY.md)
 [![License](https://img.shields.io/github/license/rwilliamspbg-ops/Sovereign_Map_Federated_Learning?style=for-the-badge&logo=creativecommons)](LICENSE)
 
+## Hardware Acceleration & Testing
+
+[![GPU/NPU Device Tests](https://img.shields.io/badge/GPU%2FNPU%20Tests-37%2F37-brightgreen?style=for-the-badge&logo=pytorch&logoColor=white)](GPU_NPU_TEST_ENHANCEMENTS_REPORT.md)
+[![Hardware Acceleration](https://img.shields.io/badge/Acceleration-NPU%20%2F%20CUDA%20%2F%20CPU-2B8A3E?style=for-the-badge&logo=nvidia&logoColor=white)](Documentation/Performance/NPU_GPU_CPU_PERFORMANCE_ANALYSIS.md)
+[![NPU Support](https://img.shields.io/badge/Support-Huawei%20Ascend%20NPU-FF0000?style=for-the-badge&logo=huawei&logoColor=white)](tests/hil/test_npu_device_selection.py)
+[![GPU Support](https://img.shields.io/badge/Support-NVIDIA%20CUDA%2FGPUs-76B900?style=for-the-badge&logo=nvidia&logoColor=white)](tests/hil/test_npu_device_selection.py)
+[![Device Fallback](https://img.shields.io/badge/Fallback%20Chain-NPU%20%E2%86%92%20CUDA%20%E2%86%92%20CPU-0066CC?style=for-the-badge&logo=codeigniter&logoColor=white)](src/client.py)
+[![Multi-Device Selection](https://img.shields.io/badge/Multi%20Device-Load%20Balancing%20Ready-4730FF?style=for-the-badge&logo=json&logoColor=white)](tests/hil/test_npu_device_selection.py)
+
 Sovereign Map is a sovereign intelligence coordination platform that combines federated learning, blockchain governance, trust attestation, and observability into one deployable stack.
 
 Intellectual Property Notice: this repository implements parts of the Sovereign Mohawk Protocol. Portions are patent pending (U.S. Provisional Patent Application filed March 2026).
@@ -89,6 +98,7 @@ Intellectual Property Notice: this repository implements parts of the Sovereign 
 - **TypeScript Quality**: Fixed aggregate handler typing issue ensuring strict null checks across all test suites
 - **Security Finalization**: All security gates (CodeQL, secret scan, supply chain) passing; SLSA L2 attestation enabled
 - **SDK Readiness**: Changesets-based release management operational; npm publishing workflow stable and automated
+- **Hardware Acceleration**: Complete GPU/NPU device selection support with comprehensive testing (37 tests covering NPU/CUDA/CPU fallback, multi-device scenarios, environment variable handling, error recovery, and device properties)
 
 ## What Is Included
 
@@ -198,6 +208,68 @@ make testnet-wallet-readiness
 ```
 
 ## Operations and Monitoring
+## Hardware Acceleration Configuration
+
+### Device Support and Auto-Detection
+
+Sovereign Map clients automatically detect and prioritize available hardware accelerators:
+
+1. **Huawei Ascend NPU** (Priority 1)
+  - Environment: `NPU_ENABLED=true` (default)
+  - Device selection: First device from `ASCEND_RT_VISIBLE_DEVICES` (default: 0)
+  - Memory: ~80GB per device
+  - Multi-device support: Load balancing across visible devices
+  - Status: ✅ Fully tested (37 comprehensive test scenarios)
+
+2. **NVIDIA CUDA/GPU** (Priority 2)
+  - Fallback when NPU unavailable
+  - Multi-GPU support: Automatic device enumeration
+  - Memory detection: Device properties and allocation tracking
+  - Status: ✅ Fully tested with CUDA device fallback scenarios
+
+3. **CPU** (Priority 3)
+  - Final fallback: Always available
+  - Override: `FORCE_CPU=true` bypasses accelerators
+  - Performance: Suitable for development and validation
+
+### Environment Variables
+
+| Variable | Values | Purpose | Example |
+|----------|--------|---------|---------|
+| `FORCE_CPU` | `true` / `false` | Force CPU-only execution | `FORCE_CPU=true` |
+| `NPU_ENABLED` | `true` / `false` | Enable/disable NPU detection | `NPU_ENABLED=true` |
+| `ASCEND_RT_VISIBLE_DEVICES` | Device IDs (comma-separated) | Visible NPU devices | `ASCEND_RT_VISIBLE_DEVICES=0,1,2,3` |
+
+### Usage Examples
+
+```bash
+# Use default device detection (NPU > CUDA > CPU)
+./client.py --node-id=0
+
+# Force NPU with specific devices
+ASCEND_RT_VISIBLE_DEVICES=2,3,1 NPU_ENABLED=true ./client.py --node-id=1
+
+# Use only CUDA/GPU
+NPU_ENABLED=false ./client.py --node-id=2
+
+# Force CPU (development/testing)
+FORCE_CPU=true ./client.py --node-id=3
+
+# Multi-GPU with Docker
+docker run -e NPU_ENABLED=false -e CUDA_VISIBLE_DEVICES=0,1 sovereign-client
+```
+
+### Device Properties and Capabilities
+
+The platform queries device properties including:
+- Device count and enumeration
+- Memory capacity per device
+- Capability tuples and compute version
+- Device name and manufacturer info
+- Cache clearing and memory management
+
+See [GPU_NPU_TEST_ENHANCEMENTS_REPORT.md](GPU_NPU_TEST_ENHANCEMENTS_REPORT.md) for complete test coverage of device detection, fallback chains, and error recovery.
+
 
 - Monitoring stack: [docker-compose.monitoring.yml](docker-compose.monitoring.yml)
 - Prometheus config: [prometheus.yml](prometheus.yml)
