@@ -1,6 +1,9 @@
 import { describe, expect, it, vi, beforeEach } from 'vitest';
 
 const mockHardwareAttest = vi.fn(async () => ({ ok: true }));
+const mockAggregatorStart = vi.fn(async () => undefined);
+const mockAggregatorStop = vi.fn(async () => undefined);
+const mockAggregatorOn = vi.fn((_event: string, _handler: (updates: unknown[]) => Promise<void>) => undefined);
 
 vi.mock('@sovereignmap/privacy', () => {
   class PrivacyEngine {
@@ -66,9 +69,9 @@ vi.mock('@sovereignmap/consensus', () => {
   }
 
   class HierarchicalAggregator {
-    public start = vi.fn(async () => undefined);
-    public stop = vi.fn(async () => undefined);
-    public on = vi.fn((_event: string, _handler: (updates: unknown[]) => Promise<void>) => undefined);
+    public start = mockAggregatorStart;
+    public stop = mockAggregatorStop;
+    public on = mockAggregatorOn;
 
     constructor(_cfg: Record<string, unknown>) {}
   }
@@ -214,5 +217,178 @@ describe('SovereignNode lifecycle branches', () => {
     await expect(
       node.submitMapUpdate({ location: { lat: 1, lng: 2 }, quality: 0.7 })
     ).rejects.toThrow('Privacy budget exhausted');
+  });
+
+  it('continues when hardware attestation fails', async () => {
+    const { SovereignNode } = await import('./node.js');
+    mockHardwareAttest.mockRejectedValueOnce(new Error('tpm not available'));
+
+    const node = new SovereignNode({
+      nodeId: 'node-hw-fail',
+      region: 'r1',
+      coordinates: { lat: 1, lng: 2 },
+      hardware: { tpmAvailable: true }
+    }) as any;
+
+    await expect(node.initializeHardware()).resolves.toBeUndefined();
+    expect(node.hardware).toBeNull();
+  });
+
+  it('covers aggregator branches and shutdown handler registration', async () => {
+    const { SovereignNode, NodeState } = await import('./node.js');
+
+    const nodeNone = new SovereignNode({
+      nodeId: 'node-none',
+      region: 'r1',
+      coordinates: { lat: 1, lng: 2 },
+      consensus: { aggregatorTier: 'none', enabled: true }
+    }) as any;
+    await expect(nodeNone.becomeAggregator({ tier: 'edge' })).rejects.toThrow('Node not configured as aggregator');
+
+    const nodeAgg = new SovereignNode({
+      nodeId: 'node-agg',
+      region: 'r1',
+      coordinates: { lat: 1, lng: 2 },
+      consensus: { aggregatorTier: 'edge', enabled: true }
+    }) as any;
+
+    await nodeAgg.becomeAggregator({ tier: 'edge', maxChildren: 4 });
+    expect(nodeAgg.state).toBe(NodeState.AGGREGATING);
+    expect(nodeAgg.shutdownHandlers.length).toBeGreaterThan(0);
+
+    const onSpy = vi.spyOn(process, 'on');
+    nodeAgg.setupShutdownHandlers();
+    expect(onSpy).toHaveBeenCalledWith('SIGTERM', expect.any(Function));
+    expect(onSpy).toHaveBeenCalledWith('SIGINT', expect.any(Function));
+    onSpy.mockRestore();
+  });
+
+  it('covers training simulation and aggregation proof fallback', async () => {
+    const { SovereignNode } = await import('./node.js');
+    const node = new SovereignNode({
+      nodeId: 'node-train',
+      region: 'r1',
+      coordinates: { lat: 1, lng: 2 }
+    }) as any;
+
+    vi.useFakeTimers();
+    const trainPromise = node.trainLocalModel({
+      id: 'round-1',
+      globalModelHash: 'h',
+      round: 2,
+      modelParams: { weightCount: 16 },
+      trainingConfig: { epochs: 1, batchSize: 1, learningRate: 0.01 },
+      deadline: Date.now() + 10000
+    });
+    await vi.runAllTimersAsync();
+    const trained = await trainPromise;
+    vi.useRealTimers();
+
+    expect(trained.roundId).toBe('round-1');
+    expect(trained.weights).toBeInstanceOf(Float64Array);
+    expect(trained.weights.length).toBe(16);
+
+    const aggProof = await node.generateAggregationProof([{ a: 1 }]);
+    expect(typeof aggProof).toBe('string');
+    expect(aggProof.length).toBeGreaterThan(10);
+  });
+
+  it('rethrows submit errors from underlying privacy/network flow', async () => {
+    const { SovereignNode } = await import('./node.js');
+    const node = new SovereignNode({
+      nodeId: 'node-submit-error',
+      region: 'r1',
+      coordinates: { lat: 1, lng: 2 }
+    }) as any;
+
+    node.privacy = {
+      hasBudgetFor: vi.fn(() => true),
+      apply: vi.fn(async () => {
+        throw new Error('apply failed');
+      })
+    };
+
+    await expect(node.submitMapUpdate({ location: { lat: 1, lng: 2 }, quality: 0.4 })).rejects.toThrow('apply failed');
+  });
+
+  it('covers consensus error wrap and submitOnline id fallback', async () => {
+    const { SovereignNode } = await import('./node.js');
+    const node = new SovereignNode({
+      nodeId: 'node-consensus-fail',
+      region: 'r1',
+      coordinates: { lat: 1, lng: 2 },
+      consensus: { enabled: true }
+    }) as any;
+
+    node.consensus = {
+      submitUpdate: vi.fn(async () => {
+        throw new Error('submit failed');
+      })
+    };
+
+    await expect(
+      node.participateInRound({
+        id: 'r1',
+        globalModelHash: 'h',
+        trainingConfig: { epochs: 1, batchSize: 1, learningRate: 0.1 },
+        deadline: Date.now() + 1000
+      })
+    ).rejects.toThrow('Failed to participate in round r1');
+
+    node.network = {
+      broadcast: vi.fn(async () => ({ accepted: true, estimatedTime: 1 }))
+    };
+
+    const submitted = await node.submitOnline(
+      {
+        location: { lat: 1, lng: 2 },
+        quality: 1,
+        noiseApplied: true,
+        privacyProof: 'x',
+        epsilonConsumed: 0.01
+      },
+      'proof'
+    );
+
+    expect(submitted.updateId).toBeTruthy();
+    expect(submitted.status).toBe('confirmed');
+  });
+
+  it('covers aggregator init failure, shutdown failure path, and metrics collector branches', async () => {
+    const { SovereignNode } = await import('./node.js');
+    const node = new SovereignNode({
+      nodeId: 'node-deep-branches',
+      region: 'r1',
+      coordinates: { lat: 1, lng: 2 },
+      consensus: { enabled: true, aggregatorTier: 'edge' }
+    }) as any;
+
+    mockAggregatorStart.mockRejectedValueOnce(new Error('aggregator start failed'));
+    await expect(node.becomeAggregator({ tier: 'edge' })).rejects.toThrow('aggregator start failed');
+
+    node.shutdownHandlers = [
+      vi.fn(async () => {
+        throw new Error('handler blew up');
+      })
+    ];
+    node.network = {
+      disconnect: vi.fn(async () => {
+        throw new Error('disconnect failed');
+      }),
+      isConnected: vi.fn(() => false),
+      getStatus: vi.fn(() => ({ connected: false, peers: 0, latency: 0, bandwidth: 0, lastSeen: Date.now() }))
+    };
+
+    await expect(node.shutdown()).rejects.toThrow('disconnect failed');
+
+    // Exercise concrete metrics collector branches that are often replaced by mocks.
+    const metrics = node.metrics;
+    metrics.recordByzantineFault('n1', 'equivocation');
+    for (let i = 0; i < 1005; i++) {
+      metrics.recordLatency(10 + (i % 3));
+    }
+    const snap = metrics.getSnapshot();
+    expect(snap.byzantineFaultsDetected['n1:equivocation']).toBe(1);
+    expect(snap.averageLatency).toBeGreaterThan(0);
   });
 });
