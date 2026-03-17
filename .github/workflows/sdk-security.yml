@@ -125,16 +125,16 @@ jobs:
     steps:
       - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd
 
-      - uses: github/codeql-action/init@v2
+      - uses: github/codeql-action/init@b8d3b6e8af63cde30bdc382c0bc28114f4346c88
         with:
           languages: 'typescript'
           queries: security-and-quality
 
       - name: Auto-build TypeScript
-        uses: github/codeql-action/autobuild@v2
+        uses: github/codeql-action/autobuild@b8d3b6e8af63cde30bdc382c0bc28114f4346c88
 
       - name: Perform CodeQL Analysis
-        uses: github/codeql-action/analyze@v2
+        uses: github/codeql-action/analyze@b8d3b6e8af63cde30bdc382c0bc28114f4346c88
         with:
           category: '/language:typescript'
 
@@ -176,7 +176,7 @@ jobs:
           cat /tmp/security-report.md
 
       - name: Upload security report
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
         with:
           name: security-scan-report
           path: /tmp/security-report.md

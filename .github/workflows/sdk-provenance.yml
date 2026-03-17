@@ -101,7 +101,7 @@ jobs:
           cat /tmp/provenance.json
 
       - name: Upload provenance as artifact
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
         with:
           name: provenance-record
           path: /tmp/provenance.json
@@ -165,7 +165,7 @@ jobs:
           cat /tmp/slsa-report.md
 
       - name: Upload SLSA report
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
         with:
           name: slsa-compliance
           path: /tmp/slsa-report.md
