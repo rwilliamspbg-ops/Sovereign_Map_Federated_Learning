@@ -7,9 +7,14 @@ const mockAggregatorOn = vi.fn((_event: string, _handler: (updates: unknown[]) =
 
 vi.mock('@sovereignmap/privacy', () => {
   class PrivacyEngine {
+    private budgetCb?: (remaining: number, total: number) => void;
     public hasBudgetFor = vi.fn(() => true);
     public apply = vi.fn(async (u: Record<string, unknown>) => ({ ...u, noiseApplied: true }));
-    public on = vi.fn();
+    public on = vi.fn((event: string, cb: (remaining: number, total: number) => void) => {
+      if (event === 'budgetUpdate') {
+        this.budgetCb = cb;
+      }
+    });
     public initialize = vi.fn(async () => undefined);
     public destroy = vi.fn(async () => undefined);
     public getStatus = vi.fn(() => ({
@@ -22,6 +27,10 @@ vi.mock('@sovereignmap/privacy', () => {
     }));
 
     constructor(_budget: Record<string, unknown>) {}
+
+    public triggerBudgetUpdate(remaining: number, total: number) {
+      this.budgetCb?.(remaining, total);
+    }
   }
 
   return { PrivacyEngine };
@@ -383,6 +392,9 @@ describe('SovereignNode lifecycle branches', () => {
 
     // Exercise concrete metrics collector branches that are often replaced by mocks.
     const metrics = node.metrics;
+    metrics.recordUpdate({ location: { lat: 1, lng: 2 }, quality: 0.8 }, true);
+    metrics.recordUpdate({ location: { lat: 1, lng: 2 }, quality: 0.6 }, false);
+    metrics.recordRound({ accepted: true, reward: 5, roundId: 'r1' });
     metrics.recordByzantineFault('n1', 'equivocation');
     for (let i = 0; i < 1005; i++) {
       metrics.recordLatency(10 + (i % 3));
@@ -390,5 +402,93 @@ describe('SovereignNode lifecycle branches', () => {
     const snap = metrics.getSnapshot();
     expect(snap.byzantineFaultsDetected['n1:equivocation']).toBe(1);
     expect(snap.averageLatency).toBeGreaterThan(0);
+    expect(snap.totalUpdates).toBe(2);
+    expect(snap.successfulUpdates).toBe(1);
+    expect(snap.failedUpdates).toBe(1);
+    expect(snap.totalRewards).toBe(5);
+  });
+
+  it('covers aggregate callback path and submitAggregate broadcast', async () => {
+    const { SovereignNode } = await import('./node.js');
+    const node = new SovereignNode({
+      nodeId: 'node-aggregate-callback',
+      region: 'r1',
+      coordinates: { lat: 1, lng: 2 },
+      consensus: { enabled: true, aggregatorTier: 'edge' }
+    }) as any;
+
+    const broadcast = vi.fn(async () => ({ accepted: true }));
+    node.network = { broadcast };
+    node.generateAggregationProof = vi.fn(async () => 'zk-proof');
+
+    await node.becomeAggregator({ tier: 'edge' });
+    const aggregateHandler = mockAggregatorOn.mock.calls.find((c) => c[0] === 'aggregate')?.[1];
+    expect(aggregateHandler).toBeTruthy();
+
+    await aggregateHandler([{ id: 1 }, { id: 2 }]);
+    expect(node.generateAggregationProof).toHaveBeenCalled();
+    expect(broadcast).toHaveBeenCalled();
+
+    await node.submitAggregate([{ id: 3 }], 'proof-x');
+    expect(broadcast).toHaveBeenCalledTimes(2);
+  });
+
+  it('covers privacy budget update emission callback', async () => {
+    const { SovereignNode } = await import('./node.js');
+    const node = new SovereignNode({
+      nodeId: 'node-privacy-callback',
+      region: 'r1',
+      coordinates: { lat: 1, lng: 2 }
+    }) as any;
+
+    const budgetSpy = vi.fn();
+    node.on('privacyBudgetUpdate', budgetSpy);
+    await node.initializePrivacy();
+
+    node.privacy.triggerBudgetUpdate(0.8, 1.0);
+    expect(budgetSpy).toHaveBeenCalledWith({ remaining: 0.8, total: 1.0 });
+  });
+
+  it('covers wasm proof fallback and signal handler exit branches', async () => {
+    vi.doMock('./wasm/prover.js', () => ({
+      generateProof: vi.fn(() => {
+        throw new Error('prover failed');
+      })
+    }));
+
+    const { SovereignNode } = await import('./node.js');
+    const node = new SovereignNode({
+      nodeId: 'node-signals',
+      region: 'r1',
+      coordinates: { lat: 1, lng: 2 }
+    }) as any;
+
+    const proof = await node.generateProof({
+      location: { lat: 1, lng: 2 },
+      quality: 1,
+      noiseApplied: true,
+      privacyProof: 'p',
+      epsilonConsumed: 0.01
+    });
+    expect(typeof proof).toBe('string');
+
+    const onSpy = vi.spyOn(process, 'on');
+    const exitSpy = vi.spyOn(process, 'exit').mockImplementation((() => undefined) as never);
+
+    node.shutdown = vi.fn(async () => undefined);
+    node.setupShutdownHandlers();
+    const sigterm = onSpy.mock.calls.find((c) => c[0] === 'SIGTERM')?.[1] as (() => Promise<void>) | undefined;
+    expect(sigterm).toBeTruthy();
+    await sigterm?.();
+    expect(exitSpy).toHaveBeenCalledWith(0);
+
+    node.shutdown = vi.fn(async () => {
+      throw new Error('shutdown boom');
+    });
+    await sigterm?.();
+    expect(exitSpy).toHaveBeenCalledWith(1);
+
+    onSpy.mockRestore();
+    exitSpy.mockRestore();
   });
 });
