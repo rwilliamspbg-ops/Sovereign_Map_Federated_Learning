@@ -5,7 +5,9 @@ set -euo pipefail
 NODES=100
 DURATION="10m"
 USE_NPU=false
-TPM_TEST=false
+USE_GPU=false
+TPM_TEST=true
+ACCELERATOR_MODE="auto"
 COMPOSE_FILE="${COMPOSE_FILE:-docker-compose.production.yml}"
 COMPOSE_ENV_FILE="${COMPOSE_ENV_FILE:-}"
 
@@ -20,11 +22,29 @@ while [[ $# -gt 0 ]]; do
       shift 2
       ;;
     --use-npu)
+      ACCELERATOR_MODE="npu"
       USE_NPU=true
+      USE_GPU=false
+      shift
+      ;;
+    --use-gpu)
+      ACCELERATOR_MODE="gpu"
+      USE_GPU=true
+      USE_NPU=false
+      shift
+      ;;
+    --cpu-only)
+      ACCELERATOR_MODE="cpu"
+      USE_NPU=false
+      USE_GPU=false
       shift
       ;;
     --tpm-test)
       TPM_TEST=true
+      shift
+      ;;
+    --disable-tpm)
+      TPM_TEST=false
       shift
       ;;
     --compose)
@@ -64,6 +84,11 @@ compose_cmd() {
   docker compose "${COMPOSE_ENV_ARGS[@]}" -f "$COMPOSE_FILE" "$@"
 }
 
+service_exists() {
+  local service_name="$1"
+  compose_cmd config --services 2>/dev/null | grep -qx "$service_name"
+}
+
 get_profile_var() {
   local key="$1"
   local fallback="$2"
@@ -78,6 +103,38 @@ BACKEND_API_PORT=$(get_profile_var "BACKEND_API_HOST_PORT" "8000")
 GRAFANA_PORT=$(get_profile_var "GRAFANA_HOST_PORT" "3001")
 PROMETHEUS_PORT=$(get_profile_var "PROMETHEUS_HOST_PORT" "9090")
 ALERTMANAGER_PORT=$(get_profile_var "ALERTMANAGER_HOST_PORT" "9093")
+
+detect_accelerator() {
+  if [ "$ACCELERATOR_MODE" = "npu" ]; then
+    USE_NPU=true
+    USE_GPU=false
+    return
+  fi
+  if [ "$ACCELERATOR_MODE" = "gpu" ]; then
+    USE_NPU=false
+    USE_GPU=true
+    return
+  fi
+  if [ "$ACCELERATOR_MODE" = "cpu" ]; then
+    USE_NPU=false
+    USE_GPU=false
+    return
+  fi
+
+  # Auto mode prefers NPU when present, then GPU, otherwise CPU.
+  if [ -e /dev/davinci0 ] || [ -e /dev/npu0 ] || command -v npu-smi >/dev/null 2>&1; then
+    USE_NPU=true
+    USE_GPU=false
+  elif command -v nvidia-smi >/dev/null 2>&1 && nvidia-smi -L >/dev/null 2>&1; then
+    USE_NPU=false
+    USE_GPU=true
+  else
+    USE_NPU=false
+    USE_GPU=false
+  fi
+}
+
+detect_accelerator
 
 # Convert duration to seconds
 convert_duration_to_seconds() {
@@ -115,6 +172,8 @@ log "=========================================="
 log "Nodes: $NODES"
 log "Duration: $DURATION ($DURATION_SECONDS seconds)"
 log "Interval: ${INTERVAL_SECONDS}s"
+log "Accelerator mode: $ACCELERATOR_MODE"
+log "GPU Acceleration: $USE_GPU"
 log "NPU Acceleration: $USE_NPU"
 log "TPM Testing: $TPM_TEST"
 log "Compose File: $COMPOSE_FILE"
@@ -151,8 +210,24 @@ if [ "$PROM_HEALTH" != "200" ] || [ "$GRAFANA_HEALTH" != "200" ]; then
 fi
 
 # Start backend, database, and redis
-log "Starting backend infrastructure (MongoDB, Redis, Backend)..."
-compose_cmd up -d mongo redis backend
+log "Starting backend infrastructure..."
+INFRA_SERVICES=()
+if service_exists mongo; then
+  INFRA_SERVICES+=(mongo)
+fi
+if service_exists redis; then
+  INFRA_SERVICES+=(redis)
+fi
+if service_exists backend; then
+  INFRA_SERVICES+=(backend)
+fi
+
+if [ "${#INFRA_SERVICES[@]}" -eq 0 ]; then
+  log "ERROR: no backend infrastructure services found in $COMPOSE_FILE"
+  exit 1
+fi
+
+compose_cmd up -d "${INFRA_SERVICES[@]}"
 
 sleep 10
 
@@ -165,12 +240,14 @@ log "Backend health: $BACKEND_HEALTH"
 export NUM_NODES=$NODES
 export NUM_ROUNDS=$((DURATION_SECONDS / 60))  # ~1 round per minute
 export USE_NPU=$USE_NPU
+export USE_GPU=$USE_GPU
 export TPM_TEST=$TPM_TEST
 
 log "Deploying $NODES federated learning node agents..."
 log "Environment:"
 log "  NUM_NODES=$NUM_NODES"
 log "  NUM_ROUNDS=$NUM_ROUNDS"
+log "  USE_GPU=$USE_GPU"
 log "  USE_NPU=$USE_NPU"
 log "  TPM_TEST=$TPM_TEST"
 
@@ -189,32 +266,59 @@ sed -i "s/REPLACE_NODES/$NODES/" "$OUT_DIR/docker-compose.override.yml"
 # Instead, we'll use docker run in a loop or rely on compose with replicas
 log "Starting node agents (this may take a few minutes for $NODES nodes)..."
 
-# For production scale, we create independent containers
-for i in $(seq 1 $NODES); do
-  if [ $((i % 100)) -eq 0 ]; then
-    log "Started $i/$NODES node agents..."
+if service_exists node-agent; then
+  compose_cmd up -d --scale node-agent="$NODES" node-agent
+else
+  # Fallback for compose profiles that define fixed node-agent services only.
+  PROJECT_NAME=$(compose_cmd config 2>/dev/null | awk '/^name: / {print $2; exit}')
+  PROJECT_NAME=${PROJECT_NAME:-sovereign_map_federated_learning}
+  NETWORK_NAME="${PROJECT_NAME}_sovereignmap"
+
+  if ! docker network inspect "$NETWORK_NAME" >/dev/null 2>&1; then
+    log "ERROR: expected Docker network '$NETWORK_NAME' not found"
+    exit 1
   fi
-  
-  docker run -d \
-    --name "node-agent-$i" \
-    --network sovereignmap \
-    --env NODE_ID="node-$i" \
-    --env BACKEND_URL="http://backend:8000" \
-    --env USE_NPU="$USE_NPU" \
-    --env TPM_TEST="$TPM_TEST" \
-    --env NUM_ROUNDS="$NUM_ROUNDS" \
-    --restart unless-stopped \
-    --health-cmd='curl -f http://localhost:6000/health || exit 1' \
-    --health-interval=30s \
-    --health-timeout=10s \
-    --health-retries=3 \
-    sovereignmap/node-agent:latest > /dev/null 2>&1 &
-  
-  # Throttle container creation to avoid overwhelming Docker daemon
-  if [ $((i % 50)) -eq 0 ]; then
-    sleep 2
+
+  if ! docker image inspect sovereignmap/node-agent:latest >/dev/null 2>&1; then
+    if service_exists node-agent-1; then
+      log "Building node-agent image from compose service node-agent-1..."
+      compose_cmd build node-agent-1
+    else
+      log "ERROR: node-agent image 'sovereignmap/node-agent:latest' is missing and no buildable node-agent service was found"
+      exit 1
+    fi
   fi
-done
+
+  for i in $(seq 1 $NODES); do
+    if [ $((i % 25)) -eq 0 ]; then
+      log "Started $i/$NODES node agents..."
+    fi
+
+    docker rm -f "node-agent-$i" >/dev/null 2>&1 || true
+    if ! docker run -d \
+      --name "node-agent-$i" \
+      --network "$NETWORK_NAME" \
+      --env NODE_ID="node-$i" \
+      --env BACKEND_URL="http://backend:8000" \
+      --env USE_NPU="$USE_NPU" \
+      --env USE_GPU="$USE_GPU" \
+      --env TPM_ENABLED=true \
+      --env TPM_TEST="$TPM_TEST" \
+      --env NUM_ROUNDS="$NUM_ROUNDS" \
+      --restart unless-stopped \
+      --health-cmd='curl -f http://localhost:6000/health || exit 1' \
+      --health-interval=30s \
+      --health-timeout=10s \
+      --health-retries=3 \
+      sovereignmap/node-agent:latest >/dev/null; then
+      log "ERROR: failed to start node-agent-$i"
+    fi
+
+    if [ $((i % 50)) -eq 0 ]; then
+      sleep 2
+    fi
+  done
+fi
 
 log "All $NODES node agents deployment initiated."
 sleep 30
@@ -222,6 +326,10 @@ sleep 30
 # Count running node agents
 RUNNING_AGENTS=$(docker ps --filter "name=node-agent-" --format "{{.Names}}" | wc -l)
 log "Currently running node agents: $RUNNING_AGENTS/$NODES"
+if [ "$RUNNING_AGENTS" -eq 0 ]; then
+  log "WARNING: no node-agent containers are running; dashboards will show limited data"
+  docker ps -a --filter "name=node-agent-" --format "{{.Names}}\t{{.Status}}" | tee -a "$OUT_DIR/demo.log" || true
+fi
 
 # Main monitoring loop
 log "Starting monitoring loop for $DURATION_SECONDS seconds..."
@@ -296,8 +404,14 @@ curl -s "http://localhost:${PROMETHEUS_PORT}/graph" > "$OUT_DIR/prometheus-graph
 
 # Capture backend logs
 log "Capturing backend logs..."
-docker logs sovereignmap-backend > "$OUT_DIR/backend-final.log" 2>&1 || true
-docker logs sovereignmap-prometheus > "$OUT_DIR/prometheus-final.log" 2>&1 || true
+BACKEND_CID=$(compose_cmd ps -q backend 2>/dev/null | head -n1 || true)
+PROMETHEUS_CID=$(compose_cmd ps -q prometheus 2>/dev/null | head -n1 || true)
+if [ -n "$BACKEND_CID" ]; then
+  docker logs "$BACKEND_CID" > "$OUT_DIR/backend-final.log" 2>&1 || true
+fi
+if [ -n "$PROMETHEUS_CID" ]; then
+  docker logs "$PROMETHEUS_CID" > "$OUT_DIR/prometheus-final.log" 2>&1 || true
+fi
 
 # Create summary report
 cat > "$OUT_DIR/DEMO_REPORT.md" <<REPORT_EOF
@@ -310,6 +424,7 @@ cat > "$OUT_DIR/DEMO_REPORT.md" <<REPORT_EOF
 - **Monitoring Interval:** ${INTERVAL_SECONDS}s
 - **Total Iterations:** $STEPS
 - **NPU Acceleration:** $USE_NPU
+- **GPU Acceleration:** $USE_GPU
 - **TPM Testing:** $TPM_TEST
 - **Compose File:** $COMPOSE_FILE
 
