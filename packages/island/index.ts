@@ -216,18 +216,27 @@ export class IslandModeManager {
   }
   
   private verifyChainIntegrity(updates: any[]): { valid: boolean; violationAt?: number } {
+    const ordered = [...updates].sort((a, b) => a.sequenceNumber - b.sequenceNumber);
     let expectedPrevious = 'genesis';
     
-    for (let i = 0; i < updates.length; i++) {
-      const update = updates[i];
+    for (let i = 0; i < ordered.length; i++) {
+      const update = ordered[i];
       
       if (update.previousHash !== expectedPrevious) {
         return { valid: false, violationAt: i };
       }
+
+      const canonical: QueuedUpdate = {
+        id: update.id,
+        timestamp: update.timestamp,
+        update: update.update,
+        proof: update.proof,
+        sequenceNumber: update.sequenceNumber,
+      };
       
       // Verify hash computation
       const recomputed = this.computeChainedHash(
-        this.hashEntry(update),
+        this.hashEntry(canonical),
         update.previousHash
       );
       

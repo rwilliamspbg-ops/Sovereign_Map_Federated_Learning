@@ -3,7 +3,7 @@
   "private": true,
   "scripts": {
     "build:libs": "npm --prefix packages/privacy ci && npm --prefix packages/privacy run build && npm --prefix packages/consensus ci && npm --prefix packages/consensus run build && npm --prefix packages/island ci && npm --prefix packages/island run build && npm --prefix packages/core ci && npm --prefix packages/core run build",
-    "test:ci": "npm --prefix packages/privacy run test && npm --prefix packages/consensus run test && npm --prefix packages/island run test && npm --prefix packages/core run test:ci",
+    "test:ci": "npm --prefix packages/privacy run test:ci && npm --prefix packages/consensus run test:ci && npm --prefix packages/island run test:ci && npm --prefix packages/core run test:ci",
     "sdk:publish": "npm --prefix packages/privacy publish --access public && npm --prefix packages/consensus publish --access public && npm --prefix packages/island publish --access public && npm --prefix packages/core publish --access public",
     "nodes:burst": "bash scripts/burst-scale-with-certs.sh",
     "nodes:burst:25": "bash scripts/burst-scale-with-certs.sh 25 docker-compose.dev.yml",
