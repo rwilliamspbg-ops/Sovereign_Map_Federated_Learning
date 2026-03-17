@@ -455,6 +455,8 @@ data/
 !bridge-policies.json
 !package-lock.json
 !**/package-lock.json
+!packages/*/package.json
+!packages/*/tsconfig.json
 !fixtures/
 !config/*.json
 !grafana/dashboards/*.json

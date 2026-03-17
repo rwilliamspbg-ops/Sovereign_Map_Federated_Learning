@@ -23,6 +23,8 @@ jobs:
           cache-dependency-path: |
             package-lock.json
             packages/core/package-lock.json
+            packages/consensus/package-lock.json
+            packages/island/package-lock.json
             packages/privacy/package-lock.json
       - run: npm ci
       - run: npm run build:libs
@@ -60,6 +62,8 @@ jobs:
           cache-dependency-path: |
             package-lock.json
             packages/core/package-lock.json
+            packages/consensus/package-lock.json
+            packages/island/package-lock.json
             packages/privacy/package-lock.json
       - run: npm ci
         if: steps.npm_token.outputs.present == 'true'

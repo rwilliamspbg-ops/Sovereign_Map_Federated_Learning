@@ -1,7 +1,7 @@
 {
-  "name": "@sovereignmap/island",
+  "name": "@sovereignmap/consensus",
   "version": "0.1.0-alpha.1",
-  "description": "Autonomous offline operation with tamper-evident state recovery",
+  "description": "Byzantine fault tolerant consensus primitives for Sovereign Map",
   "type": "module",
   "main": "./dist/index.js",
   "types": "./dist/index.d.ts",
@@ -23,8 +23,8 @@
     "clean": "rm -rf dist"
   },
   "dependencies": {
-    "level": "^8.0.0",
-    "ulid": "^2.3.0"
+    "eventemitter3": "^5.0.1",
+    "pino": "^10.3.1"
   },
   "devDependencies": {
     "@types/node": "^25.5.0",

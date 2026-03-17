@@ -41,6 +41,7 @@ export class IslandModeManager {
   private updateChain: string[] = []; // Hash chain for tamper detection
   private sequenceNumber: number = 0;
   private lastHash: string = 'genesis';
+  private approximateStorageBytes: number = 0;
   
   constructor(config: IslandModeConfig) {
     this.config = config;
@@ -96,6 +97,7 @@ export class IslandModeManager {
     // Update chain state
     this.updateChain.push(chainedHash);
     this.lastHash = chainedHash;
+    this.approximateStorageBytes += JSON.stringify(entry).length;
     await this.saveChainState();
     
     return { id: entry.id, position: this.sequenceNumber };
@@ -144,6 +146,7 @@ export class IslandModeManager {
     this.sequenceNumber = 0;
     this.updateChain = [];
     this.lastHash = 'genesis';
+    this.approximateStorageBytes = 0;
     batch.put('__chain_state__', JSON.stringify({
       sequenceNumber: 0,
       lastHash: 'genesis',
@@ -167,24 +170,13 @@ export class IslandModeManager {
       updatesQueued: this.sequenceNumber,
       lastSync: Date.now(), // Last successful sync timestamp
       storageUsed: this.calculateStorageUsed(),
-      chainIntegrity: this.verifyChainIntegrity(this.updates).valid,
+      chainIntegrity: this.updateChain.length === this.sequenceNumber,
     };
   }
   
   private calculateStorageUsed(): number {
-    // Estimate storage usage based on cached updates
-    // Each update has metadata (JSON) + model weights (binary)
-    let totalBytes = 0;
-    
-    for (const update of this.updates) {
-      // Approximate size: metadata (~500 bytes) + weights (variable)
-      totalBytes += 500;
-      if (update.weights) {
-        totalBytes += update.weights.length * 8; // Float64Array
-      }
-    }
-    
-    return totalBytes;
+    // Approximate bytes tracked as updates are queued.
+    return this.approximateStorageBytes;
   }
   
   private async initializeChain(): Promise<void> {
