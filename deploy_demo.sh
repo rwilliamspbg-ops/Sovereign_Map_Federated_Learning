@@ -7,6 +7,7 @@ DURATION="10m"
 USE_NPU=false
 TPM_TEST=false
 COMPOSE_FILE="${COMPOSE_FILE:-docker-compose.production.yml}"
+COMPOSE_ENV_FILE="${COMPOSE_ENV_FILE:-}"
 
 while [[ $# -gt 0 ]]; do
   case $1 in
@@ -36,6 +37,47 @@ while [[ $# -gt 0 ]]; do
       ;;
   esac
 done
+
+if [ -z "$COMPOSE_ENV_FILE" ]; then
+  case "$COMPOSE_FILE" in
+    docker-compose.dev.yml)
+      COMPOSE_ENV_FILE=".env.dev"
+      ;;
+    docker-compose.production.yml|docker-compose.large-scale.yml)
+      COMPOSE_ENV_FILE=".env.production"
+      ;;
+    docker-compose.full.yml)
+      COMPOSE_ENV_FILE=".env.full"
+      ;;
+    *)
+      COMPOSE_ENV_FILE=""
+      ;;
+  esac
+fi
+
+COMPOSE_ENV_ARGS=()
+if [ -n "$COMPOSE_ENV_FILE" ] && [ -f "$COMPOSE_ENV_FILE" ]; then
+  COMPOSE_ENV_ARGS=(--env-file "$COMPOSE_ENV_FILE")
+fi
+
+compose_cmd() {
+  docker compose "${COMPOSE_ENV_ARGS[@]}" -f "$COMPOSE_FILE" "$@"
+}
+
+get_profile_var() {
+  local key="$1"
+  local fallback="$2"
+  local value=""
+  if [ -n "$COMPOSE_ENV_FILE" ] && [ -f "$COMPOSE_ENV_FILE" ]; then
+    value=$(grep -E "^${key}=" "$COMPOSE_ENV_FILE" | tail -n1 | cut -d '=' -f2-)
+  fi
+  echo "${value:-$fallback}"
+}
+
+BACKEND_API_PORT=$(get_profile_var "BACKEND_API_HOST_PORT" "8000")
+GRAFANA_PORT=$(get_profile_var "GRAFANA_HOST_PORT" "3001")
+PROMETHEUS_PORT=$(get_profile_var "PROMETHEUS_HOST_PORT" "9090")
+ALERTMANAGER_PORT=$(get_profile_var "ALERTMANAGER_HOST_PORT" "9093")
 
 # Convert duration to seconds
 convert_duration_to_seconds() {
@@ -76,6 +118,11 @@ log "Interval: ${INTERVAL_SECONDS}s"
 log "NPU Acceleration: $USE_NPU"
 log "TPM Testing: $TPM_TEST"
 log "Compose File: $COMPOSE_FILE"
+if [ -n "$COMPOSE_ENV_FILE" ] && [ -f "$COMPOSE_ENV_FILE" ]; then
+  log "Env File: $COMPOSE_ENV_FILE"
+else
+  log "Env File: none (using compose defaults)"
+fi
 log "Output Directory: $OUT_DIR"
 log "=========================================="
 
@@ -87,14 +134,14 @@ fi
 
 # Start monitoring stack
 log "Starting Prometheus and Grafana monitoring stack..."
-docker compose -f "$COMPOSE_FILE" up -d prometheus grafana alertmanager
+compose_cmd up -d prometheus grafana alertmanager
 
 sleep 5
 
 # Check if services are healthy
 log "Checking monitoring stack health..."
-PROM_HEALTH=$(curl -s -o /dev/null -w '%{http_code}' http://localhost:9090/-/healthy || echo "000")
-GRAFANA_HEALTH=$(curl -s -o /dev/null -w '%{http_code}' http://localhost:3001/api/health || echo "000")
+PROM_HEALTH=$(curl -s -o /dev/null -w '%{http_code}' "http://localhost:${PROMETHEUS_PORT}/-/healthy" || echo "000")
+GRAFANA_HEALTH=$(curl -s -o /dev/null -w '%{http_code}' "http://localhost:${GRAFANA_PORT}/api/health" || echo "000")
 
 log "Prometheus health: $PROM_HEALTH"
 log "Grafana health: $GRAFANA_HEALTH"
@@ -105,13 +152,13 @@ fi
 
 # Start backend, database, and redis
 log "Starting backend infrastructure (MongoDB, Redis, Backend)..."
-docker compose -f "$COMPOSE_FILE" up -d mongo redis backend
+compose_cmd up -d mongo redis backend
 
 sleep 10
 
 # Verify backend is healthy
 log "Checking backend health..."
-BACKEND_HEALTH=$(curl -s -o /dev/null -w '%{http_code}' http://localhost:8000/health || echo "000")
+BACKEND_HEALTH=$(curl -s -o /dev/null -w '%{http_code}' "http://localhost:${BACKEND_API_PORT}/health" || echo "000")
 log "Backend health: $BACKEND_HEALTH"
 
 # Set environment variables for node agents
@@ -209,7 +256,7 @@ for step in $(seq 1 "$STEPS"); do
     
     # Prometheus metrics query
     echo "## Prometheus Active Time Series"
-    curl -s "http://localhost:9090/api/v1/query?query=up" 2>/dev/null | grep -o '"value":\[' | wc -l || echo "Unable to query"
+    curl -s "http://localhost:${PROMETHEUS_PORT}/api/v1/query?query=up" 2>/dev/null | grep -o '"value":\[' | wc -l || echo "Unable to query"
     echo ""
     
   } >> "$OUT_DIR/metrics-iteration-$step.txt"
@@ -217,7 +264,7 @@ for step in $(seq 1 "$STEPS"); do
   # Export Prometheus data every 5 iterations
   if [ $((step % 5)) -eq 0 ]; then
     log "Exporting Prometheus metrics snapshot..."
-    curl -s "http://localhost:9090/api/v1/query_range?query=increase(container_cpu_usage_seconds_total%5B5m%5D)&start=$(date -d '5 minutes ago' +%s)&end=$(date +%s)&step=60s" > "$OUT_DIR/prometheus-range-$step.json" 2>/dev/null || true
+    curl -s "http://localhost:${PROMETHEUS_PORT}/api/v1/query_range?query=increase(container_cpu_usage_seconds_total%5B5m%5D)&start=$(date -d '5 minutes ago' +%s)&end=$(date +%s)&step=60s" > "$OUT_DIR/prometheus-range-$step.json" 2>/dev/null || true
   fi
   
   # Sleep before next iteration (except on last iteration)
@@ -233,7 +280,7 @@ log "Capturing final state..."
 
 {
   echo "# Final Docker Compose State"
-  docker compose -f "$COMPOSE_FILE" ps
+  compose_cmd ps
   echo ""
   echo "# Final Node Agent Container Status"
   docker ps -a --filter "name=node-agent-" --format "table {{.Names}}\t{{.Status}}\t{{.Ports}}"
@@ -244,8 +291,8 @@ log "Capturing final state..."
 
 # Export all available Prometheus metrics
 log "Exporting final Prometheus metrics..."
-curl -s "http://localhost:9090/api/v1/label/__name__/values" > "$OUT_DIR/prometheus-metrics-available.json" 2>/dev/null || true
-curl -s "http://localhost:9090/graph" > "$OUT_DIR/prometheus-graph.html" 2>/dev/null || true
+curl -s "http://localhost:${PROMETHEUS_PORT}/api/v1/label/__name__/values" > "$OUT_DIR/prometheus-metrics-available.json" 2>/dev/null || true
+curl -s "http://localhost:${PROMETHEUS_PORT}/graph" > "$OUT_DIR/prometheus-graph.html" 2>/dev/null || true
 
 # Capture backend logs
 log "Capturing backend logs..."
@@ -271,14 +318,14 @@ cat > "$OUT_DIR/DEMO_REPORT.md" <<REPORT_EOF
 - **Output Directory:** $OUT_DIR
 
 ## Monitoring Stack Status
-- **Prometheus:** http://localhost:9090
+- **Prometheus:** http://localhost:${PROMETHEUS_PORT}
   - Health Code: $PROM_HEALTH
-- **Grafana:** http://localhost:3001 (admin/<configured password>)
+- **Grafana:** http://localhost:${GRAFANA_PORT} (admin/<configured password>)
   - Health Code: $GRAFANA_HEALTH
   - Dashboards: 7 (Overview, Convergence, Performance, Scaling, Security, NPU, GPU)
 
 ## Backend Infrastructure
-- **Backend API:** http://localhost:8000
+- **Backend API:** http://localhost:${BACKEND_API_PORT}
   - Health Code: $BACKEND_HEALTH
 - **MongoDB:** sovereignmap-mongo:27017 (internal)
 - **Redis:** sovereignmap-redis:6379 (internal)
@@ -299,7 +346,7 @@ cat > "$OUT_DIR/DEMO_REPORT.md" <<REPORT_EOF
 - Available metrics list: prometheus-metrics-available.json
 - Backend logs: backend-final.log
 - Prometheus logs: prometheus-final.log
-- Grafana dashboard screenshots: (generate manually from http://localhost:3001)
+- Grafana dashboard screenshots: (generate manually from http://localhost:${GRAFANA_PORT})
 
 ## Performance Metrics
 
@@ -317,7 +364,7 @@ cat > "$OUT_DIR/DEMO_REPORT.md" <<REPORT_EOF
 
 ### Low Performance
 1. Check node agent logs: `docker logs node-agent-1`
-2. Verify backend connectivity: `curl http://localhost:8000/health`
+2. Verify backend connectivity: `curl http://localhost:${BACKEND_API_PORT}/health`
 3. Check Docker resource limits: `docker stats`
 4. Review NPU/GPU device mapping in container
 
@@ -327,18 +374,18 @@ cat > "$OUT_DIR/DEMO_REPORT.md" <<REPORT_EOF
 3. Cleanup old containers: `docker system prune`
 
 ### Grafana Dashboards Not Loading
-1. Verify Prometheus is up: `curl http://localhost:9090/-/healthy`
+1. Verify Prometheus is up: `curl http://localhost:${PROMETHEUS_PORT}/-/healthy`
 2. Check provisioning mount: `docker exec sovereignmap-grafana ls /etc/grafana/provisioning/dashboards/`
 3. Restart Grafana: `docker restart sovereignmap-grafana`
 
 ## Monitoring URLs
-- **Grafana:** http://localhost:3001
-- **Prometheus:** http://localhost:9090
-- **Backend API:** http://localhost:8000
-- **Alertmanager:** http://localhost:9093
+- **Grafana:** http://localhost:${GRAFANA_PORT}
+- **Prometheus:** http://localhost:${PROMETHEUS_PORT}
+- **Backend API:** http://localhost:${BACKEND_API_PORT}
+- **Alertmanager:** http://localhost:${ALERTMANAGER_PORT}
 
 ## Next Steps
-1. Open Grafana dashboard at http://localhost:3001
+1. Open Grafana dashboard at http://localhost:${GRAFANA_PORT}
 2. Select desired dashboard (Overview, Convergence, Performance, Scaling)
 3. Monitor metrics in real-time
 4. Compare performance across different hardware (CPU, GPU, NPU)
@@ -355,9 +402,9 @@ log "Summary report: $OUT_DIR/DEMO_REPORT.md"
 log "=========================================="
 log ""
 log "Monitoring Endpoints:"
-log "  Grafana:      http://localhost:3001"
-log "  Prometheus:  http://localhost:9090"
-log "  Backend:     http://localhost:8000"
+log "  Grafana:      http://localhost:${GRAFANA_PORT}"
+log "  Prometheus:  http://localhost:${PROMETHEUS_PORT}"
+log "  Backend:     http://localhost:${BACKEND_API_PORT}"
 log ""
 log "To view real-time metrics, open Grafana and select a dashboard."
-log "To cleanup, run: docker compose -f $COMPOSE_FILE down"
+log "To cleanup, run: docker compose ${COMPOSE_ENV_ARGS[*]} -f $COMPOSE_FILE down"

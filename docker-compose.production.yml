@@ -6,8 +6,8 @@ services:
       dockerfile: Dockerfile.backend.optimized
     image: sovereignmap/backend:latest
     ports:
-      - "8000:8000"  # Flask Metrics API
-      - "8080:8080"  # Flower gRPC (if enabled)
+      - "${BACKEND_API_HOST_PORT:-8000}:8000"  # Flask Metrics API
+      - "${BACKEND_GRPC_HOST_PORT:-8080}:8080"  # Flower gRPC (if enabled)
     environment:
       - FLASK_ENV=production
       - NODE_ID=0
@@ -65,7 +65,7 @@ services:
       dockerfile: Dockerfile.frontend.optimized
     image: sovereignmap/frontend:latest
     ports:
-      - "3000:80"
+      - "${FRONTEND_HOST_PORT:-3000}:80"
     depends_on:
       - backend
     restart: always
@@ -95,7 +95,7 @@ services:
   mongo:
     image: mongo:7.0
     ports:
-      - "127.0.0.1:27017:27017"
+      - "127.0.0.1:${MONGO_HOST_PORT:-27017}:27017"
     environment:
       MONGO_INITDB_ROOT_USERNAME: ${MONGO_USER:-admin}
       MONGO_INITDB_ROOT_PASSWORD: ${MONGO_PASSWORD:-CHANGE_ME_MONGO}
@@ -128,7 +128,7 @@ services:
   redis:
     image: redis:7-alpine
     ports:
-      - "127.0.0.1:6379:6379"
+      - "127.0.0.1:${REDIS_HOST_PORT:-6379}:6379"
     restart: always
     healthcheck:
       test: ["CMD", "redis-cli", "ping"]
@@ -337,7 +337,7 @@ services:
   prometheus:
     image: prom/prometheus:v2.48.0
     ports:
-      - "9090:9090"
+      - "${PROMETHEUS_HOST_PORT:-9090}:9090"
     volumes:
       - ./prometheus.yml:/etc/prometheus/prometheus.yml:ro
       - ./tpm_alerts.yml:/etc/prometheus/tpm_alerts.yml:ro
@@ -416,7 +416,7 @@ services:
   grafana:
     image: grafana/grafana:10.2.3
     ports:
-      - "3001:3000"
+      - "${GRAFANA_HOST_PORT:-3001}:3000"
     environment:
       - GF_SECURITY_ADMIN_PASSWORD=${GRAFANA_ADMIN_PASSWORD:-CHANGE_ME_GRAFANA}
       - GF_SECURITY_ADMIN_USER=${GRAFANA_USER:-admin}
@@ -456,7 +456,7 @@ services:
   alertmanager:
     image: prom/alertmanager:v0.26.0
     ports:
-      - "9093:9093"
+      - "${ALERTMANAGER_HOST_PORT:-9093}:9093"
     volumes:
       - ./alertmanager.yml:/etc/alertmanager/alertmanager.yml:ro
       - alertmanager_data:/alertmanager
@@ -493,7 +493,7 @@ services:
     working_dir: /app
     command: ["sh", "-c", "python -m pip install --no-cache-dir prometheus-client flask cryptography && python tpm_metrics_exporter.py"]
     ports:
-      - "9091:9091"
+      - "${TPM_METRICS_HOST_PORT:-9091}:9091"
     networks:
       - sovereignmap
     depends_on:

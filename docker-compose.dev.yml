@@ -7,8 +7,8 @@ services:
     image: sovereignmap/backend:dev
     container_name: sovereignmap-backend-dev
     ports:
-      - "8000:8000"
-      - "8080:8080"
+      - "${BACKEND_API_HOST_PORT:-8000}:8000"
+      - "${BACKEND_GRPC_HOST_PORT:-8080}:8080"
     environment:
       - FLASK_ENV=development
       - FLASK_DEBUG=1
@@ -43,7 +43,7 @@ services:
     image: sovereignmap/frontend:dev
     container_name: sovereignmap-frontend-dev
     ports:
-      - "3000:80"
+      - "${FRONTEND_HOST_PORT:-3000}:80"
     depends_on:
       - backend
     restart: unless-stopped
@@ -64,7 +64,7 @@ services:
     image: mongo:7.0
     container_name: sovereignmap-mongo-dev
     ports:
-      - "27017:27017"
+      - "127.0.0.1:${MONGO_HOST_PORT:-27017}:27017"
     environment:
       MONGO_INITDB_ROOT_USERNAME: dev
       MONGO_INITDB_ROOT_PASSWORD: ${MONGO_PASSWORD:-dev_only_not_for_production}
@@ -85,7 +85,7 @@ services:
     image: redis:7-alpine
     container_name: sovereignmap-redis-dev
     ports:
-      - "6379:6379"
+      - "127.0.0.1:${REDIS_HOST_PORT:-6379}:6379"
     restart: unless-stopped
     networks:
       - sovereignmap
@@ -138,7 +138,7 @@ services:
     image: prom/prometheus:v2.48.0
     container_name: sovereignmap-prometheus-dev
     ports:
-      - "9090:9090"
+      - "${PROMETHEUS_HOST_PORT:-9090}:9090"
     volumes:
       - ./prometheus.yml:/etc/prometheus/prometheus.yml:ro
       - prometheus_data:/prometheus
@@ -166,7 +166,7 @@ services:
     working_dir: /app
     command: ["sh", "-c", "python -m pip install prometheus-client flask cryptography && python tpm_metrics_exporter.py"]
     ports:
-      - "9091:9091"
+      - "${TPM_METRICS_HOST_PORT:-9091}:9091"
     networks:
       - sovereignmap
     depends_on:
@@ -183,7 +183,7 @@ services:
     image: grafana/grafana:10.2.3
     container_name: sovereignmap-grafana-dev
     ports:
-      - "3001:3000"
+      - "${GRAFANA_HOST_PORT:-3001}:3000"
     environment:
       - GF_SECURITY_ADMIN_PASSWORD=${GRAFANA_ADMIN_PASSWORD:-dev_only_not_for_production}
       - GF_SECURITY_ADMIN_USER=admin

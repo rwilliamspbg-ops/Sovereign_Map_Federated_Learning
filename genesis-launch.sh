@@ -25,6 +25,33 @@ NETWORK_NAME="sovereign-genesis"
 DEFAULT_NODE_COUNT=3
 MIN_NODES="${MIN_NODES:-$DEFAULT_NODE_COUNT}"
 TARGET_NODES="${TARGET_NODES:-$MIN_NODES}"
+COMPOSE_FILE="docker-compose.production.yml"
+COMPOSE_ENV_FILE="${COMPOSE_ENV_FILE:-.env.production}"
+COMPOSE_ENV_ARGS=()
+if [ -n "$COMPOSE_ENV_FILE" ] && [ -f "$COMPOSE_ENV_FILE" ]; then
+    COMPOSE_ENV_ARGS=(--env-file "$COMPOSE_ENV_FILE")
+fi
+
+compose_cmd() {
+    docker compose "${COMPOSE_ENV_ARGS[@]}" -f "$COMPOSE_FILE" "$@"
+}
+
+get_profile_var() {
+    local key="$1"
+    local fallback="$2"
+    local value=""
+    if [ -n "$COMPOSE_ENV_FILE" ] && [ -f "$COMPOSE_ENV_FILE" ]; then
+        value=$(grep -E "^${key}=" "$COMPOSE_ENV_FILE" | tail -n1 | cut -d '=' -f2-)
+    fi
+    echo "${value:-$fallback}"
+}
+
+BACKEND_API_PORT=$(get_profile_var "BACKEND_API_HOST_PORT" "8000")
+BACKEND_GRPC_PORT=$(get_profile_var "BACKEND_GRPC_HOST_PORT" "8080")
+FRONTEND_PORT=$(get_profile_var "FRONTEND_HOST_PORT" "3000")
+GRAFANA_PORT=$(get_profile_var "GRAFANA_HOST_PORT" "3001")
+PROMETHEUS_PORT=$(get_profile_var "PROMETHEUS_HOST_PORT" "9090")
+ALERTMANAGER_PORT=$(get_profile_var "ALERTMANAGER_HOST_PORT" "9093")
 
 ##############################################################################
 # Logging Functions
@@ -59,7 +86,7 @@ log_header() {
 }
 
 get_node_services() {
-    docker compose -f docker-compose.production.yml config --services | grep '^node-agent' || true
+    compose_cmd config --services | grep '^node-agent' || true
 }
 
 ##############################################################################
@@ -113,7 +140,7 @@ pre_launch_checks() {
     echo "  - Disk Space: $(df -h . | awk 'NR==2 {print $4}') available" | tee -a "$LOG_FILE"
     
     # Check ports
-    local ports=(8000 8080 9090 9093 3000 3001)
+    local ports=("$BACKEND_API_PORT" "$BACKEND_GRPC_PORT" "$PROMETHEUS_PORT" "$ALERTMANAGER_PORT" "$FRONTEND_PORT" "$GRAFANA_PORT")
     for port in "${ports[@]}"; do
         if lsof -Pi :"$port" -sTCP:LISTEN -t >/dev/null 2>&1; then
             log_warn "Port $port is already in use"
@@ -132,7 +159,7 @@ initialize_network() {
 
     # Remove any stale containers left from a previous incomplete run
     log_info "Cleaning up any stale containers..."
-    if ! docker compose -f docker-compose.production.yml down --remove-orphans 2>&1 | tee -a "$LOG_FILE"; then
+    if ! compose_cmd down --remove-orphans 2>&1 | tee -a "$LOG_FILE"; then
         log_warn "Cleanup encountered stale/absent containers; continuing with fresh startup"
     fi
 
@@ -140,7 +167,7 @@ initialize_network() {
     # This is more reliable than hard-coded names and catches scaled services.
     local project_name
     local project_container_ids
-    project_name=$(docker compose -f docker-compose.production.yml config 2>/dev/null | awk '/^name: / {print $2; exit}')
+    project_name=$(compose_cmd config 2>/dev/null | awk '/^name: / {print $2; exit}')
     project_name=${project_name:-sovereign_map_federated_learning}
 
     log_info "Removing stale project containers for '$project_name'..."
@@ -159,7 +186,7 @@ initialize_network() {
     
     # Pull latest images
     log_info "Pulling latest Docker images..."
-    docker compose -f docker-compose.production.yml pull mongo redis prometheus grafana alertmanager 2>&1 | tee -a "$LOG_FILE"
+    compose_cmd pull mongo redis prometheus grafana alertmanager 2>&1 | tee -a "$LOG_FILE"
     log_success "Images updated"
 }
 
@@ -171,33 +198,33 @@ launch_monitoring() {
     log_header "📊 LAUNCHING MONITORING STACK"
 
     # Ensure Compose metadata is clean for monitoring services
-    docker compose -f docker-compose.production.yml rm -fsv prometheus grafana alertmanager >/dev/null 2>&1 || true
+    compose_cmd rm -fsv prometheus grafana alertmanager >/dev/null 2>&1 || true
     
     log_info "Starting Prometheus, Grafana, and Alertmanager..."
-    docker compose -f docker-compose.production.yml up -d --no-deps --no-recreate prometheus grafana alertmanager 2>&1 | tee -a "$LOG_FILE"
+    compose_cmd up -d --no-deps --no-recreate prometheus grafana alertmanager 2>&1 | tee -a "$LOG_FILE"
     
     # Wait for services to be ready
     log_info "Waiting for monitoring services to initialize..."
     sleep 10
     
     # Check Prometheus
-    if curl -s http://localhost:9090/-/healthy > /dev/null 2>&1; then
-        log_success "Prometheus is healthy (http://localhost:9090)"
+    if curl -s "http://localhost:${PROMETHEUS_PORT}/-/healthy" > /dev/null 2>&1; then
+        log_success "Prometheus is healthy (http://localhost:${PROMETHEUS_PORT})"
     else
         log_warn "Prometheus health check failed"
     fi
     
     # Check Grafana
-    if curl -s http://localhost:3001/api/health > /dev/null 2>&1; then
-        log_success "Grafana is healthy (http://localhost:3001)"
+    if curl -s "http://localhost:${GRAFANA_PORT}/api/health" > /dev/null 2>&1; then
+        log_success "Grafana is healthy (http://localhost:${GRAFANA_PORT})"
         log_info "Grafana credentials: admin/${GRAFANA_ADMIN_PASSWORD:-CHANGE_ME_GRAFANA}"
     else
         log_warn "Grafana health check failed"
     fi
     
     # Check Alertmanager
-    if curl -s http://localhost:9093/-/healthy > /dev/null 2>&1; then
-        log_success "Alertmanager is healthy (http://localhost:9093)"
+    if curl -s "http://localhost:${ALERTMANAGER_PORT}/-/healthy" > /dev/null 2>&1; then
+        log_success "Alertmanager is healthy (http://localhost:${ALERTMANAGER_PORT})"
     else
         log_warn "Alertmanager health check failed"
     fi
@@ -254,15 +281,15 @@ launch_network() {
     fi
 
     # Clear stale compose state for core services before startup
-    docker compose -f docker-compose.production.yml rm -fsv backend frontend mongo redis "${node_services[@]}" >/dev/null 2>&1 || true
+    compose_cmd rm -fsv backend frontend mongo redis "${node_services[@]}" >/dev/null 2>&1 || true
     
     log_info "Starting Sovereign Map backend..."
-    docker compose -f docker-compose.production.yml up -d --build --no-recreate backend 2>&1 | tee -a "$LOG_FILE"
+    compose_cmd up -d --build --no-recreate backend 2>&1 | tee -a "$LOG_FILE"
     
     sleep 5
     
     log_info "Deploying initial node set ($desired_nodes nodes)..."
-    docker compose -f docker-compose.production.yml up -d --build --no-recreate mongo redis backend frontend "${node_services[@]:0:$desired_nodes}" 2>&1 | tee -a "$LOG_FILE"
+    compose_cmd up -d --build --no-recreate mongo redis backend frontend "${node_services[@]:0:$desired_nodes}" 2>&1 | tee -a "$LOG_FILE"
     
     log_success "Initial nodes deployed"
     
@@ -285,7 +312,7 @@ monitor_health() {
     log_header "💊 HEALTH STATUS CHECK"
     
     # Check backend
-    if curl -s http://localhost:8000/health > /dev/null 2>&1; then
+    if curl -s "http://localhost:${BACKEND_API_PORT}/health" > /dev/null 2>&1; then
         log_success "Backend API is healthy"
     else
         log_error "Backend API is not responding"
@@ -304,7 +331,7 @@ monitor_health() {
     fi
     
     # Check FL metrics
-    if curl -s http://localhost:8000/convergence > /dev/null 2>&1; then
+    if curl -s "http://localhost:${BACKEND_API_PORT}/convergence" > /dev/null 2>&1; then
         log_success "Federated learning metrics available"
     else
         log_warn "FL metrics not yet available"
@@ -333,22 +360,22 @@ display_dashboard() {
     echo -e "${BLUE}═══════════════════════════════════════════════════════════════${NC}"
     echo -e "${YELLOW}📊 MONITORING INTERFACES:${NC}"
     echo ""
-    echo -e "  ${CYAN}🌐 Grafana Dashboard:${NC}      http://localhost:3001"
-    echo -e "     ${MAGENTA}↳${NC} Genesis Overview:      http://localhost:3001/d/genesis-launch-overview"
-    echo -e "     ${MAGENTA}↳${NC} Network Performance:   http://localhost:3001/d/network-performance-health"
-    echo -e "     ${MAGENTA}↳${NC} Consensus & Trust:     http://localhost:3001/d/consensus-trust-monitoring"
+    echo -e "  ${CYAN}🌐 Grafana Dashboard:${NC}      http://localhost:${GRAFANA_PORT}"
+    echo -e "     ${MAGENTA}↳${NC} Genesis Overview:      http://localhost:${GRAFANA_PORT}/d/genesis-launch-overview"
+    echo -e "     ${MAGENTA}↳${NC} Network Performance:   http://localhost:${GRAFANA_PORT}/d/network-performance-health"
+    echo -e "     ${MAGENTA}↳${NC} Consensus & Trust:     http://localhost:${GRAFANA_PORT}/d/consensus-trust-monitoring"
     echo ""
-    echo -e "  ${CYAN}📈 Prometheus Metrics:${NC}     http://localhost:9090"
-    echo -e "  ${CYAN}🔔 Alert Manager:${NC}          http://localhost:9093"
-    echo -e "  ${CYAN}🔌 Backend API:${NC}            http://localhost:8000"
+    echo -e "  ${CYAN}📈 Prometheus Metrics:${NC}     http://localhost:${PROMETHEUS_PORT}"
+    echo -e "  ${CYAN}🔔 Alert Manager:${NC}          http://localhost:${ALERTMANAGER_PORT}"
+    echo -e "  ${CYAN}🔌 Backend API:${NC}            http://localhost:${BACKEND_API_PORT}"
     echo ""
     echo -e "${BLUE}═══════════════════════════════════════════════════════════════${NC}"
     echo -e "${YELLOW}🔧 MANAGEMENT COMMANDS:${NC}"
     echo ""
     echo -e "  View logs:         ${GREEN}docker compose logs -f${NC}"
-    echo -e "  Start node agents: ${GREEN}docker compose -f docker-compose.production.yml up -d node-agent-1 node-agent-2 node-agent-3${NC}"
-    echo -e "  Stop network:      ${GREEN}docker compose -f docker-compose.production.yml down --remove-orphans${NC}"
-    echo -e "  Restart services:  ${GREEN}docker compose -f docker-compose.production.yml restart${NC}"
+    echo -e "  Start node agents: ${GREEN}docker compose ${COMPOSE_ENV_ARGS[*]} -f $COMPOSE_FILE up -d node-agent-1 node-agent-2 node-agent-3${NC}"
+    echo -e "  Stop network:      ${GREEN}docker compose ${COMPOSE_ENV_ARGS[*]} -f $COMPOSE_FILE down --remove-orphans${NC}"
+    echo -e "  Restart services:  ${GREEN}docker compose ${COMPOSE_ENV_ARGS[*]} -f $COMPOSE_FILE restart${NC}"
     echo ""
     echo -e "${BLUE}═══════════════════════════════════════════════════════════════${NC}"
     echo ""
@@ -372,7 +399,7 @@ start_monitoring() {
         echo ""
         
         # Get metrics from backend
-        if curl -s http://localhost:8000/convergence > /tmp/metrics.json 2>/dev/null; then
+        if curl -s "http://localhost:${BACKEND_API_PORT}/convergence" > /tmp/metrics.json 2>/dev/null; then
             local accuracy
             local loss
             local round

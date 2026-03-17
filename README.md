@@ -134,6 +134,30 @@ docker compose -f docker-compose.full.yml up -d --scale node-agent=5
 docker compose ps
 ```
 
+### Side-by-Side Stack Profiles
+
+Use stack-specific env files to run multiple stacks on one host without manual port edits:
+
+- `.env.dev`
+- `.env.production`
+- `.env.full`
+
+Direct compose commands:
+
+```bash
+docker compose --env-file .env.dev -f docker-compose.dev.yml up -d
+docker compose --env-file .env.production -f docker-compose.production.yml up -d
+docker compose --env-file .env.full -f docker-compose.full.yml up -d --scale node-agent=5
+```
+
+Launch scripts now auto-load matching env profiles:
+
+- `./deploy.sh dev` -> `.env.dev`
+- `./deploy.sh prod` -> `.env.production`
+- `./deploy.sh full` -> `.env.full`
+- `./genesis-launch.sh` -> `.env.production`
+- `./deploy_demo.sh --compose docker-compose.full.yml` -> `.env.full`
+
 ## Required Validation Before Promotion
 
 ```bash

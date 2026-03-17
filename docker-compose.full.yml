@@ -28,8 +28,8 @@ services:
       - PUBLIC_AGGREGATOR_PORT=${PUBLIC_AGGREGATOR_PORT:-8080}
       - GEMINI_API_KEY=${GEMINI_API_KEY:-}
     ports:
-      - "8000:8000"  # Flask metrics API
-      - "8080:8080"  # Flower aggregator
+      - "${BACKEND_API_HOST_PORT:-8000}:8000"  # Flask metrics API
+      - "${BACKEND_GRPC_HOST_PORT:-8080}:8080"  # Flower aggregator
     volumes:
       - ./sovereignmap_production_backend_v2.py:/app/sovereignmap_production_backend_v2.py:ro
       - ./tpm_cert_manager.py:/app/tpm_cert_manager.py:ro
@@ -253,7 +253,7 @@ services:
     image: prom/prometheus:v2.48.0
     container_name: sovereign-prometheus
     ports:
-      - "9090:9090"
+      - "${PROMETHEUS_HOST_PORT:-9090}:9090"
     volumes:
       - prometheus-data:/prometheus
       - ./prometheus.yml:/etc/prometheus/prometheus.yml:ro
@@ -288,7 +288,7 @@ services:
     working_dir: /app
     command: ["sh", "-c", "python -m pip install --no-cache-dir prometheus-client flask cryptography && python tpm_metrics_exporter.py"]
     ports:
-      - "9091:9091"
+      - "${TPM_METRICS_HOST_PORT:-9091}:9091"
     networks:
       - sovereign-network
     depends_on:
@@ -324,7 +324,7 @@ services:
       - TOKENOMICS_SOURCE_FILE=/app/data/tokenomics-telemetry.json
       - TOKENOMICS_METRICS_PORT=9105
     ports:
-      - "9105:9105"
+      - "${TOKENOMICS_HOST_PORT:-9105}:9105"
     networks:
       - sovereign-network
     depends_on:
@@ -352,7 +352,7 @@ services:
     image: grafana/grafana:10.2.3
     container_name: sovereign-grafana
     ports:
-      - "3000:3000"
+      - "${FRONTEND_HOST_PORT:-3000}:3000"
     environment:
       - GF_SECURITY_ADMIN_USER=${GRAFANA_USER:-admin}
       - GF_SECURITY_ADMIN_PASSWORD=${GRAFANA_ADMIN_PASSWORD:-CHANGE_ME_GRAFANA}
@@ -382,7 +382,7 @@ services:
     image: prom/alertmanager:v0.26.0
     container_name: sovereign-alertmanager
     ports:
-      - "9093:9093"
+      - "${ALERTMANAGER_HOST_PORT:-9093}:9093"
     volumes:
       - alertmanager-data:/alertmanager
       - ./alertmanager.yml:/etc/alertmanager/config.yml:ro

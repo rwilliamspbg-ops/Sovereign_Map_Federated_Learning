@@ -216,6 +216,9 @@ audit_results/
 .env.production
 .env.staging
 .env.development
+!.env.dev
+!.env.production
+!.env.full
 aws-config.env
 *.pem
 *.key
