@@ -1,3 +1,5 @@
+<!-- markdownlint-disable MD022 MD032 MD036 MD060 -->
+
 # Sovereign Map Federated Learning — Scale Test Report
 **Date:** 2026-03-17  
 **Milestone:** 4 — Scale and Readiness Gate  
