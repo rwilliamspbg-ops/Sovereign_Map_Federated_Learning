@@ -207,7 +207,6 @@ npm --prefix frontend run build
 make testnet-wallet-readiness
 ```
 
-## Operations and Monitoring
 ## Hardware Acceleration Configuration
 
 ### Device Support and Auto-Detection
@@ -215,27 +214,30 @@ make testnet-wallet-readiness
 Sovereign Map clients automatically detect and prioritize available hardware accelerators:
 
 1. **Huawei Ascend NPU** (Priority 1)
-  - Environment: `NPU_ENABLED=true` (default)
-  - Device selection: First device from `ASCEND_RT_VISIBLE_DEVICES` (default: 0)
-  - Memory: ~80GB per device
-  - Multi-device support: Load balancing across visible devices
-  - Status: ✅ Fully tested (37 comprehensive test scenarios)
 
-2. **NVIDIA CUDA/GPU** (Priority 2)
-  - Fallback when NPU unavailable
-  - Multi-GPU support: Automatic device enumeration
-  - Memory detection: Device properties and allocation tracking
-  - Status: ✅ Fully tested with CUDA device fallback scenarios
+- Environment: `NPU_ENABLED=true` (default)
+- Device selection: First device from `ASCEND_RT_VISIBLE_DEVICES` (default: 0)
+- Memory: ~80GB per device
+- Multi-device support: Load balancing across visible devices
+- Status: ✅ Fully tested (37 comprehensive test scenarios)
 
-3. **CPU** (Priority 3)
-  - Final fallback: Always available
-  - Override: `FORCE_CPU=true` bypasses accelerators
-  - Performance: Suitable for development and validation
+1. **NVIDIA CUDA/GPU** (Priority 2)
+
+- Fallback when NPU unavailable
+- Multi-GPU support: Automatic device enumeration
+- Memory detection: Device properties and allocation tracking
+- Status: ✅ Fully tested with CUDA device fallback scenarios
+
+1. **CPU** (Priority 3)
+
+- Final fallback: Always available
+- Override: `FORCE_CPU=true` bypasses accelerators
+- Performance: Suitable for development and validation
 
 ### Environment Variables
 
 | Variable | Values | Purpose | Example |
-|----------|--------|---------|---------|
+| -------- | ------ | ------- | ------- |
 | `FORCE_CPU` | `true` / `false` | Force CPU-only execution | `FORCE_CPU=true` |
 | `NPU_ENABLED` | `true` / `false` | Enable/disable NPU detection | `NPU_ENABLED=true` |
 | `ASCEND_RT_VISIBLE_DEVICES` | Device IDs (comma-separated) | Visible NPU devices | `ASCEND_RT_VISIBLE_DEVICES=0,1,2,3` |
@@ -262,6 +264,7 @@ docker run -e NPU_ENABLED=false -e CUDA_VISIBLE_DEVICES=0,1 sovereign-client
 ### Device Properties and Capabilities
 
 The platform queries device properties including:
+
 - Device count and enumeration
 - Memory capacity per device
 - Capability tuples and compute version
@@ -270,6 +273,7 @@ The platform queries device properties including:
 
 See [GPU_NPU_TEST_ENHANCEMENTS_REPORT.md](GPU_NPU_TEST_ENHANCEMENTS_REPORT.md) for complete test coverage of device detection, fallback chains, and error recovery.
 
+## Operations and Monitoring
 
 - Monitoring stack: [docker-compose.monitoring.yml](docker-compose.monitoring.yml)
 - Prometheus config: [prometheus.yml](prometheus.yml)
