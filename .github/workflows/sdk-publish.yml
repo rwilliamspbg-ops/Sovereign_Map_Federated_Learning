@@ -7,7 +7,7 @@ permissions:
 on:
   push:
     branches: [ main ]
-    paths: [ 'packages/**', 'apps/cli/**' ]
+    paths: [ 'packages/**', 'apps/cli/**', 'CHANGELOG.md' ]
   release:
     types: [ created ]
 
@@ -32,12 +32,22 @@ jobs:
 
   publish:
     needs: test
-    if: github.event_name == 'release'
+    if: github.event_name == 'release' || (github.event_name == 'push' && contains(github.event.head_commit.message, 'chore(release)'))
     runs-on: ubuntu-latest
     permissions:
       contents: write
       packages: write
     steps:
+      - name: Detect SDK version
+        id: version
+        run: |
+          # Extract version from commit message or use placeholder
+          if [[ "${{ github.event.head_commit.message }}" =~ v([0-9]+\.[0-9]+\.[0-9]+) ]]; then
+            echo "sdk_version=${BASH_REMATCH[1]}" >> "$GITHUB_OUTPUT"
+          else
+            echo "sdk_version=0.2.0" >> "$GITHUB_OUTPUT"
+          fi
+
       - name: Check NPM token availability
         id: npm_token
         run: |
@@ -49,7 +59,7 @@ jobs:
 
       - name: Skip publish (missing NPM_TOKEN)
         if: steps.npm_token.outputs.present != 'true'
-        run: echo "NPM_TOKEN is not configured; skipping SDK publish steps."
+        run: echo "⚠️  NPM_TOKEN is not configured; skipping SDK publish steps."
 
       - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd
         if: steps.npm_token.outputs.present == 'true'
@@ -69,8 +79,28 @@ jobs:
         if: steps.npm_token.outputs.present == 'true'
       - run: npm run build:libs
         if: steps.npm_token.outputs.present == 'true'
-      - run: npm run sdk:publish
+      - name: Publish SDK packages to npm
         if: steps.npm_token.outputs.present == 'true'
+        run: npm run sdk:publish
         env:
           NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      - name: Create GitHub Release (if not from release event)
+        if: steps.npm_token.outputs.present == 'true' && github.event_name == 'push'
+        uses: actions/create-release@c38ae29b2ad1d289889c5606da477cdca7bcd914
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          tag_name: v${{ steps.version.outputs.sdk_version }}
+          release_name: v${{ steps.version.outputs.sdk_version }}
+          body: |
+            SDK release published to npm
+            
+            Packages:
+            - @sovereignmap/core@${{ steps.version.outputs.sdk_version }}
+            - @sovereignmap/privacy@${{ steps.version.outputs.sdk_version }}
+            - @sovereignmap/consensus@${{ steps.version.outputs.sdk_version }}
+            - @sovereignmap/island@${{ steps.version.outputs.sdk_version }}
+          draft: false
+          prerelease: contains(steps.version.outputs.sdk_version, 'alpha') || contains(steps.version.outputs.sdk_version, 'beta')
+

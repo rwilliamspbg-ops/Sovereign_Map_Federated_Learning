@@ -1,0 +1,107 @@
+name: SDK Version & Release
+
+permissions:
+  contents: write
+  pull-requests: write
+
+on:
+  push:
+    branches: [ main ]
+    paths: 
+      - '.changeset/**'
+      - 'packages/*/package.json'
+
+jobs:
+  # This job checks if there are changesets and creates a version PR or release
+  check-changesets:
+    runs-on: ubuntu-latest
+    outputs:
+      should_version: ${{ steps.check.outputs.has_changesets }}
+    steps:
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd
+        with:
+          fetch-depth: 0  # Full history to detect changeset files
+      
+      - name: Check for changesets
+        id: check
+        run: |
+          CHANGESET_COUNT=$(find .changeset -maxdepth 1 -type f -name "*.md" ! -name "README.md" | wc -l)
+          if [ "$CHANGESET_COUNT" -gt 0 ]; then
+            echo "has_changesets=true" >> "$GITHUB_OUTPUT"
+            echo "Detected $CHANGESET_COUNT changeset file(s)"
+          else
+            echo "has_changesets=false" >> "$GITHUB_OUTPUT"
+            echo "No changesets found"
+          fi
+  
+  version:
+    needs: check-changesets
+    if: needs.check-changesets.outputs.should_version == 'true'
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+      pull-requests: write
+    steps:
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd
+        with:
+          fetch-depth: 0
+      
+      - uses: actions/setup-node@53b83947a5a98c8d113130e565377fae1a50d02f
+        with:
+          node-version: '22'
+          cache: npm
+          cache-dependency-path: |
+            package-lock.json
+            packages/core/package-lock.json
+            packages/consensus/package-lock.json
+            packages/island/package-lock.json
+            packages/privacy/package-lock.json
+      
+      - name: Install dependencies
+        run: npm ci
+      
+      - name: Run tests
+        run: npm run test:ci
+      
+      - name: Version packages
+        run: npx changeset version
+        
+      - name: Store version bump
+        id: version
+        run: |
+          # Read new versions from updated package.json files
+          CORE_VERSION=$(node -e "console.log(require('./packages/core/package.json').version)")
+          echo "core_version=$CORE_VERSION" >> "$GITHUB_OUTPUT"
+          echo "Version updated to $CORE_VERSION"
+      
+      - name: Create version commit and PR
+        if: success()
+        uses: peter-evans/create-pull-request@6d6857d36972b65fab9e3a2d5b1618fac584cbf8
+        with:
+          commit-message: 'chore(release): Sovereign Map SDK v${{ steps.version.outputs.core_version }}'
+          title: 'chore(release): Sovereign Map SDK v${{ steps.version.outputs.core_version }}'
+          body: |
+            ## SDK Version Bump
+            
+            This PR contains version updates based on merged changesets.
+            
+            ### What to do next
+            1. Review the CHANGELOG.md updates
+            2. Merge this PR
+            3. GitHub will automatically publish to npm
+            
+            Version: **${{ steps.version.outputs.core_version }}**
+          branch: release/version-bump
+          delete-branch: true
+          labels: 'release,automation'
+
+  # After merge, this will be triggered by the publish workflow
+  notify:
+    if: success()
+    runs-on: ubuntu-latest
+    steps:
+      - name: Print versioning summary
+        run: |
+          echo "✅ Version bump PR created"
+          echo "📦 SDK packages ready for release"
+          echo "⏭️  Next: Merge PR to trigger npm publish"

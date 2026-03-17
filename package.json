@@ -1,9 +1,19 @@
 {
   "name": "sovereign-map-federated-learning-monorepo",
   "private": true,
+  "workspaces": [
+    "packages/core",
+    "packages/privacy",
+    "packages/consensus",
+    "packages/island"
+  ],
   "scripts": {
     "build:libs": "npm --prefix packages/privacy ci && npm --prefix packages/privacy run build && npm --prefix packages/consensus ci && npm --prefix packages/consensus run build && npm --prefix packages/island ci && npm --prefix packages/island run build && npm --prefix packages/core ci && npm --prefix packages/core run build",
     "test:ci": "npm --prefix packages/privacy run test:ci && npm --prefix packages/consensus run test:ci && npm --prefix packages/island run test:ci && npm --prefix packages/core run test:ci",
+    "changeset": "changeset add",
+    "changeset:version": "changeset version",
+    "changeset:status": "changeset status",
+    "sdk:version": "npm run test:ci && npm run changeset:version && npm run build:libs",
     "sdk:publish": "npm --prefix packages/privacy publish --access public && npm --prefix packages/consensus publish --access public && npm --prefix packages/island publish --access public && npm --prefix packages/core publish --access public",
     "nodes:burst": "bash scripts/burst-scale-with-certs.sh",
     "nodes:burst:25": "bash scripts/burst-scale-with-certs.sh 25 docker-compose.dev.yml",
@@ -17,7 +27,10 @@
     "target": "ESNext",
     "module": "ESNext",
     "moduleResolution": "node",
-    "lib": ["ESNext", "DOM"],
+    "lib": [
+      "ESNext",
+      "DOM"
+    ],
     "strict": true,
     "skipLibCheck": true,
     "esModuleInterop": true,
@@ -32,7 +45,9 @@
     "checkJs": false,
     "baseUrl": ".",
     "paths": {
-      "@sovereignmap/*": ["packages/*/src"]
+      "@sovereignmap/*": [
+        "packages/*/src"
+      ]
     }
   },
   "exclude": [
@@ -42,6 +57,10 @@
     "examples",
     "**/*.config.js",
     "results-*"
-  ]
+  ],
+  "devDependencies": {
+    "@changesets/changelog-git": "^0.2.1",
+    "@changesets/cli": "^2.30.0",
+    "@changesets/types": "^6.1.0"
+  }
 }
-
