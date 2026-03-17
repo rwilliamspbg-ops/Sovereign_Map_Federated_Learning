@@ -51,6 +51,19 @@
 [![SDK Publish](https://img.shields.io/github/actions/workflow/status/rwilliamspbg-ops/Sovereign_Map_Federated_Learning/sdk-publish.yml?branch=main&style=for-the-badge&logo=npm&label=SDK%20Publish)](https://github.com/rwilliamspbg-ops/Sovereign_Map_Federated_Learning/actions/workflows/sdk-publish.yml)
 [![Windows Client EXE](https://img.shields.io/github/actions/workflow/status/rwilliamspbg-ops/Sovereign_Map_Federated_Learning/windows-client-exe.yml?branch=main&style=for-the-badge&logo=windows&label=Windows%20EXE)](https://github.com/rwilliamspbg-ops/Sovereign_Map_Federated_Learning/actions/workflows/windows-client-exe.yml)
 
+## SDK Quality & Security
+
+[![SDK Build](https://img.shields.io/github/actions/workflow/status/rwilliamspbg-ops/Sovereign_Map_Federated_Learning/build.yml?branch=main&style=for-the-badge&logo=github&label=SDK%20Build)](https://github.com/rwilliamspbg-ops/Sovereign_Map_Federated_Learning/actions/workflows/build.yml)
+[![Core Coverage](https://img.shields.io/badge/Coverage%20%40core-66.56%25-green?style=for-the-badge&logo=codecov)](packages/core/)
+[![Privacy Coverage](https://img.shields.io/badge/Coverage%20%40privacy-100%25-green?style=for-the-badge&logo=codecov)](packages/privacy/)
+[![Consensus Coverage](https://img.shields.io/badge/Coverage%20%40consensus-91.13%25-green?style=for-the-badge&logo=codecov)](packages/consensus/)
+[![Island Coverage](https://img.shields.io/badge/Coverage%20%40island-88.4%25-green?style=for-the-badge&logo=codecov)](packages/island/)
+[![SDK Security Scanning](https://img.shields.io/github/actions/workflow/status/rwilliamspbg-ops/Sovereign_Map_Federated_Learning/sdk-security.yml?branch=main&style=for-the-badge&logo=snyk&label=SDK%20Security)](https://github.com/rwilliamspbg-ops/Sovereign_Map_Federated_Learning/actions/workflows/sdk-security.yml)
+[![SDK Supply Chain](https://img.shields.io/github/actions/workflow/status/rwilliamspbg-ops/Sovereign_Map_Federated_Learning/sdk-provenance.yml?branch=main&style=for-the-badge&logo=sigstore&label=SLSA%20L2)](https://github.com/rwilliamspbg-ops/Sovereign_Map_Federated_Learning/actions/workflows/sdk-provenance.yml)
+[![SDK Version](https://img.shields.io/github/actions/workflow/status/rwilliamspbg-ops/Sovereign_Map_Federated_Learning/sdk-version.yml?branch=main&style=for-the-badge&logo=semver&label=Version%20Management)](https://github.com/rwilliamspbg-ops/Sovereign_Map_Federated_Learning/actions/workflows/sdk-version.yml)
+[![API Stability](https://img.shields.io/badge/API%20Stability-3%20Tiers-blue?style=for-the-badge&logo=contractsaregoverned)](SDK_API_STABILITY.md)
+[![License](https://img.shields.io/github/license/rwilliamspbg-ops/Sovereign_Map_Federated_Learning?style=for-the-badge&logo=creativecommons)](LICENSE)
+
 Sovereign Map is a sovereign intelligence coordination platform that combines federated learning, blockchain governance, trust attestation, and observability into one deployable stack.
 
 Intellectual Property Notice: this repository implements parts of the Sovereign Mohawk Protocol. Portions are patent pending (U.S. Provisional Patent Application filed March 2026).
