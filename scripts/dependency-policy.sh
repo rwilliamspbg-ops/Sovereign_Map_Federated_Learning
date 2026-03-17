@@ -53,7 +53,7 @@ fi
 echo ""
 echo "Check 2: Vulnerability thresholds"
 
-AUDIT_OUTPUT=$(npm audit --production --json 2>/dev/null || echo '{}')
+AUDIT_OUTPUT=$(npm audit --omit=dev --json 2>/dev/null || echo '{}')
 
 if command -v jq &> /dev/null; then
   CRITICAL=$(echo "$AUDIT_OUTPUT" | jq '.metadata.vulnerabilities.critical // 0')

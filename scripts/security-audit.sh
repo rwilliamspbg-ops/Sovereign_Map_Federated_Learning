@@ -26,7 +26,7 @@ run_audit() {
   local level=$1
   echo "🔍 Running npm audit (level: $level)..."
   
-  if npm audit --production --audit-level=$level 2>&1 | tee /tmp/audit-results.txt; then
+  if npm audit --omit=dev --audit-level=$level 2>&1 | tee /tmp/audit-results.txt; then
     echo -e "${GREEN}✅ No vulnerabilities at level: $level${NC}"
     return 0
   else
@@ -77,7 +77,7 @@ show_fixes() {
   echo "   npm audit fix"
   echo ""
   echo "2. Manual review:"
-  echo "   npm audit --production | grep vulnerability"
+  echo "   npm audit --omit=dev | grep vulnerability"
   echo ""
   echo "3. Update specific package:"
   echo "   npm update <package-name>"

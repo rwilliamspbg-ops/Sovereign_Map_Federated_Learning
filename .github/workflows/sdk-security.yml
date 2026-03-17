@@ -8,13 +8,17 @@ on:
   push:
     branches: [ main ]
     paths: 
+      - 'packages/**/package.json'
       - 'packages/**/package-lock.json'
       - 'package-lock.json'
+      - 'package.json'
   pull_request:
     branches: [ main ]
     paths:
       - 'packages/**/package.json'
+      - 'packages/**/package-lock.json'
       - 'package.json'
+      - 'package-lock.json'
   schedule:
     # Run daily at 2 AM UTC for dependency checks
     - cron: '0 2 * * *'
@@ -43,7 +47,7 @@ jobs:
         continue-on-error: true
         run: |
           echo "🔍 Scanning dependencies for known vulnerabilities..."
-          npm audit --production --audit-level=moderate > /tmp/audit.txt 2>&1
+          npm audit --omit=dev --audit-level=moderate > /tmp/audit.txt 2>&1
           AUDIT_RESULT=$?
           cat /tmp/audit.txt
           
@@ -68,7 +72,7 @@ jobs:
       - name: Fail on critical/high vulnerabilities
         if: steps.audit.outputs.audit_failed == 'true'
         run: |
-          npm audit --production --audit-level=high 2>&1 | tee /tmp/audit-high.txt
+          npm audit --omit=dev --audit-level=high 2>&1 | tee /tmp/audit-high.txt
           if grep -q "found.*vulnerabilities"; then
             echo "❌ Critical or high severity vulnerabilities found!"
             exit 1
@@ -124,6 +128,25 @@ jobs:
       security-events: write
     steps:
       - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd
+
+      - uses: actions/setup-node@53b83947a5a98c8d113130e565377fae1a50d02f
+        with:
+          node-version: '22'
+          cache: npm
+          cache-dependency-path: |
+            package-lock.json
+            packages/core/package-lock.json
+            packages/privacy/package-lock.json
+            packages/consensus/package-lock.json
+            packages/island/package-lock.json
+
+      - name: Install dependencies for analysis
+        run: |
+          npm ci
+          npm --prefix packages/privacy ci
+          npm --prefix packages/consensus ci
+          npm --prefix packages/island ci
+          npm --prefix packages/core ci
 
       - uses: github/codeql-action/init@b8d3b6e8af63cde30bdc382c0bc28114f4346c88
         with:
