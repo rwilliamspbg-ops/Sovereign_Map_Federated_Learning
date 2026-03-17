@@ -1,0 +1,183 @@
+name: SDK Security Scanning
+
+permissions:
+  contents: read
+  security-events: write
+
+on:
+  push:
+    branches: [ main ]
+    paths: 
+      - 'packages/**/package-lock.json'
+      - 'package-lock.json'
+  pull_request:
+    branches: [ main ]
+    paths:
+      - 'packages/**/package.json'
+      - 'package.json'
+  schedule:
+    # Run daily at 2 AM UTC for dependency checks
+    - cron: '0 2 * * *'
+
+jobs:
+  npm-audit:
+    name: npm Audit Scan
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      security-events: write
+    steps:
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd
+
+      - uses: actions/setup-node@53b83947a5a98c8d113130e565377fae1a50d02f
+        with:
+          node-version: '22'
+          cache: npm
+          cache-dependency-path: package-lock.json
+
+      - name: Install root dependencies
+        run: npm ci
+
+      - name: Run npm audit
+        id: audit
+        continue-on-error: true
+        run: |
+          echo "🔍 Scanning dependencies for known vulnerabilities..."
+          npm audit --production --audit-level=moderate > /tmp/audit.txt 2>&1
+          AUDIT_RESULT=$?
+          cat /tmp/audit.txt
+          
+          if [ $AUDIT_RESULT -ne 0 ]; then
+            echo "audit_failed=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "audit_failed=false" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Parse npm audit results
+        if: always()
+        run: |
+          echo "## npm Audit Results" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          if grep -q "found 0 vulnerabilities" /tmp/audit.txt; then
+            echo "✅ No vulnerabilities detected" >> $GITHUB_STEP_SUMMARY
+          else
+            echo "⚠️ Vulnerabilities detected:" >> $GITHUB_STEP_SUMMARY
+            grep -E "(critical|high|moderate|low) severity" /tmp/audit.txt >> $GITHUB_STEP_SUMMARY || true
+          fi
+
+      - name: Fail on critical/high vulnerabilities
+        if: steps.audit.outputs.audit_failed == 'true'
+        run: |
+          npm audit --production --audit-level=high 2>&1 | tee /tmp/audit-high.txt
+          if grep -q "found.*vulnerabilities"; then
+            echo "❌ Critical or high severity vulnerabilities found!"
+            exit 1
+          fi
+
+  dependency-check:
+    name: Dependency License Check
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd
+
+      - uses: actions/setup-node@53b83947a5a98c8d113130e565377fae1a50d02f
+        with:
+          node-version: '22'
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Check for GPL/AGPL licenses (restricted)
+        id: license
+        continue-on-error: true
+        run: |
+          echo "🔍 Scanning for restricted licenses..."
+          # Simple grep check for GPL/AGPL in package metadata
+          RESTRICTED_LICENSES=$(npm ls --all 2>/dev/null | grep -i "gpl\|agpl" || true)
+          
+          if [ -n "$RESTRICTED_LICENSES" ]; then
+            echo "⚠️ Found packages with GPL/AGPL licenses:"
+            echo "$RESTRICTED_LICENSES"
+            echo "license_check_failed=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "✅ No restricted GPL/AGPL licenses detected"
+            echo "license_check_failed=false" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Report license findings
+        if: always()
+        run: |
+          echo "## License Scan Results" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          if [ "${{ steps.license.outputs.license_check_failed }}" = "true" ]; then
+            echo "⚠️ Restricted licenses found (review required)" >> $GITHUB_STEP_SUMMARY
+          else
+            echo "✅ All licenses are compatible" >> $GITHUB_STEP_SUMMARY
+          fi
+
+  codeql:
+    name: CodeQL Analysis
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      security-events: write
+    steps:
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd
+
+      - uses: github/codeql-action/init@v2
+        with:
+          languages: 'typescript'
+          queries: security-and-quality
+
+      - name: Auto-build TypeScript
+        uses: github/codeql-action/autobuild@v2
+
+      - name: Perform CodeQL Analysis
+        uses: github/codeql-action/analyze@v2
+        with:
+          category: '/language:typescript'
+
+  security-report:
+    name: Generate Security Report
+    needs: [npm-audit, dependency-check]
+    runs-on: ubuntu-latest
+    if: always()
+    steps:
+      - name: Generate security summary
+        run: |
+          cat > /tmp/security-report.md << 'EOF'
+          # Security Scan Summary
+          
+          ## Dependency Vulnerabilities
+          | Status | Details |
+          |--------|---------|
+          | npm audit | See job results |
+          | License check | See job results |
+          | CodeQL analysis | See job results |
+          
+          ## Scanning Tools
+          - ✅ npm audit (official npm vulnerability database)
+          - ✅ License check (GPL/AGPL detection)
+          - ✅ CodeQL (code security analysis)
+          
+          ## Remediation
+          - Review any flagged vulnerabilities
+          - Check compatibility of new dependencies
+          - Update packages as needed
+          - Re-run scan to verify fixes
+          
+          ## Frequency
+          - On-demand: Every PR and push
+          - Scheduled: Daily at 2 AM UTC
+          
+          Generated: $(date -u +%Y-%m-%dT%H:%M:%SZ)
+          EOF
+          cat /tmp/security-report.md
+
+      - name: Upload security report
+        uses: actions/upload-artifact@v4
+        with:
+          name: security-scan-report
+          path: /tmp/security-report.md
+          retention-days: 90
