@@ -10,10 +10,10 @@ export default defineConfig({
       include: ['src/**/*.ts'],
       exclude: ['src/**/*.d.ts', 'src/ambient.d.ts', 'src/wasm/**/*.ts'],
       thresholds: {
-        lines: 35,
-        functions: 30,
-        statements: 35,
-        branches: 30
+        lines: 60,
+        functions: 55,
+        statements: 60,
+        branches: 45
       }
     }
   }
