@@ -94,7 +94,7 @@ jobs:
         run: bash scripts/generate-release-notes.sh ${{ steps.version.outputs.sdk_version }} | tee /tmp/release-notes.md
       - name: Create GitHub Release with SBOM
         if: steps.npm_token.outputs.present == 'true' && github.event_name == 'push'
-        uses: softprops/action-gh-release@v1
+        uses: softprops/action-gh-release@de2c0eb89ae2a093876385947365aca7b0e5f844
         with:
           tag_name: v${{ steps.version.outputs.sdk_version }}
           name: v${{ steps.version.outputs.sdk_version }}
