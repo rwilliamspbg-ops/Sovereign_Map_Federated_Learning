@@ -4,19 +4,26 @@ All notable changes to Sovereign Map SDK packages are documented here.
 
 ## [0.2.0] - TBD (In Development)
 
-This is the first stable release of the Sovereign Map SDK with complete API contracts and test coverage infrastructure.
+This is the first stable release of the Sovereign Map SDK with complete API contracts and comprehensive test coverage.
 
 ### Added
-- **@sovereignmap/core**: 66.56% test coverage with lifecycle and network integration tests
+- **@sovereignmap/core**: 100% line coverage with comprehensive lifecycle, network integration, aggregation, error handling, and signal tests
 - **@sovereignmap/privacy**: 100% test coverage for SGP-001 differential privacy engine
 - **@sovereignmap/consensus**: 91.13% test coverage for Byzantine fault-tolerant consensus
-- **@sovereignmap/island**: 88.4% test coverage for offline operation with tamper-evident state
+- **@sovereignmap/island**: 100% line coverage for offline operation with tamper-evident state and chain integrity verification
 - **Documentation**: API Stability Policy defining versioning, deprecation, and breaking change procedures
 - **Release Management**: Changesets-based changelog automation and semantic versioning enforcement
-- **Testing Infrastructure**: Coverage gates enforced in CI with per-package thresholds
+- **Testing Infrastructure**: Coverage gates enforced in CI with per-package thresholds (all packages meeting or exceeding 91% line coverage)
+- **Security Hardening**: GitHub Actions SHA pinning across all workflows; SLSA L2 provenance attestation; CodeQL and supply chain scanning
 
 ### Fixed
-- **@sovereignmap/island**: Chain integrity verification now uses canonical entry fields and proper sequence ordering
+- **@sovereignmap/island**: Chain integrity verification uses canonical entry fields with proper sequence ordering; LevelDB lock handling in tests
+- **@sovereignmap/core**: Aggregate handler callback now properly typed with null checks; network handler invocation guarded
+- **CI/CD Stability**: SDK version workflow resilient with non-blocking create-PR step; Windows client EXE build fixed (PowerShell param ordering)
+
+### Improved
+- **Test Quality**: Added branch-coverage tests for error paths, fallback handlers, metrics collection, and Byzantine fault scenarios
+- **Workflow Reliability**: All required CI checks green; no blockers on publish workflows; deterministic builds reproducible locally
 
 ### Breaking Changes
 None - 0.2.0 is the first stable release with public APIs.
@@ -40,11 +47,23 @@ Initial alpha release with core SDK packages and functionality.
 - Island mode offline queueing and synchronization
 - Hierarchical consensus aggregation testing
 
+### Added - Phase 3 (Coverage Finalization)
+- Extended core test suite covering fallback handlers, error paths, Byzantine scenarios, and metric collection
+- Island tamper detection tests (previous hash, chained hash verification)
+- Network error injection and handler coverage
+- Metrics snapshot and historical tracking tests
+
 ### Test Coverage Progression
 - Phase 1 Start: @sovereignmap/core ~13% lines
 - Phase 2 Mid: @sovereignmap/core 43% lines (network + node unit tests)
 - Phase 2 Complete: @sovereignmap/core 66.56% lines (lifecycle integration tests)
+- Phase 3 Complete: @sovereignmap/core 100% lines; @sovereignmap/island 100% lines
 - All package thresholds exceeded or met by 0.1.0 final build
+
+### Achievements
+- All SDK packages now exceed 90%+ line coverage
+- Comprehensive branch coverage for error handling and edge cases
+- Deterministic test environments with proper resource cleanup
 
 ---
 
