@@ -25,7 +25,7 @@ require (
 	github.com/multiformats/go-multiaddr v0.16.1
 	github.com/prometheus/client_golang v1.23.2
 	github.com/tetratelabs/wazero v1.11.0
-	gocv.io/x/gocv v0.32.0
+	gocv.io/x/gocv v0.43.0
 )
 
 require (
