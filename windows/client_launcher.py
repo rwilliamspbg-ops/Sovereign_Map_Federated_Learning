@@ -89,13 +89,19 @@ def _apply_llm_policy_env(policy: Dict[str, Any]):
 
 
 def _acceleration_report(torch_mod) -> Dict[str, Any]:
+    gpu_backend = "rocm" if getattr(getattr(torch_mod, "version", None), "hip", None) else "cuda"
     report: Dict[str, Any] = {
         "torch_version": torch_mod.__version__,
         "cuda_available": bool(torch_mod.cuda.is_available()),
+        "gpu_backend": gpu_backend,
         "cuda_device_count": 0,
         "cuda_devices": [],
         "npu_available": False,
         "npu_device": None,
+        "xpu_available": False,
+        "xpu_device_count": 0,
+        "xpu_devices": [],
+        "mps_available": False,
         "selected_device": "cpu",
     }
 
@@ -107,12 +113,38 @@ def _acceleration_report(torch_mod) -> Dict[str, Any]:
         if count > 0:
             report["selected_device"] = "cuda:0"
 
+    if hasattr(torch_mod, "xpu"):
+        try:
+            if torch_mod.xpu.is_available():
+                report["xpu_available"] = True
+                count = torch_mod.xpu.device_count()
+                report["xpu_device_count"] = count
+                for idx in range(count):
+                    if hasattr(torch_mod.xpu, "get_device_name"):
+                        report["xpu_devices"].append(torch_mod.xpu.get_device_name(idx))
+                    else:
+                        report["xpu_devices"].append(f"xpu:{idx}")
+                if count > 0:
+                    report["selected_device"] = "xpu:0"
+        except Exception:
+            pass
+
     if hasattr(torch_mod, "npu"):
         try:
             if torch_mod.npu.is_available():
                 report["npu_available"] = True
                 report["npu_device"] = "npu:0"
                 report["selected_device"] = "npu:0"
+        except Exception:
+            pass
+
+    mps_backend = getattr(getattr(torch_mod, "backends", None), "mps", None)
+    if mps_backend is not None:
+        try:
+            if mps_backend.is_available():
+                report["mps_available"] = True
+                if report["selected_device"] == "cpu":
+                    report["selected_device"] = "mps"
         except Exception:
             pass
 

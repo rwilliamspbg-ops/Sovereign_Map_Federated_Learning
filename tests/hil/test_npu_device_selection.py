@@ -40,9 +40,10 @@ class _FakeNPU:
 
 
 class _FakeCUDA:
-    def __init__(self, available: bool = False, device_count: int = 1):
+    def __init__(self, available: bool = False, device_count: int = 1, device_prefix: str = "NVIDIA Tesla V"):
         self._available = available
         self._device_count = device_count
+        self._device_prefix = device_prefix
         self._memory_per_device = {i: 24 * 1024 * 1024 * 1024 for i in range(device_count)}  # 24GB each
 
     def is_available(self) -> bool:
@@ -57,7 +58,7 @@ class _FakeCUDA:
         if not self._available or device_id >= self._device_count:
             raise RuntimeError(f"CUDA device {device_id} not available")
         return types.SimpleNamespace(
-            name=f"NVIDIA Tesla V{100 + device_id}",
+            name=f"{self._device_prefix}{100 + device_id}",
             total_memory=self._memory_per_device.get(device_id, 24 * 1024 * 1024 * 1024),
             capability=(7, 0),
         )
@@ -70,17 +71,79 @@ class _FakeCUDA:
         """Return device name"""
         if not self._available or device_id >= self._device_count:
             raise RuntimeError(f"CUDA device {device_id} not available")
-        return f"NVIDIA Tesla V{100 + device_id}"
+        return f"{self._device_prefix}{100 + device_id}"
+
+
+class _FakeXPU:
+    def __init__(self, available: bool = False, device_count: int = 1):
+        self._available = available
+        self._device_count = device_count
+        self.selected_device = None
+        self._memory_per_device = {i: 16 * 1024 * 1024 * 1024 for i in range(device_count)}
+
+    def is_available(self) -> bool:
+        return self._available
+
+    def set_device(self, device):
+        self.selected_device = device
+
+    def device_count(self) -> int:
+        return self._device_count if self._available else 0
+
+    def get_device_properties(self, device_id: int) -> types.SimpleNamespace:
+        if not self._available or device_id >= self._device_count:
+            raise RuntimeError(f"XPU device {device_id} not available")
+        return types.SimpleNamespace(
+            name=f"Intel XPU Flex {device_id}",
+            total_memory=self._memory_per_device.get(device_id, 16 * 1024 * 1024 * 1024),
+            capability=(1, 0),
+        )
+
+    def synchronize(self):
+        pass
+
+    def empty_cache(self):
+        pass
+
+    def get_device_name(self, device_id: int) -> str:
+        if not self._available or device_id >= self._device_count:
+            raise RuntimeError(f"XPU device {device_id} not available")
+        return f"Intel XPU Flex {device_id}"
+
+
+class _FakeMPS:
+    def __init__(self, available: bool = False):
+        self._available = available
+
+    def is_available(self) -> bool:
+        return self._available
 
 
 def _install_module_stubs(
-    monkeypatch, *, npu_available=False, npu_raises=False, npu_device_count=1, cuda_available=False, cuda_device_count=1
+    monkeypatch,
+    *,
+    npu_available=False,
+    npu_raises=False,
+    npu_device_count=1,
+    cuda_available=False,
+    cuda_device_count=1,
+    cuda_backend="cuda",
+    xpu_available=False,
+    xpu_device_count=1,
+    mps_available=False,
 ):
     fake_torch = types.ModuleType("torch")
     fake_torch.npu = _FakeNPU(available=npu_available, raise_on_check=npu_raises, device_count=npu_device_count)
-    fake_torch.cuda = _FakeCUDA(available=cuda_available, device_count=cuda_device_count)
+    fake_torch.cuda = _FakeCUDA(
+        available=cuda_available,
+        device_count=cuda_device_count,
+        device_prefix=("AMD Radeon Instinct MI" if cuda_backend == "rocm" else "NVIDIA Tesla V"),
+    )
+    fake_torch.xpu = _FakeXPU(available=xpu_available, device_count=xpu_device_count)
     fake_torch.device = lambda name: name
     fake_torch.__version__ = "2.1.0"
+    fake_torch.version = types.SimpleNamespace(cuda="12.1", hip=("6.1" if cuda_backend == "rocm" else None))
+    fake_torch.backends = types.SimpleNamespace(mps=_FakeMPS(available=mps_available))
 
     fake_torch_nn = types.ModuleType("torch.nn")
     fake_torch_nn.Module = type("Module", (), {})
@@ -121,7 +184,17 @@ def _install_module_stubs(
 
 
 def _load_client_module(
-    monkeypatch, *, npu_available=False, npu_raises=False, npu_device_count=1, cuda_available=False, cuda_device_count=1
+    monkeypatch,
+    *,
+    npu_available=False,
+    npu_raises=False,
+    npu_device_count=1,
+    cuda_available=False,
+    cuda_device_count=1,
+    cuda_backend="cuda",
+    xpu_available=False,
+    xpu_device_count=1,
+    mps_available=False,
 ):
     fake_torch = _install_module_stubs(
         monkeypatch,
@@ -130,6 +203,10 @@ def _load_client_module(
         npu_device_count=npu_device_count,
         cuda_available=cuda_available,
         cuda_device_count=cuda_device_count,
+        cuda_backend=cuda_backend,
+        xpu_available=xpu_available,
+        xpu_device_count=xpu_device_count,
+        mps_available=mps_available,
     )
 
     module_path = Path(__file__).resolve().parents[2] / "src" / "client.py"
@@ -298,6 +375,116 @@ def test_npu_disabled_falls_back_to_cpu(monkeypatch):
 
     selected = client._select_device()
     assert selected == "cpu"
+
+
+# ============================================================================
+# XPU / ROCM / MPS SUPPORT TESTS
+# ============================================================================
+
+def test_xpu_selected_when_npu_unavailable(monkeypatch):
+    """Select XPU when NPU is unavailable and XPU is present"""
+    module, _ = _load_client_module(
+        monkeypatch,
+        npu_available=False,
+        cuda_available=True,
+        xpu_available=True,
+        xpu_device_count=2,
+    )
+    monkeypatch.setenv("FORCE_CPU", "false")
+    monkeypatch.setenv("NPU_ENABLED", "true")
+    monkeypatch.setenv("XPU_ENABLED", "true")
+    monkeypatch.setenv("XPU_VISIBLE_DEVICES", "1,0")
+
+    client = module.SovereignClient.__new__(module.SovereignClient)
+    client.node_id = 4
+
+    selected = client._select_device()
+    assert selected == "xpu:1"
+
+
+def test_xpu_disabled_falls_back_to_cuda(monkeypatch):
+    """Skip XPU when disabled and use CUDA instead"""
+    module, _ = _load_client_module(
+        monkeypatch,
+        npu_available=False,
+        cuda_available=True,
+        xpu_available=True,
+    )
+    monkeypatch.setenv("FORCE_CPU", "false")
+    monkeypatch.setenv("NPU_ENABLED", "false")
+    monkeypatch.setenv("XPU_ENABLED", "false")
+
+    client = module.SovereignClient.__new__(module.SovereignClient)
+    client.node_id = 2
+
+    selected = client._select_device()
+    assert selected == "cuda:0"
+
+
+def test_xpu_visible_devices_environment_variable(monkeypatch):
+    """Respect XPU_VISIBLE_DEVICES for XPU selection"""
+    module, fake_torch = _load_client_module(
+        monkeypatch,
+        npu_available=False,
+        cuda_available=False,
+        xpu_available=True,
+        xpu_device_count=4,
+    )
+    monkeypatch.setenv("FORCE_CPU", "false")
+    monkeypatch.setenv("NPU_ENABLED", "false")
+    monkeypatch.setenv("XPU_ENABLED", "true")
+    monkeypatch.setenv("XPU_VISIBLE_DEVICES", "2,3")
+
+    client = module.SovereignClient.__new__(module.SovereignClient)
+    client.node_id = 0
+
+    selected = client._select_device()
+    assert selected == "xpu:2"
+    assert fake_torch.xpu.selected_device == "xpu:2"
+
+
+def test_rocm_backend_uses_cuda_device_namespace(monkeypatch):
+    """AMD ROCm GPUs are selected through the CUDA namespace in PyTorch"""
+    module, fake_torch = _load_client_module(
+        monkeypatch,
+        npu_available=False,
+        cuda_available=True,
+        cuda_backend="rocm",
+        cuda_device_count=2,
+    )
+    monkeypatch.setenv("FORCE_CPU", "false")
+    monkeypatch.setenv("NPU_ENABLED", "false")
+    monkeypatch.setenv("HIP_VISIBLE_DEVICES", "1,0")
+
+    client = module.SovereignClient.__new__(module.SovereignClient)
+    client.node_id = 0
+
+    selected = client._select_device()
+    assert selected == "cuda:1"
+    assert fake_torch.version.hip == "6.1"
+    assert fake_torch.cuda.get_device_name(0).startswith("AMD Radeon Instinct MI")
+
+
+def test_mps_selected_when_other_accelerators_unavailable(monkeypatch):
+    """Use MPS when NPU, XPU, and CUDA are unavailable"""
+    module, _ = _load_client_module(
+        monkeypatch,
+        npu_available=False,
+        cuda_available=False,
+        xpu_available=False,
+        mps_available=True,
+    )
+    monkeypatch.setenv("FORCE_CPU", "false")
+    monkeypatch.setenv("NPU_ENABLED", "false")
+    monkeypatch.setenv("XPU_ENABLED", "false")
+    monkeypatch.setenv("GPU_ENABLED", "false")
+    monkeypatch.setenv("MPS_ENABLED", "true")
+
+    client = module.SovereignClient.__new__(module.SovereignClient)
+    client.node_id = 0
+
+    selected = client._select_device()
+    assert selected == "mps"
 
 
 # ============================================================================

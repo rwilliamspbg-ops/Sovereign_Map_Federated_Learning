@@ -66,12 +66,12 @@
 
 ## Hardware Acceleration & Testing
 
-[![GPU/NPU Device Tests](https://img.shields.io/badge/GPU%2FNPU%20Tests-37%2F37-brightgreen?style=for-the-badge&logo=pytorch&logoColor=white)](GPU_NPU_TEST_ENHANCEMENTS_REPORT.md)
-[![Hardware Acceleration](https://img.shields.io/badge/Acceleration-NPU%20%2F%20CUDA%20%2F%20CPU-2B8A3E?style=for-the-badge&logo=nvidia&logoColor=white)](Documentation/Performance/NPU_GPU_CPU_PERFORMANCE_ANALYSIS.md)
-[![NPU Support](https://img.shields.io/badge/Support-Huawei%20Ascend%20NPU-FF0000?style=for-the-badge&logo=huawei&logoColor=white)](tests/hil/test_npu_device_selection.py)
-[![GPU Support](https://img.shields.io/badge/Support-NVIDIA%20CUDA%2FGPUs-76B900?style=for-the-badge&logo=nvidia&logoColor=white)](tests/hil/test_npu_device_selection.py)
-[![Device Fallback](https://img.shields.io/badge/Fallback%20Chain-NPU%20%E2%86%92%20CUDA%20%E2%86%92%20CPU-0066CC?style=for-the-badge&logo=codeigniter&logoColor=white)](src/client.py)
-[![Multi-Device Selection](https://img.shields.io/badge/Multi%20Device-Load%20Balancing%20Ready-4730FF?style=for-the-badge&logo=json&logoColor=white)](tests/hil/test_npu_device_selection.py)
+[![GPU/NPU Device Tests](https://img.shields.io/badge/GPU%2FNPU%20Tests-42%2F42-brightgreen?style=for-the-badge&logo=pytorch&logoColor=white)](GPU_NPU_TEST_ENHANCEMENTS_REPORT.md)
+[![Hardware Acceleration](https://img.shields.io/badge/Acceleration-NPU%20%2F%20XPU%20%2F%20CUDA%20%2F%20MPS%20%2F%20CPU-2B8A3E?style=for-the-badge&logo=pytorch&logoColor=white)](Documentation/Performance/NPU_GPU_CPU_PERFORMANCE_ANALYSIS.md)
+[![NPU Support](https://img.shields.io/badge/Support-Ascend%20NPU%20%2B%20XPU%20Backends-FF0000?style=for-the-badge&logo=huawei&logoColor=white)](tests/hil/test_npu_device_selection.py)
+[![GPU Support](https://img.shields.io/badge/Support-NVIDIA%20CUDA%20%2B%20AMD%20ROCm-76B900?style=for-the-badge&logo=amd&logoColor=white)](tests/hil/test_npu_device_selection.py)
+[![Device Fallback](https://img.shields.io/badge/Fallback%20Chain-NPU%20%E2%86%92%20XPU%20%E2%86%92%20CUDA%2FROCm%20%E2%86%92%20MPS%20%E2%86%92%20CPU-0066CC?style=for-the-badge&logo=codeigniter&logoColor=white)](src/client.py)
+[![Multi-Device Selection](https://img.shields.io/badge/Multi%20Device-Ascend%20%2B%20ROCm%20%2B%20XPU%20Ready-4730FF?style=for-the-badge&logo=json&logoColor=white)](tests/hil/test_npu_device_selection.py)
 
 Sovereign Map is a sovereign intelligence coordination platform that combines federated learning, blockchain governance, trust attestation, and observability into one deployable stack.
 
@@ -98,7 +98,7 @@ Intellectual Property Notice: this repository implements parts of the Sovereign 
 - **TypeScript Quality**: Fixed aggregate handler typing issue ensuring strict null checks across all test suites
 - **Security Finalization**: All security gates (CodeQL, secret scan, supply chain) passing; SLSA L2 attestation enabled
 - **SDK Readiness**: Changesets-based release management operational; npm publishing workflow stable and automated
-- **Hardware Acceleration**: Complete GPU/NPU device selection support with comprehensive testing (37 tests covering NPU/CUDA/CPU fallback, multi-device scenarios, environment variable handling, error recovery, and device properties)
+- **Hardware Acceleration**: Complete device selection support with comprehensive testing (42 tests covering Ascend NPU, XPU, NVIDIA CUDA, AMD ROCm, Apple MPS, CPU fallback, multi-device scenarios, environment variable handling, error recovery, and device properties)
 
 ## What Is Included
 
@@ -213,22 +213,37 @@ make testnet-wallet-readiness
 
 Sovereign Map clients automatically detect and prioritize available hardware accelerators:
 
-1. **Huawei Ascend NPU** (Priority 1)
+1. **Huawei Ascend and `torch.npu` NPUs** (Priority 1)
 
 - Environment: `NPU_ENABLED=true` (default)
 - Device selection: First device from `ASCEND_RT_VISIBLE_DEVICES` (default: 0)
 - Memory: ~80GB per device
 - Multi-device support: Load balancing across visible devices
-- Status: ✅ Fully tested (37 comprehensive test scenarios)
+- Status: ✅ Fully tested
 
-1. **NVIDIA CUDA/GPU** (Priority 2)
+1. **Intel / oneAPI `xpu` accelerators** (Priority 2)
+
+- Environment: `XPU_ENABLED=true` (default)
+- Device selection: First device from `XPU_VISIBLE_DEVICES` or `ZE_AFFINITY_MASK`
+- Device family: Intel GPU and XPU-class accelerator backends exposed through PyTorch
+- Status: ✅ Added and covered by device-selection tests
+
+1. **NVIDIA CUDA and AMD ROCm GPUs** (Priority 3)
 
 - Fallback when NPU unavailable
 - Multi-GPU support: Automatic device enumeration
+- ROCm support: AMD GPUs use PyTorch's `cuda` namespace with `HIP_VISIBLE_DEVICES` / `ROCR_VISIBLE_DEVICES`
 - Memory detection: Device properties and allocation tracking
-- Status: ✅ Fully tested with CUDA device fallback scenarios
+- Status: ✅ Fully tested with CUDA and ROCm-aware fallback scenarios
 
-1. **CPU** (Priority 3)
+1. **Apple Metal Performance Shaders (MPS)** (Priority 4)
+
+- Environment: `MPS_ENABLED=true` (default)
+- Fallback path: Used when NPU, XPU, and CUDA/ROCm are unavailable
+- Target platform: Apple Silicon and macOS Metal backends
+- Status: ✅ Added and covered by device-selection tests
+
+1. **CPU** (Priority 5)
 
 - Final fallback: Always available
 - Override: `FORCE_CPU=true` bypasses accelerators
@@ -240,24 +255,39 @@ Sovereign Map clients automatically detect and prioritize available hardware acc
 | -------- | ------ | ------- | ------- |
 | `FORCE_CPU` | `true` / `false` | Force CPU-only execution | `FORCE_CPU=true` |
 | `NPU_ENABLED` | `true` / `false` | Enable/disable NPU detection | `NPU_ENABLED=true` |
+| `XPU_ENABLED` | `true` / `false` | Enable/disable XPU detection | `XPU_ENABLED=true` |
+| `GPU_ENABLED` | `true` / `false` | Enable/disable CUDA or ROCm GPU detection | `GPU_ENABLED=true` |
+| `MPS_ENABLED` | `true` / `false` | Enable/disable Apple MPS fallback | `MPS_ENABLED=true` |
 | `ASCEND_RT_VISIBLE_DEVICES` | Device IDs (comma-separated) | Visible NPU devices | `ASCEND_RT_VISIBLE_DEVICES=0,1,2,3` |
+| `XPU_VISIBLE_DEVICES` | Device IDs (comma-separated) | Visible XPU devices | `XPU_VISIBLE_DEVICES=0,1` |
+| `CUDA_VISIBLE_DEVICES` | Device IDs (comma-separated) | Visible NVIDIA CUDA devices | `CUDA_VISIBLE_DEVICES=0,1` |
+| `HIP_VISIBLE_DEVICES` | Device IDs (comma-separated) | Visible AMD ROCm devices | `HIP_VISIBLE_DEVICES=0,1` |
 
 ### Usage Examples
 
 ```bash
-# Use default device detection (NPU > CUDA > CPU)
+# Use default device detection (NPU > XPU > CUDA/ROCm > MPS > CPU)
 ./client.py --node-id=0
 
 # Force NPU with specific devices
 ASCEND_RT_VISIBLE_DEVICES=2,3,1 NPU_ENABLED=true ./client.py --node-id=1
 
-# Use only CUDA/GPU
+# Use Intel XPU / oneAPI backend
+XPU_VISIBLE_DEVICES=1 XPU_ENABLED=true NPU_ENABLED=false ./client.py --node-id=2
+
+# Use only NVIDIA CUDA or AMD ROCm GPUs
 NPU_ENABLED=false ./client.py --node-id=2
 
-# Force CPU (development/testing)
-FORCE_CPU=true ./client.py --node-id=3
+# Use AMD ROCm-visible devices
+HIP_VISIBLE_DEVICES=1,0 NPU_ENABLED=false ./client.py --node-id=3
 
-# Multi-GPU with Docker
+# Use Apple MPS after disabling higher-priority accelerators
+NPU_ENABLED=false XPU_ENABLED=false GPU_ENABLED=false MPS_ENABLED=true ./client.py --node-id=4
+
+# Force CPU (development/testing)
+FORCE_CPU=true ./client.py --node-id=5
+
+# Multi-GPU with Docker (CUDA or ROCm)
 docker run -e NPU_ENABLED=false -e CUDA_VISIBLE_DEVICES=0,1 sovereign-client
 ```
 

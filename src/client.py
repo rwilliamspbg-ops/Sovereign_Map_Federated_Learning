@@ -129,6 +129,66 @@ class SovereignClient(fl.client.NumPyClient):
             model = model.to(self.device)
         return model
 
+    def _env_enabled(self, name: str, default: str = "true") -> bool:
+        """Parse boolean environment flags consistently."""
+        return os.getenv(name, default).lower() in ("1", "true", "yes")
+
+    def _first_visible_device_index(self, *env_names: str, default: int = 0) -> int:
+        """Return the first visible device index from the configured env vars."""
+        for env_name in env_names:
+            raw_value = os.getenv(env_name)
+            if raw_value is None:
+                continue
+
+            device_index_raw = str(raw_value).split(",")[0].strip()
+            if not device_index_raw:
+                continue
+
+            try:
+                return int(device_index_raw)
+            except ValueError:
+                logger.warning(
+                    f"Node {self.node_id}: Invalid {env_name}={raw_value}, using default device {default}"
+                )
+                return default
+
+        return default
+
+    def _try_accelerator(
+        self,
+        *,
+        backend_name: str,
+        backend_attr: str,
+        visible_env_names: Tuple[str, ...],
+        label: str,
+    ) -> object | None:
+        """Try a specific accelerator backend and return a selected device on success."""
+        backend = getattr(torch, backend_attr, None)
+        if backend is None:
+            return None
+
+        try:
+            if not backend.is_available():
+                return None
+
+            device_index = self._first_visible_device_index(*visible_env_names)
+            selected_device = torch.device(f"{backend_name}:{device_index}")
+
+            if hasattr(backend, "set_device"):
+                backend.set_device(selected_device)
+
+            if self._probe_device(selected_device):
+                logger.info(
+                    f"Node {self.node_id}: Using {label} device {selected_device}"
+                )
+                return selected_device
+        except Exception as e:
+            logger.warning(
+                f"Node {self.node_id}: {label} requested but unavailable ({e}), falling back"
+            )
+
+        return None
+
     def _probe_device(self, device: torch.device) -> bool:
         """Verify device is actually usable by running a tiny allocation/op."""
         if not hasattr(torch, "zeros"):
@@ -142,6 +202,12 @@ class SovereignClient(fl.client.NumPyClient):
             _ = probe + 1
             if device.type == "cuda":
                 torch.cuda.synchronize()
+            elif (
+                device.type == "xpu"
+                and hasattr(torch, "xpu")
+                and hasattr(torch.xpu, "synchronize")
+            ):
+                torch.xpu.synchronize()
             elif (
                 device.type == "npu"
                 and hasattr(torch, "npu")
@@ -164,36 +230,66 @@ class SovereignClient(fl.client.NumPyClient):
         self.model = self.model.to(self.device)
 
     def _select_device(self) -> torch.device:
-        """Select training device with NPU/CUDA/CPU fallback."""
-        force_cpu = os.getenv("FORCE_CPU", "false").lower() in ("1", "true", "yes")
+        """Select training device with NPU/XPU/CUDA/MPS/CPU fallback."""
+        force_cpu = self._env_enabled("FORCE_CPU", "false")
         if force_cpu:
             logger.info(f"Node {self.node_id}: FORCE_CPU enabled")
             return torch.device("cpu")
 
-        npu_enabled = os.getenv("NPU_ENABLED", "true").lower() in ("1", "true", "yes")
-        if npu_enabled and hasattr(torch, "npu"):
+        npu_enabled = self._env_enabled("NPU_ENABLED", "true")
+        if npu_enabled:
+            npu_device = self._try_accelerator(
+                backend_name="npu",
+                backend_attr="npu",
+                visible_env_names=("ASCEND_RT_VISIBLE_DEVICES",),
+                label="NPU",
+            )
+            if npu_device is not None:
+                return npu_device
+
+        xpu_enabled = self._env_enabled("XPU_ENABLED", "true")
+        if xpu_enabled:
+            xpu_device = self._try_accelerator(
+                backend_name="xpu",
+                backend_attr="xpu",
+                visible_env_names=("XPU_VISIBLE_DEVICES", "ZE_AFFINITY_MASK"),
+                label="XPU",
+            )
+            if xpu_device is not None:
+                return xpu_device
+
+        gpu_enabled = self._env_enabled("GPU_ENABLED", "true")
+        if gpu_enabled and hasattr(torch, "cuda") and torch.cuda.is_available():
+            gpu_device = self._try_accelerator(
+                backend_name="cuda",
+                backend_attr="cuda",
+                visible_env_names=(
+                    "CUDA_VISIBLE_DEVICES",
+                    "HIP_VISIBLE_DEVICES",
+                    "ROCR_VISIBLE_DEVICES",
+                ),
+                label=(
+                    "ROCm GPU"
+                    if getattr(getattr(torch, "version", None), "hip", None)
+                    else "CUDA GPU"
+                ),
+            )
+            if gpu_device is not None:
+                return gpu_device
+
+        mps_backend = getattr(getattr(torch, "backends", None), "mps", None)
+        mps_enabled = self._env_enabled("MPS_ENABLED", "true")
+        if mps_enabled and mps_backend is not None:
             try:
-                if torch.npu.is_available():
-                    visible = os.getenv("ASCEND_RT_VISIBLE_DEVICES", "0")
-                    device_index_raw = str(visible).split(",")[0].strip() or "0"
-                    device_index = int(device_index_raw)
-                    selected_device = torch.device(f"npu:{device_index}")
-                    torch.npu.set_device(selected_device)
-                    if self._probe_device(selected_device):
-                        logger.info(
-                            f"Node {self.node_id}: Using NPU device {selected_device}"
-                        )
-                        return selected_device
+                if mps_backend.is_available():
+                    mps_device = torch.device("mps")
+                    if self._probe_device(mps_device):
+                        logger.info(f"Node {self.node_id}: Using MPS device {mps_device}")
+                        return mps_device
             except Exception as e:
                 logger.warning(
-                    f"Node {self.node_id}: NPU requested but unavailable ({e}), falling back"
+                    f"Node {self.node_id}: MPS requested but unavailable ({e}), falling back"
                 )
-
-        if torch.cuda.is_available():
-            cuda_device = torch.device("cuda:0")
-            if self._probe_device(cuda_device):
-                logger.info(f"Node {self.node_id}: Using CUDA device {cuda_device}")
-                return cuda_device
 
         logger.info(f"Node {self.node_id}: Using CPU device")
         return torch.device("cpu")
