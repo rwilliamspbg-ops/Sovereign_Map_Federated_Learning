@@ -22,7 +22,6 @@ jobs:
       - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd
         with:
           fetch-depth: 0  # Full history to detect changeset files
-          persist-credentials: false
       
       - name: Check for changesets
         id: check
@@ -47,7 +46,6 @@ jobs:
       - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd
         with:
           fetch-depth: 0
-          persist-credentials: false
       
       - uses: actions/setup-node@53b83947a5a98c8d113130e565377fae1a50d02f
         with:
@@ -76,6 +74,9 @@ jobs:
           CORE_VERSION=$(node -e "console.log(require('./packages/core/package.json').version)")
           echo "core_version=$CORE_VERSION" >> "$GITHUB_OUTPUT"
           echo "Version updated to $CORE_VERSION"
+
+      - name: Clear checkout auth header
+        run: git config --local --unset-all http.https://github.com/.extraheader || true
       
       - name: Create version commit and PR
         if: success()
