@@ -16,6 +16,7 @@ import './BrowserFLDemo.css';
 const MAX_POINTS = 120;
 const DEFAULT_ROUNDS = 50;
 const API_BASE = import.meta.env.VITE_HUD_API_BASE || (import.meta.env.DEV ? '/backend' : 'http://localhost:8000');
+const TRAINING_API_BASE = import.meta.env.VITE_TRAINING_API_BASE || 'http://localhost:5001';
 
 function clamp(value, min, max) {
   return Math.max(min, Math.min(max, value));
@@ -26,11 +27,9 @@ function randomFloat(min, max) {
 }
 
 export default function BrowserFLDemo({ enableBackendMetrics = false, onMetricsUpdate = null }) {
+  const [trainingMode, setTrainingMode] = useState('simulation');
+
   const [participants, setParticipants] = useState(120);
-    const [trainingMode, setTrainingMode] = useState('simulation');  // 'simulation' or 'real'
-    const [phase3dStatus, setPhase3dStatus] = useState('idle');  // idle, training, completed
-    const [phase3dRound, setPhase3dRound] = useState(0);
-    const [phase3dTotal, setPhase3dTotal] = useState(10);
   const [localEpochs, setLocalEpochs] = useState(2);
   const [targetRounds, setTargetRounds] = useState(DEFAULT_ROUNDS);
   const [epsilon, setEpsilon] = useState(1.2);
@@ -48,14 +47,13 @@ export default function BrowserFLDemo({ enableBackendMetrics = false, onMetricsU
   const [bandwidthKB, setBandwidthKB] = useState(0);
 
   const [history, setHistory] = useState([]);
-  
-  // Backend metrics integration
-  const [backendMetrics, setBackendMetrics] = useState(null);
-  const [usingBackendData, setUsingBackendData] = useState(false);
-  const [backendError, setBackendError] = useState(null);
+  const [realHistory, setRealHistory] = useState([]);
 
-  // Phase 3D training backend URL
-  const TRAINING_API_BASE = import.meta.env.VITE_TRAINING_API_BASE || 'http://localhost:5001';
+  const [usingBackendData, setUsingBackendData] = useState(false);
+
+  const [phase3dStatus, setPhase3dStatus] = useState('idle');
+  const [phase3dRound, setPhase3dRound] = useState(0);
+  const [phase3dTotal, setPhase3dTotal] = useState(10);
 
   useEffect(() => {
     const detectWebGPU = async () => {
@@ -74,77 +72,83 @@ export default function BrowserFLDemo({ enableBackendMetrics = false, onMetricsU
     detectWebGPU();
   }, []);
 
-  // Fetch backend metrics if enabled
   useEffect(() => {
     if (!enableBackendMetrics) return undefined;
 
     const fetchBackendMetrics = async () => {
       try {
         const response = await fetch(`${API_BASE}/metrics_summary`);
-        if (response.ok) {
-          const metrics = await response.json();
-          setBackendMetrics(metrics);
-          setUsingBackendData(true);
-          setBackendError(null);
-        }
-      } catch (err) {
-        console.warn('Failed to fetch backend metrics:', err);
-        setBackendError('Backend metrics unavailable');
+        setUsingBackendData(response.ok);
+      } catch {
         setUsingBackendData(false);
       }
     };
 
     fetchBackendMetrics();
-    const interval = setInterval(fetchBackendMetrics, 5000); // Poll every 5s
+    const interval = setInterval(fetchBackendMetrics, 5000);
     return () => clearInterval(interval);
   }, [enableBackendMetrics]);
 
-  // Phase 3D training polling
   useEffect(() => {
-    if (trainingMode !== 'real' || phase3dStatus !== 'training') {
-      onMetricsUpdate?.(trainingMode === 'real' ? [] : history);
-      return undefined;
-    }
+    if (trainingMode !== 'real' || phase3dStatus !== 'training') return undefined;
 
     const pollTrainingStatus = async () => {
       try {
         const response = await fetch(`${TRAINING_API_BASE}/training/status`);
-        if (response.ok) {
-          const status = await response.json();
-          setPhase3dRound(status.current_round);
-          setPhase3dTotal(status.total_rounds);
-          
-          // Update metrics from real training
-          if (status.current_metrics) {
-            setAccuracy(status.current_metrics.accuracy);
-            setLoss(status.current_metrics.round_loss);
-            setCompressionRatio(status.current_metrics.compression_ratio);
-            
-                      // Export metrics to Privacy-Utility Dashboard
-                      onMetricsUpdate?.([...(trainingMetrics || []), status.current_metrics]);
-          }
-          
-          // Check if training completed
-          if (status.status === 'completed') {
-            setPhase3dStatus('completed');
-          } else if (status.status === 'error') {
-            setPhase3dStatus('idle');
-            console.error('Training error:', status.error);
-          }
+        if (!response.ok) return;
+
+        const status = await response.json();
+        setPhase3dRound(status.current_round || 0);
+        setPhase3dTotal(status.total_rounds || phase3dTotal);
+
+        if (status.current_metrics) {
+          const metric = status.current_metrics;
+          setAccuracy(metric.accuracy ?? accuracy);
+          setLoss(metric.round_loss ?? loss);
+          setCompressionRatio(metric.compression_ratio ?? compressionRatio);
+
+          setRealHistory((previous) => {
+            const point = {
+              round: status.current_round || previous.length + 1,
+              accuracy: Number((metric.accuracy ?? accuracy).toFixed(4)),
+              loss: Number((metric.round_loss ?? loss).toFixed(4)),
+              compressionRatio: Number((metric.compression_ratio ?? compressionRatio).toFixed(2)),
+              latencyMs,
+              bandwidthKB
+            };
+            const merged = [...previous, point].slice(-MAX_POINTS);
+            onMetricsUpdate?.(merged);
+            return merged;
+          });
         }
-      } catch (err) {
-        console.warn('Failed to poll training status:', err);
+
+        if (status.status === 'completed') {
+          setPhase3dStatus('completed');
+        } else if (status.status === 'error') {
+          setPhase3dStatus('idle');
+        }
+      } catch {
         setPhase3dStatus('idle');
       }
     };
 
-    const interval = setInterval(pollTrainingStatus, 2000); // Poll every 2s
-    pollTrainingStatus(); // Immediate poll
+    pollTrainingStatus();
+    const interval = setInterval(pollTrainingStatus, 2000);
     return () => clearInterval(interval);
-  }, [trainingMode, phase3dStatus, onMetricsUpdate]);
+  }, [
+    trainingMode,
+    phase3dStatus,
+    phase3dTotal,
+    accuracy,
+    loss,
+    compressionRatio,
+    latencyMs,
+    bandwidthKB,
+    onMetricsUpdate
+  ]);
 
   useEffect(() => {
-    if (!running || trainingMode === 'real') return undefined;
+    if (!running || trainingMode !== 'simulation') return undefined;
 
     const tick = () => {
       setRound((previousRound) => {
@@ -198,8 +202,9 @@ export default function BrowserFLDemo({ enableBackendMetrics = false, onMetricsU
             compressionRatio: Number(nextCompressionRatio.toFixed(2))
           };
 
-          const merged = [...previousHistory, point];
-          return merged.slice(-MAX_POINTS);
+          const merged = [...previousHistory, point].slice(-MAX_POINTS);
+          onMetricsUpdate?.(merged);
+          return merged;
         });
 
         if (nextRound >= targetRounds) {
@@ -214,7 +219,7 @@ export default function BrowserFLDemo({ enableBackendMetrics = false, onMetricsU
     return () => clearInterval(timer);
   }, [
     running,
-      trainingMode,
+    trainingMode,
     targetRounds,
     participants,
     localEpochs,
@@ -223,14 +228,9 @@ export default function BrowserFLDemo({ enableBackendMetrics = false, onMetricsU
     learningRate,
     runtimeBackend,
     accuracy,
-    loss
+    loss,
+    onMetricsUpdate
   ]);
-
-  // Export simulation metrics to dashboard
-  useEffect(() => {
-    if (trainingMode === 'real') return;
-    onMetricsUpdate?.(history);
-  }, [history, onMetricsUpdate, trainingMode]);
 
   const backendLabel = useMemo(() => {
     if (runtimeBackend === 'webgpu') return 'WebGPU Active';
@@ -240,64 +240,72 @@ export default function BrowserFLDemo({ enableBackendMetrics = false, onMetricsU
 
   const backendClass = runtimeBackend === 'webgpu' ? 'badge-webgpu' : 'badge-cpu';
 
-  const progressPercent = clamp((round / targetRounds) * 100, 0, 100);
+  const activeRound = trainingMode === 'real' ? phase3dRound : round;
+  const activeTarget = trainingMode === 'real' ? phase3dTotal : targetRounds;
+  const activeHistory = trainingMode === 'real' ? realHistory : history;
+
+  const progressPercent = clamp((activeRound / Math.max(activeTarget, 1)) * 100, 0, 100);
   const compressionSavedPercent = clamp((1 - 1 / compressionRatio) * 100, 0, 99.9);
 
   const resetScenario = () => {
     setRunning(false);
     setRound(0);
+    setPhase3dRound(0);
     setAccuracy(0.51);
     setLoss(1.7);
     setCompressionRatio(4.0);
     setLatencyMs(0);
     setBandwidthKB(0);
     setHistory([]);
+    setRealHistory([]);
+    onMetricsUpdate?.([]);
+  };
 
-    const startPhase3dTraining = async () => {
-      try {
-        const config = {
-          num_rounds: phase3dTotal,
-          num_clients: participants,
-          learning_rate: learningRate,
-          epsilon: epsilon,
-          compression_bits: compressionBits,
-          local_epochs: localEpochs,
-          use_compression: true,
-          use_privacy: true
-        };
+  const startPhase3dTraining = async () => {
+    try {
+      const config = {
+        num_rounds: phase3dTotal,
+        num_clients: participants,
+        local_epochs: localEpochs,
+        learning_rate: learningRate,
+        epsilon,
+        compression_bits: compressionBits,
+        use_compression: true,
+        use_privacy: true,
+        dataset: 'cifar10',
+        device: 'cuda',
+        multi_gpu: true
+      };
 
-        const response = await fetch(`${TRAINING_API_BASE}/training/start`, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify(config)
-        });
+      const response = await fetch(`${TRAINING_API_BASE}/training/start`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(config)
+      });
 
-        if (response.ok) {
-          setPhase3dStatus('training');
-          setPhase3dRound(0);
-          setRunning(false);
-          setRound(0);
-          // Reset metrics for fresh training
-          setAccuracy(0.1);
-          setLoss(2.3);
-          setHistory([]);
-        } else {
-          console.error('Failed to start training');
-        }
-      } catch (err) {
-        console.error('Training API error:', err);
+      if (!response.ok) {
         setPhase3dStatus('idle');
+        return;
       }
-    };
 
-    const cancelPhase3dTraining = async () => {
-      try {
-        await fetch(`${TRAINING_API_BASE}/training/cancel`, { method: 'POST' });
-        setPhase3dStatus('idle');
-      } catch (err) {
-        console.error('Cancel error:', err);
-      }
-    };
+      setPhase3dStatus('training');
+      setRunning(false);
+      setRound(0);
+      setPhase3dRound(0);
+      setRealHistory([]);
+      onMetricsUpdate?.([]);
+    } catch {
+      setPhase3dStatus('idle');
+    }
+  };
+
+  const cancelPhase3dTraining = async () => {
+    try {
+      await fetch(`${TRAINING_API_BASE}/training/cancel`, { method: 'POST' });
+      setPhase3dStatus('idle');
+    } catch {
+      setPhase3dStatus('idle');
+    }
   };
 
   return (
@@ -306,10 +314,9 @@ export default function BrowserFLDemo({ enableBackendMetrics = false, onMetricsU
         <div>
           <h2>Browser Federated Learning Studio</h2>
           <p>
-            {trainingMode === 'simulation' 
+            {trainingMode === 'simulation'
               ? 'Interactive simulation of local training, privacy noise, gradient compression, and network bandwidth tradeoffs.'
-              : 'Real federated learning with MNIST dataset, actual gradient compression, and differential privacy.'
-            }
+              : 'Real federated learning with CIFAR-10, gradient compression, and CUDA multi-GPU support.'}
             {usingBackendData ? ' (Real network metrics enabled)' : ''}
           </p>
         </div>
@@ -317,14 +324,14 @@ export default function BrowserFLDemo({ enableBackendMetrics = false, onMetricsU
           <div className={`runtime-badge ${backendClass}`}>{backendLabel}</div>
           {enableBackendMetrics && (
             <div className={`runtime-badge ${usingBackendData ? 'badge-sync' : 'badge-offline'}`}>
-              {usingBackendData ? '🔄 Network Live' : '⚠️ Simulation Only'}
+              {usingBackendData ? 'Network Live' : 'Simulation Only'}
             </div>
           )}
-                  {trainingMode === 'real' && (
-                    <div className={`runtime-badge ${phase3dStatus === 'training' ? 'badge-sync' : phase3dStatus === 'completed' ? 'badge-webgpu' : 'badge-offline'}`}>
-                      {phase3dStatus === 'training' ? '🔄 Training Live' : phase3dStatus === 'completed' ? '✅ Training Complete' : '⏸️ Phase 3D Ready'}
-                    </div>
-                  )}
+          {trainingMode === 'real' && (
+            <div className={`runtime-badge ${phase3dStatus === 'training' ? 'badge-sync' : phase3dStatus === 'completed' ? 'badge-webgpu' : 'badge-offline'}`}>
+              {phase3dStatus === 'training' ? 'Training Live' : phase3dStatus === 'completed' ? 'Training Complete' : 'Phase 3D Ready'}
+            </div>
+          )}
         </div>
       </div>
 
@@ -332,38 +339,12 @@ export default function BrowserFLDemo({ enableBackendMetrics = false, onMetricsU
         <aside className="control-card">
           <h3>Round Controls</h3>
 
-          <label style={{ marginBottom: '16px' }}>
-            <strong>Training Mode</strong>
-            <div style={{ display: 'flex', gap: '8px', marginTop: '4px' }}>
-              <button
-                style={{
-                  flex: 1,
-                  padding: '8px',
-                  background: trainingMode === 'simulation' ? '#007AFF' : '#e0e0e0',
-                  color: trainingMode === 'simulation' ? 'white' : 'black',
-                  border: 'none',
-                  borderRadius: '4px',
-                  cursor: 'pointer'
-                }}
-                onClick={() => { trainingMode === 'real' && setTrainingMode('simulation'); setPhase3dStatus('idle'); }}
-              >
-                Simulation
-              </button>
-              <button
-                style={{
-                  flex: 1,
-                  padding: '8px',
-                  background: trainingMode === 'real' ? '#007AFF' : '#e0e0e0',
-                  color: trainingMode === 'real' ? 'white' : 'black',
-                  border: 'none',
-                  borderRadius: '4px',
-                  cursor: 'pointer'
-                }}
-                onClick={() => { trainingMode === 'simulation' && setTrainingMode('real'); }}
-              >
-                Phase 3D (Real)
-              </button>
-            </div>
+          <label>
+            Training Mode
+            <select value={trainingMode} onChange={(event) => setTrainingMode(event.target.value)}>
+              <option value="simulation">Simulation</option>
+              <option value="real">Phase 3D (Real)</option>
+            </select>
           </label>
 
           <label>
@@ -372,9 +353,9 @@ export default function BrowserFLDemo({ enableBackendMetrics = false, onMetricsU
               type="range"
               min="10"
               max="500"
-                            disabled={trainingMode === 'real' && phase3dStatus === 'training'}
               value={participants}
               onChange={(event) => setParticipants(Number(event.target.value))}
+              disabled={trainingMode === 'real' && phase3dStatus === 'training'}
             />
             <span>{participants}</span>
           </label>
@@ -385,9 +366,9 @@ export default function BrowserFLDemo({ enableBackendMetrics = false, onMetricsU
               type="range"
               min="1"
               max="10"
-                            disabled={trainingMode === 'real' && phase3dStatus === 'training'}
               value={localEpochs}
               onChange={(event) => setLocalEpochs(Number(event.target.value))}
+              disabled={trainingMode === 'real' && phase3dStatus === 'training'}
             />
             <span>{localEpochs}</span>
           </label>
@@ -399,9 +380,9 @@ export default function BrowserFLDemo({ enableBackendMetrics = false, onMetricsU
               min="0.2"
               max="3"
               step="0.1"
-                            disabled={trainingMode === 'real' && phase3dStatus === 'training'}
               value={epsilon}
               onChange={(event) => setEpsilon(Number(event.target.value))}
+              disabled={trainingMode === 'real' && phase3dStatus === 'training'}
             />
             <span>{epsilon.toFixed(1)}</span>
           </label>
@@ -413,9 +394,9 @@ export default function BrowserFLDemo({ enableBackendMetrics = false, onMetricsU
               min="4"
               max="16"
               step="1"
-                            disabled={trainingMode === 'real' && phase3dStatus === 'training'}
               value={compressionBits}
               onChange={(event) => setCompressionBits(Number(event.target.value))}
+              disabled={trainingMode === 'real' && phase3dStatus === 'training'}
             />
             <span>{compressionBits}-bit</span>
           </label>
@@ -427,9 +408,9 @@ export default function BrowserFLDemo({ enableBackendMetrics = false, onMetricsU
               min="0.005"
               max="0.08"
               step="0.001"
-                            disabled={trainingMode === 'real' && phase3dStatus === 'training'}
               value={learningRate}
               onChange={(event) => setLearningRate(Number(event.target.value))}
+              disabled={trainingMode === 'real' && phase3dStatus === 'training'}
             />
             <span>{learningRate.toFixed(3)}</span>
           </label>
@@ -440,33 +421,26 @@ export default function BrowserFLDemo({ enableBackendMetrics = false, onMetricsU
               type="number"
               min="5"
               max="400"
-              disabled={trainingMode === 'real' && phase3dStatus === 'training'}
               value={trainingMode === 'real' ? phase3dTotal : targetRounds}
               onChange={(event) => {
-                const val = clamp(Number(event.target.value) || 1, 5, 400);
-                if (trainingMode === 'simulation') {
-                  setTargetRounds(val);
+                const value = clamp(Number(event.target.value) || 1, 5, 400);
+                if (trainingMode === 'real') {
+                  setPhase3dTotal(value);
                 } else {
-                  setPhase3dTotal(val);
+                  setTargetRounds(value);
                 }
               }}
+              disabled={trainingMode === 'real' && phase3dStatus === 'training'}
             />
           </label>
 
           <div className="control-actions">
-                        {trainingMode === 'simulation' ? (
-            <button onClick={() => setRunning((value) => !value)}>
-              {running ? 'Pause Training' : 'Start Training'}
-            </button>
+            {trainingMode === 'simulation' ? (
+              <button onClick={() => setRunning((value) => !value)}>{running ? 'Pause Training' : 'Start Training'}</button>
             ) : (
-              <>
-                <button 
-                  onClick={phase3dStatus === 'training' ? cancelPhase3dTraining : startPhase3dTraining}
-                  style={{ background: phase3dStatus === 'training' ? '#ff6b6b' : '#007AFF' }}
-                >
-                  {phase3dStatus === 'training' ? 'Cancel Training' : 'Start Real Training'}
-                </button>
-              </>
+              <button onClick={phase3dStatus === 'training' ? cancelPhase3dTraining : startPhase3dTraining}>
+                {phase3dStatus === 'training' ? 'Cancel Training' : 'Start Real Training'}
+              </button>
             )}
             <button className="ghost" onClick={resetScenario}>
               Reset
@@ -478,8 +452,7 @@ export default function BrowserFLDemo({ enableBackendMetrics = false, onMetricsU
           <div className="kpi-grid">
             <article>
               <h4>Round</h4>
-                            <p>{trainingMode === 'real' ? `${phase3dRound}/${phase3dTotal}` : round}</p>
-              <p>{round}</p>
+              <p>{activeRound}</p>
             </article>
             <article>
               <h4>Accuracy</h4>
@@ -500,57 +473,56 @@ export default function BrowserFLDemo({ enableBackendMetrics = false, onMetricsU
             <article>
               <h4>Round Latency</h4>
               <p>{latencyMs} ms</p>
-                        {trainingMode === 'real' && (
-                          <article>
-                            <h4>Training Mode</h4>
-                            <p>{phase3dStatus.toUpperCase()}</p>
-                          </article>
-                        )}
             </article>
           </div>
 
           <div className="progress-wrap">
             <div className="progress-labels">
               <span>Progress</span>
-                            <span>{(trainingMode === 'real' ? (phase3dRound / phase3dTotal) * 100 : progressPercent).toFixed(0)}%</span>
               <span>{progressPercent.toFixed(0)}%</span>
             </div>
             <div className="progress-track">
               <div className="progress-fill" style={{ width: `${progressPercent}%` }} />
             </div>
-            <small>
-              Compression saves approximately {compressionSavedPercent.toFixed(1)}% of gradient
-              transfer volume in this scenario.
-            </small>
+            <div className="progress-meta">
+              <span>
+                {activeRound}/{activeTarget} rounds
+              </span>
+              <span>{compressionSavedPercent.toFixed(1)}% payload saved</span>
+            </div>
           </div>
 
-          <div className="chart-card">
-            <h3>Convergence</h3>
-            <ResponsiveContainer width="100%" height={260}>
-              <LineChart data={history}>
-                <CartesianGrid strokeDasharray="3 3" stroke="#d8deeb" />
-                <XAxis dataKey="round" />
-                <YAxis yAxisId="left" domain={[0.4, 1]} />
-                <YAxis yAxisId="right" orientation="right" domain={[0, 2.2]} />
-                <Tooltip />
-                <Legend />
-                <Line yAxisId="left" type="monotone" dataKey="accuracy" stroke="#1678f2" dot={false} />
-                <Line yAxisId="right" type="monotone" dataKey="loss" stroke="#d9480f" dot={false} />
-              </LineChart>
-            </ResponsiveContainer>
-          </div>
+          <div className="chart-grid">
+            <article className="chart-card">
+              <h3>Accuracy and Loss</h3>
+              <ResponsiveContainer width="100%" height={260}>
+                <LineChart data={activeHistory}>
+                  <CartesianGrid strokeDasharray="3 3" />
+                  <XAxis dataKey="round" />
+                  <YAxis yAxisId="left" domain={[0, 1]} />
+                  <YAxis yAxisId="right" orientation="right" domain={[0, 2.5]} />
+                  <Tooltip />
+                  <Legend />
+                  <Line yAxisId="left" type="monotone" dataKey="accuracy" stroke="#1d4ed8" dot={false} />
+                  <Line yAxisId="right" type="monotone" dataKey="loss" stroke="#f97316" dot={false} />
+                </LineChart>
+              </ResponsiveContainer>
+            </article>
 
-          <div className="chart-card">
-            <h3>Communication Cost</h3>
-            <ResponsiveContainer width="100%" height={220}>
-              <AreaChart data={history}>
-                <CartesianGrid strokeDasharray="3 3" stroke="#d8deeb" />
-                <XAxis dataKey="round" />
-                <YAxis />
-                <Tooltip />
-                <Area type="monotone" dataKey="bandwidthKB" stroke="#0b7285" fill="#99e9f2" />
-              </AreaChart>
-            </ResponsiveContainer>
+            <article className="chart-card">
+              <h3>Bandwidth and Compression</h3>
+              <ResponsiveContainer width="100%" height={260}>
+                <AreaChart data={activeHistory}>
+                  <CartesianGrid strokeDasharray="3 3" />
+                  <XAxis dataKey="round" />
+                  <YAxis />
+                  <Tooltip />
+                  <Legend />
+                  <Area type="monotone" dataKey="bandwidthKB" stroke="#0ea5e9" fill="#bae6fd" />
+                  <Line type="monotone" dataKey="compressionRatio" stroke="#16a34a" dot={false} />
+                </AreaChart>
+              </ResponsiveContainer>
+            </article>
           </div>
         </div>
       </div>

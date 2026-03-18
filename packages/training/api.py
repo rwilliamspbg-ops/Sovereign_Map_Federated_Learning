@@ -28,6 +28,7 @@ training_state = {
     'current_metrics': None,
     'error': None,
     'trainer': None,
+    'config': TrainingConfig(),
     'lock': Lock()
 }
 
@@ -45,7 +46,7 @@ def training_config():
     """Get or create training configuration"""
     with training_state['lock']:
         if request.method == 'POST':
-            config_data = request.get_json()
+            config_data = request.get_json() or {}
             try:
                 config = TrainingConfig(**config_data)
                 training_state['config'] = config
@@ -54,22 +55,32 @@ def training_config():
                     'config': {
                         'num_rounds': config.num_rounds,
                         'num_clients': config.num_clients,
+                        'local_epochs': config.local_epochs,
+                        'batch_size': config.batch_size,
                         'learning_rate': config.learning_rate,
                         'epsilon': config.epsilon,
-                        'compression_bits': config.compression_bits
+                        'compression_bits': config.compression_bits,
+                        'dataset': config.dataset,
+                        'device': config.device,
+                        'multi_gpu': config.multi_gpu
                     }
                 })
             except Exception as e:
                 return jsonify({'status': 'error', 'message': str(e)}), 400
         
         # GET: Return current config or defaults
-        config = getattr(training_state, 'config', TrainingConfig())
+        config = training_state.get('config', TrainingConfig())
         return jsonify({
             'num_rounds': config.num_rounds,
             'num_clients': config.num_clients,
+            'local_epochs': config.local_epochs,
+            'batch_size': config.batch_size,
             'learning_rate': config.learning_rate,
             'epsilon': config.epsilon,
             'compression_bits': config.compression_bits,
+            'dataset': config.dataset,
+            'device': config.device,
+            'multi_gpu': config.multi_gpu,
             'use_compression': config.use_compression,
             'use_privacy': config.use_privacy
         })
@@ -93,6 +104,7 @@ def start_training():
         
         # Initialize trainer and state
         training_state['trainer'] = FederatedLearningTrainer(config)
+        training_state['config'] = config
         training_state['status'] = 'training'
         training_state['current_round'] = 0
         training_state['total_rounds'] = config.num_rounds
@@ -114,7 +126,7 @@ def _run_training():
     """Background task for federated learning training"""
     try:
         trainer = training_state['trainer']
-        train_loader, test_loader = trainer.load_data()
+        client_loaders, test_loader = trainer.load_data()
         
         logger.info(f"Starting {training_state['total_rounds']} rounds of training")
         
@@ -124,7 +136,7 @@ def _run_training():
                 break
             
             # Run one round
-            metrics = trainer.train_round(train_loader, test_loader)
+            metrics = trainer.train_round(client_loaders, test_loader)
             
             with training_state['lock']:
                 training_state['current_round'] = round_num + 1
@@ -148,13 +160,17 @@ def _run_training():
 def get_status():
     """Get current training status"""
     with training_state['lock']:
+        config = training_state.get('config', TrainingConfig())
         return jsonify({
             'status': training_state['status'],
             'current_round': training_state['current_round'],
             'total_rounds': training_state['total_rounds'],
             'progress_percent': (training_state['current_round'] / max(training_state['total_rounds'], 1)) * 100,
             'current_metrics': training_state['current_metrics'],
-            'error': training_state['error']
+            'error': training_state['error'],
+            'dataset': config.dataset,
+            'device': config.device,
+            'multi_gpu': config.multi_gpu
         })
 
 @app.route('/training/metrics', methods=['GET'])

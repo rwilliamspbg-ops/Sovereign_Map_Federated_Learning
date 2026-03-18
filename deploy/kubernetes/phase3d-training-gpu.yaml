@@ -1,0 +1,72 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: phase3d-training
+  namespace: sovereign-map
+  labels:
+    app: phase3d-training
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: phase3d-training
+  template:
+    metadata:
+      labels:
+        app: phase3d-training
+    spec:
+      containers:
+      - name: phase3d-training
+        image: __IMAGE__
+        imagePullPolicy: Always
+        ports:
+        - containerPort: 5001
+          name: http
+        env:
+        - name: PYTHONUNBUFFERED
+          value: "1"
+        - name: TRAINING_DEFAULT_DATASET
+          value: "cifar10"
+        - name: TRAINING_DEFAULT_DEVICE
+          value: "cuda"
+        - name: TRAINING_MULTI_GPU
+          value: "true"
+        resources:
+          requests:
+            cpu: "2000m"
+            memory: "4Gi"
+            nvidia.com/gpu: "2"
+          limits:
+            cpu: "8000m"
+            memory: "16Gi"
+            nvidia.com/gpu: "2"
+        readinessProbe:
+          httpGet:
+            path: /health
+            port: 5001
+          initialDelaySeconds: 30
+          periodSeconds: 10
+        livenessProbe:
+          httpGet:
+            path: /health
+            port: 5001
+          initialDelaySeconds: 45
+          periodSeconds: 20
+      nodeSelector:
+        accelerator: nvidia
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: phase3d-training
+  namespace: sovereign-map
+  labels:
+    app: phase3d-training
+spec:
+  selector:
+    app: phase3d-training
+  ports:
+  - name: http
+    port: 5001
+    targetPort: 5001
+  type: ClusterIP

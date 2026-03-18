@@ -1,13 +1,14 @@
-# Phase 3D: Real Federated Learning with MNIST
+# Phase 3D: Real Federated Learning with CIFAR-10 and CUDA
 
 ## Overview
 
-Phase 3D transitions from simulation to **real federated learning** on the MNIST dataset with:
+Phase 3D transitions from simulation to **real federated learning** on CIFAR-10 by default (with optional MNIST) and includes:
 
 - ✅ **Actual gradient training** using PyTorch
 - ✅ **Differential privacy** with Gaussian noise injection
 - ✅ **Real gradient compression** with quantization and delta encoding
 - ✅ **Convergence tracking** on actual data
+- ✅ **CUDA + multi-GPU training path** with DataParallel
 - ✅ **Browser integration** with live update dashboard
 
 ## Architecture
@@ -17,7 +18,7 @@ Phase 3D transitions from simulation to **real federated learning** on the MNIST
 │ Browser Frontend (React/Vite)                               │
 │ ├─ BrowserFLDemo.jsx (simulation + Phase 3D mode switch)   │
 │ └─ Real Training Mode:                                      │
-│    └─ POST /training/start → Start real MNIST training      │
+│    └─ POST /training/start → Start real CIFAR-10 training    │
 │    └─ GET /training/status → Poll progress every 2 seconds  │
 │    └─ GET /training/metrics → Full training history         │
 │    └─ POST /training/cancel → Stop training                 │
@@ -28,7 +29,7 @@ Phase 3D transitions from simulation to **real federated learning** on the MNIST
 ┌─────────────────────────────────────────────────────────────┐
 │ Training Backend (Flask) - packages/training/               │
 │ ├─ api.py (Flask server with training management)          │
-│ └─ phase3d_training.py (MNIST training logic):             │
+│ └─ phase3d_training.py (CIFAR-10 + MNIST training logic):   │
 │    ├─ SimpleCNN model                                       │
 │    ├─ FederatedLearningTrainer                              │
 │    ├─ GradientCompressor (quantization + delta)             │
@@ -64,6 +65,21 @@ Expected output:
  * Running on http://0.0.0.0:5001
  * Press CTRL+C to quit
 ```
+
+### 2b. Production Deploy (ECR + Kubernetes)
+
+Use the production automation script:
+
+```bash
+export AWS_REGION=us-east-1
+export EKS_CLUSTER_NAME=<your-cluster>
+export K8S_NAMESPACE=sovereign-map
+export ENABLE_GPU=true
+
+./deploy/production/deploy-phase3d-production.sh
+```
+
+This script builds `packages/training/Dockerfile`, pushes to ECR, and rolls out Kubernetes manifests in `deploy/kubernetes/`.
 
 ### 3. Configure Frontend Environment Variable
 
@@ -112,7 +128,9 @@ class TrainingConfig:
     compression_bits: int = 8         # Quantization bit depth
     use_compression: bool = True      # Enable gradient compression
     use_privacy: bool = True          # Enable differential privacy
-    device: str = 'cpu'               # 'cpu' or 'cuda'
+    dataset: str = 'cifar10'          # 'cifar10' (default) or 'mnist'
+    device: str = 'auto'              # auto | cpu | cuda
+    multi_gpu: bool = True            # Enables DataParallel when multiple GPUs exist
 ```
 
 ### Example Configurations

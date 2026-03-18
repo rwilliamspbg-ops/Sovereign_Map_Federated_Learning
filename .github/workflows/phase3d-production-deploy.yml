@@ -1,0 +1,42 @@
+name: Phase3D Production Deploy
+
+on:
+  workflow_dispatch:
+    inputs:
+      image_tag:
+        description: Docker image tag (defaults to commit SHA)
+        required: false
+      enable_gpu:
+        description: Use GPU Kubernetes manifest
+        required: false
+        default: 'true'
+
+permissions:
+  id-token: write
+  contents: read
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd
+
+      - name: Configure AWS Credentials
+        uses: aws-actions/configure-aws-credentials@e3dd6a429d7300a6f3c7dd0d8f4f95f1f1a7f6b4
+        with:
+          role-to-assume: ${{ secrets.AWS_DEPLOY_ROLE_ARN }}
+          aws-region: ${{ secrets.AWS_REGION }}
+
+      - name: Deploy Phase 3D trainer to ECR + Kubernetes
+        env:
+          AWS_REGION: ${{ secrets.AWS_REGION }}
+          AWS_ACCOUNT_ID: ${{ secrets.AWS_ACCOUNT_ID }}
+          ECR_REPOSITORY: ${{ secrets.PHASE3D_ECR_REPOSITORY }}
+          EKS_CLUSTER_NAME: ${{ secrets.EKS_CLUSTER_NAME }}
+          K8S_NAMESPACE: ${{ secrets.K8S_NAMESPACE }}
+          IMAGE_TAG: ${{ github.event.inputs.image_tag || github.sha }}
+          ENABLE_GPU: ${{ github.event.inputs.enable_gpu || 'true' }}
+        run: |
+          chmod +x deploy/production/deploy-phase3d-production.sh
+          ./deploy/production/deploy-phase3d-production.sh
