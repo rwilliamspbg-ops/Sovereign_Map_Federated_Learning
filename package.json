@@ -6,7 +6,8 @@
     "packages/privacy",
     "packages/consensus",
     "packages/island",
-    "packages/monitoring"
+    "packages/monitoring",
+    "packages/compression"
   ],
   "scripts": {
     "build:libs": "npm --prefix packages/privacy ci && npm --prefix packages/privacy run build && npm --prefix packages/consensus ci && npm --prefix packages/consensus run build && npm --prefix packages/island ci && npm --prefix packages/island run build && npm --prefix packages/core ci && npm --prefix packages/core run build",
@@ -35,7 +36,10 @@
     "monitoring:integration": "npm --prefix packages/monitoring run test:integration",
     "provision:dashboards:generate": "node scripts/provision-grafana-dashboards.js generate",
     "provision:dashboards:deploy": "node scripts/provision-grafana-dashboards.js deploy",
-    "provision:dashboards:k8s": "node scripts/provision-grafana-dashboards.js k8s"
+    "provision:dashboards:k8s": "node scripts/provision-grafana-dashboards.js k8s",
+    "compression:build": "npm --prefix packages/compression run build",
+    "compression:test": "npm --prefix packages/compression run test:ci",
+    "compression:benchmark": "npm --prefix packages/compression run test:benchmark"
   },
   "compilerOptions": {
     "target": "ESNext",

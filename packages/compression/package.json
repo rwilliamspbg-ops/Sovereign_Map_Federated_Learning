@@ -1,0 +1,48 @@
+{
+  "name": "@sovereign-map/compression",
+  "version": "1.0.0",
+  "description": "Privacy-aware data compression engine for Sovereign Map federated learning",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "files": [
+    "dist",
+    "src"
+  ],
+  "scripts": {
+    "build": "tsc",
+    "test": "vitest",
+    "test:ci": "vitest --run",
+    "test:benchmark": "vitest bench",
+    "test:integration": "vitest run --include '**/*.integration.test.ts'",
+    "lint": "eslint src --ext .ts",
+    "clean": "rm -rf dist",
+    "prepublishOnly": "npm run clean && npm run build && npm run test:ci"
+  },
+  "keywords": [
+    "compression",
+    "quantization",
+    "privacy",
+    "federated-learning",
+    "delta-encoding",
+    "deflate"
+  ],
+  "author": "Sovereign Map Contributors",
+  "license": "Apache-2.0",
+  "dependencies": {
+    "eventemitter3": "^5.0.0"
+  },
+  "devDependencies": {
+    "@types/node": "^20.0.0",
+    "typescript": "^5.0.0",
+    "vitest": "^1.0.0"
+  },
+  "engines": {
+    "node": ">=18.0.0"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/sovereign-map/sovereign-map-federated-learning.git",
+    "directory": "packages/compression"
+  },
+  "homepage": "https://github.com/sovereign-map/sovereign-map-federated-learning/tree/main/packages/compression#readme"
+}
