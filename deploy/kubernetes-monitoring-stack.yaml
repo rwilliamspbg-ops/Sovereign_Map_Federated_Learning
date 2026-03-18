@@ -1,0 +1,807 @@
+---
+# Kubernetes Manifests for Sovereign Map Monitoring Stack
+# 
+# Deploy with:
+# kubectl apply -f kubernetes-monitoring-stack.yaml
+# 
+# Includes:
+# - Prometheus for metrics collection
+# - Grafana for visualization
+# - Alertmanager for alert routing
+# - ConfigMaps for configuration
+# - Persistent storage for data
+#
+
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: sovereign-map-monitoring
+  labels:
+    app: sovereign-map-monitoring
+
+---
+# Prometheus ConfigMap
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: prometheus-config
+  namespace: sovereign-map-monitoring
+data:
+  prometheus.yml: |
+    global:
+      scrape_interval: 30s
+      evaluation_interval: 30s
+      external_labels:
+        cluster: 'sovereign-map'
+        environment: 'production'
+
+    # Alertmanager configuration
+    alerting:
+      alertmanagers:
+        - static_configs:
+            - targets: ['alertmanager:9093']
+
+    # Alert rules
+    rule_files:
+      - '/etc/prometheus/rules/alert-rules.yml'
+
+    # Scrape targets
+    scrape_configs:
+      # Sovereign Map application metrics
+      - job_name: 'sovereign-map'
+        static_configs:
+          - targets: ['localhost:9090']
+        scrape_interval: 30s
+        scrape_timeout: 10s
+        metrics_path: '/metrics'
+        relabel_configs:
+          - source_labels: [__address__]
+            target_label: instance
+          - source_labels: [__scheme__]
+            target_label: __scheme__
+
+      # Prometheus self-monitoring
+      - job_name: prometheus
+        static_configs:
+          - targets: ['localhost:9090']
+
+      # Kubernetes API server metrics (if in K8s)
+      - job_name: 'kubernetes-apiservers'
+        kubernetes_sd_configs:
+          - role: endpoints
+        scheme: https
+        tls_config:
+          ca_file: /var/run/secrets/kubernetes.io/serviceaccount/ca.crt
+        bearer_token_file: /var/run/secrets/kubernetes.io/serviceaccount/token
+        relabel_configs:
+          - source_labels: [__meta_kubernetes_namespace, __meta_kubernetes_service_name, __meta_kubernetes_endpoint_port_name]
+            action: keep
+            regex: default;kubernetes;https
+
+      # Kubernetes nodes metrics
+      - job_name: 'kubernetes-nodes'
+        kubernetes_sd_configs:
+          - role: node
+        scheme: https
+        tls_config:
+          ca_file: /var/run/secrets/kubernetes.io/serviceaccount/ca.crt
+        bearer_token_file: /var/run/secrets/kubernetes.io/serviceaccount/token
+        relabel_configs:
+          - action: labelmap
+            regex: __meta_kubernetes_node_label_(.+)
+
+---
+# Alert Rules ConfigMap
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: prometheus-alert-rules
+  namespace: sovereign-map-monitoring
+data:
+  alert-rules.yml: |
+    groups:
+      - name: sovereign_map_alerts
+        interval: 30s
+        rules:
+          # Privacy Alerts
+          - alert: HighPrivacyOverhead
+            expr: privacy_overhead_percent > 20
+            for: 5m
+            labels:
+              severity: warning
+              category: privacy
+            annotations:
+              summary: "High privacy overhead detected ({{ $value | humanize }}%)"
+              description: "Privacy overhead exceeded 20% on {{ $labels.instance }}"
+
+          - alert: PrivacyBudgetExhausted
+            expr: privacy_epsilon_remaining < 0.1
+            for: 1m
+            labels:
+              severity: critical
+              category: privacy
+            annotations:
+              summary: "Privacy epsilon budget exhausted"
+              description: "Remaining epsilon: {{ $value }} on {{ $labels.instance }}"
+
+          # GPU Alerts
+          - alert: GPUMemoryExhaustion
+            expr: (gpu_memory_used_bytes / gpu_memory_total_bytes) * 100 > 90
+            for: 2m
+            labels:
+              severity: critical
+              category: gpu
+            annotations:
+              summary: "GPU memory usage critical ({{ $value | humanize }}%)"
+              description: "GPU memory on {{ $labels.instance }} exceeded 90%"
+
+          # Consensus Alerts
+          - alert: LowConsensusParticipation
+            expr: consensus_participation_rate < 66.7
+            for: 5m
+            labels:
+              severity: critical
+              category: consensus
+            annotations:
+              summary: "Consensus participation below 66.7%"
+              description: "Participation rate: {{ $value | humanize }}% on {{ $labels.instance }}"
+
+          - alert: ByzantineNodesDetected
+            expr: byzantine_nodes_currently_detected >= 1
+            for: 1m
+            labels:
+              severity: critical
+              category: byzantine
+            annotations:
+              summary: "Byzantine nodes detected"
+              description: "{{ $value | humanize }} Byzantine nodes on {{ $labels.instance }}"
+
+          # Network Alerts
+          - alert: NetworkPartitionDetected
+            expr: network_partitions_detected_total > 0
+            for: 1m
+            labels:
+              severity: warning
+              category: network
+            annotations:
+              summary: "Network partition detected"
+              description: "Partition on {{ $labels.instance }}"
+
+          - alert: PartitionPersists
+            expr: network_partition_isolated_nodes > 0
+            for: 5m
+            labels:
+              severity: critical
+              category: network
+            annotations:
+              summary: "Network partition persists ({{ $value | humanize }} nodes isolated)"
+              description: "Partition on {{ $labels.instance }} exceeded 5 minutes"
+
+          # System Alerts
+          - alert: ProcessDown
+            expr: up{job="sovereign-map"} == 0
+            for: 1m
+            labels:
+              severity: critical
+              category: system
+            annotations:
+              summary: "Sovereign Map process is down"
+              description: "Process on {{ $labels.instance }} not responding"
+
+          - alert: HighCPUUsage
+            expr: system_cpu_usage_percent > 90
+            for: 5m
+            labels:
+              severity: warning
+              category: system
+            annotations:
+              summary: "CPU usage critical ({{ $value | humanize }}%)"
+              description: "CPU on {{ $labels.instance }} exceeded 90%"
+
+---
+# Prometheus Deployment
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: prometheus
+  namespace: sovereign-map-monitoring
+  labels:
+    app: prometheus
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: prometheus
+  template:
+    metadata:
+      labels:
+        app: prometheus
+      annotations:
+        prometheus.io/scrape: "true"
+        prometheus.io/port: "9090"
+    spec:
+      serviceAccountName: prometheus
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 65534
+      containers:
+      - name: prometheus
+        image: prom/prometheus:v2.40.0
+        args:
+          - '--config.file=/etc/prometheus/prometheus.yml'
+          - '--storage.tsdb.path=/prometheus'
+          - '--storage.tsdb.retention.time=30d'
+          - '--web.console.libraries=/usr/share/prometheus/console_libraries'
+          - '--web.console.templates=/usr/share/prometheus/consoles'
+          - '--web.enable-lifecycle'
+        ports:
+        - containerPort: 9090
+          name: http
+        livenessProbe:
+          httpGet:
+            path: /-/healthy
+            port: 9090
+          initialDelaySeconds: 30
+          periodSeconds: 10
+          timeoutSeconds: 5
+        readinessProbe:
+          httpGet:
+            path: /-/ready
+            port: 9090
+          initialDelaySeconds: 30
+          periodSeconds: 10
+          timeoutSeconds: 5
+        resources:
+          requests:
+            cpu: 500m
+            memory: 512Mi
+          limits:
+            cpu: 2000m
+            memory: 2Gi
+        volumeMounts:
+        - name: config
+          mountPath: /etc/prometheus
+        - name: rules
+          mountPath: /etc/prometheus/rules
+        - name: storage
+          mountPath: /prometheus
+      termination
+GracePeriodSeconds: 30
+      volumes:
+      - name: config
+        configMap:
+          name: prometheus-config
+      - name: rules
+        configMap:
+          name: prometheus-alert-rules
+      - name: storage
+        persistentVolumeClaim:
+          claimName: prometheus-storage
+
+---
+# Prometheus PersistentVolumeClaim
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: prometheus-storage
+  namespace: sovereign-map-monitoring
+spec:
+  accessModes:
+    - ReadWriteOnce
+  resources:
+    requests:
+      storage: 50Gi
+  storageClassName: standard
+
+---
+# Prometheus Service
+apiVersion: v1
+kind: Service
+metadata:
+  name: prometheus
+  namespace: sovereign-map-monitoring
+  labels:
+    app: prometheus
+spec:
+  type: ClusterIP
+  ports:
+  - name: http
+    port: 9090
+    targetPort: 9090
+  selector:
+    app: prometheus
+
+---
+# Grafana Deployment
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: grafana
+  namespace: sovereign-map-monitoring
+  labels:
+    app: grafana
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: grafana
+  template:
+    metadata:
+      labels:
+        app: grafana
+    spec:
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 472
+      containers:
+      - name: grafana
+        image: grafana/grafana:9.3.0
+        ports:
+        - containerPort: 3000
+          name: http
+        env:
+        - name: GF_SECURITY_ADMIN_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              name: grafana-admin
+              key: password
+        - name: GF_INSTALL_PLUGINS
+          value: "grafana-piechart-panel"
+        livenessProbe:
+          httpGet:
+            path: /api/health
+            port: 3000
+          initialDelaySeconds: 30
+          periodSeconds: 10
+        readinessProbe:
+          httpGet:
+            path: /api/health
+            port: 3000
+          initialDelaySeconds: 30
+          periodSeconds: 10
+        resources:
+          requests:
+            cpu: 100m
+            memory: 128Mi
+          limits:
+            cpu: 500m
+            memory: 512Mi
+        volumeMounts:
+        - name: storage
+          mountPath: /var/lib/grafana
+        - name: datasources
+          mountPath: /etc/grafana/provisioning/datasources
+        - name: dashboards
+          mountPath: /etc/grafana/provisioning/dashboards
+      volumes:
+      - name: storage
+        persistentVolumeClaim:
+          claimName: grafana-storage
+      - name: datasources
+        configMap:
+          name: grafana-datasources
+      - name: dashboards
+        configMap:
+          name: grafana-dashboards
+
+---
+# Grafana PersistentVolumeClaim
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: grafana-storage
+  namespace: sovereign-map-monitoring
+spec:
+  accessModes:
+    - ReadWriteOnce
+  resources:
+    requests:
+      storage: 2Gi
+  storageClassName: standard
+
+---
+# Grafana DataSources ConfigMap
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: grafana-datasources
+  namespace: sovereign-map-monitoring
+data:
+  prometheus.yaml: |
+    apiVersion: 1
+    datasources:
+    - name: Prometheus
+      type: prometheus
+      access: proxy
+      url: http://prometheus:9090
+      isDefault: true
+      editable: true
+
+---
+# Grafana Dashboards ConfigMap (placeholder, filled by provisioning script)
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: grafana-dashboards
+  namespace: sovereign-map-monitoring
+data:
+  dashboards.yaml: |
+    apiVersion: 1
+    providers:
+    - name: 'Sovereign Map Dashboards'
+      orgId: 1
+      folder: ''
+      type: file
+      disableDeletion: false
+      updateIntervalSeconds: 10
+      allowUiUpdates: true
+      options:
+        path: /etc/grafana/provisioning/dashboards
+
+---
+# Grafana Service
+apiVersion: v1
+kind: Service
+metadata:
+  name: grafana
+  namespace: sovereign-map-monitoring
+  labels:
+    app: grafana
+spec:
+  type: LoadBalancer
+  ports:
+  - name: http
+    port: 3000
+    targetPort: 3000
+  selector:
+    app: grafana
+
+---
+# Alertmanager Deployment
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: alertmanager
+  namespace: sovereign-map-monitoring
+  labels:
+    app: alertmanager
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: alertmanager
+  template:
+    metadata:
+      labels:
+        app: alertmanager
+    spec:
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 65534
+      containers:
+      - name: alertmanager
+        image: prom/alertmanager:v0.24.0
+        args:
+          - '--config.file=/etc/alertmanager/alertmanager.yml'
+          - '--storage.path=/alertmanager'
+        ports:
+        - containerPort: 9093
+          name: http
+        livenessProbe:
+          httpGet:
+            path: /-/healthy
+            port: 9093
+          initialDelaySeconds: 30
+          periodSeconds: 10
+        readinessProbe:
+          httpGet:
+            path: /-/ready
+            port: 9093
+          initialDelaySeconds: 30
+          periodSeconds: 10
+        resources:
+          requests:
+            cpu: 100m
+            memory: 128Mi
+          limits:
+            cpu: 500m
+            memory: 512Mi
+        volumeMounts:
+        - name: config
+          mountPath: /etc/alertmanager
+        - name: storage
+          mountPath: /alertmanager
+      volumes:
+      - name: config
+        configMap:
+          name: alertmanager-config
+      - name: storage
+        persistentVolumeClaim:
+          claimName: alertmanager-storage
+
+---
+# Alertmanager ConfigMap
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: alertmanager-config
+  namespace: sovereign-map-monitoring
+data:
+  alertmanager.yml: |
+    global:
+      resolve_timeout: 5m
+      slack_api_url: '${SLACK_WEBHOOK_URL:-http://localhost:5001}'
+
+    route:
+      receiver: 'default'
+      group_by: ['alertname', 'cluster', 'severity']
+      group_wait: 10s
+      group_interval: 10s
+      repeat_interval: 12h
+
+      routes:
+        - match:
+            severity: critical
+          receiver: 'critical'
+          repeat_interval: 5m
+          continue: true
+
+        - match:
+            severity: warning
+          receiver: 'warning'
+          repeat_interval: 1h
+
+    receivers:
+      - name: 'default'
+        slack_configs:
+          - channel: '#monitoring'
+            title: 'Sovereign Map Alert'
+            text: '{{ range .Alerts }}{{ .Annotations.description }}{{ end }}'
+
+      - name: 'critical'
+        slack_configs:
+          - channel: '#critical'
+            title: '🔴 CRITICAL: {{ .GroupLabels.alertname }}'
+            text: '{{ range .Alerts }}{{ .Annotations.description }}{{ end }}'
+
+      - name: 'warning'
+        slack_configs:
+          - channel: '#warnings'
+            title: '⚠️ WARNING: {{ .GroupLabels.alertname }}'
+            text: '{{ range .Alerts }}{{ .Annotations.description }}{{ end }}'
+
+    inhibit_rules:
+      - source_match:
+          severity: 'critical'
+        target_match:
+          severity: 'warning'
+        equal: ['alertname', 'dev', 'instance']
+
+---
+# Alertmanager PersistentVolumeClaim
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: alertmanager-storage
+  namespace: sovereign-map-monitoring
+spec:
+  accessModes:
+    - ReadWriteOnce
+  resources:
+    requests:
+      storage: 1Gi
+  storageClassName: standard
+
+---
+# Alertmanager Service
+apiVersion: v1
+kind: Service
+metadata:
+  name: alertmanager
+  namespace: sovereign-map-monitoring
+  labels:
+    app: alertmanager
+spec:
+  type: ClusterIP
+  ports:
+  - name: http
+    port: 9093
+    targetPort: 9093
+  selector:
+    app: alertmanager
+
+---
+# ServiceAccount for Prometheus
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: prometheus
+  namespace: sovereign-map-monitoring
+
+---
+# ClusterRole for Prometheus
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  name: prometheus
+rules:
+  - apiGroups: [""]
+    resources:
+      - nodes
+      - nodes/proxy
+      - services
+      - endpoints
+      - pods
+    verbs: ["get", "list", "watch"]
+  - apiGroups: ["extensions"]
+    resources:
+      - ingresses
+    verbs: ["get", "list", "watch"]
+  - nonResourceURLs: ["/metrics"]
+    verbs: ["get"]
+
+---
+# ClusterRoleBinding for Prometheus
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRoleBinding
+metadata:
+  name: prometheus
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: ClusterRole
+  name: prometheus
+subjects:
+  - kind: ServiceAccount
+    name: prometheus
+    namespace: sovereign-map-monitoring
+
+---
+# Secret for Grafana Admin
+apiVersion: v1
+kind: Secret
+metadata:
+  name: grafana-admin
+  namespace: sovereign-map-monitoring
+type: Opaque
+stringData:
+  password: "sovereign-map-admin-change-me"
+
+---
+# NetworkPolicy for monitoring namespace
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: monitoring-network-policy
+  namespace: sovereign-map-monitoring
+spec:
+  podSelector: {}
+  policyTypes:
+    - Ingress
+  ingress:
+    - from:
+        - namespaceSelector:
+            matchLabels:
+              name: sovereign-map-monitoring
+      ports:
+        - protocol: TCP
+          port: 9090
+        - protocol: TCP
+          port: 3000
+        - protocol: TCP
+          port: 9093
+    - from:
+        - namespaceSelector:
+            matchLabels:
+              name: default
+      ports:
+        - protocol: TCP
+          port: 9090
+
+---
+# Ingress for external access (optional)
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: monitoring-ingress
+  namespace: sovereign-map-monitoring
+  annotations:
+    nginx.ingress.kubernetes.io/rewrite-target: /
+spec:
+  rules:
+    - host: monitoring.example.com
+      http:
+        paths:
+          - path: /prometheus
+            pathType: Prefix
+            backend:
+              service:
+                name: prometheus
+                port:
+                  number: 9090
+          - path: /grafana
+            pathType: Prefix
+            backend:
+              service:
+                name: grafana
+                port:
+                  number: 3000
+          - path: /alertmanager
+            pathType: Prefix
+            backend:
+              service:
+                name: alertmanager
+                port:
+                  number: 9093
+
+---
+# HorizontalPodAutoscaler for Grafana (optional)
+apiVersion: autoscaling/v2
+kind: HorizontalPodAutoscaler
+metadata:
+  name: grafana-hpa
+  namespace: sovereign-map-monitoring
+spec:
+  scaleTargetRef:
+    apiVersion: apps/v1
+    kind: Deployment
+    name: grafana
+  minReplicas: 1
+  maxReplicas: 3
+  metrics:
+    - type: Resource
+      resource:
+        name: cpu
+        target:
+          type: Utilization
+          averageUtilization: 80
+
+---
+# MonitoringStack CustomResourceDefinition (example for CRD-based deployment)
+apiVersion: apiextensions.k8s.io/v1
+kind: CustomResourceDefinition
+metadata:
+  name: monitoring-stacks.monitoring.sovereign-map.io
+spec:
+  group: monitoring.sovereign-map.io
+  names:
+    kind: MonitoringStack
+    plural: monitoring-stacks
+  scope: Cluster
+  versions:
+    - name: v1
+      served: true
+      storage: true
+      schema:
+        openAPIV3Schema:
+          type: object
+          properties:
+            spec:
+              type: object
+              properties:
+                namespace:
+                  type: string
+                grafana:
+                  type: object
+                  properties:
+                    replicas:
+                      type: integer
+                    storageSize:
+                      type: string
+                    adminPassword:
+                      type: string
+                prometheus:
+                  type: object
+                  properties:
+                    replicas:
+                      type: integer
+                    retention:
+                      type: string
+                    storageSize:
+                      type: string
+                alertmanager:
+                  type: object
+                  properties:
+                    replicas:
+                      type: integer
+                    slackWebhook:
+                      type: string
