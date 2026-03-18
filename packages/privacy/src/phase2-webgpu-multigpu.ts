@@ -292,7 +292,6 @@ export class WebGPUNoiseGenerator {
     }
   }
 }
-`;
 
 export interface MultiGPUConfig {
   gpuIds: number[];
