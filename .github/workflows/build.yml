@@ -31,10 +31,7 @@ jobs:
             frontend/package-lock.json
 
       - name: Install root and package dependencies
-        run: |
-          npm ci
-          npm --prefix packages/core ci
-          npm --prefix packages/privacy ci
+        run: npm ci
 
       - name: Build SDK packages
         run: npm run build:libs
