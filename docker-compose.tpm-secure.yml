@@ -127,5 +127,4 @@ volumes:
 
 networks:
   sovereign-network:
-    external: true
     driver: bridge
