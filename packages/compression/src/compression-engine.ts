@@ -211,7 +211,7 @@ export class CompressionEngine extends EventEmitter {
    * Compress float array with privacy preservation
    * Returns compressed buffer and metadata
    */
-  async compress(data: Float32Array | Float64Array, privacyEpsilon?: number): Promise<{
+  compress(data: Float32Array | Float64Array, privacyEpsilon?: number): {
     compressed: Buffer;
     metadata: {
       originalSize: number;
@@ -223,7 +223,7 @@ export class CompressionEngine extends EventEmitter {
       compressionLevel: number;
     };
     stats: CompressionStats;
-  }> {
+  } {
     const startTime = performance.now();
     const originalSize = data.byteLength;
 
@@ -348,7 +348,7 @@ export class CompressionEngine extends EventEmitter {
   /**
    * Decompress to float array with privacy verification
    */
-  async decompress(
+  decompress(
     compressed: Buffer,
     metadata: {
       originalSize: number;
@@ -358,7 +358,7 @@ export class CompressionEngine extends EventEmitter {
       dataType: string;
       enableDelta: boolean;
     }
-  ): Promise<Float32Array | Float64Array> {
+  ): Float32Array | Float64Array {
     const startTime = performance.now();
 
     try {
@@ -526,16 +526,16 @@ export class PrivacyAwareCompression {
    * Compress update with privacy guarantee
    * Returns { compressed, metadata, privacySpent }
    */
-  async compressUpdate(
+  compressUpdate(
     gradient: Float32Array,
     epsilonRemaining: number
-  ): Promise<{
+  ): {
     compressed: Buffer;
     metadata: any;
     privacySpent: number;
     stats: CompressionStats;
-  }> {
-    const { compressed, metadata, stats } = await this.engine.compress(gradient, epsilonRemaining);
+  } {
+    const { compressed, metadata, stats } = this.engine.compress(gradient, epsilonRemaining);
 
     // Compression itself doesn't consume epsilon (it's post-privacy projection)
     // But we track the privacy overhead of quantization error
@@ -554,11 +554,11 @@ export class PrivacyAwareCompression {
   /**
    * Decompress with privacy preservation
    */
-  async decompressUpdate(
+  decompressUpdate(
     compressed: Buffer,
     metadata: any
-  ): Promise<Float32Array> {
-    return this.engine.decompress(compressed, metadata) as Promise<Float32Array>;
+  ): Float32Array {
+    return this.engine.decompress(compressed, metadata) as Float32Array;
   }
 
   /**

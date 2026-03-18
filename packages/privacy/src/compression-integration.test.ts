@@ -359,11 +359,11 @@ describe.skipIf(process.env.SKIP_BENCHMARKS)('Compression Benchmarks', () => {
     }
   });
 
-  it.bench('compress 10K gradient values', () => {
+  it('compress 10K gradient values', () => {
     integration.compressGradient(largeGradient);
   });
 
-  it.bench('decompress 10K gradient values', () => {
+  it('decompress 10K gradient values', () => {
     const compressed = integration.compressGradient(largeGradient);
     integration.decompressGradient(compressed.data, compressed.metadata);
   });

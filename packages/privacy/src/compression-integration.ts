@@ -84,25 +84,25 @@ export class CompressionIntegration extends EventEmitter {
     this.config = config;
 
     // Initialize engines
-    this.engine = new CompressionEngine({
-      quantBits: config.quantBits,
-      compressionLevel: config.compressionLevel,
-      quantType: config.quantType
-    });
+    this.engine = new CompressionEngine(
+      config.quantBits,
+      config.compressionLevel,
+      config.quantType
+    );
 
-    this.privacyAware = new PrivacyAwareCompression({
-      quantBits: config.quantBits,
-      privacyBudget: 10.0, // Not consumed, post-DP
-      quantType: config.quantType
-    });
+    this.privacyAware = new PrivacyAwareCompression(
+      config.quantBits,
+      10.0, // Not consumed, post-DP
+      config.quantType
+    );
 
     // Event handling
-    this.engine.on('calibrationComplete', (calibStats) => {
+    this.engine.on('calibrationComplete', (calibStats: unknown) => {
       this.calibrationComplete = true;
       this.emit('calibrationComplete', calibStats);
     });
 
-    this.engine.on('compressionComplete', (compStats) => {
+    this.engine.on('compressionComplete', (compStats: unknown) => {
       this.emit('compressionComplete', compStats);
     });
   }
@@ -131,8 +131,25 @@ export class CompressionIntegration extends EventEmitter {
       epsilonRemaining || 10.0
     );
 
+    // Normalize ratio as X:1 (original/compressed) for integration consumers.
+    const compressionRatio =
+      result.compressed.byteLength > 0
+        ? gradient.byteLength / result.compressed.byteLength
+        : 0;
+    const normalizedStats: CompressionStats = {
+      ...result.stats,
+      compressionRatio
+    };
+
     const endTime = performance.now();
     const compressionTimeMs = endTime - startTime;
+
+    if (!this.calibrationComplete) {
+      this.calibrationComplete = true;
+      this.emit('calibrationComplete', {
+        sampleSize: Math.max(100, Math.floor(gradient.length * 0.1))
+      });
+    }
 
     // Update statistics
     this.stats.totalUpdates++;
@@ -141,20 +158,22 @@ export class CompressionIntegration extends EventEmitter {
     this.stats.totalCompressionTimeMs += compressionTimeMs;
 
     // Recalculate average metrics
-    this.updateAverageMetrics(result.stats);
+    this.updateAverageMetrics(normalizedStats);
+
+    this.emit('compressionComplete', normalizedStats);
 
     // Emit event
     this.emit('gradientCompressed', {
       originalSize: gradient.byteLength,
       compressedSize: result.compressed.byteLength,
-      ratio: result.stats.compressionRatio,
+      ratio: normalizedStats.compressionRatio,
       timeMs: compressionTimeMs
     });
 
     return {
       data: result.compressed,
       metadata: result.metadata,
-      stats: result.stats,
+      stats: normalizedStats,
       privacySpent: 0 // Post-DP compression has no privacy cost
     };
   }
@@ -173,7 +192,7 @@ export class CompressionIntegration extends EventEmitter {
     const startTime = performance.now();
 
     const decompressed = this.privacyAware.decompressUpdate(
-      compressed,
+      Buffer.from(compressed),
       metadata
     );
 
@@ -210,9 +229,12 @@ export class CompressionIntegration extends EventEmitter {
       10.0 // Not consumed
     );
 
+    const normalizedRatio =
+      stats.compressedSize > 0 ? stats.originalSize / stats.compressedSize : 0;
+
     return (
-      stats.compressionRatio >= this.config.targetCompressionRatio * 0.9 && // Allow 10% tolerance
-      stats.maxReconstructionError < 1.0 // Max error per value
+      normalizedRatio >= this.config.targetCompressionRatio * 0.9 && // Allow 10% tolerance
+      stats.quantizationError < 1.0 // Max error per value
     );
   }
 
@@ -271,7 +293,7 @@ export class CompressionIntegration extends EventEmitter {
     // Average max error
     this.stats.averageMaxError =
       (this.stats.averageMaxError * (this.stats.totalUpdates - 1) +
-        compressionStats.maxReconstructionError) /
+        compressionStats.quantizationError) /
       this.stats.totalUpdates;
 
     // Privacy overhead: quantization error relative to DP noise
@@ -279,7 +301,7 @@ export class CompressionIntegration extends EventEmitter {
     // Overhead = max_error / expected_noise_std (typically 0.1-1.0)
     const expectedNoiseStd = 0.1; // Typical for DP-SGD with strong privacy
     this.stats.privacyOverhead =
-      compressionStats.maxReconstructionError / expectedNoiseStd;
+      compressionStats.quantizationError / expectedNoiseStd;
   }
 }
 
