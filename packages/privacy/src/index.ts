@@ -8,6 +8,7 @@
 import { EventEmitter } from 'eventemitter3';
 import sodium from 'libsodium-wrappers';
 import { Matrix } from 'ml-matrix';
+import { GPUNoiseGenerator, AcceleratorDetector, type AccelerationStats } from './gpu-acceleration.js';
 
 export interface PrivacyBudget {
   epsilon: number;      // Privacy loss parameter (default: 1.0)
@@ -29,12 +30,15 @@ export interface PrivacyStatus {
 export class PrivacyEngine extends EventEmitter<{
   budgetUpdate: (remaining: number, total: number) => void;
   noiseInjected: (magnitude: number, mechanism: string) => void;
+  accelerationDetected: (device: string, overhead: number) => void;
 }> {
   
   private budget: PrivacyBudget;
   private consumed: number = 0;
   private updates: number = 0;
   private noiseMagnitudes: number[] = [];
+  private gpuAccelerator: GPUNoiseGenerator | null = null;
+  private accelerationStats: AccelerationStats | null = null;
   
   constructor(budget: PrivacyBudget) {
     super();
@@ -43,6 +47,18 @@ export class PrivacyEngine extends EventEmitter<{
   
   async initialize(): Promise<void> {
     await sodium.ready;
+    
+    // Initialize GPU acceleration
+    try {
+      const accelerator = AcceleratorDetector.detect();
+      this.gpuAccelerator = new GPUNoiseGenerator(accelerator);
+      this.accelerationStats = this.gpuAccelerator.getStats();
+      
+      this.emit('accelerationDetected', this.accelerationStats.device, this.accelerationStats.overhead);
+    } catch (e) {
+      console.warn('GPU acceleration initialization failed, using CPU fallback', e);
+      this.gpuAccelerator = null;
+    }
   }
   
   /**
@@ -110,6 +126,16 @@ export class PrivacyEngine extends EventEmitter<{
   }
   
   /**
+   * Get hardware acceleration statistics
+   */
+  getAccelerationStats(): AccelerationStats | null {
+    if (this.gpuAccelerator) {
+      return this.gpuAccelerator.getStats();
+    }
+    return null;
+  }
+  
+  /**
    * Get remaining privacy budget
    */
   getRemainingBudget(): number {
@@ -134,6 +160,21 @@ export class PrivacyEngine extends EventEmitter<{
   }
   
   private generateNoise(scale: number, dimension: number): Float64Array {
+    // Use GPU acceleration if available
+    if (this.gpuAccelerator) {
+      try {
+        if (this.budget.mechanism === 'gaussian') {
+          return this.gpuAccelerator.generateGaussianNoise(dimension, scale);
+        } else {
+          return this.gpuAccelerator.generateLaplaceNoise(dimension, scale);
+        }
+      } catch (e) {
+        console.warn('GPU acceleration failed for noise generation, falling back to CPU', e);
+        // Fall through to CPU implementation
+      }
+    }
+    
+    // CPU fallback
     const noise = new Float64Array(dimension);
     
     if (this.budget.mechanism === 'gaussian') {
@@ -205,8 +246,17 @@ export class PrivacyEngine extends EventEmitter<{
   }
   
   async destroy(): Promise<void> {
+    // Clean up GPU resources
+    if (this.gpuAccelerator) {
+      this.gpuAccelerator.destroy();
+      this.gpuAccelerator = null;
+    }
+    
     // Secure cleanup
     this.consumed = 0;
     this.noiseMagnitudes = [];
   }
 }
+
+// Export GPU acceleration utilities
+export { GPUNoiseGenerator, AcceleratorDetector, type AcceleratorType, type AccelerationStats } from './gpu-acceleration.js';
