@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import HUD from './HUD';
 import BrowserFLDemo from './BrowserFLDemo';
 import './App.css';
+import PrivacyUtilityDashboard from './PrivacyUtilityDashboard';
 
 const API_BASE = import.meta.env.VITE_HUD_API_BASE || (import.meta.env.DEV ? '/backend' : 'http://localhost:8000');
 const TRUST_API_BASE =
@@ -19,6 +20,7 @@ function App() {
   const [founders, setFounders] = useState([]);
   const [voiceQuery, setVoiceQuery] = useState('');
   const [voiceResponse, setVoiceResponse] = useState('');
+    const [trainingMetrics, setTrainingMetrics] = useState([]);
   const [policyDraft, setPolicyDraft] = useState({
     require_proof: false,
     min_confidence_bps: 7000,
@@ -216,11 +218,20 @@ function App() {
           type="button"
         >
           Network Operations HUD
+               <button
+                 className={mode === 'privacy-dashboard' ? 'active' : ''}
+                 onClick={() => setMode('privacy-dashboard')}
+                 type="button"
+               >
+                 Privacy-Utility Analysis
+               </button>
         </button>
       </nav>
 
       {mode === 'browser-demo' ? (
-        <BrowserFLDemo />
+        <BrowserFLDemo onMetricsUpdate={setTrainingMetrics} />
+      ) : mode === 'privacy-dashboard' ? (
+        <PrivacyUtilityDashboard trainingMetrics={trainingMetrics} trainingMode="real" />
       ) : (
         <>
           <HUD

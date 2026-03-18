@@ -25,7 +25,7 @@ function randomFloat(min, max) {
   return min + Math.random() * (max - min);
 }
 
-export default function BrowserFLDemo({ enableBackendMetrics = false }) {
+export default function BrowserFLDemo({ enableBackendMetrics = false, onMetricsUpdate = null }) {
   const [participants, setParticipants] = useState(120);
     const [trainingMode, setTrainingMode] = useState('simulation');  // 'simulation' or 'real'
     const [phase3dStatus, setPhase3dStatus] = useState('idle');  // idle, training, completed
@@ -101,7 +101,10 @@ export default function BrowserFLDemo({ enableBackendMetrics = false }) {
 
   // Phase 3D training polling
   useEffect(() => {
-    if (trainingMode !== 'real' || phase3dStatus !== 'training') return undefined;
+    if (trainingMode !== 'real' || phase3dStatus !== 'training') {
+      onMetricsUpdate?.(trainingMode === 'real' ? [] : history);
+      return undefined;
+    }
 
     const pollTrainingStatus = async () => {
       try {
@@ -116,6 +119,9 @@ export default function BrowserFLDemo({ enableBackendMetrics = false }) {
             setAccuracy(status.current_metrics.accuracy);
             setLoss(status.current_metrics.round_loss);
             setCompressionRatio(status.current_metrics.compression_ratio);
+            
+                      // Export metrics to Privacy-Utility Dashboard
+                      onMetricsUpdate?.([...(trainingMetrics || []), status.current_metrics]);
           }
           
           // Check if training completed
@@ -135,7 +141,7 @@ export default function BrowserFLDemo({ enableBackendMetrics = false }) {
     const interval = setInterval(pollTrainingStatus, 2000); // Poll every 2s
     pollTrainingStatus(); // Immediate poll
     return () => clearInterval(interval);
-  }, [trainingMode, phase3dStatus]);
+  }, [trainingMode, phase3dStatus, onMetricsUpdate]);
 
   useEffect(() => {
     if (!running || trainingMode === 'real') return undefined;
@@ -219,6 +225,12 @@ export default function BrowserFLDemo({ enableBackendMetrics = false }) {
     accuracy,
     loss
   ]);
+
+  // Export simulation metrics to dashboard
+  useEffect(() => {
+    if (trainingMode === 'real') return;
+    onMetricsUpdate?.(history);
+  }, [history, onMetricsUpdate, trainingMode]);
 
   const backendLabel = useMemo(() => {
     if (runtimeBackend === 'webgpu') return 'WebGPU Active';
