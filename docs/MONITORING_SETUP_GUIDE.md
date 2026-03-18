@@ -303,7 +303,7 @@ curl http://localhost:9090/api/v1/series
 # Should return series list
 
 kubectl port-forward -n sovereign-map-monitoring svc/grafana 3000:3000 &
-curl -u admin:sovereign-map-admin-change-me http://localhost:3000/api/health
+curl -u "$GRAFANA_USER:$GRAFANA_PASSWORD" http://localhost:3000/api/health
 # Should return {"status":"ok"}
 ```
 
@@ -456,7 +456,7 @@ open http://localhost:3000/
 
 ```bash
 # Via API
-curl -u admin:admin http://localhost:3000/api/search
+curl -u "$GRAFANA_USER:$GRAFANA_PASSWORD" http://localhost:3000/api/search
 
 # Via UI
 open http://localhost:3000/dashboards
@@ -564,7 +564,7 @@ scrape_configs:
 
 ```bash
 # 1. Check datasource configured
-curl -u admin:admin http://localhost:3000/api/datasources
+curl -u "$GRAFANA_USER:$GRAFANA_PASSWORD" http://localhost:3000/api/datasources
 # Should show Prometheus with id
 
 # 2. Verify metrics available in Prometheus

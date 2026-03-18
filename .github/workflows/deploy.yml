@@ -443,7 +443,7 @@ jobs:
 
       - name: Configure AWS Credentials
         if: steps.phase3d_inputs.outputs.ready == 'true'
-        uses: aws-actions/configure-aws-credentials@e3dd6a429d7300a6f3c7dd0d8f4f95f1f1a7f6b4
+        uses: aws-actions/configure-aws-credentials@b1257c400167d727708335212f95607835cd03fd
         with:
           role-to-assume: ${{ secrets.AWS_DEPLOY_ROLE_ARN }}
           aws-region: ${{ secrets.AWS_REGION }}
@@ -495,7 +495,7 @@ jobs:
 
       - name: Configure AWS Credentials
         if: steps.cdn_inputs.outputs.ready == 'true'
-        uses: aws-actions/configure-aws-credentials@e3dd6a429d7300a6f3c7dd0d8f4f95f1f1a7f6b4
+        uses: aws-actions/configure-aws-credentials@b1257c400167d727708335212f95607835cd03fd
         with:
           role-to-assume: ${{ secrets.AWS_DEPLOY_ROLE_ARN }}
           aws-region: ${{ secrets.AWS_REGION }}

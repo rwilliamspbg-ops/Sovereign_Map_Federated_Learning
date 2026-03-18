@@ -21,9 +21,11 @@
     "LICENSE"
   ],
   "scripts": {
+    "prebuild": "npm --prefix ../compression run build",
     "build": "tsc && npm run wasm:copy",
     "wasm:copy": "cp -r src/wasm dist/ 2>/dev/null || true",
     "test": "vitest run",
+    "pretest:ci": "npm --prefix ../compression run build",
     "test:ci": "vitest run --coverage",
     "bench": "vitest bench",
     "typecheck": "tsc --noEmit"

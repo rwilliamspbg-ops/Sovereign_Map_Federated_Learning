@@ -1,0 +1,11 @@
+title = "Sovereign Map Gitleaks Config"
+
+[allowlist]
+description = "Allow known documentation-only basic-auth curl examples and placeholders"
+paths = [
+  '''docs/.*\.md'''
+]
+regexes = [
+  '''curl\s+-u\s+\$?\{?[A-Za-z_][A-Za-z0-9_]*\}?[:]\$?\{?[A-Za-z_][A-Za-z0-9_]*\}?\s+http://localhost:3000/api/''',
+  '''curl\s+-u\s+[A-Za-z0-9_.-]+:[A-Za-z0-9_.-]+\s+http://localhost:3000/api/'''
+]

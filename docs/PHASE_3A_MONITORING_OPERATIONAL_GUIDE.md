@@ -751,7 +751,7 @@ storage:
 
 ```bash
 # Check Prometheus connectivity in Grafana
-curl -u admin:admin http://localhost:3000/api/datasources
+curl -u "$GRAFANA_USER:$GRAFANA_PASSWORD" http://localhost:3000/api/datasources
 # Should show prometheus datasource as "ok"
 
 # Test Prometheus directly

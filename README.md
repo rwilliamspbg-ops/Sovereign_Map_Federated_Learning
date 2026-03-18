@@ -4,74 +4,74 @@
 
 ## Live Project Pulse
 
-[![Release](https://img.shields.io/github/v/release/rwilliamspbg-ops/Sovereign_Map_Federated_Learning?display_name=tag&style=for-the-badge&logo=github&color=0b7285)](https://github.com/rwilliamspbg-ops/Sovereign_Map_Federated_Learning/releases)
-[![Last Commit](https://img.shields.io/github/last-commit/rwilliamspbg-ops/Sovereign_Map_Federated_Learning?style=for-the-badge&logo=git&color=1c7ed6)](https://github.com/rwilliamspbg-ops/Sovereign_Map_Federated_Learning/commits/main)
-[![Repo Size](https://img.shields.io/github/repo-size/rwilliamspbg-ops/Sovereign_Map_Federated_Learning?style=for-the-badge&logo=files&color=2b8a3e)](https://github.com/rwilliamspbg-ops/Sovereign_Map_Federated_Learning)
-[![Contributors](https://img.shields.io/github/contributors/rwilliamspbg-ops/Sovereign_Map_Federated_Learning?style=for-the-badge&logo=github&color=087f5b)](https://github.com/rwilliamspbg-ops/Sovereign_Map_Federated_Learning/graphs/contributors)
-[![Issues](https://img.shields.io/github/issues/rwilliamspbg-ops/Sovereign_Map_Federated_Learning?style=for-the-badge&logo=github&color=364fc7)](https://github.com/rwilliamspbg-ops/Sovereign_Map_Federated_Learning/issues)
-[![Pull Requests](https://img.shields.io/github/issues-pr/rwilliamspbg-ops/Sovereign_Map_Federated_Learning?style=for-the-badge&logo=github&color=5f3dc4)](https://github.com/rwilliamspbg-ops/Sovereign_Map_Federated_Learning/pulls)
-[![Stars](https://img.shields.io/github/stars/rwilliamspbg-ops/Sovereign_Map_Federated_Learning?style=for-the-badge&logo=github&color=f08c00)](https://github.com/rwilliamspbg-ops/Sovereign_Map_Federated_Learning/stargazers)
-[![Forks](https://img.shields.io/github/forks/rwilliamspbg-ops/Sovereign_Map_Federated_Learning?style=for-the-badge&logo=github&color=e67700)](https://github.com/rwilliamspbg-ops/Sovereign_Map_Federated_Learning/network/members)
+[![Release](https://img.shields.io/github/v/release/rwilliamspbg-ops/Sovereign_Map_Federated_Learning?display_name=tag&style=flat-square&logo=github&color=0b7285)](https://github.com/rwilliamspbg-ops/Sovereign_Map_Federated_Learning/releases)
+[![Last Commit](https://img.shields.io/github/last-commit/rwilliamspbg-ops/Sovereign_Map_Federated_Learning?style=flat-square&logo=git&color=1c7ed6)](https://github.com/rwilliamspbg-ops/Sovereign_Map_Federated_Learning/commits/main)
+[![Repo Size](https://img.shields.io/github/repo-size/rwilliamspbg-ops/Sovereign_Map_Federated_Learning?style=flat-square&logo=files&color=2b8a3e)](https://github.com/rwilliamspbg-ops/Sovereign_Map_Federated_Learning)
+[![Contributors](https://img.shields.io/github/contributors/rwilliamspbg-ops/Sovereign_Map_Federated_Learning?style=flat-square&logo=github&color=087f5b)](https://github.com/rwilliamspbg-ops/Sovereign_Map_Federated_Learning/graphs/contributors)
+[![Issues](https://img.shields.io/github/issues/rwilliamspbg-ops/Sovereign_Map_Federated_Learning?style=flat-square&logo=github&color=364fc7)](https://github.com/rwilliamspbg-ops/Sovereign_Map_Federated_Learning/issues)
+[![Pull Requests](https://img.shields.io/github/issues-pr/rwilliamspbg-ops/Sovereign_Map_Federated_Learning?style=flat-square&logo=github&color=5f3dc4)](https://github.com/rwilliamspbg-ops/Sovereign_Map_Federated_Learning/pulls)
+[![Stars](https://img.shields.io/github/stars/rwilliamspbg-ops/Sovereign_Map_Federated_Learning?style=flat-square&logo=github&color=f08c00)](https://github.com/rwilliamspbg-ops/Sovereign_Map_Federated_Learning/stargazers)
+[![Forks](https://img.shields.io/github/forks/rwilliamspbg-ops/Sovereign_Map_Federated_Learning?style=flat-square&logo=github&color=e67700)](https://github.com/rwilliamspbg-ops/Sovereign_Map_Federated_Learning/network/members)
 
 ## Platform Capabilities
 
-[![Federated Learning](https://img.shields.io/badge/Capability-Federated%20Learning-2f9e44?style=for-the-badge&logo=tensorflow&logoColor=white)](Documentation/Architecture/ARCHITECTURE.md)
-[![Blockchain Ledger](https://img.shields.io/badge/Capability-Blockchain%20Ledger-1864ab?style=for-the-badge&logo=blockchaindotcom&logoColor=white)](internal/blockchain/README.md)
-[![Governance Engine](https://img.shields.io/badge/Capability-Governance%20Engine-5f3dc4?style=for-the-badge&logo=openpolicyagent&logoColor=white)](Documentation/Project/ROADMAP.md)
-[![TPM Trust](https://img.shields.io/badge/Capability-TPM%20Trust%20Attestation-0b7285?style=for-the-badge&logo=letsencrypt&logoColor=white)](Documentation/Security/TPM_TRUST_GUIDE.md)
-[![Proof Verification](https://img.shields.io/badge/Capability-Proof%20Verification-c2255c?style=for-the-badge&logo=vercel&logoColor=white)](Documentation/Project/CAPABILITIES_SCHEMA_V1.md)
-[![Wallet and Staking](https://img.shields.io/badge/Capability-Wallet%20%26%20Staking-f08c00?style=for-the-badge&logo=bitcoin&logoColor=white)](docs/RELEASE_NOTES_v1.2.0.md)
-[![Observability Stack](https://img.shields.io/badge/Capability-Observability-1c7ed6?style=for-the-badge&logo=grafana&logoColor=white)](Documentation/DEPLOYMENT_INDEX.md)
-[![SDK Surface](https://img.shields.io/badge/Capability-TypeScript%20%2B%20Python%20SDKs-2b8a3e?style=for-the-badge&logo=typescript&logoColor=white)](packages/core/package.json)
+[![Federated Learning](https://img.shields.io/badge/Capability-Federated%20Learning-2f9e44?style=flat-square&logo=tensorflow&logoColor=white)](Documentation/Architecture/ARCHITECTURE.md)
+[![Blockchain Ledger](https://img.shields.io/badge/Capability-Blockchain%20Ledger-1864ab?style=flat-square&logo=blockchaindotcom&logoColor=white)](internal/blockchain/README.md)
+[![Governance Engine](https://img.shields.io/badge/Capability-Governance%20Engine-5f3dc4?style=flat-square&logo=openpolicyagent&logoColor=white)](Documentation/Project/ROADMAP.md)
+[![TPM Trust](https://img.shields.io/badge/Capability-TPM%20Trust%20Attestation-0b7285?style=flat-square&logo=letsencrypt&logoColor=white)](Documentation/Security/TPM_TRUST_GUIDE.md)
+[![Proof Verification](https://img.shields.io/badge/Capability-Proof%20Verification-c2255c?style=flat-square&logo=vercel&logoColor=white)](Documentation/Project/CAPABILITIES_SCHEMA_V1.md)
+[![Wallet and Staking](https://img.shields.io/badge/Capability-Wallet%20%26%20Staking-f08c00?style=flat-square&logo=bitcoin&logoColor=white)](docs/RELEASE_NOTES_v1.2.0.md)
+[![Observability Stack](https://img.shields.io/badge/Capability-Observability-1c7ed6?style=flat-square&logo=grafana&logoColor=white)](Documentation/DEPLOYMENT_INDEX.md)
+[![SDK Surface](https://img.shields.io/badge/Capability-TypeScript%20%2B%20Python%20SDKs-2b8a3e?style=flat-square&logo=typescript&logoColor=white)](packages/core/package.json)
 
 ## Runtime Functions
 
-[![Node Agent API](https://img.shields.io/badge/Function-Node%20Agent%20API-364fc7?style=for-the-badge&logo=go&logoColor=white)](cmd/node-agent/main.go)
-[![Capabilities Contract](https://img.shields.io/badge/Function-Capabilities%20Contract-495057?style=for-the-badge&logo=json&logoColor=white)](capabilities.json)
-[![Verification Policy](https://img.shields.io/badge/Function-Verification%20Policy-862e9c?style=for-the-badge&logo=shield&logoColor=white)](config/llm_adapter_policy.json)
-[![Secure Channels](https://img.shields.io/badge/Function-Secure%20Communication-087f5b?style=for-the-badge&logo=openssl&logoColor=white)](secure_communication.py)
-[![Metrics Exporters](https://img.shields.io/badge/Function-Metrics%20Exporters-1971c2?style=for-the-badge&logo=prometheus&logoColor=white)](cmd/metrics-exporter/)
-[![Dashboard Provisioning](https://img.shields.io/badge/Function-Grafana%20Provisioning-e67700?style=for-the-badge&logo=grafana&logoColor=white)](grafana/provisioning/dashboards)
-[![Docker Deployment](https://img.shields.io/badge/Function-Docker%20Deploy-0c8599?style=for-the-badge&logo=docker&logoColor=white)](docker-compose.production.yml)
-[![Kubernetes Manifests](https://img.shields.io/badge/Function-Kubernetes%20Scale%20Profiles-0b7285?style=for-the-badge&logo=kubernetes&logoColor=white)](kubernetes-5000-node-manifests.yaml)
+[![Node Agent API](https://img.shields.io/badge/Function-Node%20Agent%20API-364fc7?style=flat-square&logo=go&logoColor=white)](cmd/node-agent/main.go)
+[![Capabilities Contract](https://img.shields.io/badge/Function-Capabilities%20Contract-495057?style=flat-square&logo=json&logoColor=white)](capabilities.json)
+[![Verification Policy](https://img.shields.io/badge/Function-Verification%20Policy-862e9c?style=flat-square&logo=shield&logoColor=white)](config/llm_adapter_policy.json)
+[![Secure Channels](https://img.shields.io/badge/Function-Secure%20Communication-087f5b?style=flat-square&logo=openssl&logoColor=white)](secure_communication.py)
+[![Metrics Exporters](https://img.shields.io/badge/Function-Metrics%20Exporters-1971c2?style=flat-square&logo=prometheus&logoColor=white)](cmd/metrics-exporter/)
+[![Dashboard Provisioning](https://img.shields.io/badge/Function-Grafana%20Provisioning-e67700?style=flat-square&logo=grafana&logoColor=white)](grafana/provisioning/dashboards)
+[![Docker Deployment](https://img.shields.io/badge/Function-Docker%20Deploy-0c8599?style=flat-square&logo=docker&logoColor=white)](docker-compose.production.yml)
+[![Kubernetes Manifests](https://img.shields.io/badge/Function-Kubernetes%20Scale%20Profiles-0b7285?style=flat-square&logo=kubernetes&logoColor=white)](kubernetes-5000-node-manifests.yaml)
 
 ## CI and Security Gates
 
-[![Build and Test](https://img.shields.io/github/actions/workflow/status/rwilliamspbg-ops/Sovereign_Map_Federated_Learning/build.yml?branch=main&style=for-the-badge&logo=githubactions&label=Build%20and%20Test)](https://github.com/rwilliamspbg-ops/Sovereign_Map_Federated_Learning/actions/workflows/build.yml)
-[![Lint Code Base](https://img.shields.io/github/actions/workflow/status/rwilliamspbg-ops/Sovereign_Map_Federated_Learning/lint.yml?branch=main&style=for-the-badge&logo=eslint&label=Lint)](https://github.com/rwilliamspbg-ops/Sovereign_Map_Federated_Learning/actions/workflows/lint.yml)
-[![Reproducibility Check](https://img.shields.io/github/actions/workflow/status/rwilliamspbg-ops/Sovereign_Map_Federated_Learning/reproducibility-check.yml?branch=main&style=for-the-badge&logo=dependabot&label=Reproducibility)](https://github.com/rwilliamspbg-ops/Sovereign_Map_Federated_Learning/actions/workflows/reproducibility-check.yml)
-[![Governance Check](https://img.shields.io/github/actions/workflow/status/rwilliamspbg-ops/Sovereign_Map_Federated_Learning/governance-check.yml?branch=main&style=for-the-badge&logo=buffer&label=Governance)](https://github.com/rwilliamspbg-ops/Sovereign_Map_Federated_Learning/actions/workflows/governance-check.yml)
-[![CodeQL Security Analysis](https://img.shields.io/github/actions/workflow/status/rwilliamspbg-ops/Sovereign_Map_Federated_Learning/codeql-analysis.yml?branch=main&style=for-the-badge&logo=github&label=CodeQL)](https://github.com/rwilliamspbg-ops/Sovereign_Map_Federated_Learning/actions/workflows/codeql-analysis.yml)
-[![Security Supply Chain](https://img.shields.io/github/actions/workflow/status/rwilliamspbg-ops/Sovereign_Map_Federated_Learning/security-supply-chain.yml?branch=main&style=for-the-badge&logo=snyk&label=Supply%20Chain)](https://github.com/rwilliamspbg-ops/Sovereign_Map_Federated_Learning/actions/workflows/security-supply-chain.yml)
-[![Secret Scan](https://img.shields.io/github/actions/workflow/status/rwilliamspbg-ops/Sovereign_Map_Federated_Learning/secret-scan.yml?branch=main&style=for-the-badge&logo=datadog&label=Secret%20Scan)](https://github.com/rwilliamspbg-ops/Sovereign_Map_Federated_Learning/actions/workflows/secret-scan.yml)
-[![Docs Link Check](https://img.shields.io/github/actions/workflow/status/rwilliamspbg-ops/Sovereign_Map_Federated_Learning/docs-link-check.yml?branch=main&style=for-the-badge&logo=readthedocs&label=Docs%20Links)](https://github.com/rwilliamspbg-ops/Sovereign_Map_Federated_Learning/actions/workflows/docs-link-check.yml)
-[![Observability CI](https://img.shields.io/github/actions/workflow/status/rwilliamspbg-ops/Sovereign_Map_Federated_Learning/observability-ci.yml?branch=main&style=for-the-badge&logo=grafana&label=Observability%20CI)](https://github.com/rwilliamspbg-ops/Sovereign_Map_Federated_Learning/actions/workflows/observability-ci.yml)
-[![HIL Tests](https://img.shields.io/github/actions/workflow/status/rwilliamspbg-ops/Sovereign_Map_Federated_Learning/hil-tests.yml?branch=main&style=for-the-badge&logo=pytest&label=HIL%20Tests)](https://github.com/rwilliamspbg-ops/Sovereign_Map_Federated_Learning/actions/workflows/hil-tests.yml)
-[![Docker Build](https://img.shields.io/github/actions/workflow/status/rwilliamspbg-ops/Sovereign_Map_Federated_Learning/docker-build.yml?branch=main&style=for-the-badge&logo=docker&label=Docker%20Build)](https://github.com/rwilliamspbg-ops/Sovereign_Map_Federated_Learning/actions/workflows/docker-build.yml)
-[![SDK Publish](https://img.shields.io/github/actions/workflow/status/rwilliamspbg-ops/Sovereign_Map_Federated_Learning/sdk-publish.yml?branch=main&style=for-the-badge&logo=npm&label=SDK%20Publish)](https://github.com/rwilliamspbg-ops/Sovereign_Map_Federated_Learning/actions/workflows/sdk-publish.yml)
-[![Windows Client EXE](https://img.shields.io/github/actions/workflow/status/rwilliamspbg-ops/Sovereign_Map_Federated_Learning/windows-client-exe.yml?branch=main&style=for-the-badge&logo=windows&label=Windows%20EXE)](https://github.com/rwilliamspbg-ops/Sovereign_Map_Federated_Learning/actions/workflows/windows-client-exe.yml)
+[![Build and Test](https://img.shields.io/github/actions/workflow/status/rwilliamspbg-ops/Sovereign_Map_Federated_Learning/build.yml?branch=main&style=flat-square&logo=githubactions&label=Build%20and%20Test)](https://github.com/rwilliamspbg-ops/Sovereign_Map_Federated_Learning/actions/workflows/build.yml)
+[![Lint Code Base](https://img.shields.io/github/actions/workflow/status/rwilliamspbg-ops/Sovereign_Map_Federated_Learning/lint.yml?branch=main&style=flat-square&logo=eslint&label=Lint)](https://github.com/rwilliamspbg-ops/Sovereign_Map_Federated_Learning/actions/workflows/lint.yml)
+[![Reproducibility Check](https://img.shields.io/github/actions/workflow/status/rwilliamspbg-ops/Sovereign_Map_Federated_Learning/reproducibility-check.yml?branch=main&style=flat-square&logo=dependabot&label=Reproducibility)](https://github.com/rwilliamspbg-ops/Sovereign_Map_Federated_Learning/actions/workflows/reproducibility-check.yml)
+[![Governance Check](https://img.shields.io/github/actions/workflow/status/rwilliamspbg-ops/Sovereign_Map_Federated_Learning/governance-check.yml?branch=main&style=flat-square&logo=buffer&label=Governance)](https://github.com/rwilliamspbg-ops/Sovereign_Map_Federated_Learning/actions/workflows/governance-check.yml)
+[![CodeQL Security Analysis](https://img.shields.io/github/actions/workflow/status/rwilliamspbg-ops/Sovereign_Map_Federated_Learning/codeql-analysis.yml?branch=main&style=flat-square&logo=github&label=CodeQL)](https://github.com/rwilliamspbg-ops/Sovereign_Map_Federated_Learning/actions/workflows/codeql-analysis.yml)
+[![Security Supply Chain](https://img.shields.io/github/actions/workflow/status/rwilliamspbg-ops/Sovereign_Map_Federated_Learning/security-supply-chain.yml?branch=main&style=flat-square&logo=snyk&label=Supply%20Chain)](https://github.com/rwilliamspbg-ops/Sovereign_Map_Federated_Learning/actions/workflows/security-supply-chain.yml)
+[![Secret Scan](https://img.shields.io/github/actions/workflow/status/rwilliamspbg-ops/Sovereign_Map_Federated_Learning/secret-scan.yml?branch=main&style=flat-square&logo=datadog&label=Secret%20Scan)](https://github.com/rwilliamspbg-ops/Sovereign_Map_Federated_Learning/actions/workflows/secret-scan.yml)
+[![Docs Link Check](https://img.shields.io/github/actions/workflow/status/rwilliamspbg-ops/Sovereign_Map_Federated_Learning/docs-link-check.yml?branch=main&style=flat-square&logo=readthedocs&label=Docs%20Links)](https://github.com/rwilliamspbg-ops/Sovereign_Map_Federated_Learning/actions/workflows/docs-link-check.yml)
+[![Observability CI](https://img.shields.io/github/actions/workflow/status/rwilliamspbg-ops/Sovereign_Map_Federated_Learning/observability-ci.yml?branch=main&style=flat-square&logo=grafana&label=Observability%20CI)](https://github.com/rwilliamspbg-ops/Sovereign_Map_Federated_Learning/actions/workflows/observability-ci.yml)
+[![HIL Tests](https://img.shields.io/github/actions/workflow/status/rwilliamspbg-ops/Sovereign_Map_Federated_Learning/hil-tests.yml?branch=main&style=flat-square&logo=pytest&label=HIL%20Tests)](https://github.com/rwilliamspbg-ops/Sovereign_Map_Federated_Learning/actions/workflows/hil-tests.yml)
+[![Docker Build](https://img.shields.io/github/actions/workflow/status/rwilliamspbg-ops/Sovereign_Map_Federated_Learning/docker-build.yml?branch=main&style=flat-square&logo=docker&label=Docker%20Build)](https://github.com/rwilliamspbg-ops/Sovereign_Map_Federated_Learning/actions/workflows/docker-build.yml)
+[![SDK Publish](https://img.shields.io/github/actions/workflow/status/rwilliamspbg-ops/Sovereign_Map_Federated_Learning/sdk-publish.yml?branch=main&style=flat-square&logo=npm&label=SDK%20Publish)](https://github.com/rwilliamspbg-ops/Sovereign_Map_Federated_Learning/actions/workflows/sdk-publish.yml)
+[![Windows Client EXE](https://img.shields.io/github/actions/workflow/status/rwilliamspbg-ops/Sovereign_Map_Federated_Learning/windows-client-exe.yml?branch=main&style=flat-square&logo=windows&label=Windows%20EXE)](https://github.com/rwilliamspbg-ops/Sovereign_Map_Federated_Learning/actions/workflows/windows-client-exe.yml)
 
 ## SDK Quality & Security
 
-[![SDK Build](https://img.shields.io/github/actions/workflow/status/rwilliamspbg-ops/Sovereign_Map_Federated_Learning/build.yml?branch=main&style=for-the-badge&logo=github&label=SDK%20Build)](https://github.com/rwilliamspbg-ops/Sovereign_Map_Federated_Learning/actions/workflows/build.yml)
-[![Core Coverage](https://img.shields.io/badge/Coverage%20%40core-100%25-blue?style=for-the-badge&logo=codecov)](packages/core/)
-[![Privacy Coverage](https://img.shields.io/badge/Coverage%20%40privacy-100%25-blue?style=for-the-badge&logo=codecov)](packages/privacy/)
-[![Consensus Coverage](https://img.shields.io/badge/Coverage%20%40consensus-100%25-blue?style=for-the-badge&logo=codecov)](packages/consensus/)
-[![Island Coverage](https://img.shields.io/badge/Coverage%20%40island-100%25-blue?style=for-the-badge&logo=codecov)](packages/island/)
-[![SDK Security Scanning](https://img.shields.io/github/actions/workflow/status/rwilliamspbg-ops/Sovereign_Map_Federated_Learning/sdk-security.yml?branch=main&style=for-the-badge&logo=snyk&label=SDK%20Security)](https://github.com/rwilliamspbg-ops/Sovereign_Map_Federated_Learning/actions/workflows/sdk-security.yml)
-[![SDK Supply Chain](https://img.shields.io/github/actions/workflow/status/rwilliamspbg-ops/Sovereign_Map_Federated_Learning/sdk-provenance.yml?branch=main&style=for-the-badge&logo=sigstore&label=SLSA%20L2)](https://github.com/rwilliamspbg-ops/Sovereign_Map_Federated_Learning/actions/workflows/sdk-provenance.yml)
-[![SDK Version](https://img.shields.io/github/actions/workflow/status/rwilliamspbg-ops/Sovereign_Map_Federated_Learning/sdk-version.yml?branch=main&style=for-the-badge&logo=semver&label=Version%20Management)](https://github.com/rwilliamspbg-ops/Sovereign_Map_Federated_Learning/actions/workflows/sdk-version.yml)
-[![API Stability](https://img.shields.io/badge/API%20Stability-3%20Tiers-blue?style=for-the-badge&logo=contractsaregoverned)](SDK_API_STABILITY.md)
-[![License](https://img.shields.io/github/license/rwilliamspbg-ops/Sovereign_Map_Federated_Learning?style=for-the-badge&logo=creativecommons)](LICENSE)
+[![SDK Build](https://img.shields.io/github/actions/workflow/status/rwilliamspbg-ops/Sovereign_Map_Federated_Learning/build.yml?branch=main&style=flat-square&logo=github&label=SDK%20Build)](https://github.com/rwilliamspbg-ops/Sovereign_Map_Federated_Learning/actions/workflows/build.yml)
+[![Core Coverage](https://img.shields.io/badge/Coverage%20%40core-tracked%20in%20CI-lightgrey?style=flat-square&logo=codecov)](packages/core/)
+[![Privacy Coverage](https://img.shields.io/badge/Coverage%20%40privacy-tracked%20in%20CI-lightgrey?style=flat-square&logo=codecov)](packages/privacy/)
+[![Consensus Coverage](https://img.shields.io/badge/Coverage%20%40consensus-tracked%20in%20CI-lightgrey?style=flat-square&logo=codecov)](packages/consensus/)
+[![Island Coverage](https://img.shields.io/badge/Coverage%20%40island-tracked%20in%20CI-lightgrey?style=flat-square&logo=codecov)](packages/island/)
+[![SDK Security Scanning](https://img.shields.io/github/actions/workflow/status/rwilliamspbg-ops/Sovereign_Map_Federated_Learning/sdk-security.yml?branch=main&style=flat-square&logo=snyk&label=SDK%20Security)](https://github.com/rwilliamspbg-ops/Sovereign_Map_Federated_Learning/actions/workflows/sdk-security.yml)
+[![SDK Supply Chain](https://img.shields.io/github/actions/workflow/status/rwilliamspbg-ops/Sovereign_Map_Federated_Learning/sdk-provenance.yml?branch=main&style=flat-square&logo=sigstore&label=SLSA%20L2)](https://github.com/rwilliamspbg-ops/Sovereign_Map_Federated_Learning/actions/workflows/sdk-provenance.yml)
+[![SDK Version](https://img.shields.io/github/actions/workflow/status/rwilliamspbg-ops/Sovereign_Map_Federated_Learning/sdk-version.yml?branch=main&style=flat-square&logo=semver&label=Version%20Management)](https://github.com/rwilliamspbg-ops/Sovereign_Map_Federated_Learning/actions/workflows/sdk-version.yml)
+[![API Stability](https://img.shields.io/badge/API%20Stability-3%20Tiers-blue?style=flat-square&logo=contractsaregoverned)](SDK_API_STABILITY.md)
+[![License](https://img.shields.io/github/license/rwilliamspbg-ops/Sovereign_Map_Federated_Learning?style=flat-square&logo=creativecommons)](LICENSE)
 
 ## Hardware Acceleration & Testing
 
-[![GPU/NPU Device Tests](https://img.shields.io/badge/GPU%2FNPU%20Tests-42%2F42-brightgreen?style=for-the-badge&logo=pytorch&logoColor=white)](GPU_NPU_TEST_ENHANCEMENTS_REPORT.md)
-[![Hardware Acceleration](https://img.shields.io/badge/Acceleration-NPU%20%2F%20XPU%20%2F%20CUDA%20%2F%20MPS%20%2F%20CPU-2B8A3E?style=for-the-badge&logo=pytorch&logoColor=white)](Documentation/Performance/NPU_GPU_CPU_PERFORMANCE_ANALYSIS.md)
-[![NPU Support](https://img.shields.io/badge/Support-Ascend%20NPU%20%2B%20XPU%20Backends-FF0000?style=for-the-badge&logo=huawei&logoColor=white)](tests/hil/test_npu_device_selection.py)
-[![GPU Support](https://img.shields.io/badge/Support-NVIDIA%20CUDA%20%2B%20AMD%20ROCm-76B900?style=for-the-badge&logo=amd&logoColor=white)](tests/hil/test_npu_device_selection.py)
-[![Device Fallback](https://img.shields.io/badge/Fallback%20Chain-NPU%20%E2%86%92%20XPU%20%E2%86%92%20CUDA%2FROCm%20%E2%86%92%20MPS%20%E2%86%92%20CPU-0066CC?style=for-the-badge&logo=codeigniter&logoColor=white)](src/client.py)
-[![Multi-Device Selection](https://img.shields.io/badge/Multi%20Device-Ascend%20%2B%20ROCm%20%2B%20XPU%20Ready-4730FF?style=for-the-badge&logo=json&logoColor=white)](tests/hil/test_npu_device_selection.py)
+[![GPU/NPU Device Tests](https://img.shields.io/badge/GPU%2FNPU%20Tests-42%2F42-brightgreen?style=flat-square&logo=pytorch&logoColor=white)](GPU_NPU_TEST_ENHANCEMENTS_REPORT.md)
+[![Hardware Acceleration](https://img.shields.io/badge/Acceleration-NPU%20%2F%20XPU%20%2F%20CUDA%20%2F%20MPS%20%2F%20CPU-2B8A3E?style=flat-square&logo=pytorch&logoColor=white)](Documentation/Performance/NPU_GPU_CPU_PERFORMANCE_ANALYSIS.md)
+[![NPU Support](https://img.shields.io/badge/Support-Ascend%20NPU%20%2B%20XPU%20Backends-FF0000?style=flat-square&logo=huawei&logoColor=white)](tests/hil/test_npu_device_selection.py)
+[![GPU Support](https://img.shields.io/badge/Support-NVIDIA%20CUDA%20%2B%20AMD%20ROCm-76B900?style=flat-square&logo=amd&logoColor=white)](tests/hil/test_npu_device_selection.py)
+[![Device Fallback](https://img.shields.io/badge/Fallback%20Chain-NPU%20%E2%86%92%20XPU%20%E2%86%92%20CUDA%2FROCm%20%E2%86%92%20MPS%20%E2%86%92%20CPU-0066CC?style=flat-square&logo=codeigniter&logoColor=white)](src/client.py)
+[![Multi-Device Selection](https://img.shields.io/badge/Multi%20Device-Ascend%20%2B%20ROCm%20%2B%20XPU%20Ready-4730FF?style=flat-square&logo=json&logoColor=white)](tests/hil/test_npu_device_selection.py)
 
 Sovereign Map is a sovereign intelligence coordination platform that combines federated learning, blockchain governance, trust attestation, and observability into one deployable stack.
 
@@ -81,9 +81,9 @@ Intellectual Property Notice: this repository implements parts of the Sovereign 
 
 - Current release: [v1.2.0](https://github.com/rwilliamspbg-ops/Sovereign_Map_Federated_Learning/releases/tag/v1.2.0)
 - Default branch: `main`
-- **SDK Coverage**: Core 100% lines, Privacy 100%, Island 100% lines, Consensus 100% lines
-- **Workflow Status**: All CI gates passing; SHA-pinned GitHub Actions; TypeScript compilation fully typed
-- **Security**: SLSA L2 provenance, CodeQL analysis, supply chain scanning all green
+- **SDK Coverage**: Package-level coverage is enforced and reported in CI test jobs
+- **Workflow Status**: Live status is shown by the CI badges above (GitHub Actions)
+- **Security**: SLSA provenance, CodeQL, and supply-chain checks are configured in CI
 - CI baseline: npm-based SDK build/test workflows are aligned with repository lockfiles
 - Local baseline validation commands:
   - `npm ci`
@@ -93,16 +93,16 @@ Intellectual Property Notice: this repository implements parts of the Sovereign 
 
 ### Recent Improvements (March 2026)
 
-- **Coverage Expansion**: Core and Island packages reached 100% line coverage through targeted branch and fallback path testing
+- **Coverage Expansion**: Added targeted branch and fallback path tests across SDK packages
 - **Workflow Hardening**: All GitHub Actions pinned to immutable SHAs; SDK version workflow now resilient with strict tests intact
 - **TypeScript Quality**: Fixed aggregate handler typing issue ensuring strict null checks across all test suites
-- **Security Finalization**: All security gates (CodeQL, secret scan, supply chain) passing; SLSA L2 attestation enabled
-- **SDK Readiness**: Changesets-based release management operational; npm publishing workflow stable and automated
+- **Security Finalization**: Security gates include CodeQL, secret scanning, and supply-chain verification with SLSA L2 attestation
+- **SDK Readiness**: Changesets-based release management is operational with automated npm publish workflow
 - **Hardware Acceleration**: Complete device selection support with comprehensive testing (42 tests covering Ascend NPU, XPU, NVIDIA CUDA, AMD ROCm, Apple MPS, CPU fallback, multi-device scenarios, environment variable handling, error recovery, and device properties)
 - **🎉 GPU/NPU Acceleration**: Integrated hardware-accelerated noise generation for differential privacy
   - **Automatic hardware detection**: CUDA → ROCm → Ascend → WebGPU → SIMD → CPU
   - **Performance**: 10-50× faster Gaussian noise generation on GPU
-  - **Privacy overhead**: <12% with GPU (vs 2400% CPU baseline) 
+  - **Privacy overhead**: <12% with GPU (vs 2400% CPU baseline)
   - **Mechanisms**: Gaussian and Laplace differential privacy with hardware acceleration
   - **Seamless integration**: Transparent to existing PrivacyEngine code
   - **Documentation**: [GPU/NPU Acceleration Guide](docs/GPU_NPU_ACCELERATION.md)

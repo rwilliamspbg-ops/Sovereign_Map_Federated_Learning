@@ -70,7 +70,9 @@ class GradientCompressor:
         self.use_compression = use_compression
         self.quantization_range = (1 << self.bits) - 1
 
-    def compress_gradient(self, gradient: np.ndarray) -> Tuple[np.ndarray, Dict[str, float]]:
+    def compress_gradient(
+        self, gradient: np.ndarray
+    ) -> Tuple[np.ndarray, Dict[str, float]]:
         """Compress a gradient tensor via uniform quantization."""
         if not self.use_compression:
             return gradient.astype(np.float32), {"compression_ratio": 1.0}
@@ -79,7 +81,9 @@ class GradientCompressor:
         grad_max = float(gradient.max())
         grad_range = grad_max - grad_min + 1e-8
 
-        quantized = np.round((gradient - grad_min) / grad_range * self.quantization_range).astype(np.uint16)
+        quantized = np.round(
+            (gradient - grad_min) / grad_range * self.quantization_range
+        ).astype(np.uint16)
 
         original_bytes = gradient.nbytes
         compressed_bytes = max(1.0, quantized.nbytes * (self.bits / 16.0))
@@ -92,7 +96,9 @@ class GradientCompressor:
             "grad_max": grad_max,
         }
 
-    def decompress_gradient(self, compressed: np.ndarray, metadata: Dict[str, float]) -> np.ndarray:
+    def decompress_gradient(
+        self, compressed: np.ndarray, metadata: Dict[str, float]
+    ) -> np.ndarray:
         """Decompress quantized gradient back to float32."""
         if not self.use_compression:
             return compressed
@@ -117,7 +123,9 @@ class DifferentialPrivacyNoise:
         if self.epsilon <= 0:
             return gradient, 0.0
 
-        noise_scale = self.sensitivity * np.sqrt(2 * np.log(1.25 / self.delta)) / self.epsilon
+        noise_scale = (
+            self.sensitivity * np.sqrt(2 * np.log(1.25 / self.delta)) / self.epsilon
+        )
         noise = np.random.normal(0, noise_scale, gradient.shape)
         noisy_gradient = gradient + noise
         privacy_overhead = float(np.mean(np.abs(noise)))
@@ -142,8 +150,12 @@ class FederatedLearningTrainer:
             self.model = nn.DataParallel(self.model)
 
         self.criterion = nn.CrossEntropyLoss()
-        self.optimizer = torch.optim.SGD(self.model.parameters(), lr=config.learning_rate)
-        self.compressor = GradientCompressor(config.compression_bits, config.use_compression)
+        self.optimizer = torch.optim.SGD(
+            self.model.parameters(), lr=config.learning_rate
+        )
+        self.compressor = GradientCompressor(
+            config.compression_bits, config.use_compression
+        )
         self.dp_noise = DifferentialPrivacyNoise(config.epsilon, config.delta)
         self.history: List[Dict[str, Any]] = []
 
@@ -160,13 +172,17 @@ class FederatedLearningTrainer:
             return SimpleCNN(input_channels=1, image_size=28, num_classes=10)
         if self.dataset == "cifar10":
             return SimpleCNN(input_channels=3, image_size=32, num_classes=10)
-        raise ValueError(f"Unsupported dataset '{self.dataset}'. Supported: cifar10, mnist")
+        raise ValueError(
+            f"Unsupported dataset '{self.dataset}'. Supported: cifar10, mnist"
+        )
 
     def _dataset_transforms(self) -> Tuple[transforms.Compose, transforms.Compose]:
         if self.dataset == "mnist":
             normalize = transforms.Normalize((0.1307,), (0.3081,))
         else:
-            normalize = transforms.Normalize((0.4914, 0.4822, 0.4465), (0.2470, 0.2435, 0.2616))
+            normalize = transforms.Normalize(
+                (0.4914, 0.4822, 0.4465), (0.2470, 0.2435, 0.2616)
+            )
 
         train_transform = transforms.Compose([transforms.ToTensor(), normalize])
         test_transform = transforms.Compose([transforms.ToTensor(), normalize])
@@ -177,11 +193,19 @@ class FederatedLearningTrainer:
         train_transform, test_transform = self._dataset_transforms()
 
         if self.dataset == "mnist":
-            train_dataset = datasets.MNIST(root="./data", train=True, download=True, transform=train_transform)
-            test_dataset = datasets.MNIST(root="./data", train=False, download=True, transform=test_transform)
+            train_dataset = datasets.MNIST(
+                root="./data", train=True, download=True, transform=train_transform
+            )
+            test_dataset = datasets.MNIST(
+                root="./data", train=False, download=True, transform=test_transform
+            )
         else:
-            train_dataset = datasets.CIFAR10(root="./data", train=True, download=True, transform=train_transform)
-            test_dataset = datasets.CIFAR10(root="./data", train=False, download=True, transform=test_transform)
+            train_dataset = datasets.CIFAR10(
+                root="./data", train=True, download=True, transform=train_transform
+            )
+            test_dataset = datasets.CIFAR10(
+                root="./data", train=False, download=True, transform=test_transform
+            )
 
         indices = np.random.permutation(len(train_dataset))
         splits = np.array_split(indices, self.config.num_clients)
@@ -229,7 +253,9 @@ class FederatedLearningTrainer:
                 compressed, meta = self.compressor.compress_gradient(grad_np)
                 grad_np = self.compressor.decompress_gradient(compressed, meta)
 
-            grad_tensor = torch.from_numpy(grad_np).to(self.device, dtype=param.grad.data.dtype)
+            grad_tensor = torch.from_numpy(grad_np).to(
+                self.device, dtype=param.grad.data.dtype
+            )
             param.grad.data = grad_tensor
             param_count += 1
 
@@ -284,7 +310,9 @@ class FederatedLearningTrainer:
         avg_loss = total_loss / max(len(data_loader), 1)
         return accuracy, avg_loss
 
-    def train_round(self, client_loaders: List[DataLoader], test_loader: DataLoader) -> Dict[str, Any]:
+    def train_round(
+        self, client_loaders: List[DataLoader], test_loader: DataLoader
+    ) -> Dict[str, Any]:
         """Execute one federated round across all client loaders."""
         round_loss = 0.0
         round_privacy_overhead = 0.0
@@ -311,13 +339,19 @@ class FederatedLearningTrainer:
             "eval_loss": float(eval_loss),
             "accuracy": float(accuracy),
             "compression_ratio": float(compression_ratio),
-            "privacy_overhead": float(round_privacy_overhead if self.config.use_privacy else 0.0),
+            "privacy_overhead": float(
+                round_privacy_overhead if self.config.use_privacy else 0.0
+            ),
             "epsilon": float(self.config.epsilon),
             "compression_bits": int(self.config.compression_bits),
             "dataset": self.dataset,
             "device": str(self.device),
             "gpu_count": int(self.num_gpus if self.device.type == "cuda" else 0),
-            "multi_gpu": bool(self.device.type == "cuda" and self.config.multi_gpu and self.num_gpus > 1),
+            "multi_gpu": bool(
+                self.device.type == "cuda"
+                and self.config.multi_gpu
+                and self.num_gpus > 1
+            ),
             "num_clients": int(self.config.num_clients),
             "local_epochs": int(self.config.local_epochs),
         }
@@ -325,7 +359,9 @@ class FederatedLearningTrainer:
         self.history.append(metrics)
         return metrics
 
-    def train(self, client_loaders: List[DataLoader], test_loader: DataLoader) -> List[Dict[str, Any]]:
+    def train(
+        self, client_loaders: List[DataLoader], test_loader: DataLoader
+    ) -> List[Dict[str, Any]]:
         """Train for the configured number of rounds."""
         for round_num in range(self.config.num_rounds):
             metrics = self.train_round(client_loaders, test_loader)

@@ -10,8 +10,8 @@
     "packages/compression"
   ],
   "scripts": {
-    "build:libs": "npm --prefix packages/privacy ci && npm --prefix packages/privacy run build && npm --prefix packages/consensus ci && npm --prefix packages/consensus run build && npm --prefix packages/island ci && npm --prefix packages/island run build && npm --prefix packages/core ci && npm --prefix packages/core run build",
-    "test:ci": "npm --prefix packages/privacy run test:ci && npm --prefix packages/consensus run test:ci && npm --prefix packages/island run test:ci && npm --prefix packages/core run test:ci",
+    "build:libs": "npm --prefix packages/compression ci && npm --prefix packages/compression run build && npm --prefix packages/privacy ci && npm --prefix packages/privacy run build && npm --prefix packages/consensus ci && npm --prefix packages/consensus run build && npm --prefix packages/island ci && npm --prefix packages/island run build && npm --prefix packages/core ci && npm --prefix packages/core run build",
+    "test:ci": "npm --prefix packages/compression run build && npm --prefix packages/privacy run test:ci && npm --prefix packages/consensus run test:ci && npm --prefix packages/island run test:ci && npm --prefix packages/core run test:ci",
     "changeset": "changeset add",
     "changeset:version": "changeset version",
     "changeset:status": "changeset status",
