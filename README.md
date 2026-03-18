@@ -86,10 +86,10 @@ Intellectual Property Notice: this repository implements parts of the Sovereign 
 - **Security**: SLSA provenance, CodeQL, and supply-chain checks are configured in CI
 - CI baseline: npm-based SDK build/test workflows are aligned with repository lockfiles
 - Local baseline validation commands:
-  - `npm ci`
-  - `npm run build:libs`
-  - `npm run test:ci`
-  - `npm --prefix frontend run build`
+  - `cp .env.template .env` (and edit `.env` with your settings)
+  - `docker-compose up -d`
+  - `docker-compose -f docker-compose.dev.yml up -d`
+  - `docker-compose -f docker-compose.production.yml up -d`
 
 ### Recent Improvements (March 2026)
 

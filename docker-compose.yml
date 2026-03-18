@@ -5,7 +5,7 @@ services:
       dockerfile: Dockerfile.frontend
     image: frontend:latest
     ports:
-      - "3000:80"
+      - "${FRONTEND_HOST_PORT:-3000}:80"
     environment:
       - NODE_ENV=production
     depends_on:
@@ -18,7 +18,7 @@ services:
       dockerfile: Dockerfile.backend
     image: backend:latest
     ports:
-      - "8081:5000"
+      - "${BACKEND_API_HOST_PORT:-8081}:5000"
     environment:
       - DATABASE_URI=mongodb://${MONGO_USER:-admin}:${MONGO_PASSWORD:-CHANGE_ME_MONGO}@mongo:27017/mydb?authSource=admin
     depends_on:
