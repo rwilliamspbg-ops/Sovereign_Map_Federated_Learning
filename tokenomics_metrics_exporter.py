@@ -288,7 +288,6 @@ class TokenomicsMetricsExporter:
             self._persist_payload(self._last_payload)
 
     def generate_metrics(self) -> bytes:
-        self.load_source_file()
         return generate_latest(self.registry)
 
 
@@ -323,11 +322,9 @@ def create_app(source_file: str):
     app = Flask(__name__)
     exporter = TokenomicsMetricsExporter(source_file=source_file)
     import threading
-
     t = threading.Thread(target=run_simulation, args=(exporter,), daemon=True)
     t.start()
-
-    @app.route("/metrics", methods=["GET"])
+@app.route("/metrics", methods=["GET"])
     def metrics():
         return Response(exporter.generate_metrics(), mimetype=CONTENT_TYPE_LATEST)
 
