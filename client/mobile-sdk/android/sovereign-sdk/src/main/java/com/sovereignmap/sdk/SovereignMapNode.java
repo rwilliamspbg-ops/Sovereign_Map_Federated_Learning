@@ -24,6 +24,7 @@ public class SovereignMapNode {
     // Sensor Trackers
     private LocationManager locationManager;
     private CameraManager cameraManager;
+    private ArCoreLiDARHelper lidarHelper;
     private boolean isCollectingData = false;
 
     public SovereignMapNode(Context context, String aggregatorUrl, boolean secureMode, String walletKey) {
@@ -44,11 +45,10 @@ public class SovereignMapNode {
         try {
             locationManager = (LocationManager) context.getSystemService(Context.LOCATION_SERVICE);
             cameraManager = (CameraManager) context.getSystemService(Context.CAMERA_SERVICE);
+            lidarHelper = new ArCoreLiDARHelper(context);
             isCollectingData = true;
             
-            Log.i(TAG, "Hooked into Android LocationManager & Camera2 API");
-            
-            // TODO: Bind ARCore Depth API here for LiDAR map points
+            Log.i(TAG, "Hooked into Android LocationManager, Camera2 API, and ARCore LiDAR");
             
             simulateSensorExtractionLoop();
         } catch (Exception e) {
