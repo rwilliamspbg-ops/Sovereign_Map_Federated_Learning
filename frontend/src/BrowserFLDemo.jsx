@@ -301,7 +301,7 @@ export default function BrowserFLDemo({ enableBackendMetrics = false, onMetricsU
 
   const cancelPhase3dTraining = async () => {
     try {
-      await fetch(`${TRAINING_API_BASE}/training/cancel`, { method: 'POST' });
+      await fetch(`${TRAINING_API_BASE}/training/stop`, { method: 'POST' });
       setPhase3dStatus('idle');
     } catch {
       setPhase3dStatus('idle');
