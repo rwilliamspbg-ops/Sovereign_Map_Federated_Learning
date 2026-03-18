@@ -62,7 +62,7 @@ case "$PROFILE" in
         ;;
     *)
         show_menu
-        read -p "Choose option (1-5): " choice
+        read -r -p "Choose option (1-5): " choice
         case "$choice" in
             1) PROFILE="dev" && $0 dev ;;
             2) PROFILE="prod" && $0 prod ;;
@@ -204,7 +204,7 @@ if [ "$PROFILE" = "prod" ] || [ "$PROFILE" = "production" ]; then
 elif [ "$PROFILE" = "full" ]; then
     compose_cmd up -d --scale node-agent=5
 elif [ "$PROFILE" = "large-scale" ]; then
-    read -p "Enter number of nodes (default 500): " NODES
+    read -r -p "Enter number of nodes (default 500): " NODES
     NODES=${NODES:-500}
     compose_cmd up -d --scale node-agent=$NODES
 else
