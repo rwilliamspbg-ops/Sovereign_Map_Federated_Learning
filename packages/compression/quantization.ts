@@ -16,17 +16,17 @@ export function quantizeGradients(
   // Determine scale and zero-point
   const qMin = -128;
   const qMax = 127;
-  
+
   const scale = (maxVal - minVal) / (qMax - qMin);
   const zeroPoint = Math.round(qMin - minVal / scale);
-  
+
   const quantized = new Int8Array(gradients.length);
   for (let i = 0; i < gradients.length; i++) {
     let q = Math.round(gradients[i] / scale + zeroPoint);
     q = Math.max(qMin, Math.min(qMax, q)); // Clamp
     quantized[i] = q;
   }
-  
+
   return { quantized, params: { scale, zeroPoint } };
 }
 

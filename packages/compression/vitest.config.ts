@@ -1,18 +1,18 @@
-import { defineConfig } from 'vitest/config';
+import { defineConfig } from "vitest/config";
 
 export default defineConfig({
   test: {
     globals: true,
-    environment: 'node',
-    include: ['src/**/*.test.ts'],
+    environment: "node",
+    include: ["src/**/*.test.ts"],
     benchmark: {
-      include: ['src/**/*.test.ts'],
-      exclude: []
+      include: ["src/**/*.test.ts"],
+      exclude: [],
     },
     coverage: {
-      provider: 'v8',
-      reporter: ['text', 'json', 'html'],
-      exclude: ['node_modules/', 'dist/', '**/*.test.ts']
-    }
-  }
+      provider: "v8",
+      reporter: ["text", "json", "html"],
+      exclude: ["node_modules/", "dist/", "**/*.test.ts"],
+    },
+  },
 });

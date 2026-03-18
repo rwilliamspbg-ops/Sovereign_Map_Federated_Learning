@@ -1,19 +1,23 @@
 /**
  * SGP-001 Privacy Engine
- * 
+ *
  * Implements differential privacy with Gaussian mechanism
  * and hardware-accelerated noise injection.
  */
 
-import { EventEmitter } from 'eventemitter3';
-import sodium from 'libsodium-wrappers';
-import { Matrix } from 'ml-matrix';
-import { GPUNoiseGenerator, AcceleratorDetector, type AccelerationStats } from './gpu-acceleration.js';
+import { EventEmitter } from "eventemitter3";
+import sodium from "libsodium-wrappers";
+import { Matrix } from "ml-matrix";
+import {
+  GPUNoiseGenerator,
+  AcceleratorDetector,
+  type AccelerationStats,
+} from "./gpu-acceleration.js";
 
 export interface PrivacyBudget {
-  epsilon: number;      // Privacy loss parameter (default: 1.0)
-  delta: number;        // Failure probability (default: 1e-5)
-  mechanism: 'gaussian' | 'laplace';
+  epsilon: number; // Privacy loss parameter (default: 1.0)
+  delta: number; // Failure probability (default: 1e-5)
+  mechanism: "gaussian" | "laplace";
 }
 
 export interface PrivacyStatus {
@@ -32,69 +36,93 @@ export class PrivacyEngine extends EventEmitter<{
   noiseInjected: (magnitude: number, mechanism: string) => void;
   accelerationDetected: (device: string, overhead: number) => void;
 }> {
-  
   private budget: PrivacyBudget;
   private consumed: number = 0;
   private updates: number = 0;
   private noiseMagnitudes: number[] = [];
   private gpuAccelerator: GPUNoiseGenerator | null = null;
   private accelerationStats: AccelerationStats | null = null;
-  
+
   constructor(budget: PrivacyBudget) {
     super();
     this.budget = budget;
   }
-  
+
   async initialize(): Promise<void> {
     await sodium.ready;
-    
+
     // Initialize GPU acceleration
     try {
       const accelerator = AcceleratorDetector.detect();
       this.gpuAccelerator = new GPUNoiseGenerator(accelerator);
       this.accelerationStats = this.gpuAccelerator.getStats();
-      
-      this.emit('accelerationDetected', this.accelerationStats.device, this.accelerationStats.overhead);
+
+      this.emit(
+        "accelerationDetected",
+        this.accelerationStats.device,
+        this.accelerationStats.overhead
+      );
     } catch (e) {
-      console.warn('GPU acceleration initialization failed, using CPU fallback', e);
+      console.warn(
+        "GPU acceleration initialization failed, using CPU fallback",
+        e
+      );
       this.gpuAccelerator = null;
     }
   }
-  
+
   /**
    * Apply differential privacy to map update
    */
   async apply<T extends { pointCloud?: Uint8Array; location: object }>(
     update: T
-  ): Promise<T & { noiseApplied: boolean; privacyProof: string; epsilonConsumed: number }> {
-    
+  ): Promise<
+    T & { noiseApplied: boolean; privacyProof: string; epsilonConsumed: number }
+  > {
     // Calculate sensitivity (max change one record can cause)
     const sensitivity = this.calculateSensitivity(update);
-    
+
     // Determine noise scale based on remaining budget
     const noiseScale = this.computeNoiseScale(sensitivity);
-    
+
     // Generate calibrated noise
-    const noise = this.generateNoise(noiseScale, update.pointCloud?.length || 1);
-    
+    const noise = this.generateNoise(
+      noiseScale,
+      update.pointCloud?.length || 1
+    );
+
     // Apply noise to point cloud if present
     let privatizedPointCloud = update.pointCloud;
     if (update.pointCloud) {
-      privatizedPointCloud = this.addNoiseToPointCloud(update.pointCloud, noise);
+      privatizedPointCloud = this.addNoiseToPointCloud(
+        update.pointCloud,
+        noise
+      );
     }
-    
+
     // Consume privacy budget
-    const epsilonConsumed = this.computeEpsilonConsumed(sensitivity, noiseScale);
+    const epsilonConsumed = this.computeEpsilonConsumed(
+      sensitivity,
+      noiseScale
+    );
     this.consumed += epsilonConsumed;
     this.updates++;
     this.noiseMagnitudes.push(this.averageMagnitude(noise));
-    
+
     // Generate privacy proof
-    const proof = await this.generatePrivacyProof(update, noise, epsilonConsumed);
-    
-    this.emit('budgetUpdate', this.getRemainingBudget(), this.budget.epsilon);
-    this.emit('noiseInjected', this.averageMagnitude(noise), this.budget.mechanism);
-    
+    const proof = await this.generatePrivacyProof(
+      update,
+      noise,
+      epsilonConsumed
+    );
+
+    this.emit("budgetUpdate", this.getRemainingBudget(), this.budget.epsilon);
+    this.emit(
+      "noiseInjected",
+      this.averageMagnitude(noise),
+      this.budget.mechanism
+    );
+
     return {
       ...update,
       pointCloud: privatizedPointCloud,
@@ -103,15 +131,15 @@ export class PrivacyEngine extends EventEmitter<{
       epsilonConsumed,
     };
   }
-  
+
   /**
    * Check if enough budget remains for operation
    */
   hasBudgetFor(update: object): boolean {
     const estimatedEpsilon = 0.1; // Conservative estimate
-    return (this.consumed + estimatedEpsilon) <= this.budget.epsilon;
+    return this.consumed + estimatedEpsilon <= this.budget.epsilon;
   }
-  
+
   /**
    * Get current privacy status
    */
@@ -121,10 +149,12 @@ export class PrivacyEngine extends EventEmitter<{
       budgetRemaining: this.getRemainingBudget(),
       totalBudget: this.budget.epsilon,
       updatesProcessed: this.updates,
-      averageNoiseMagnitude: this.noiseMagnitudes.reduce((a, b) => a + b, 0) / this.noiseMagnitudes.length || 0,
+      averageNoiseMagnitude:
+        this.noiseMagnitudes.reduce((a, b) => a + b, 0) /
+          this.noiseMagnitudes.length || 0,
     };
   }
-  
+
   /**
    * Get hardware acceleration statistics
    */
@@ -134,57 +164,62 @@ export class PrivacyEngine extends EventEmitter<{
     }
     return null;
   }
-  
+
   /**
    * Get remaining privacy budget
    */
   getRemainingBudget(): number {
     return Math.max(0, this.budget.epsilon - this.consumed);
   }
-  
+
   private calculateSensitivity(update: object): number {
     // Sensitivity analysis for mapping data
     // Worst case: one point changes by max coordinate value
     return 1.0; // Normalized sensitivity
   }
-  
+
   private computeNoiseScale(sensitivity: number): number {
     // Gaussian mechanism: sigma = sensitivity * sqrt(2 * ln(1.25/delta)) / epsilon
-    if (this.budget.mechanism === 'gaussian') {
-      const sigma = sensitivity * Math.sqrt(2 * Math.log(1.25 / this.budget.delta)) / this.budget.epsilon;
+    if (this.budget.mechanism === "gaussian") {
+      const sigma =
+        (sensitivity * Math.sqrt(2 * Math.log(1.25 / this.budget.delta))) /
+        this.budget.epsilon;
       return sigma * (this.budget.epsilon / this.getRemainingBudget()); // Adaptive scaling
     } else {
       // Laplace mechanism: b = sensitivity / epsilon
       return sensitivity / this.budget.epsilon;
     }
   }
-  
+
   private generateNoise(scale: number, dimension: number): Float64Array {
     // Use GPU acceleration if available
     if (this.gpuAccelerator) {
       try {
-        if (this.budget.mechanism === 'gaussian') {
+        if (this.budget.mechanism === "gaussian") {
           return this.gpuAccelerator.generateGaussianNoise(dimension, scale);
         } else {
           return this.gpuAccelerator.generateLaplaceNoise(dimension, scale);
         }
       } catch (e) {
-        console.warn('GPU acceleration failed for noise generation, falling back to CPU', e);
+        console.warn(
+          "GPU acceleration failed for noise generation, falling back to CPU",
+          e
+        );
         // Fall through to CPU implementation
       }
     }
-    
+
     // CPU fallback
     const noise = new Float64Array(dimension);
-    
-    if (this.budget.mechanism === 'gaussian') {
+
+    if (this.budget.mechanism === "gaussian") {
       // Box-Muller transform for Gaussian noise
       for (let i = 0; i < dimension; i += 2) {
         const u1 = Math.random();
         const u2 = Math.random();
         const z0 = Math.sqrt(-2 * Math.log(u1)) * Math.cos(2 * Math.PI * u2);
         const z1 = Math.sqrt(-2 * Math.log(u1)) * Math.sin(2 * Math.PI * u2);
-        
+
         noise[i] = z0 * scale;
         if (i + 1 < dimension) noise[i + 1] = z1 * scale;
       }
@@ -195,22 +230,25 @@ export class PrivacyEngine extends EventEmitter<{
         noise[i] = -scale * Math.sign(u) * Math.log(1 - 2 * Math.abs(u));
       }
     }
-    
+
     return noise;
   }
-  
-  private addNoiseToPointCloud(pointCloud: Uint8Array, noise: Float64Array): Uint8Array {
+
+  private addNoiseToPointCloud(
+    pointCloud: Uint8Array,
+    noise: Float64Array
+  ): Uint8Array {
     // Convert point cloud to float array, add noise, convert back
     const floats = new Float64Array(pointCloud.buffer);
     const result = new Float64Array(floats.length);
-    
+
     for (let i = 0; i < floats.length; i++) {
       result[i] = floats[i] + (noise[i % noise.length] || 0);
     }
-    
+
     return new Uint8Array(result.buffer);
   }
-  
+
   private averageMagnitude(noise: Float64Array): number {
     let sum = 0;
     for (let i = 0; i < noise.length; i++) {
@@ -218,12 +256,15 @@ export class PrivacyEngine extends EventEmitter<{
     }
     return sum / noise.length;
   }
-  
-  private computeEpsilonConsumed(sensitivity: number, noiseScale: number): number {
+
+  private computeEpsilonConsumed(
+    sensitivity: number,
+    noiseScale: number
+  ): number {
     // Simplified composition theorem
     return (sensitivity / noiseScale) * 0.1; // Per-update epsilon
   }
-  
+
   private async generatePrivacyProof(
     original: object,
     noise: Float64Array,
@@ -236,22 +277,22 @@ export class PrivacyEngine extends EventEmitter<{
       noiseHash: this.hashNoise(noise),
       timestamp: Date.now(),
     });
-    
+
     return sodium.to_hex(sodium.crypto_generichash(32, data, null));
   }
-  
+
   private hashNoise(noise: Float64Array): string {
     const bytes = new Uint8Array(noise.buffer);
     return sodium.to_hex(sodium.crypto_generichash(32, bytes, null));
   }
-  
+
   async destroy(): Promise<void> {
     // Clean up GPU resources
     if (this.gpuAccelerator) {
       this.gpuAccelerator.destroy();
       this.gpuAccelerator = null;
     }
-    
+
     // Secure cleanup
     this.consumed = 0;
     this.noiseMagnitudes = [];
@@ -259,7 +300,12 @@ export class PrivacyEngine extends EventEmitter<{
 }
 
 // Export GPU acceleration utilities
-export { GPUNoiseGenerator, AcceleratorDetector, type AcceleratorType, type AccelerationStats } from './gpu-acceleration.js';
+export {
+  GPUNoiseGenerator,
+  AcceleratorDetector,
+  type AcceleratorType,
+  type AccelerationStats,
+} from "./gpu-acceleration.js";
 
 // Export compression integration
 export {
@@ -267,5 +313,5 @@ export {
   createCompressionHook,
   type CompressionIntegrationConfig,
   type CompressionIntegrationStats,
-  type CompressionResult
-} from './compression-integration.js';
+  type CompressionResult,
+} from "./compression-integration.js";

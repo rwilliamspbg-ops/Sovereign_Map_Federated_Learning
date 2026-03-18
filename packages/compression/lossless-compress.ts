@@ -14,7 +14,7 @@ export class ZstdStubCodec implements CompressionCodec {
    */
   compress(data: Uint8Array): Uint8Array {
     // Basic RLE or dictionary fallback
-    return data; 
+    return data;
   }
 
   decompress(data: Uint8Array): Uint8Array {
@@ -32,7 +32,7 @@ export function fullGradientCompress(
 ): Uint8Array {
   // Convert Int8Array to Uint8Array
   const u8 = new Uint8Array(intData.buffer);
-  
+
   // Apply final lossless compression
   return codec.compress(u8);
 }

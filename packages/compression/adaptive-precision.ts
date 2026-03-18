@@ -3,7 +3,7 @@
  * Combines Differential Privacy guarantees with quantized gradient precision.
  */
 
-import { quantizeGradients, QuantizationParams } from './quantization';
+import { quantizeGradients, QuantizationParams } from "./quantization";
 
 /**
  * 1. Calculate clipping threshold C based on previous rounds
@@ -20,9 +20,12 @@ export function addDPNoiseQuantized(
   // Step 1: Clip
   const clippedGradients = new Float32Array(gradients.length);
   // Simple clipping:
-  for(let i=0; i<gradients.length; i++) {
+  for (let i = 0; i < gradients.length; i++) {
     // Basic clamping for demo
-    clippedGradients[i] = Math.max(-clippingThreshold, Math.min(clippingThreshold, gradients[i]));
+    clippedGradients[i] = Math.max(
+      -clippingThreshold,
+      Math.min(clippingThreshold, gradients[i])
+    );
   }
 
   // Step 2: Determine appropriate variance
@@ -38,7 +41,11 @@ export function addDPNoiseQuantized(
   }
 
   // Step 3: Quantize
-  return quantizeGradients(noisy, -clippingThreshold * 1.5, clippingThreshold * 1.5);
+  return quantizeGradients(
+    noisy,
+    -clippingThreshold * 1.5,
+    clippingThreshold * 1.5
+  );
 }
 
 // Simple Box-Muller transform for Gaussian Generation

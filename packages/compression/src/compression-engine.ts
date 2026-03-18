@@ -1,11 +1,11 @@
 /**
  * Privacy-Aware Data Compression Module
- * 
+ *
  * Implements quantization + lossless compression to reduce bandwidth
  * while maintaining differential privacy guarantees (SGP-001)
- * 
+ *
  * Target: 10× bandwidth reduction with <12% privacy overhead
- * 
+ *
  * Compression Pipeline:
  * 1. Original data (32-bit floats, M bytes)
  * 2. Quantization (8-16 bits, M/2-M/4 bytes)
@@ -14,29 +14,29 @@
  * 5. Result: ~10× size reduction
  */
 
-import { EventEmitter } from 'eventemitter3';
+import { EventEmitter } from "eventemitter3";
 
 /**
  * Quantization types and their characteristics
  */
 export enum QuantizationType {
-  UNIFORM = 'uniform',          // Linear quantization
-  LOGARITHMIC = 'logarithmic',  // Exponential scale (better for gradients)
-  ADAPTIVE = 'adaptive'           // Automatic based on distribution
+  UNIFORM = "uniform", // Linear quantization
+  LOGARITHMIC = "logarithmic", // Exponential scale (better for gradients)
+  ADAPTIVE = "adaptive", // Automatic based on distribution
 }
 
 /**
  * Compression metrics and statistics
  */
 export interface CompressionStats {
-  originalSize: number;           // Bytes before compression
-  compressedSize: number;         // Bytes after compression
-  compressionRatio: number;       // (original - compressed) / original
-  quantizationBits: number;       // Bits per value after quantization
-  quantizationError: number;      // Max absolute error from quantization
-  privacyOverhead: number;        // % overhead for privacy protection
-  compressionTime: number;        // Milliseconds
-  decompressionTime: number;      // Milliseconds
+  originalSize: number; // Bytes before compression
+  compressedSize: number; // Bytes after compression
+  compressionRatio: number; // (original - compressed) / original
+  quantizationBits: number; // Bits per value after quantization
+  quantizationError: number; // Max absolute error from quantization
+  privacyOverhead: number; // % overhead for privacy protection
+  compressionTime: number; // Milliseconds
+  decompressionTime: number; // Milliseconds
 }
 
 /**
@@ -49,7 +49,10 @@ export class Quantizer {
   private scale: number;
   private quantType: QuantizationType;
 
-  constructor(bits: number = 8, type: QuantizationType = QuantizationType.UNIFORM) {
+  constructor(
+    bits: number = 8,
+    type: QuantizationType = QuantizationType.UNIFORM
+  ) {
     if (bits < 1 || bits > 32) {
       throw new Error(`Quantization bits must be 1-32, got ${bits}`);
     }
@@ -72,7 +75,7 @@ export class Quantizer {
       this.maxValue = Math.max(...data);
     } else if (this.quantType === QuantizationType.LOGARITHMIC) {
       // For gradients, use log scale
-      const absData = data.map(v => Math.abs(v)).filter(v => v > 0);
+      const absData = data.map((v) => Math.abs(v)).filter((v) => v > 0);
       if (absData.length > 0) {
         const minLog = Math.log10(Math.min(...absData));
         const maxLog = Math.log10(Math.max(...absData));
@@ -155,7 +158,9 @@ export class DeltaEncoder {
   /**
    * Encode values as deltas
    */
-  static encode(values: Uint8Array | Uint16Array | Uint32Array): Uint8Array | Uint16Array | Uint32Array {
+  static encode(
+    values: Uint8Array | Uint16Array | Uint32Array
+  ): Uint8Array | Uint16Array | Uint32Array {
     if (values.length === 0) return values;
 
     const deltas = new (values.constructor as any)(values.length);
@@ -171,7 +176,9 @@ export class DeltaEncoder {
   /**
    * Decode deltas back to values
    */
-  static decode(deltas: Uint8Array | Uint16Array | Uint32Array): Uint8Array | Uint16Array | Uint32Array {
+  static decode(
+    deltas: Uint8Array | Uint16Array | Uint32Array
+  ): Uint8Array | Uint16Array | Uint32Array {
     if (deltas.length === 0) return deltas;
 
     const values = new (deltas.constructor as any)(deltas.length);
@@ -211,7 +218,10 @@ export class CompressionEngine extends EventEmitter {
    * Compress float array with privacy preservation
    * Returns compressed buffer and metadata
    */
-  compress(data: Float32Array | Float64Array, privacyEpsilon?: number): {
+  compress(
+    data: Float32Array | Float64Array,
+    privacyEpsilon?: number
+  ): {
     compressed: Buffer;
     metadata: {
       originalSize: number;
@@ -233,15 +243,15 @@ export class CompressionEngine extends EventEmitter {
       const sample = Array.from(data.slice(0, sampleSize));
       this.quantizer.calibrate(sample);
 
-      this.emit('calibrationComplete', { sampleSize });
+      this.emit("calibrationComplete", { sampleSize });
 
       // Step 2: Quantize
-      const quantType = data instanceof Float32Array ? 'float32' : 'float64';
+      const quantType = data instanceof Float32Array ? "float32" : "float64";
       const quantBits = this.quantizer.getBits();
       const bytesPerValue = Math.ceil(quantBits / 8);
-      
+
       let quantized: Buffer;
-      
+
       if (quantBits <= 8) {
         if (quantBits < 8) {
           // Pack sub-byte quantized values (e.g. 4-bit, 2-bit, 1-bit).
@@ -281,17 +291,17 @@ export class CompressionEngine extends EventEmitter {
         }
       }
 
-      this.emit('quantizationComplete', {
+      this.emit("quantizationComplete", {
         originalSize,
         quantizedSize: quantized.length,
         quantBits,
-        maxError: this.quantizer.getMaxError()
+        maxError: this.quantizer.getMaxError(),
       });
 
       // Step 3: Apply delta encoding if beneficial
       let deltaEncoded = quantized;
       let enableDelta = this.enableDeltaEncoding;
-      
+
       if (enableDelta && quantBits <= 16) {
         try {
           // Simple delta would work here but we keep raw for now
@@ -305,15 +315,17 @@ export class CompressionEngine extends EventEmitter {
       // In production, use native zstd bindings
       const compressed = this.deflateCompress(deltaEncoded);
 
-      this.emit('compressionComplete', {
+      this.emit("compressionComplete", {
         originalSize,
         compressedSize: compressed.length,
-        compressionRatio: (1 - compressed.length / originalSize),
-        compressionTime: performance.now() - startTime
+        compressionRatio: 1 - compressed.length / originalSize,
+        compressionTime: performance.now() - startTime,
       });
 
       const compressionTime = Math.max(0.001, performance.now() - startTime);
-      const privacyOverhead = privacyEpsilon ? Math.min(15, 20 * Math.exp(-privacyEpsilon)) : 0;
+      const privacyOverhead = privacyEpsilon
+        ? Math.min(15, 20 * Math.exp(-privacyEpsilon))
+        : 0;
 
       this.stats = {
         originalSize,
@@ -323,7 +335,7 @@ export class CompressionEngine extends EventEmitter {
         quantizationError: this.quantizer.getMaxError(),
         privacyOverhead,
         compressionTime,
-        decompressionTime: 0
+        decompressionTime: 0,
       };
 
       return {
@@ -335,12 +347,12 @@ export class CompressionEngine extends EventEmitter {
           maxValue: (this.quantizer as any).maxValue,
           dataType: quantType,
           enableDelta,
-          compressionLevel: this.compressionLevel
+          compressionLevel: this.compressionLevel,
         },
-        stats: this.stats
+        stats: this.stats,
       };
     } catch (err) {
-      this.emit('compressionFailed', { error: err });
+      this.emit("compressionFailed", { error: err });
       throw err;
     }
   }
@@ -370,10 +382,12 @@ export class CompressionEngine extends EventEmitter {
       const decompressed = this.deflateDecompress(compressed);
 
       // Step 2: Dequantize
-      const dataLength = metadata.originalSize / (metadata.dataType === 'float32' ? 4 : 8);
-      const result = metadata.dataType === 'float32' 
-        ? new Float32Array(dataLength)
-        : new Float64Array(dataLength);
+      const dataLength =
+        metadata.originalSize / (metadata.dataType === "float32" ? 4 : 8);
+      const result =
+        metadata.dataType === "float32"
+          ? new Float32Array(dataLength)
+          : new Float64Array(dataLength);
 
       if (metadata.quantBits <= 8) {
         if (metadata.quantBits < 8) {
@@ -414,11 +428,11 @@ export class CompressionEngine extends EventEmitter {
         this.stats.decompressionTime = decompressionTime;
       }
 
-      this.emit('decompressionComplete', { decompressionTime });
+      this.emit("decompressionComplete", { decompressionTime });
 
       return result;
     } catch (err) {
-      this.emit('decompressionFailed', { error: err });
+      this.emit("decompressionFailed", { error: err });
       throw err;
     }
   }
@@ -456,7 +470,9 @@ export class CompressionEngine extends EventEmitter {
       }
 
       if (readPos + chunkSize > compressed.length) {
-        throw new Error('Corrupted compressed buffer: chunk exceeds input length');
+        throw new Error(
+          "Corrupted compressed buffer: chunk exceeds input length"
+        );
       }
 
       const chunk = compressed.slice(readPos, readPos + chunkSize);
@@ -475,10 +491,10 @@ export class CompressionEngine extends EventEmitter {
     const quantBits = this.quantizer.getBits();
     const originalBitsPerValue = data instanceof Float32Array ? 32 : 64;
     const quantizedBitsPerValue = quantBits;
-    
+
     // Assume 20% additional compression from deflate
     const deflateRatio = 0.8;
-    
+
     return (quantizedBitsPerValue / originalBitsPerValue) * deflateRatio;
   }
 
@@ -496,7 +512,7 @@ export class CompressionEngine extends EventEmitter {
     try {
       const minSize = 10; // Minimum reasonable size
       const maxSize = metadata.originalSize * 2; // Shouldn't expand more than 2×
-      
+
       return compressed.length >= minSize && compressed.length <= maxSize;
     } catch {
       return false;
@@ -535,7 +551,10 @@ export class PrivacyAwareCompression {
     privacySpent: number;
     stats: CompressionStats;
   } {
-    const { compressed, metadata, stats } = this.engine.compress(gradient, epsilonRemaining);
+    const { compressed, metadata, stats } = this.engine.compress(
+      gradient,
+      epsilonRemaining
+    );
 
     // Compression itself doesn't consume epsilon (it's post-privacy projection)
     // But we track the privacy overhead of quantization error
@@ -547,17 +566,14 @@ export class PrivacyAwareCompression {
       compressed,
       metadata,
       privacySpent,
-      stats
+      stats,
     };
   }
 
   /**
    * Decompress with privacy preservation
    */
-  decompressUpdate(
-    compressed: Buffer,
-    metadata: any
-  ): Float32Array {
+  decompressUpdate(compressed: Buffer, metadata: any): Float32Array {
     return this.engine.decompress(compressed, metadata) as Float32Array;
   }
 
@@ -569,17 +585,18 @@ export class PrivacyAwareCompression {
 
     const n = this.compressionHistory.length;
     const sumStat = (key: keyof CompressionStats) =>
-      this.compressionHistory.reduce((sum, s) => sum + (s[key] as number), 0) / n;
+      this.compressionHistory.reduce((sum, s) => sum + (s[key] as number), 0) /
+      n;
 
     return {
-      originalSize: sumStat('originalSize'),
-      compressedSize: sumStat('compressedSize'),
-      compressionRatio: sumStat('compressionRatio'),
-      quantizationBits: sumStat('quantizationBits'),
-      quantizationError: sumStat('quantizationError'),
-      privacyOverhead: sumStat('privacyOverhead'),
-      compressionTime: sumStat('compressionTime'),
-      decompressionTime: sumStat('decompressionTime')
+      originalSize: sumStat("originalSize"),
+      compressedSize: sumStat("compressedSize"),
+      compressionRatio: sumStat("compressionRatio"),
+      quantizationBits: sumStat("quantizationBits"),
+      quantizationError: sumStat("quantizationError"),
+      privacyOverhead: sumStat("privacyOverhead"),
+      compressionTime: sumStat("compressionTime"),
+      decompressionTime: sumStat("decompressionTime"),
     };
   }
 
@@ -592,15 +609,21 @@ export class PrivacyAwareCompression {
     bytesSaved: number;
     percentSaved: number;
   } {
-    const totalOriginal = this.compressionHistory.reduce((sum, s) => sum + s.originalSize, 0);
-    const totalCompressed = this.compressionHistory.reduce((sum, s) => sum + s.compressedSize, 0);
+    const totalOriginal = this.compressionHistory.reduce(
+      (sum, s) => sum + s.originalSize,
+      0
+    );
+    const totalCompressed = this.compressionHistory.reduce(
+      (sum, s) => sum + s.compressedSize,
+      0
+    );
     const bytesSaved = totalOriginal - totalCompressed;
 
     return {
       totalOriginal,
       totalCompressed,
       bytesSaved,
-      percentSaved: totalOriginal > 0 ? (bytesSaved / totalOriginal) * 100 : 0
+      percentSaved: totalOriginal > 0 ? (bytesSaved / totalOriginal) * 100 : 0,
     };
   }
 }

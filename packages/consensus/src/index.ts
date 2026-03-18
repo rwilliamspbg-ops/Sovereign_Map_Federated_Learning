@@ -3,8 +3,8 @@
  * 55.5% malicious node resilience
  */
 
-import { EventEmitter } from 'eventemitter3';
-import type { Logger } from 'pino';
+import { EventEmitter } from "eventemitter3";
+import type { Logger } from "pino";
 
 export interface ConsensusConfig {
   nodeId: string;
@@ -20,7 +20,7 @@ export class ConsensusParticipant extends EventEmitter {
   private votes: Map<string, Set<string>> = new Map();
   private network: any;
   private logger: Logger;
-  private state: 'idle' | 'proposing' | 'voting' | 'committed' = 'idle';
+  private state: "idle" | "proposing" | "voting" | "committed" = "idle";
 
   constructor(config: { nodeId: string; network: any; logger: Logger }) {
     super();
@@ -28,30 +28,30 @@ export class ConsensusParticipant extends EventEmitter {
       nodeId: config.nodeId,
       totalNodes: 200,
       byzantineRatio: 0.555,
-      quorumSize: 134 // ⌈(2*200/3)⌉ + 1
+      quorumSize: 134, // ⌈(2*200/3)⌉ + 1
     };
     this.network = config.network;
     this.logger = config.logger;
   }
 
   async initialize(): Promise<void> {
-    this.logger.info('Initializing consensus participant');
-    
+    this.logger.info("Initializing consensus participant");
+
     // Listen for consensus messages
-    this.network.on('message', (msg: any) => {
-      if (msg.type === 'CONSENSUS_PROPOSAL') {
+    this.network.on("message", (msg: any) => {
+      if (msg.type === "CONSENSUS_PROPOSAL") {
         this.handleProposal(msg);
-      } else if (msg.type === 'CONSENSUS_VOTE') {
+      } else if (msg.type === "CONSENSUS_VOTE") {
         this.handleVote(msg);
       }
     });
 
-    this.emit('ready');
+    this.emit("ready");
   }
 
   async submitUpdate(roundId: string, update: any): Promise<any> {
     this.currentRound++;
-    this.state = 'proposing';
+    this.state = "proposing";
 
     const proposal = {
       id: `proposal-${this.currentRound}`,
@@ -59,15 +59,15 @@ export class ConsensusParticipant extends EventEmitter {
       proposer: this.config.nodeId,
       update,
       timestamp: Date.now(),
-      proof: await this.generateProof(update)
+      proof: await this.generateProof(update),
     };
 
-    this.logger.info({ proposalId: proposal.id }, 'Submitting proposal');
+    this.logger.info({ proposalId: proposal.id }, "Submitting proposal");
 
     // Broadcast proposal
     await this.network.broadcast({
-      type: 'CONSENSUS_PROPOSAL',
-      proposal
+      type: "CONSENSUS_PROPOSAL",
+      proposal,
     });
 
     this.proposals.set(proposal.id, proposal);
@@ -75,43 +75,48 @@ export class ConsensusParticipant extends EventEmitter {
     // Collect votes with timeout
     const result = await this.collectVotes(proposal.id, 30000); // 30s timeout
 
-    this.state = result.reached ? 'committed' : 'idle';
+    this.state = result.reached ? "committed" : "idle";
 
     return {
       accepted: result.reached,
       roundId,
       reward: result.reached ? this.calculateReward() : 0,
-      votes: result.votes
+      votes: result.votes,
     };
   }
 
   async leave(): Promise<void> {
-    this.logger.info('Leaving consensus');
+    this.logger.info("Leaving consensus");
     await this.network.broadcast({
-      type: 'CONSENSUS_LEAVE',
-      nodeId: this.config.nodeId
+      type: "CONSENSUS_LEAVE",
+      nodeId: this.config.nodeId,
     });
   }
 
   private async generateProof(update: any): Promise<string> {
     // Simulated ZK proof generation
     // In production, integrate snarkjs, circom, or similar ZK library
-    
+
     // Create deterministic proof based on update hash
     const updateHash = JSON.stringify(update);
     const timestamp = Date.now();
     const randomness = Math.random().toString(36).substr(2, 9);
-    
+
     // Simulate computational delay for proof generation
-    await new Promise(resolve => setTimeout(resolve, 100 + Math.random() * 200));
-    
+    await new Promise((resolve) =>
+      setTimeout(resolve, 100 + Math.random() * 200)
+    );
+
     // Generate proof string (placeholder format)
     const proof = `zkp-${timestamp}-${randomness}-${updateHash.slice(0, 16)}`;
-    
+
     return proof;
   }
 
-  private async collectVotes(proposalId: string, timeout: number): Promise<any> {
+  private async collectVotes(
+    proposalId: string,
+    timeout: number
+  ): Promise<any> {
     return new Promise((resolve) => {
       const votes = new Set<string>();
       votes.add(this.config.nodeId); // Self vote
@@ -124,17 +129,17 @@ export class ConsensusParticipant extends EventEmitter {
 
       // Listen for votes
       const voteHandler = (msg: any) => {
-        if (msg.type === 'CONSENSUS_VOTE' && msg.proposalId === proposalId) {
+        if (msg.type === "CONSENSUS_VOTE" && msg.proposalId === proposalId) {
           votes.add(msg.voter);
           checkQuorum();
         }
       };
 
-      this.network.on('message', voteHandler);
+      this.network.on("message", voteHandler);
 
       // Timeout
       setTimeout(() => {
-        this.network.off('message', voteHandler);
+        this.network.off("message", voteHandler);
         resolve({ reached: false, votes: votes.size });
       }, timeout);
 
@@ -143,17 +148,17 @@ export class ConsensusParticipant extends EventEmitter {
   }
 
   private handleProposal(msg: any): void {
-    this.logger.debug({ proposalId: msg.proposal.id }, 'Received proposal');
-    
+    this.logger.debug({ proposalId: msg.proposal.id }, "Received proposal");
+
     // Validate and vote
     const valid = this.validateProposal(msg.proposal);
-    
+
     if (valid) {
       this.network.broadcast({
-        type: 'CONSENSUS_VOTE',
+        type: "CONSENSUS_VOTE",
         proposalId: msg.proposal.id,
         voter: this.config.nodeId,
-        timestamp: Date.now()
+        timestamp: Date.now(),
       });
     }
   }
@@ -186,34 +191,34 @@ export class HierarchicalAggregator extends EventEmitter {
   }
 
   async start(): Promise<void> {
-    this.logger.info({ tier: this.config.tier }, 'Starting aggregator');
+    this.logger.info({ tier: this.config.tier }, "Starting aggregator");
     this.running = true;
-    this.emit('started');
+    this.emit("started");
   }
 
   async stop(): Promise<void> {
-    this.logger.info('Stopping aggregator');
+    this.logger.info("Stopping aggregator");
     this.running = false;
-    this.emit('stopped');
+    this.emit("stopped");
   }
 
   async aggregate(updates: any[]): Promise<any> {
-    this.logger.info({ count: updates.length }, 'Aggregating updates');
-    
+    this.logger.info({ count: updates.length }, "Aggregating updates");
+
     // Weighted averaging
     const aggregated = {
-      weights: this.averageWeights(updates.map(u => u.weights)),
+      weights: this.averageWeights(updates.map((u) => u.weights)),
       samples: updates.reduce((sum, u) => sum + (u.samples || 0), 0),
-      contributors: updates.map(u => u.nodeId)
+      contributors: updates.map((u) => u.nodeId),
     };
 
-    this.emit('aggregate', updates);
+    this.emit("aggregate", updates);
     return aggregated;
   }
 
   private averageWeights(weights: Float64Array[]): Float64Array {
     if (weights.length === 0) return new Float64Array();
-    
+
     const result = new Float64Array(weights[0].length);
     for (const w of weights) {
       for (let i = 0; i < w.length; i++) {

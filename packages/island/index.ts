@@ -1,13 +1,13 @@
 /**
  * Island Mode Manager
- * 
+ *
  * Enables autonomous operation when network connectivity is lost.
  * Features tamper-evident state logging and automatic reconciliation.
  */
 
-import { Level } from 'level';
-import { ulid } from 'ulid';
-import { createHash, createSign } from 'crypto';
+import { Level } from "level";
+import { ulid } from "ulid";
+import { createHash, createSign } from "crypto";
 
 export interface IslandModeConfig {
   enabled: boolean;
@@ -24,7 +24,7 @@ export interface QueuedUpdate {
 }
 
 export interface IslandStatus {
-  mode: 'online' | 'island';
+  mode: "online" | "island";
   updatesQueued: number;
   lastSync: number;
   storageUsed: number;
@@ -35,25 +35,24 @@ export interface IslandStatus {
  * Tamper-evident state manager for offline operation
  */
 export class IslandModeManager {
-  
   private db: Level<string, string>;
   private config: IslandModeConfig;
   private updateChain: string[] = []; // Hash chain for tamper detection
   private sequenceNumber: number = 0;
-  private lastHash: string = 'genesis';
+  private lastHash: string = "genesis";
   private approximateStorageBytes: number = 0;
-  
+
   constructor(config: IslandModeConfig) {
     this.config = config;
-    this.db = new Level(config.storagePath, { valueEncoding: 'json' });
+    this.db = new Level(config.storagePath, { valueEncoding: "json" });
   }
-  
+
   async initialize(): Promise<void> {
     await this.db.open();
-    
+
     // Load chain state if exists
     try {
-      const saved = await this.db.get('__chain_state__');
+      const saved = await this.db.get("__chain_state__");
       const state = JSON.parse(saved);
       this.sequenceNumber = state.sequenceNumber;
       this.lastHash = state.lastHash;
@@ -63,17 +62,20 @@ export class IslandModeManager {
       await this.initializeChain();
     }
   }
-  
+
   /**
    * Queue an update while in Island Mode
    */
-  async queueUpdate(update: object, proof: string): Promise<{ id: string; position: number }> {
+  async queueUpdate(
+    update: object,
+    proof: string
+  ): Promise<{ id: string; position: number }> {
     if (!this.config.enabled) {
-      throw new Error('Island Mode not enabled');
+      throw new Error("Island Mode not enabled");
     }
-    
+
     this.sequenceNumber++;
-    
+
     // Create tamper-evident entry
     const entry: QueuedUpdate = {
       id: ulid(),
@@ -82,48 +84,53 @@ export class IslandModeManager {
       proof,
       sequenceNumber: this.sequenceNumber,
     };
-    
+
     // Compute hash chain
     const entryHash = this.hashEntry(entry);
     const chainedHash = this.computeChainedHash(entryHash, this.lastHash);
-    
+
     // Store with hash chain
-    await this.db.put(`update:${entry.id}`, JSON.stringify({
-      ...entry,
-      chainedHash,
-      previousHash: this.lastHash,
-    }));
-    
+    await this.db.put(
+      `update:${entry.id}`,
+      JSON.stringify({
+        ...entry,
+        chainedHash,
+        previousHash: this.lastHash,
+      })
+    );
+
     // Update chain state
     this.updateChain.push(chainedHash);
     this.lastHash = chainedHash;
     this.approximateStorageBytes += JSON.stringify(entry).length;
     await this.saveChainState();
-    
+
     return { id: entry.id, position: this.sequenceNumber };
   }
-  
+
   /**
    * Sync queued updates when connectivity restored
    */
   async sync(): Promise<SyncResult> {
     const updates: QueuedUpdate[] = [];
-    const stream = this.db.iterator({ gt: 'update:', lt: 'update:~' });
-    
+    const stream = this.db.iterator({ gt: "update:", lt: "update:~" });
+
     for await (const [key, value] of stream) {
       const parsed = JSON.parse(value);
       updates.push(parsed);
     }
-    
+
     // Verify chain integrity before sync
     const integrity = this.verifyChainIntegrity(updates);
     if (!integrity.valid) {
-      throw new Error(`Chain integrity violated at position ${integrity.violationAt}`);
+      throw new Error(
+        `Chain integrity violated at position ${integrity.violationAt}`
+      );
     }
-    
+
     // Sort by sequence number
     updates.sort((a, b) => a.sequenceNumber - b.sequenceNumber);
-    
+
     return {
       updatesQueued: updates.length,
       updates: updates,
@@ -131,31 +138,37 @@ export class IslandModeManager {
       syncDuration: 0, // To be filled by caller
     };
   }
-  
+
   /**
    * Flush storage after successful sync
    */
   async flush(): Promise<void> {
     const batch = this.db.batch();
-    
-    for await (const [key] of this.db.iterator({ gt: 'update:', lt: 'update:~' })) {
+
+    for await (const [key] of this.db.iterator({
+      gt: "update:",
+      lt: "update:~",
+    })) {
       batch.del(key);
     }
-    
+
     // Reset chain
     this.sequenceNumber = 0;
     this.updateChain = [];
-    this.lastHash = 'genesis';
+    this.lastHash = "genesis";
     this.approximateStorageBytes = 0;
-    batch.put('__chain_state__', JSON.stringify({
-      sequenceNumber: 0,
-      lastHash: 'genesis',
-      chain: [],
-    }));
-    
+    batch.put(
+      "__chain_state__",
+      JSON.stringify({
+        sequenceNumber: 0,
+        lastHash: "genesis",
+        chain: [],
+      })
+    );
+
     await batch.write();
   }
-  
+
   /**
    * Verify local chain hasn't been tampered with
    */
@@ -163,65 +176,77 @@ export class IslandModeManager {
     const updates = await this.getAllUpdates();
     return this.verifyChainIntegrity(updates).valid;
   }
-  
+
   getStatus(): IslandStatus {
     return {
-      mode: 'online', // Updated by caller based on connectivity
+      mode: "online", // Updated by caller based on connectivity
       updatesQueued: this.sequenceNumber,
       lastSync: Date.now(), // Last successful sync timestamp
       storageUsed: this.calculateStorageUsed(),
       chainIntegrity: this.updateChain.length === this.sequenceNumber,
     };
   }
-  
+
   private calculateStorageUsed(): number {
     // Approximate bytes tracked as updates are queued.
     return this.approximateStorageBytes;
   }
-  
+
   private async initializeChain(): Promise<void> {
-    await this.db.put('__chain_state__', JSON.stringify({
-      sequenceNumber: 0,
-      lastHash: 'genesis',
-      chain: [],
-    }));
+    await this.db.put(
+      "__chain_state__",
+      JSON.stringify({
+        sequenceNumber: 0,
+        lastHash: "genesis",
+        chain: [],
+      })
+    );
   }
-  
+
   private hashEntry(entry: QueuedUpdate): string {
-    return createHash('sha256')
-      .update(JSON.stringify(entry))
-      .digest('hex');
+    return createHash("sha256").update(JSON.stringify(entry)).digest("hex");
   }
-  
+
   private computeChainedHash(entryHash: string, previousHash: string): string {
-    return createHash('sha256')
+    return createHash("sha256")
       .update(entryHash + previousHash)
-      .digest('hex');
+      .digest("hex");
   }
-  
+
   private async saveChainState(): Promise<void> {
-    await this.db.put('__chain_state__', JSON.stringify({
-      sequenceNumber: this.sequenceNumber,
-      lastHash: this.lastHash,
-      chain: this.updateChain,
-    }));
+    await this.db.put(
+      "__chain_state__",
+      JSON.stringify({
+        sequenceNumber: this.sequenceNumber,
+        lastHash: this.lastHash,
+        chain: this.updateChain,
+      })
+    );
   }
-  
+
   private async getAllUpdates(): Promise<any[]> {
     const updates = [];
-    for await (const [, value] of this.db.iterator({ gt: 'update:', lt: 'update:~' })) {
+    for await (const [, value] of this.db.iterator({
+      gt: "update:",
+      lt: "update:~",
+    })) {
       updates.push(JSON.parse(value));
     }
     return updates;
   }
-  
-  private verifyChainIntegrity(updates: any[]): { valid: boolean; violationAt?: number } {
-    const ordered = [...updates].sort((a, b) => a.sequenceNumber - b.sequenceNumber);
-    let expectedPrevious = 'genesis';
-    
+
+  private verifyChainIntegrity(updates: any[]): {
+    valid: boolean;
+    violationAt?: number;
+  } {
+    const ordered = [...updates].sort(
+      (a, b) => a.sequenceNumber - b.sequenceNumber
+    );
+    let expectedPrevious = "genesis";
+
     for (let i = 0; i < ordered.length; i++) {
       const update = ordered[i];
-      
+
       if (update.previousHash !== expectedPrevious) {
         return { valid: false, violationAt: i };
       }
@@ -233,20 +258,20 @@ export class IslandModeManager {
         proof: update.proof,
         sequenceNumber: update.sequenceNumber,
       };
-      
+
       // Verify hash computation
       const recomputed = this.computeChainedHash(
         this.hashEntry(canonical),
         update.previousHash
       );
-      
+
       if (recomputed !== update.chainedHash) {
         return { valid: false, violationAt: i };
       }
-      
+
       expectedPrevious = update.chainedHash;
     }
-    
+
     return { valid: true };
   }
 }
