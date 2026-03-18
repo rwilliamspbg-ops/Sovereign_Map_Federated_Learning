@@ -423,3 +423,36 @@ pre {
     flex: 1;
   }
 }
+
+.network-telemetry-panel {
+  border: 1px solid var(--neon-cyan);
+  background: rgba(0, 0, 0, 0.4);
+}
+
+.telemetry-grid {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  margin-top: 10px;
+}
+
+.telemetry-item {
+  display: flex;
+  justify-content: space-between;
+  border-bottom: 1px dashed rgba(255, 255, 255, 0.2);
+  padding-bottom: 0.25rem;
+}
+
+.telemetry-label {
+  color: var(--neon-secondary);
+  font-family: 'Orbitron', sans-serif;
+  font-size: 0.85rem;
+}
+
+.telemetry-value {
+  font-weight: bold;
+}
+
+.highlight-cyan { color: var(--neon-cyan); }
+.highlight-green { color: #0f0; }
+.highlight-yellow { color: #fe0; }
