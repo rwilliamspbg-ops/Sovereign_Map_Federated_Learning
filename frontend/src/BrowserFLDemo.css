@@ -48,6 +48,18 @@
   border: 1px solid #f2cc5c;
 }
 
+.badge-sync {
+  background: #d0ebff;
+  color: #0c5ba6;
+  border: 1px solid #5dade2;
+}
+
+.badge-offline {
+  background: #ffe0e0;
+  color: #a61e4d;
+  border: 1px solid #f08080;
+}
+
 .demo-layout {
   display: grid;
   grid-template-columns: minmax(250px, 310px) minmax(0, 1fr);

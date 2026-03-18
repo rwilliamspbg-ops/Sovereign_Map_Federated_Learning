@@ -15,6 +15,7 @@ import './BrowserFLDemo.css';
 
 const MAX_POINTS = 120;
 const DEFAULT_ROUNDS = 50;
+const API_BASE = import.meta.env.VITE_HUD_API_BASE || (import.meta.env.DEV ? '/backend' : 'http://localhost:8000');
 
 function clamp(value, min, max) {
   return Math.max(min, Math.min(max, value));
@@ -24,7 +25,7 @@ function randomFloat(min, max) {
   return min + Math.random() * (max - min);
 }
 
-export default function BrowserFLDemo() {
+export default function BrowserFLDemo({ enableBackendMetrics = false }) {
   const [participants, setParticipants] = useState(120);
   const [localEpochs, setLocalEpochs] = useState(2);
   const [targetRounds, setTargetRounds] = useState(DEFAULT_ROUNDS);
@@ -43,6 +44,11 @@ export default function BrowserFLDemo() {
   const [bandwidthKB, setBandwidthKB] = useState(0);
 
   const [history, setHistory] = useState([]);
+  
+  // Backend metrics integration
+  const [backendMetrics, setBackendMetrics] = useState(null);
+  const [usingBackendData, setUsingBackendData] = useState(false);
+  const [backendError, setBackendError] = useState(null);
 
   useEffect(() => {
     const detectWebGPU = async () => {
@@ -60,6 +66,31 @@ export default function BrowserFLDemo() {
 
     detectWebGPU();
   }, []);
+
+  // Fetch backend metrics if enabled
+  useEffect(() => {
+    if (!enableBackendMetrics) return undefined;
+
+    const fetchBackendMetrics = async () => {
+      try {
+        const response = await fetch(`${API_BASE}/metrics_summary`);
+        if (response.ok) {
+          const metrics = await response.json();
+          setBackendMetrics(metrics);
+          setUsingBackendData(true);
+          setBackendError(null);
+        }
+      } catch (err) {
+        console.warn('Failed to fetch backend metrics:', err);
+        setBackendError('Backend metrics unavailable');
+        setUsingBackendData(false);
+      }
+    };
+
+    fetchBackendMetrics();
+    const interval = setInterval(fetchBackendMetrics, 5000); // Poll every 5s
+    return () => clearInterval(interval);
+  }, [enableBackendMetrics]);
 
   useEffect(() => {
     if (!running) return undefined;
@@ -172,10 +203,17 @@ export default function BrowserFLDemo() {
           <h2>Browser Federated Learning Studio</h2>
           <p>
             Interactive simulation of local training, privacy noise, gradient compression, and
-            network bandwidth tradeoffs.
+            network bandwidth tradeoffs.{usingBackendData ? ' (Real network metrics enabled)' : ''}
           </p>
         </div>
-        <div className={`runtime-badge ${backendClass}`}>{backendLabel}</div>
+        <div style={{ display: 'flex', gap: '8px' }}>
+          <div className={`runtime-badge ${backendClass}`}>{backendLabel}</div>
+          {enableBackendMetrics && (
+            <div className={`runtime-badge ${usingBackendData ? 'badge-sync' : 'badge-offline'}`}>
+              {usingBackendData ? '🔄 Network Live' : '⚠️ Simulation Only'}
+            </div>
+          )}
+        </div>
       </div>
 
       <div className="demo-layout">
