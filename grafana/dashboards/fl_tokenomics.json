@@ -83,11 +83,11 @@
       },
       "targets": [
         {
-          "expr": "fl_dp_noise_multiplier",
+          "expr": "tokenomics_staked_collateral",
           "refId": "A"
         }
       ],
-      "title": "DP Gaussian Noise Level (Sigma)",
+      "title": "Staked Collateral Over Time",
       "type": "timeseries"
     },
     {
@@ -164,11 +164,11 @@
       },
       "targets": [
         {
-          "expr": "fl_quantization_bits",
+          "expr": "tokenomics_wallet_balance",
           "refId": "A"
         }
       ],
-      "title": "Quantization Bit Depth",
+      "title": "Wallet Token Balances",
       "type": "timeseries"
     },
     {
@@ -245,11 +245,11 @@
       },
       "targets": [
         {
-          "expr": "fl_tee_attestation_failures_total",
+          "expr": "tokenomics_contributions_total",
           "refId": "A"
         }
       ],
-      "title": "Enclave Attestation Failures",
+      "title": "Model Contributions (Int8)",
       "type": "timeseries"
     }
   ],
@@ -257,7 +257,7 @@
   "schemaVersion": 38,
   "style": "dark",
   "tags": [
-    "fl-privacy-&-security"
+    "tokenomics-overview"
   ],
   "templating": {
     "list": []
@@ -268,7 +268,7 @@
   },
   "timepicker": {},
   "timezone": "",
-  "title": "FL Privacy & Security",
-  "uid": "priv-1",
+  "title": "Tokenomics Overview",
+  "uid": "tok-1",
   "version": 1
 }
