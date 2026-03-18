@@ -162,7 +162,7 @@ export class DeltaEncoder {
     deltas[0] = values[0];
 
     for (let i = 1; i < values.length; i++) {
-      deltas[i] = (values[i] - values[i - 1]) & ((1 << 32) - 1);
+      deltas[i] = values[i] - values[i - 1];
     }
 
     return deltas;
@@ -178,7 +178,7 @@ export class DeltaEncoder {
     values[0] = deltas[0];
 
     for (let i = 1; i < deltas.length; i++) {
-      values[i] = (values[i - 1] + deltas[i]) & ((1 << 32) - 1);
+      values[i] = values[i - 1] + deltas[i];
     }
 
     return values;
@@ -224,7 +224,7 @@ export class CompressionEngine extends EventEmitter {
     };
     stats: CompressionStats;
   }> {
-    const startTime = Date.now();
+    const startTime = performance.now();
     const originalSize = data.byteLength;
 
     try {
@@ -243,9 +243,29 @@ export class CompressionEngine extends EventEmitter {
       let quantized: Buffer;
       
       if (quantBits <= 8) {
-        quantized = Buffer.allocUnsafe(data.length);
-        for (let i = 0; i < data.length; i++) {
-          quantized[i] = this.quantizer.quantize(data[i]);
+        if (quantBits < 8) {
+          // Pack sub-byte quantized values (e.g. 4-bit, 2-bit, 1-bit).
+          quantized = Buffer.alloc(Math.ceil((data.length * quantBits) / 8));
+          const mask = (1 << quantBits) - 1;
+          let bitOffset = 0;
+
+          for (let i = 0; i < data.length; i++) {
+            const q = this.quantizer.quantize(data[i]) & mask;
+            const byteIndex = Math.floor(bitOffset / 8);
+            const bitIndex = bitOffset % 8;
+
+            quantized[byteIndex] |= q << bitIndex;
+            if (bitIndex + quantBits > 8) {
+              quantized[byteIndex + 1] |= q >> (8 - bitIndex);
+            }
+
+            bitOffset += quantBits;
+          }
+        } else {
+          quantized = Buffer.allocUnsafe(data.length);
+          for (let i = 0; i < data.length; i++) {
+            quantized[i] = this.quantizer.quantize(data[i]);
+          }
         }
       } else if (quantBits <= 16) {
         quantized = Buffer.allocUnsafe(data.length * 2);
@@ -289,10 +309,10 @@ export class CompressionEngine extends EventEmitter {
         originalSize,
         compressedSize: compressed.length,
         compressionRatio: (1 - compressed.length / originalSize),
-        compressionTime: Date.now() - startTime
+        compressionTime: performance.now() - startTime
       });
 
-      const compressionTime = Date.now() - startTime;
+      const compressionTime = Math.max(0.001, performance.now() - startTime);
       const privacyOverhead = privacyEpsilon ? Math.min(15, 20 * Math.exp(-privacyEpsilon)) : 0;
 
       this.stats = {
@@ -339,7 +359,7 @@ export class CompressionEngine extends EventEmitter {
       enableDelta: boolean;
     }
   ): Promise<Float32Array | Float64Array> {
-    const startTime = Date.now();
+    const startTime = performance.now();
 
     try {
       // Restore quantizer state
@@ -356,8 +376,26 @@ export class CompressionEngine extends EventEmitter {
         : new Float64Array(dataLength);
 
       if (metadata.quantBits <= 8) {
-        for (let i = 0; i < dataLength; i++) {
-          result[i] = this.quantizer.dequantize(decompressed[i]);
+        if (metadata.quantBits < 8) {
+          const mask = (1 << metadata.quantBits) - 1;
+          let bitOffset = 0;
+
+          for (let i = 0; i < dataLength; i++) {
+            const byteIndex = Math.floor(bitOffset / 8);
+            const bitIndex = bitOffset % 8;
+
+            let packed = (decompressed[byteIndex] >> bitIndex) & mask;
+            if (bitIndex + metadata.quantBits > 8) {
+              packed |= (decompressed[byteIndex + 1] << (8 - bitIndex)) & mask;
+            }
+
+            result[i] = this.quantizer.dequantize(packed);
+            bitOffset += metadata.quantBits;
+          }
+        } else {
+          for (let i = 0; i < dataLength; i++) {
+            result[i] = this.quantizer.dequantize(decompressed[i]);
+          }
         }
       } else if (metadata.quantBits <= 16) {
         const view = new Uint16Array(decompressed.buffer, 0, dataLength);
@@ -371,7 +409,7 @@ export class CompressionEngine extends EventEmitter {
         }
       }
 
-      const decompressionTime = Date.now() - startTime;
+      const decompressionTime = Math.max(0.001, performance.now() - startTime);
       if (this.stats) {
         this.stats.decompressionTime = decompressionTime;
       }
@@ -390,40 +428,43 @@ export class CompressionEngine extends EventEmitter {
    * In production, use native zstd via @reach/zstd or similar
    */
   private deflateCompress(data: Buffer): Buffer {
-    // For now, just RunLength encode + simple compression
-    // Real implementation would use zstd or gzip
-    
-    const compressed = Buffer.allocUnsafe(Math.ceil(data.length * 0.9));
-    let writePos = 0;
+    // Encode as: [chunk_len:1][chunk_bytes...] where chunk_len is 1..255.
+    // This avoids out-of-bounds writes from optimistic preallocation.
+    const parts: Buffer[] = [];
 
-    // Simple RLE-like compression
-    for (let i = 0; i < data.length; i += 256) {
-      const chunk = data.slice(i, Math.min(i + 256, data.length));
-      compressed[writePos++] = chunk.length;
-      compressed.set(chunk, writePos);
-      writePos += chunk.length;
+    for (let i = 0; i < data.length; i += 255) {
+      const chunk = data.slice(i, Math.min(i + 255, data.length));
+      parts.push(Buffer.from([chunk.length]));
+      parts.push(chunk);
     }
 
-    return compressed.slice(0, writePos);
+    return Buffer.concat(parts);
   }
 
   /**
    * Simple deflate decompression simulation
    */
   private deflateDecompress(compressed: Buffer): Buffer {
-    const result = Buffer.allocUnsafe(compressed.length * 2);
-    let writePos = 0;
     let readPos = 0;
+    const parts: Buffer[] = [];
 
     while (readPos < compressed.length) {
       const chunkSize = compressed[readPos++];
+
+      if (chunkSize === 0) {
+        continue;
+      }
+
+      if (readPos + chunkSize > compressed.length) {
+        throw new Error('Corrupted compressed buffer: chunk exceeds input length');
+      }
+
       const chunk = compressed.slice(readPos, readPos + chunkSize);
-      result.set(chunk, writePos);
-      writePos += chunkSize;
+      parts.push(chunk);
       readPos += chunkSize;
     }
 
-    return result.slice(0, writePos);
+    return Buffer.concat(parts);
   }
 
   /**
@@ -517,7 +558,7 @@ export class PrivacyAwareCompression {
     compressed: Buffer,
     metadata: any
   ): Promise<Float32Array> {
-    return this.engine.decompress(compressed, metadata);
+    return this.engine.decompress(compressed, metadata) as Promise<Float32Array>;
   }
 
   /**

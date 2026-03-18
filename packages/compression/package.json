@@ -1,5 +1,5 @@
 {
-  "name": "@sovereign-map/compression",
+  "name": "@sovereignmap/compression",
   "version": "1.0.0",
   "description": "Privacy-aware data compression engine for Sovereign Map federated learning",
   "main": "dist/index.js",

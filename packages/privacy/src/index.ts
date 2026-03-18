@@ -260,3 +260,12 @@ export class PrivacyEngine extends EventEmitter<{
 
 // Export GPU acceleration utilities
 export { GPUNoiseGenerator, AcceleratorDetector, type AcceleratorType, type AccelerationStats } from './gpu-acceleration.js';
+
+// Export compression integration
+export {
+  CompressionIntegration,
+  createCompressionHook,
+  type CompressionIntegrationConfig,
+  type CompressionIntegrationStats,
+  type CompressionResult
+} from './compression-integration.js';

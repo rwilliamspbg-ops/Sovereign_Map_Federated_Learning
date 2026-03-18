@@ -29,6 +29,7 @@
     "typecheck": "tsc --noEmit"
   },
   "dependencies": {
+    "@sovereignmap/compression": "file:../compression",
     "eventemitter3": "^5.0.1",
     "libsodium-wrappers": "^0.8.2",
     "ml-matrix": "^6.10.6"

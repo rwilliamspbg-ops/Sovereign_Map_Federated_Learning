@@ -4,11 +4,14 @@
  * Provides privacy-aware data compression for Sovereign Map
  */
 
+export type {
+  CompressionStats
+} from './compression-engine';
+
 export {
   Quantizer,
   QuantizationType,
   CompressionEngine,
-  CompressionStats,
   DeltaEncoder,
   PrivacyAwareCompression
 } from './compression-engine';

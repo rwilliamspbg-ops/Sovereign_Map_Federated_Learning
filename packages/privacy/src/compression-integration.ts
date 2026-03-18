@@ -11,7 +11,7 @@ import {
   PrivacyAwareCompression,
   CompressionStats,
   QuantizationType
-} from '@sovereign-map/compression';
+} from '@sovereignmap/compression';
 
 /**
  * Configuration for privacy-aware compression
@@ -190,7 +190,7 @@ export class CompressionIntegration extends EventEmitter {
       timeMs: decompressionTimeMs
     });
 
-    return decompressed;
+    return decompressed as Float32Array;
   }
 
   /**
