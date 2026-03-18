@@ -13,6 +13,14 @@
 [![Stars](https://img.shields.io/github/stars/rwilliamspbg-ops/Sovereign_Map_Federated_Learning?style=flat-square&logo=github&color=f08c00)](https://github.com/rwilliamspbg-ops/Sovereign_Map_Federated_Learning/stargazers)
 [![Forks](https://img.shields.io/github/forks/rwilliamspbg-ops/Sovereign_Map_Federated_Learning?style=flat-square&logo=github&color=e67700)](https://github.com/rwilliamspbg-ops/Sovereign_Map_Federated_Learning/network/members)
 
+
+## 🔥 Phase 3 Active: Edge Sensoring & Differential Privacy
+[![Bandwidth Saved](https://img.shields.io/badge/Compression-90%25%20(Int8%2BDP)-2b8a3e?style=flat-square&logo=webpack&logoColor=white)](packages/compression)
+[![Edge Integration](https://img.shields.io/badge/Hardware-Android%20ARCore%20%7C%20Web%20Sensor-1c7ed6?style=flat-square&logo=android&logoColor=white)](client/mobile-sdk/android)
+[![Performance](https://img.shields.io/badge/Self--Healing-Auto%20Tuning-f08c00?style=flat-square&logo=grafana&logoColor=white)](hardware_auto_tuner.py)
+
+The latest Phase 3 enhancements deliver full edge-hardware parity, seamlessly connecting **Camera/LiDAR data streams** directly to secure TEE enclaves over Self-Healing networks.
+
 ## Platform Capabilities
 
 [![Federated Learning](https://img.shields.io/badge/Capability-Federated%20Learning-2f9e44?style=flat-square&logo=tensorflow&logoColor=white)](Documentation/Architecture/ARCHITECTURE.md)

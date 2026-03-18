@@ -1,6 +1,8 @@
-export async function generateAggregationProof(updates: unknown[]): Promise<string> {
+export async function generateAggregationProof(
+  updates: unknown[]
+): Promise<string> {
   return JSON.stringify({
-    proof: 'mock-aggregation-proof',
+    proof: "mock-aggregation-proof",
     count: updates.length,
   });
 }

@@ -1,12 +1,12 @@
 /**
  * Integration Tests for Monitoring System
- * 
+ *
  * Tests integration of MonitoringOrchestrator with PrivacyEngine,
  * ConsensusModule, and PartitionRecoveryManager
  */
 
-import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
-import { EventEmitter } from 'eventemitter3';
+import { describe, it, expect, beforeEach, afterEach, vi } from "vitest";
+import { EventEmitter } from "eventemitter3";
 import {
   MonitoringOrchestrator,
   PrivacyMetricsCollector,
@@ -14,100 +14,100 @@ import {
   NetworkMetricsCollector,
   SystemMetricsCollector,
   MetricsRegistry,
-  PrometheusServer
-} from '../src/index';
+  PrometheusServer,
+} from "../src/index";
 
 // Mock module implementations
 class MockPrivacyEngine extends EventEmitter {
   generateNoise() {
-    this.emit('noiseGenerated', {
+    this.emit("noiseGenerated", {
       epsilon: 0.95,
       delta: 1e-5,
-      mechanism: 'gaussian',
+      mechanism: "gaussian",
       magnitude: 0.42,
       overhead: 8.5,
-      latency: 0.025
+      latency: 0.025,
     });
   }
 
   detectAcceleration() {
-    this.emit('accelerationDetected', 'cuda');
+    this.emit("accelerationDetected", "cuda");
   }
 
   triggerFallback() {
-    this.emit('accelerationFallback', 'cuda');
+    this.emit("accelerationFallback", "cuda");
   }
 
   triggerNoiseFailure() {
-    this.emit('noiseInjectionFailed', { type: 'memoryExhaustion' });
+    this.emit("noiseInjectionFailed", { type: "memoryExhaustion" });
   }
 }
 
 class MockConsensusModule extends EventEmitter {
   completeRound() {
-    this.emit('roundCompleted', {
+    this.emit("roundCompleted", {
       roundNumber: 42,
       duration: 5.2,
       participants: { online: 95, offline: 5 },
-      participation: 95.0
+      participation: 95.0,
     });
   }
 
   detectByzantine() {
-    this.emit('byzantineNodeDetected', {
-      nodeId: 'node-42',
-      confidence: 0.98
+    this.emit("byzantineNodeDetected", {
+      nodeId: "node-42",
+      confidence: 0.98,
     });
   }
 
   triggerTimeout() {
-    this.emit('roundTimeout');
+    this.emit("roundTimeout");
   }
 
   triggerRoundFailure() {
-    this.emit('roundFailed', { reason: 'quorumLoss' });
+    this.emit("roundFailed", { reason: "quorumLoss" });
   }
 }
 
 class MockPartitionRecoveryManager extends EventEmitter {
   detectPartition() {
-    this.emit('partitionDetected', {
-      isolatedNodes: ['node-1', 'node-2', 'node-3'],
-      detectionMethod: 'heartbeat'
+    this.emit("partitionDetected", {
+      isolatedNodes: ["node-1", "node-2", "node-3"],
+      detectionMethod: "heartbeat",
     });
   }
 
   startRecovery() {
-    this.emit('recoveryStarted', {
-      timestamp: Date.now()
+    this.emit("recoveryStarted", {
+      timestamp: Date.now(),
     });
   }
 
   succeedRecovery() {
-    this.emit('recoverySucceeded', {
+    this.emit("recoverySucceeded", {
       duration: 35.5,
-      nodesRecovered: 3
+      nodesRecovered: 3,
     });
   }
 
   failRecovery() {
-    this.emit('recoveryFailed', {
-      reason: 'byzantineDispute'
+    this.emit("recoveryFailed", {
+      reason: "byzantineDispute",
     });
   }
 
   validateAttestation() {
-    this.emit('attestationValidated');
+    this.emit("attestationValidated");
   }
 
   failAttestation() {
-    this.emit('attestationValidationFailed', {
-      reason: 'invalidSignature'
+    this.emit("attestationValidationFailed", {
+      reason: "invalidSignature",
     });
   }
 }
 
-describe('MonitoringOrchestrator Integration Tests', () => {
+describe("MonitoringOrchestrator Integration Tests", () => {
   let orchestrator: MonitoringOrchestrator;
   let privacyEngine: MockPrivacyEngine;
   let consensusModule: MockConsensusModule;
@@ -126,8 +126,8 @@ describe('MonitoringOrchestrator Integration Tests', () => {
     await orchestrator.shutdown();
   });
 
-  describe('PrivacyMetricsCollector Integration', () => {
-    it('should collect noise generation metrics', (done) => {
+  describe("PrivacyMetricsCollector Integration", () => {
+    it("should collect noise generation metrics", (done) => {
       orchestrator.integratePrivacy(privacyEngine);
       const metrics = orchestrator.getMetrics();
 
@@ -135,246 +135,286 @@ describe('MonitoringOrchestrator Integration Tests', () => {
 
       // Give event loop time to process
       setTimeout(() => {
-        expect(metrics.exportPrometheus()).toContain('privacy_epsilon_remaining');
-        expect(metrics.exportPrometheus()).toContain('privacy_overhead_percent');
-        expect(metrics.exportPrometheus()).toContain('privacy_noise_injected_total');
+        expect(metrics.exportPrometheus()).toContain(
+          "privacy_epsilon_remaining"
+        );
+        expect(metrics.exportPrometheus()).toContain(
+          "privacy_overhead_percent"
+        );
+        expect(metrics.exportPrometheus()).toContain(
+          "privacy_noise_injected_total"
+        );
         done();
       }, 50);
     });
 
-    it('should detect GPU acceleration', (done) => {
+    it("should detect GPU acceleration", (done) => {
       orchestrator.integratePrivacy(privacyEngine);
       const metrics = orchestrator.getMetrics();
 
       privacyEngine.detectAcceleration();
 
       setTimeout(() => {
-        expect(metrics.exportPrometheus()).toContain('gpu_detection_attempts');
-        expect(metrics.exportPrometheus()).toContain('gpu_active_devices');
+        expect(metrics.exportPrometheus()).toContain("gpu_detection_attempts");
+        expect(metrics.exportPrometheus()).toContain("gpu_active_devices");
         done();
       }, 50);
     });
 
-    it('should track GPU acceleration fallback', (done) => {
+    it("should track GPU acceleration fallback", (done) => {
       orchestrator.integratePrivacy(privacyEngine);
       const metrics = orchestrator.getMetrics();
 
       privacyEngine.triggerFallback();
 
       setTimeout(() => {
-        expect(metrics.exportPrometheus()).toContain('gpu_detection_failures');
-        expect(metrics.exportPrometheus()).toContain('gpu_cpu_fallback_total');
+        expect(metrics.exportPrometheus()).toContain("gpu_detection_failures");
+        expect(metrics.exportPrometheus()).toContain("gpu_cpu_fallback_total");
         done();
       }, 50);
     });
 
-    it('should track noise injection failures', (done) => {
+    it("should track noise injection failures", (done) => {
       orchestrator.integratePrivacy(privacyEngine);
       const metrics = orchestrator.getMetrics();
 
       privacyEngine.triggerNoiseFailure();
 
       setTimeout(() => {
-        expect(metrics.exportPrometheus()).toContain('privacy_noise_injection_failures');
+        expect(metrics.exportPrometheus()).toContain(
+          "privacy_noise_injection_failures"
+        );
         done();
       }, 50);
     });
 
-    it('should measure Gaussian vs Laplace mechanisms', (done) => {
+    it("should measure Gaussian vs Laplace mechanisms", (done) => {
       orchestrator.integratePrivacy(privacyEngine);
       const metrics = orchestrator.getMetrics();
 
       privacyEngine.generateNoise();
 
       setTimeout(() => {
-        expect(metrics.exportPrometheus()).toContain('privacy_gaussian_noise_count_total');
+        expect(metrics.exportPrometheus()).toContain(
+          "privacy_gaussian_noise_count_total"
+        );
         done();
       }, 50);
     });
   });
 
-  describe('ConsensusMetricsCollector Integration', () => {
-    it('should collect round completion metrics', (done) => {
+  describe("ConsensusMetricsCollector Integration", () => {
+    it("should collect round completion metrics", (done) => {
       orchestrator.integrateConsensus(consensusModule);
       const metrics = orchestrator.getMetrics();
 
       consensusModule.completeRound();
 
       setTimeout(() => {
-        expect(metrics.exportPrometheus()).toContain('consensus_rounds_completed');
-        expect(metrics.exportPrometheus()).toContain('consensus_round_duration_seconds');
-        expect(metrics.exportPrometheus()).toContain('consensus_participation_rate');
+        expect(metrics.exportPrometheus()).toContain(
+          "consensus_rounds_completed"
+        );
+        expect(metrics.exportPrometheus()).toContain(
+          "consensus_round_duration_seconds"
+        );
+        expect(metrics.exportPrometheus()).toContain(
+          "consensus_participation_rate"
+        );
         done();
       }, 50);
     });
 
-    it('should detect Byzantine nodes', (done) => {
+    it("should detect Byzantine nodes", (done) => {
       orchestrator.integrateConsensus(consensusModule);
       const metrics = orchestrator.getMetrics();
 
       consensusModule.detectByzantine();
 
       setTimeout(() => {
-        expect(metrics.exportPrometheus()).toContain('byzantine_nodes_detected_total');
-        expect(metrics.exportPrometheus()).toContain('byzantine_nodes_currently_detected');
+        expect(metrics.exportPrometheus()).toContain(
+          "byzantine_nodes_detected_total"
+        );
+        expect(metrics.exportPrometheus()).toContain(
+          "byzantine_nodes_currently_detected"
+        );
         done();
       }, 50);
     });
 
-    it('should track consensus timeouts', (done) => {
+    it("should track consensus timeouts", (done) => {
       orchestrator.integrateConsensus(consensusModule);
       const metrics = orchestrator.getMetrics();
 
       consensusModule.triggerTimeout();
 
       setTimeout(() => {
-        expect(metrics.exportPrometheus()).toContain('consensus_round_timeout_total');
+        expect(metrics.exportPrometheus()).toContain(
+          "consensus_round_timeout_total"
+        );
         done();
       }, 50);
     });
 
-    it('should track round failures', (done) => {
+    it("should track round failures", (done) => {
       orchestrator.integrateConsensus(consensusModule);
       const metrics = orchestrator.getMetrics();
 
       consensusModule.triggerRoundFailure();
 
       setTimeout(() => {
-        expect(metrics.exportPrometheus()).toContain('consensus_failed');
+        expect(metrics.exportPrometheus()).toContain("consensus_failed");
         done();
       }, 50);
     });
 
-    it('should track online/offline nodes', (done) => {
+    it("should track online/offline nodes", (done) => {
       orchestrator.integrateConsensus(consensusModule);
       const metrics = orchestrator.getMetrics();
 
       consensusModule.completeRound();
 
       setTimeout(() => {
-        expect(metrics.exportPrometheus()).toContain('consensus_nodes_online');
-        expect(metrics.exportPrometheus()).toContain('consensus_nodes_offline');
+        expect(metrics.exportPrometheus()).toContain("consensus_nodes_online");
+        expect(metrics.exportPrometheus()).toContain("consensus_nodes_offline");
         done();
       }, 50);
     });
   });
 
-  describe('NetworkMetricsCollector Integration', () => {
-    it('should detect network partitions', (done) => {
+  describe("NetworkMetricsCollector Integration", () => {
+    it("should detect network partitions", (done) => {
       orchestrator.integrateNetwork(partitionRecovery);
       const metrics = orchestrator.getMetrics();
 
       partitionRecovery.detectPartition();
 
       setTimeout(() => {
-        expect(metrics.exportPrometheus()).toContain('network_partitions_detected_total');
-        expect(metrics.exportPrometheus()).toContain('network_partition_isolated_nodes');
+        expect(metrics.exportPrometheus()).toContain(
+          "network_partitions_detected_total"
+        );
+        expect(metrics.exportPrometheus()).toContain(
+          "network_partition_isolated_nodes"
+        );
         done();
       }, 50);
     });
 
-    it('should track recovery attempts', (done) => {
+    it("should track recovery attempts", (done) => {
       orchestrator.integrateNetwork(partitionRecovery);
       const metrics = orchestrator.getMetrics();
 
       partitionRecovery.startRecovery();
 
       setTimeout(() => {
-        expect(metrics.exportPrometheus()).toContain('network_partition_recovery_attempts');
+        expect(metrics.exportPrometheus()).toContain(
+          "network_partition_recovery_attempts"
+        );
         done();
       }, 50);
     });
 
-    it('should track successful recovery', (done) => {
+    it("should track successful recovery", (done) => {
       orchestrator.integrateNetwork(partitionRecovery);
       const metrics = orchestrator.getMetrics();
 
       partitionRecovery.succeedRecovery();
 
       setTimeout(() => {
-        expect(metrics.exportPrometheus()).toContain('network_partition_recovery_success');
-        expect(metrics.exportPrometheus()).toContain('network_partition_recovery_seconds');
+        expect(metrics.exportPrometheus()).toContain(
+          "network_partition_recovery_success"
+        );
+        expect(metrics.exportPrometheus()).toContain(
+          "network_partition_recovery_seconds"
+        );
         done();
       }, 50);
     });
 
-    it('should track recovery failures', (done) => {
+    it("should track recovery failures", (done) => {
       orchestrator.integrateNetwork(partitionRecovery);
       const metrics = orchestrator.getMetrics();
 
       partitionRecovery.failRecovery();
 
       setTimeout(() => {
-        expect(metrics.exportPrometheus()).toContain('network_partition_recovery_failure');
+        expect(metrics.exportPrometheus()).toContain(
+          "network_partition_recovery_failure"
+        );
         done();
       }, 50);
     });
 
-    it('should track attestation validation', (done) => {
+    it("should track attestation validation", (done) => {
       orchestrator.integrateNetwork(partitionRecovery);
       const metrics = orchestrator.getMetrics();
 
       partitionRecovery.validateAttestation();
 
       setTimeout(() => {
-        expect(metrics.exportPrometheus()).toContain('attestation_validations_total');
+        expect(metrics.exportPrometheus()).toContain(
+          "attestation_validations_total"
+        );
         done();
       }, 50);
     });
 
-    it('should track attestation validation failures', (done) => {
+    it("should track attestation validation failures", (done) => {
       orchestrator.integrateNetwork(partitionRecovery);
       const metrics = orchestrator.getMetrics();
 
       partitionRecovery.failAttestation();
 
       setTimeout(() => {
-        expect(metrics.exportPrometheus()).toContain('attestation_validation_failures');
+        expect(metrics.exportPrometheus()).toContain(
+          "attestation_validation_failures"
+        );
         done();
       }, 50);
     });
   });
 
-  describe('SystemMetricsCollector Integration', () => {
-    it('should collect system metrics periodically', (done) => {
+  describe("SystemMetricsCollector Integration", () => {
+    it("should collect system metrics periodically", (done) => {
       const metrics = orchestrator.getMetrics();
 
       setTimeout(() => {
         const prometheusOutput = metrics.exportPrometheus();
-        expect(prometheusOutput).toContain('system_memory_bytes');
-        expect(prometheusOutput).toContain('system_cpu_usage_percent');
-        expect(prometheusOutput).toContain('system_uptime_seconds');
+        expect(prometheusOutput).toContain("system_memory_bytes");
+        expect(prometheusOutput).toContain("system_cpu_usage_percent");
+        expect(prometheusOutput).toContain("system_uptime_seconds");
         done();
       }, 500); // Wait for first collection cycle
     });
 
-    it('should record network latency measurements', (done) => {
+    it("should record network latency measurements", (done) => {
       const metrics = orchestrator.getMetrics();
       const systemCollector = new SystemMetricsCollector(metrics);
 
       systemCollector.recordNetworkLatency(45.5);
 
       setTimeout(() => {
-        expect(metrics.exportPrometheus()).toContain('system_network_latency_seconds');
+        expect(metrics.exportPrometheus()).toContain(
+          "system_network_latency_seconds"
+        );
         done();
       }, 50);
     });
 
-    it('should track process restarts', (done) => {
+    it("should track process restarts", (done) => {
       const metrics = orchestrator.getMetrics();
       const systemCollector = new SystemMetricsCollector(metrics);
 
       systemCollector.recordRestart();
 
       setTimeout(() => {
-        expect(metrics.exportPrometheus()).toContain('system_restarts');
+        expect(metrics.exportPrometheus()).toContain("system_restarts");
         done();
       }, 50);
     });
   });
 
-  describe('End-to-End Integration', () => {
-    it('should handle simultaneous events from multiple modules', (done) => {
+  describe("End-to-End Integration", () => {
+    it("should handle simultaneous events from multiple modules", (done) => {
       orchestrator.integratePrivacy(privacyEngine);
       orchestrator.integrateConsensus(consensusModule);
       orchestrator.integrateNetwork(partitionRecovery);
@@ -390,16 +430,16 @@ describe('MonitoringOrchestrator Integration Tests', () => {
         const prometheusOutput = metrics.exportPrometheus();
 
         // Verify all subsystems reporting metrics
-        expect(prometheusOutput).toContain('privacy_overhead_percent');
-        expect(prometheusOutput).toContain('consensus_participation_rate');
-        expect(prometheusOutput).toContain('network_partitions_detected_total');
-        expect(prometheusOutput).toContain('system_uptime_seconds');
+        expect(prometheusOutput).toContain("privacy_overhead_percent");
+        expect(prometheusOutput).toContain("consensus_participation_rate");
+        expect(prometheusOutput).toContain("network_partitions_detected_total");
+        expect(prometheusOutput).toContain("system_uptime_seconds");
 
         done();
       }, 100);
     });
 
-    it('should support SLA compliance checks', (done) => {
+    it("should support SLA compliance checks", (done) => {
       orchestrator.integratePrivacy(privacyEngine);
       orchestrator.integrateConsensus(consensusModule);
 
@@ -411,15 +451,15 @@ describe('MonitoringOrchestrator Integration Tests', () => {
         const metrics = orchestrator.getMetrics();
         const slaStatus = metrics.exportSLAStatus();
 
-        expect(slaStatus).toHaveProperty('overallStatus');
-        expect(slaStatus).toHaveProperty('checks');
+        expect(slaStatus).toHaveProperty("overallStatus");
+        expect(slaStatus).toHaveProperty("checks");
         expect(slaStatus.checks.length).toBeGreaterThan(0);
 
         done();
       }, 100);
     });
 
-    it('should export metrics in Prometheus text format', (done) => {
+    it("should export metrics in Prometheus text format", (done) => {
       orchestrator.integratePrivacy(privacyEngine);
       privacyEngine.generateNoise();
 
@@ -437,8 +477,8 @@ describe('MonitoringOrchestrator Integration Tests', () => {
     });
   });
 
-  describe('Error Handling', () => {
-    it('should handle collector gracefully during shutdown', async () => {
+  describe("Error Handling", () => {
+    it("should handle collector gracefully during shutdown", async () => {
       orchestrator.integratePrivacy(privacyEngine);
       orchestrator.integrateConsensus(consensusModule);
 
@@ -446,7 +486,7 @@ describe('MonitoringOrchestrator Integration Tests', () => {
       await expect(orchestrator.shutdown()).resolves.toBeUndefined();
     });
 
-    it('should support multiple integrations on same orchestrator', async () => {
+    it("should support multiple integrations on same orchestrator", async () => {
       orchestrator.integratePrivacy(privacyEngine);
       orchestrator.integrateConsensus(consensusModule);
       orchestrator.integrateNetwork(partitionRecovery);
@@ -456,7 +496,7 @@ describe('MonitoringOrchestrator Integration Tests', () => {
       expect(metrics).toBeDefined();
     });
 
-    it('should handle rapid event sequences', (done) => {
+    it("should handle rapid event sequences", (done) => {
       orchestrator.integratePrivacy(privacyEngine);
       const metrics = orchestrator.getMetrics();
 
@@ -467,14 +507,16 @@ describe('MonitoringOrchestrator Integration Tests', () => {
 
       setTimeout(() => {
         // Should not crash and should report metrics
-        expect(metrics.exportPrometheus()).toContain('privacy_noise_injected_total');
+        expect(metrics.exportPrometheus()).toContain(
+          "privacy_noise_injected_total"
+        );
         done();
       }, 200);
     });
   });
 
-  describe('Performance Characteristics', () => {
-    it('should have minimal metric collection overhead', (done) => {
+  describe("Performance Characteristics", () => {
+    it("should have minimal metric collection overhead", (done) => {
       const startTime = Date.now();
 
       orchestrator.integratePrivacy(privacyEngine);
@@ -495,7 +537,7 @@ describe('MonitoringOrchestrator Integration Tests', () => {
       done();
     });
 
-    it('should maintain metric accuracy under load', (done) => {
+    it("should maintain metric accuracy under load", (done) => {
       orchestrator.integratePrivacy(privacyEngine);
       const metrics = orchestrator.getMetrics();
 
@@ -508,7 +550,9 @@ describe('MonitoringOrchestrator Integration Tests', () => {
         const prometheusOutput = metrics.exportPrometheus();
 
         // Should have incremented counter by 50
-        const noiseMatch = prometheusOutput.match(/privacy_noise_injected_total\s+(\d+)/);
+        const noiseMatch = prometheusOutput.match(
+          /privacy_noise_injected_total\s+(\d+)/
+        );
         expect(noiseMatch).toBeTruthy();
         expect(parseInt(noiseMatch![1])).toBe(50);
 
@@ -520,26 +564,26 @@ describe('MonitoringOrchestrator Integration Tests', () => {
 
 /**
  * Manual testing guide:
- * 
+ *
  * # 1. Start monitoring orchestrator
  * const orch = new MonitoringOrchestrator(9090);
  * await orch.initialize();
- * 
+ *
  * # 2. Verify endpoints
  * curl http://localhost:9090/metrics   # Should show metric lines
  * curl http://localhost:9090/health    # Should return {"status": "healthy"}
  * curl http://localhost:9090/sla       # Should show SLA status
- * 
+ *
  * # 3. Integrate with modules
  * orch.integratePrivacy(privacyEngine);
  * orch.integrateConsensus(consensusModule);
  * orch.integrateNetwork(partitionManager);
- * 
+ *
  * # 4. Verify metrics flowing
  * setInterval(() => {
  *   console.log(orch.getMetrics().exportPrometheus().split('\n').filter(l => !l.startsWith('#')).length);
  * }, 1000);
- * 
+ *
  * # 5. Configure Prometheus scraping
  * # In prometheus.yml:
  * # scrape_configs:

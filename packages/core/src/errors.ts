@@ -9,12 +9,12 @@ export class SovereignMapError extends Error {
 
   constructor(
     message: string,
-    code: string = 'SOVEREIGNMAP_ERROR',
+    code: string = "SOVEREIGNMAP_ERROR",
     isOperational: boolean = true,
     cause?: Error
   ) {
     super(message, { cause });
-    this.name = 'SovereignMapError';
+    this.name = "SovereignMapError";
     this.code = code;
     this.isOperational = isOperational;
     this.timestamp = new Date();
@@ -22,22 +22,23 @@ export class SovereignMapError extends Error {
   }
 
   toJSON() {
-		const causeMessage = this.cause instanceof Error ? this.cause.message : undefined;
+    const causeMessage =
+      this.cause instanceof Error ? this.cause.message : undefined;
     return {
       name: this.name,
       message: this.message,
       code: this.code,
       timestamp: this.timestamp.toISOString(),
       stack: this.stack,
-      cause: causeMessage
+      cause: causeMessage,
     };
   }
 }
 
 export class NodeInitializationError extends SovereignMapError {
   constructor(message: string, cause?: Error) {
-    super(message, 'NODE_INIT_ERROR', true, cause);
-    this.name = 'NodeInitializationError';
+    super(message, "NODE_INIT_ERROR", true, cause);
+    this.name = "NodeInitializationError";
   }
 }
 
@@ -48,10 +49,10 @@ export class PrivacyBudgetExceededError extends SovereignMapError {
   constructor(current: number, required: number) {
     super(
       `Privacy budget exhausted (current: ${current}, required: ${required})`,
-      'PRIVACY_BUDGET_EXCEEDED',
+      "PRIVACY_BUDGET_EXCEEDED",
       true
     );
-    this.name = 'PrivacyBudgetExceededError';
+    this.name = "PrivacyBudgetExceededError";
     this.currentBudget = current;
     this.requiredBudget = required;
   }
@@ -61,8 +62,8 @@ export class ConsensusError extends SovereignMapError {
   public readonly roundId?: string;
 
   constructor(message: string, roundId?: string, cause?: Error) {
-    super(message, 'CONSENSUS_ERROR', true, cause);
-    this.name = 'ConsensusError';
+    super(message, "CONSENSUS_ERROR", true, cause);
+    this.name = "ConsensusError";
     this.roundId = roundId;
   }
 }
@@ -71,9 +72,14 @@ export class NetworkError extends SovereignMapError {
   public readonly endpoint?: string;
   public readonly statusCode?: number;
 
-  constructor(message: string, endpoint?: string, statusCode?: number, cause?: Error) {
-    super(message, 'NETWORK_ERROR', true, cause);
-    this.name = 'NetworkError';
+  constructor(
+    message: string,
+    endpoint?: string,
+    statusCode?: number,
+    cause?: Error
+  ) {
+    super(message, "NETWORK_ERROR", true, cause);
+    this.name = "NetworkError";
     this.endpoint = endpoint;
     this.statusCode = statusCode;
   }
@@ -83,22 +89,22 @@ export class HardwareAttestationError extends SovereignMapError {
   public readonly devicePath?: string;
 
   constructor(message: string, devicePath?: string, cause?: Error) {
-    super(message, 'HW_ATTESTATION_ERROR', true, cause);
-    this.name = 'HardwareAttestationError';
+    super(message, "HW_ATTESTATION_ERROR", true, cause);
+    this.name = "HardwareAttestationError";
     this.devicePath = devicePath;
   }
 }
 
 export class IslandModeError extends SovereignMapError {
   constructor(message: string, cause?: Error) {
-    super(message, 'ISLAND_MODE_ERROR', true, cause);
-    this.name = 'IslandModeError';
+    super(message, "ISLAND_MODE_ERROR", true, cause);
+    this.name = "IslandModeError";
   }
 }
 
 export class ZKProofError extends SovereignMapError {
   constructor(message: string, cause?: Error) {
-    super(message, 'ZK_PROOF_ERROR', true, cause);
-    this.name = 'ZKProofError';
+    super(message, "ZK_PROOF_ERROR", true, cause);
+    this.name = "ZKProofError";
   }
 }

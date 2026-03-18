@@ -1,16 +1,16 @@
-import { EventEmitter } from 'eventemitter3';
-import { nanoid } from 'nanoid';
-import { z } from 'zod';
-import type { Logger } from 'pino';
+import { EventEmitter } from "eventemitter3";
+import { nanoid } from "nanoid";
+import { z } from "zod";
+import type { Logger } from "pino";
 
-import { createLogger } from './logger.js';
-import { NetworkClient } from './network.js';
+import { createLogger } from "./logger.js";
+import { NetworkClient } from "./network.js";
 import {
   SovereignMapError,
   NodeInitializationError,
   PrivacyBudgetExceededError,
-  ConsensusError
-} from './errors.js';
+  ConsensusError,
+} from "./errors.js";
 import type {
   NodeConfig,
   NodeStatus,
@@ -25,8 +25,8 @@ import type {
   NodeEvents,
   HardwareCapabilities,
   PrivacyStatus,
-  IslandStatus
-} from './types.js';
+  IslandStatus,
+} from "./types.js";
 
 // Re-export types
 export type { NodeConfig, NodeStatus };
@@ -35,59 +35,92 @@ export type { NodeConfig, NodeStatus };
  * Node operational states
  */
 export enum NodeState {
-  INITIALIZING = 'initializing',
-  ATTESTING = 'attesting',
-  CONNECTING = 'connecting',
-  SYNCING = 'syncing',
-  ONLINE = 'online',
-  ISLAND_MODE = 'island_mode',
-  AGGREGATING = 'aggregating',
-  CONSENSUS = 'consensus',
-  OFFLINE = 'offline',
-  ERROR = 'error',
-  SHUTTING_DOWN = 'shutting_down'
+  INITIALIZING = "initializing",
+  ATTESTING = "attesting",
+  CONNECTING = "connecting",
+  SYNCING = "syncing",
+  ONLINE = "online",
+  ISLAND_MODE = "island_mode",
+  AGGREGATING = "aggregating",
+  CONSENSUS = "consensus",
+  OFFLINE = "offline",
+  ERROR = "error",
+  SHUTTING_DOWN = "shutting_down",
 }
 
 /**
  * Node configuration schema with validation
  */
 export const NodeConfigSchema = z.object({
-  nodeId: z.string().min(1).max(64).default(() => `node-${nanoid(8)}`),
+  nodeId: z
+    .string()
+    .min(1)
+    .max(64)
+    .default(() => `node-${nanoid(8)}`),
   region: z.string().min(2).max(64),
   coordinates: z.object({
     lat: z.number().min(-90).max(90),
-    lng: z.number().min(-180).max(180)
+    lng: z.number().min(-180).max(180),
   }),
-  privacyBudget: z.object({
-    epsilon: z.number().min(0.1).max(10.0).default(1.0),
-    delta: z.number().min(1e-10).max(1e-3).default(1e-5),
-    mechanism: z.enum(['gaussian', 'laplace']).default('gaussian')
-  }).default({ epsilon: 1.0, delta: 1e-5, mechanism: 'gaussian' }),
-  hardware: z.object({
-    npuTops: z.number().min(0).default(0),
-    tpmAvailable: z.boolean().default(false),
-    maxMemoryMB: z.number().min(512).default(4096),
-    cpuCores: z.number().min(1).default(4)
-  }).default({ npuTops: 0, tpmAvailable: false, maxMemoryMB: 4096, cpuCores: 4 }),
-  network: z.object({
-    bootstrapPeers: z.array(z.string()).default([]),
-    maxConnections: z.number().min(10).max(1000).default(50),
-    enableRelay: z.boolean().default(true)
-  }).default({ bootstrapPeers: [], maxConnections: 50, enableRelay: true }),
-  islandMode: z.object({
-    enabled: z.boolean().default(true),
-    storagePath: z.string().default('./island-storage'),
-    maxOfflineHours: z.number().min(1).max(168).default(24)
-  }).default({ enabled: true, storagePath: './island-storage', maxOfflineHours: 24 }),
-  consensus: z.object({
-    enabled: z.boolean().default(true),
-    aggregatorTier: z.enum(['none', 'edge', 'regional', 'global']).default('none'),
-    maxAggregationChildren: z.number().min(0).max(200).default(0)
-  }).default({ enabled: true, aggregatorTier: 'none', maxAggregationChildren: 0 }),
-  logging: z.object({
-    level: z.enum(['trace', 'debug', 'info', 'warn', 'error']).default('info'),
-    pretty: z.boolean().default(false)
-  }).default({ level: 'info', pretty: false })
+  privacyBudget: z
+    .object({
+      epsilon: z.number().min(0.1).max(10.0).default(1.0),
+      delta: z.number().min(1e-10).max(1e-3).default(1e-5),
+      mechanism: z.enum(["gaussian", "laplace"]).default("gaussian"),
+    })
+    .default({ epsilon: 1.0, delta: 1e-5, mechanism: "gaussian" }),
+  hardware: z
+    .object({
+      npuTops: z.number().min(0).default(0),
+      tpmAvailable: z.boolean().default(false),
+      maxMemoryMB: z.number().min(512).default(4096),
+      cpuCores: z.number().min(1).default(4),
+    })
+    .default({
+      npuTops: 0,
+      tpmAvailable: false,
+      maxMemoryMB: 4096,
+      cpuCores: 4,
+    }),
+  network: z
+    .object({
+      bootstrapPeers: z.array(z.string()).default([]),
+      maxConnections: z.number().min(10).max(1000).default(50),
+      enableRelay: z.boolean().default(true),
+    })
+    .default({ bootstrapPeers: [], maxConnections: 50, enableRelay: true }),
+  islandMode: z
+    .object({
+      enabled: z.boolean().default(true),
+      storagePath: z.string().default("./island-storage"),
+      maxOfflineHours: z.number().min(1).max(168).default(24),
+    })
+    .default({
+      enabled: true,
+      storagePath: "./island-storage",
+      maxOfflineHours: 24,
+    }),
+  consensus: z
+    .object({
+      enabled: z.boolean().default(true),
+      aggregatorTier: z
+        .enum(["none", "edge", "regional", "global"])
+        .default("none"),
+      maxAggregationChildren: z.number().min(0).max(200).default(0),
+    })
+    .default({
+      enabled: true,
+      aggregatorTier: "none",
+      maxAggregationChildren: 0,
+    }),
+  logging: z
+    .object({
+      level: z
+        .enum(["trace", "debug", "info", "warn", "error"])
+        .default("info"),
+      pretty: z.boolean().default(false),
+    })
+    .default({ level: "info", pretty: false }),
 });
 
 /**
@@ -97,7 +130,7 @@ export class SovereignNode extends EventEmitter<NodeEvents> {
   public readonly config: z.infer<typeof NodeConfigSchema>;
   public state: NodeState = NodeState.INITIALIZING;
   public readonly id: string;
-  public readonly version: string = '0.1.0-alpha.1';
+  public readonly version: string = "0.1.0-alpha.1";
 
   private logger: Logger;
   private network: NetworkClient;
@@ -111,29 +144,29 @@ export class SovereignNode extends EventEmitter<NodeEvents> {
 
   constructor(config: NodeConfig) {
     super();
-    
+
     // Validate and merge with defaults
     this.config = NodeConfigSchema.parse(config);
     this.id = this.config.nodeId;
     this.startTime = new Date();
-    
+
     // Initialize logger
     this.logger = createLogger({
       level: this.config.logging?.level,
       pretty: this.config.logging?.pretty,
-      nodeId: this.id
+      nodeId: this.id,
     });
-    
-    this.logger.info({ nodeId: this.id }, 'SovereignNode created');
-    
+
+    this.logger.info({ nodeId: this.id }, "SovereignNode created");
+
     // Initialize metrics
     this.metrics = new NodeMetricsCollector();
-    
+
     // Initialize network client
     this.network = new NetworkClient(
       this.config.network,
       this.id,
-      this.logger.child({ component: 'network' })
+      this.logger.child({ component: "network" })
     );
   }
 
@@ -143,7 +176,7 @@ export class SovereignNode extends EventEmitter<NodeEvents> {
   async initialize(): Promise<void> {
     try {
       this.setState(NodeState.INITIALIZING);
-      this.logger.info('Starting node initialization');
+      this.logger.info("Starting node initialization");
 
       // Step 1: Hardware attestation (if TPM available)
       if (this.config.hardware.tpmAvailable) {
@@ -168,14 +201,15 @@ export class SovereignNode extends EventEmitter<NodeEvents> {
       this.setupShutdownHandlers();
 
       this.setState(NodeState.ONLINE);
-      this.logger.info('Node initialization complete');
-      this.emit('ready', this.getStatus());
-
+      this.logger.info("Node initialization complete");
+      this.emit("ready", this.getStatus());
     } catch (error) {
       this.setState(NodeState.ERROR);
-      this.logger.error({ error }, 'Node initialization failed');
+      this.logger.error({ error }, "Node initialization failed");
       throw new NodeInitializationError(
-        `Failed to initialize node ${this.id}: ${error instanceof Error ? error.message : 'Unknown error'}`,
+        `Failed to initialize node ${this.id}: ${
+          error instanceof Error ? error.message : "Unknown error"
+        }`,
         error instanceof Error ? error : undefined
       );
     }
@@ -185,7 +219,7 @@ export class SovereignNode extends EventEmitter<NodeEvents> {
    * Submit a map update with automatic SGP-001 privacy protection
    */
   async submitMapUpdate(update: MapUpdate): Promise<SubmissionResult> {
-    this.logger.debug({ update }, 'Submitting map update');
+    this.logger.debug({ update }, "Submitting map update");
 
     // Check privacy budget
     if (!this.privacy?.hasBudgetFor(update)) {
@@ -199,7 +233,7 @@ export class SovereignNode extends EventEmitter<NodeEvents> {
     try {
       // Apply differential privacy
       const privatized = await this.privacy.apply(update);
-      
+
       // Generate cryptographic proof
       const proof = await this.generateProof(privatized);
 
@@ -213,13 +247,12 @@ export class SovereignNode extends EventEmitter<NodeEvents> {
         this.setState(NodeState.ISLAND_MODE);
       }
 
-      this.metrics.recordUpdate(update, result.status === 'confirmed');
-      this.emit('mapUpdateSubmitted', { updateId: result.updateId, proof });
+      this.metrics.recordUpdate(update, result.status === "confirmed");
+      this.emit("mapUpdateSubmitted", { updateId: result.updateId, proof });
 
       return result;
-
     } catch (error) {
-      this.logger.error({ error, update }, 'Failed to submit map update');
+      this.logger.error({ error, update }, "Failed to submit map update");
       throw error;
     }
   }
@@ -229,28 +262,33 @@ export class SovereignNode extends EventEmitter<NodeEvents> {
    */
   async participateInRound(round: FLRound): Promise<RoundResult> {
     if (!this.consensus) {
-      throw new Error('Consensus not enabled for this node');
+      throw new Error("Consensus not enabled for this node");
     }
 
-    this.logger.info({ roundId: round.id }, 'Participating in FL round');
+    this.logger.info({ roundId: round.id }, "Participating in FL round");
 
     try {
       // Train local model (placeholder - would integrate with actual ML)
       const localUpdate = await this.trainLocalModel(round);
-      
+
       // Submit with BFT verification
       const result = await this.consensus.submitUpdate(round.id, localUpdate);
-      
+
       this.metrics.recordRound(result);
-      
+
       if (result.reward > 0) {
-        this.emit('rewardEarned', { amount: result.reward, reason: `FL round ${round.id}` });
+        this.emit("rewardEarned", {
+          amount: result.reward,
+          reason: `FL round ${round.id}`,
+        });
       }
 
       return result;
-
     } catch (error) {
-      this.logger.error({ error, roundId: round.id }, 'FL round participation failed');
+      this.logger.error(
+        { error, roundId: round.id },
+        "FL round participation failed"
+      );
       throw new ConsensusError(
         `Failed to participate in round ${round.id}`,
         round.id,
@@ -263,37 +301,39 @@ export class SovereignNode extends EventEmitter<NodeEvents> {
    * Enter aggregator mode (MOHAWK protocol)
    */
   async becomeAggregator(config: AggregatorConfig): Promise<void> {
-    if (this.config.consensus.aggregatorTier === 'none') {
-      throw new Error('Node not configured as aggregator');
+    if (this.config.consensus.aggregatorTier === "none") {
+      throw new Error("Node not configured as aggregator");
     }
 
-    this.logger.info({ config }, 'Becoming aggregator');
+    this.logger.info({ config }, "Becoming aggregator");
     this.setState(NodeState.AGGREGATING);
 
     try {
-      const { HierarchicalAggregator } = await import('@sovereignmap/consensus');
-      
+      const { HierarchicalAggregator } = await import(
+        "@sovereignmap/consensus"
+      );
+
       const aggregator = new HierarchicalAggregator({
         nodeId: this.id,
         tier: config.tier || this.config.consensus.aggregatorTier,
-        maxChildren: config.maxChildren || this.config.consensus.maxAggregationChildren,
+        maxChildren:
+          config.maxChildren || this.config.consensus.maxAggregationChildren,
         regionBoundary: config.regionBoundary,
         specialization: config.specialization,
-        logger: this.logger.child({ component: 'aggregator' })
+        logger: this.logger.child({ component: "aggregator" }),
       });
 
       await aggregator.start();
 
-      aggregator.on('aggregate', async (updates: any[]) => {
-        this.logger.info({ count: updates.length }, 'Aggregating updates');
+      aggregator.on("aggregate", async (updates: any[]) => {
+        this.logger.info({ count: updates.length }, "Aggregating updates");
         const zkProof = await this.generateAggregationProof(updates);
         await this.submitAggregate(updates, zkProof);
       });
 
       this.shutdownHandlers.push(() => aggregator.stop());
-
     } catch (error) {
-      this.logger.error({ error }, 'Failed to become aggregator');
+      this.logger.error({ error }, "Failed to become aggregator");
       throw error;
     }
   }
@@ -313,24 +353,24 @@ export class SovereignNode extends EventEmitter<NodeEvents> {
         totalBudget: this.config.privacyBudget.epsilon,
         updatesProcessed: 0,
         averageNoiseMagnitude: 0,
-        mechanism: this.config.privacyBudget.mechanism
+        mechanism: this.config.privacyBudget.mechanism,
       },
       network: this.network.getStatus(),
       island: this.island?.getStatus() || {
-        mode: this.network.isConnected() ? 'online' : 'island',
+        mode: this.network.isConnected() ? "online" : "island",
         updatesQueued: 0,
         lastSync: Date.now(),
         storageUsed: 0,
         chainIntegrity: true,
-        maxOfflineHours: this.config.islandMode.maxOfflineHours
+        maxOfflineHours: this.config.islandMode.maxOfflineHours,
       },
       metrics: this.metrics.getSnapshot(),
       hardware: {
         npuTops: this.config.hardware.npuTops,
         tpmAvailable: this.config.hardware.tpmAvailable,
         maxMemoryMB: this.config.hardware.maxMemoryMB,
-        cpuCores: this.config.hardware.cpuCores
-      }
+        cpuCores: this.config.hardware.cpuCores,
+      },
     };
   }
 
@@ -338,7 +378,7 @@ export class SovereignNode extends EventEmitter<NodeEvents> {
    * Graceful shutdown with state preservation
    */
   async shutdown(): Promise<void> {
-    this.logger.info('Initiating graceful shutdown');
+    this.logger.info("Initiating graceful shutdown");
     this.setState(NodeState.SHUTTING_DOWN);
 
     try {
@@ -347,7 +387,7 @@ export class SovereignNode extends EventEmitter<NodeEvents> {
         try {
           await handler();
         } catch (error) {
-          this.logger.error({ error }, 'Shutdown handler failed');
+          this.logger.error({ error }, "Shutdown handler failed");
         }
       }
 
@@ -370,10 +410,9 @@ export class SovereignNode extends EventEmitter<NodeEvents> {
       }
 
       this.setState(NodeState.OFFLINE);
-      this.logger.info('Shutdown complete');
-
+      this.logger.info("Shutdown complete");
     } catch (error) {
-      this.logger.error({ error }, 'Error during shutdown');
+      this.logger.error({ error }, "Error during shutdown");
       throw error;
     }
   }
@@ -383,102 +422,104 @@ export class SovereignNode extends EventEmitter<NodeEvents> {
   private setState(newState: NodeState): void {
     const oldState = this.state;
     this.state = newState;
-    this.logger.debug({ from: oldState, to: newState }, 'State transition');
-    this.emit('stateChange', { from: oldState, to: newState });
+    this.logger.debug({ from: oldState, to: newState }, "State transition");
+    this.emit("stateChange", { from: oldState, to: newState });
   }
 
   private async initializeHardware(): Promise<void> {
     this.setState(NodeState.ATTESTING);
-    this.logger.info('Initializing hardware attestation');
+    this.logger.info("Initializing hardware attestation");
 
     try {
-      const { HardwareAttestation } = await import('@sovereignmap/hardware');
+      const { HardwareAttestation } = await import("@sovereignmap/hardware");
       this.hardware = new HardwareAttestation({
-        devicePath: '/dev/tpm0',
-        logger: this.logger.child({ component: 'hardware' })
+        devicePath: "/dev/tpm0",
+        logger: this.logger.child({ component: "hardware" }),
       });
 
       const attestation = await this.hardware.attest(this.id);
-      this.logger.info({ attestation }, 'Hardware attestation complete');
-
+      this.logger.info({ attestation }, "Hardware attestation complete");
     } catch (error) {
-      this.logger.error({ error }, 'Hardware attestation failed');
+      this.logger.error({ error }, "Hardware attestation failed");
       // Don't throw - allow operation without TPM
       this.hardware = null;
     }
   }
 
   private async initializePrivacy(): Promise<void> {
-    this.logger.info('Initializing privacy engine');
+    this.logger.info("Initializing privacy engine");
 
-    const { PrivacyEngine } = await import('@sovereignmap/privacy');
+    const { PrivacyEngine } = await import("@sovereignmap/privacy");
     this.privacy = new PrivacyEngine(this.config.privacyBudget);
     await this.privacy.initialize();
 
-    this.privacy.on('budgetUpdate', (remaining: number, total: number) => {
-      this.emit('privacyBudgetUpdate', { remaining, total });
+    this.privacy.on("budgetUpdate", (remaining: number, total: number) => {
+      this.emit("privacyBudgetUpdate", { remaining, total });
     });
 
-    this.logger.info('Privacy engine initialized');
+    this.logger.info("Privacy engine initialized");
   }
 
   private async initializeIsland(): Promise<void> {
-    this.logger.info('Initializing Island Mode');
+    this.logger.info("Initializing Island Mode");
 
-    const { IslandModeManager } = await import('@sovereignmap/island');
+    const { IslandModeManager } = await import("@sovereignmap/island");
     this.island = new IslandModeManager({
       enabled: this.config.islandMode.enabled,
       storagePath: this.config.islandMode.storagePath,
       maxOfflineHours: this.config.islandMode.maxOfflineHours,
-      logger: this.logger.child({ component: 'island' })
+      logger: this.logger.child({ component: "island" }),
     });
 
     await this.island.initialize();
-    this.logger.info('Island Mode initialized');
+    this.logger.info("Island Mode initialized");
   }
 
   private async connectNetwork(): Promise<void> {
     this.setState(NodeState.CONNECTING);
-    this.logger.info('Connecting to network');
+    this.logger.info("Connecting to network");
 
     await this.network.connect();
 
-    this.network.on('disconnected', () => {
-      this.logger.warn('Network connectivity lost');
-      this.emit('connectivityLost');
+    this.network.on("disconnected", () => {
+      this.logger.warn("Network connectivity lost");
+      this.emit("connectivityLost");
       this.setState(NodeState.ISLAND_MODE);
     });
 
-    this.network.on('reconnected', async () => {
-      this.logger.info('Network connectivity restored');
+    this.network.on("reconnected", async () => {
+      this.logger.info("Network connectivity restored");
       const stats = await this.syncIsland();
-      this.emit('connectivityRestored', stats);
+      this.emit("connectivityRestored", stats);
       this.setState(NodeState.ONLINE);
     });
 
-    this.network.on('byzantineDetected', (nodeId: string, faultType: string) => {
-      this.logger.warn({ nodeId, faultType }, 'Byzantine fault detected');
-      this.emit('byzantineFaultDetected', { nodeId, faultType });
-      this.metrics.recordByzantineFault(nodeId, faultType);
-    });
+    this.network.on(
+      "byzantineDetected",
+      (nodeId: string, faultType: string) => {
+        this.logger.warn({ nodeId, faultType }, "Byzantine fault detected");
+        this.emit("byzantineFaultDetected", { nodeId, faultType });
+        this.metrics.recordByzantineFault(nodeId, faultType);
+      }
+    );
 
     this.setState(NodeState.SYNCING);
     await this.syncState();
-    this.logger.info('Network connected and synced');
+    this.logger.info("Network connected and synced");
   }
 
   private async initializeConsensus(): Promise<void> {
-    this.logger.info('Initializing consensus');
+    this.logger.info("Initializing consensus");
 
-    const { ConsensusParticipant } = await import('@sovereignmap/consensus');
+    const { ConsensusParticipant } = await import("@sovereignmap/consensus");
     this.consensus = new ConsensusParticipant({
       nodeId: this.id,
       network: this.network,
-      logger: this.logger.child({ component: 'consensus' })
+      logger: this.logger.child({ component: "consensus" }),
     });
 
     await this.consensus.initialize();
-    this.logger.info('Consensus initialized');
+    this.logger.info("Consensus initialized");
   }
 
   private async syncState(): Promise<void> {
@@ -495,7 +536,7 @@ export class SovereignNode extends EventEmitter<NodeEvents> {
         updatesQueued: 0,
         conflictsResolved: 0,
         syncDuration: 0,
-        bytesTransferred: 0
+        bytesTransferred: 0,
       };
     }
     return this.island.sync();
@@ -504,10 +545,13 @@ export class SovereignNode extends EventEmitter<NodeEvents> {
   private async generateProof(update: PrivatizedUpdate): Promise<string> {
     // Use WASM-wrapped gnark for 10ms proof generation
     try {
-      const wasmModule = await import('./wasm/prover.js');
+      const wasmModule = await import("./wasm/prover.js");
       return wasmModule.generateProof(update);
     } catch (error) {
-      this.logger.warn({ error }, 'WASM proof generation failed, using fallback');
+      this.logger.warn(
+        { error },
+        "WASM proof generation failed, using fallback"
+      );
       // Fallback to software proof
       return this.generateSoftwareProof(update);
     }
@@ -515,51 +559,54 @@ export class SovereignNode extends EventEmitter<NodeEvents> {
 
   private generateSoftwareProof(update: PrivatizedUpdate): string {
     // Simple hash-based proof as fallback
-    const crypto = require('crypto');
+    const crypto = require("crypto");
     const data = JSON.stringify(update);
-    return crypto.createHash('sha256').update(data).digest('hex');
+    return crypto.createHash("sha256").update(data).digest("hex");
   }
 
-  private async submitOnline(update: PrivatizedUpdate, proof: string): Promise<SubmissionResult> {
+  private async submitOnline(
+    update: PrivatizedUpdate,
+    proof: string
+  ): Promise<SubmissionResult> {
     const result = await this.network.broadcast({
-      type: 'MAP_UPDATE',
+      type: "MAP_UPDATE",
       payload: update,
       proof,
       timestamp: Date.now(),
-      nodeId: this.id
+      nodeId: this.id,
     });
 
     return {
       updateId: result.id || nanoid(),
-      status: result.accepted ? 'confirmed' : 'pending',
+      status: result.accepted ? "confirmed" : "pending",
       proof,
-      estimatedConfirmationTime: result.estimatedTime
+      estimatedConfirmationTime: result.estimatedTime,
     };
   }
 
   private async trainLocalModel(round: FLRound): Promise<any> {
     // Simulated ML training with realistic gradient computation
     // In production, integrate TensorFlow.js or PyTorch.js
-    this.logger.info({ roundId: round.id }, 'Training local model');
-    
+    this.logger.info({ roundId: round.id }, "Training local model");
+
     // Simulate training time based on data size
     const trainingTime = 500 + Math.random() * 1500;
-    await new Promise(resolve => setTimeout(resolve, trainingTime));
-    
+    await new Promise((resolve) => setTimeout(resolve, trainingTime));
+
     // Generate realistic model weights with some variance
     const weightCount = round.modelParams?.weightCount || 1000;
     const weights = new Float64Array(weightCount);
     const baseValue = 0.01 + (Math.random() - 0.5) * 0.002;
-    
+
     for (let i = 0; i < weightCount; i++) {
       weights[i] = baseValue + (Math.random() - 0.5) * 0.005;
     }
-    
+
     // Simulate training metrics with convergence
     const epoch = round.round || 0;
-    const baseAccuracy = 0.75 + (epoch * 0.002);
+    const baseAccuracy = 0.75 + epoch * 0.002;
     const baseLoss = 0.5 * Math.exp(-epoch * 0.01);
-    
+
     return {
       roundId: round.id,
       weights,
@@ -567,45 +614,48 @@ export class SovereignNode extends EventEmitter<NodeEvents> {
       metrics: {
         loss: Math.max(0.05, baseLoss + (Math.random() - 0.5) * 0.1),
         accuracy: Math.min(0.95, baseAccuracy + (Math.random() - 0.5) * 0.05),
-        trainingTime
-      }
+        trainingTime,
+      },
     };
   }
 
   private async generateAggregationProof(updates: any[]): Promise<string> {
     // Generate ZK proof for hierarchical aggregation
     try {
-      const wasmModule = await import('./wasm/aggregator.js');
+      const wasmModule = await import("./wasm/aggregator.js");
       return wasmModule.generateAggregationProof(updates);
     } catch (error) {
-      this.logger.warn({ error }, 'WASM aggregation proof failed, using fallback');
+      this.logger.warn(
+        { error },
+        "WASM aggregation proof failed, using fallback"
+      );
       return this.generateSoftwareProof({ updates } as any);
     }
   }
 
   private async submitAggregate(updates: any[], proof: string): Promise<void> {
     await this.network.broadcast({
-      type: 'AGGREGATE_UPDATE',
+      type: "AGGREGATE_UPDATE",
       payload: { updates, proof },
       timestamp: Date.now(),
-      nodeId: this.id
+      nodeId: this.id,
     });
   }
 
   private setupShutdownHandlers(): void {
     const gracefulShutdown = async (signal: string) => {
-      this.logger.info({ signal }, 'Received shutdown signal');
+      this.logger.info({ signal }, "Received shutdown signal");
       try {
         await this.shutdown();
         process.exit(0);
       } catch (error) {
-        this.logger.error({ error }, 'Graceful shutdown failed');
+        this.logger.error({ error }, "Graceful shutdown failed");
         process.exit(1);
       }
     };
 
-    process.on('SIGTERM', () => gracefulShutdown('SIGTERM'));
-    process.on('SIGINT', () => gracefulShutdown('SIGINT'));
+    process.on("SIGTERM", () => gracefulShutdown("SIGTERM"));
+    process.on("SIGINT", () => gracefulShutdown("SIGINT"));
   }
 }
 
@@ -650,9 +700,10 @@ class NodeMetricsCollector {
   }
 
   getSnapshot(): MetricsSnapshot {
-    const avgLatency = this.latencies.length > 0
-      ? this.latencies.reduce((a, b) => a + b, 0) / this.latencies.length
-      : 0;
+    const avgLatency =
+      this.latencies.length > 0
+        ? this.latencies.reduce((a, b) => a + b, 0) / this.latencies.length
+        : 0;
 
     const faults: Record<string, number> = {};
     this.byzantineFaults.forEach((count, key) => {
@@ -665,7 +716,7 @@ class NodeMetricsCollector {
       failedUpdates: this.failedUpdates,
       byzantineFaultsDetected: faults,
       averageLatency: avgLatency,
-      totalRewards: this.totalRewards
+      totalRewards: this.totalRewards,
     };
   }
 }

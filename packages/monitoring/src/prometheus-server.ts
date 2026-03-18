@@ -1,26 +1,26 @@
 /**
  * Prometheus Metrics HTTP Server
- * 
+ *
  * Exposes metrics on /metrics endpoint for Prometheus scraping
  * Provides health checks and SLA status
  */
 
-import http from 'http';
-import { MetricsRegistry } from './metrics-registry.js';
+import http from "http";
+import { MetricsRegistry } from "./metrics-registry.js";
 
 export class PrometheusServer {
   private server: http.Server | null = null;
   private registry: MetricsRegistry;
   private port: number;
-  private metricsPath: string = '/metrics';
-  private healthPath: string = '/health';
-  private slaPath: string = '/sla';
-  
+  private metricsPath: string = "/metrics";
+  private healthPath: string = "/health";
+  private slaPath: string = "/sla";
+
   constructor(registry: MetricsRegistry, port: number = 9090) {
     this.registry = registry;
     this.port = port;
   }
-  
+
   /**
    * Start the metrics server
    */
@@ -28,37 +28,41 @@ export class PrometheusServer {
     return new Promise((resolve) => {
       this.server = http.createServer((req, res) => {
         // Enable CORS
-        res.setHeader('Access-Control-Allow-Origin', '*');
-        res.setHeader('Access-Control-Allow-Methods', 'GET, OPTIONS');
-        
-        if (req.url === this.metricsPath && req.method === 'GET') {
+        res.setHeader("Access-Control-Allow-Origin", "*");
+        res.setHeader("Access-Control-Allow-Methods", "GET, OPTIONS");
+
+        if (req.url === this.metricsPath && req.method === "GET") {
           // Prometheus metrics endpoint
           this.handleMetrics(res);
-        } else if (req.url === this.healthPath && req.method === 'GET') {
+        } else if (req.url === this.healthPath && req.method === "GET") {
           // Health check endpoint
           this.handleHealth(res);
-        } else if (req.url === this.slaPath && req.method === 'GET') {
+        } else if (req.url === this.slaPath && req.method === "GET") {
           // SLA status endpoint
           this.handleSLA(res);
-        } else if (req.url === '/' && req.method === 'GET') {
+        } else if (req.url === "/" && req.method === "GET") {
           // Root endpoint
           this.handleRoot(res);
         } else {
-          res.writeHead(404, { 'Content-Type': 'text/plain' });
-          res.end('Not Found');
+          res.writeHead(404, { "Content-Type": "text/plain" });
+          res.end("Not Found");
         }
       });
-      
+
       this.server.listen(this.port, () => {
         console.log(`Prometheus metrics server listening on port ${this.port}`);
-        console.log(`  Metrics:  http://localhost:${this.port}${this.metricsPath}`);
-        console.log(`  Health:   http://localhost:${this.port}${this.healthPath}`);
+        console.log(
+          `  Metrics:  http://localhost:${this.port}${this.metricsPath}`
+        );
+        console.log(
+          `  Health:   http://localhost:${this.port}${this.healthPath}`
+        );
         console.log(`  SLA:      http://localhost:${this.port}${this.slaPath}`);
         resolve();
       });
     });
   }
-  
+
   /**
    * Stop the metrics server
    */
@@ -66,7 +70,7 @@ export class PrometheusServer {
     return new Promise((resolve) => {
       if (this.server) {
         this.server.close(() => {
-          console.log('Prometheus metrics server stopped');
+          console.log("Prometheus metrics server stopped");
           resolve();
         });
       } else {
@@ -74,57 +78,57 @@ export class PrometheusServer {
       }
     });
   }
-  
+
   /**
    * Handle /metrics request (Prometheus format)
    */
   private handleMetrics(res: http.ServerResponse) {
     try {
       const metrics = this.registry.exportPrometheus();
-      res.writeHead(200, { 'Content-Type': 'text/plain; charset=utf-8' });
+      res.writeHead(200, { "Content-Type": "text/plain; charset=utf-8" });
       res.end(metrics);
     } catch (error) {
-      res.writeHead(500, { 'Content-Type': 'text/plain' });
+      res.writeHead(500, { "Content-Type": "text/plain" });
       res.end(`Error exporting metrics: ${error}`);
     }
   }
-  
+
   /**
    * Handle /health request (simple liveness)
    */
   private handleHealth(res: http.ServerResponse) {
     const health = {
-      status: 'healthy',
+      status: "healthy",
       timestamp: new Date().toISOString(),
-      uptime: process.uptime()
+      uptime: process.uptime(),
     };
-    
-    res.writeHead(200, { 'Content-Type': 'application/json' });
+
+    res.writeHead(200, { "Content-Type": "application/json" });
     res.end(JSON.stringify(health, null, 2));
   }
-  
+
   /**
    * Handle /sla request (SLA compliance)
    */
   private handleSLA(res: http.ServerResponse) {
     const slaStatus = this.registry.exportSLAStatus();
-    const allPassed = Object.values(slaStatus).every(v => v === true);
-    
+    const allPassed = Object.values(slaStatus).every((v) => v === true);
+
     const response = {
-      status: allPassed ? 'compliant' : 'non-compliant',
+      status: allPassed ? "compliant" : "non-compliant",
       timestamp: new Date().toISOString(),
       checks: slaStatus,
       summary: {
-        passed: Object.values(slaStatus).filter(v => v).length,
-        total: Object.keys(slaStatus).length
-      }
+        passed: Object.values(slaStatus).filter((v) => v).length,
+        total: Object.keys(slaStatus).length,
+      },
     };
-    
+
     const statusCode = allPassed ? 200 : 206;
-    res.writeHead(statusCode, { 'Content-Type': 'application/json' });
+    res.writeHead(statusCode, { "Content-Type": "application/json" });
     res.end(JSON.stringify(response, null, 2));
   }
-  
+
   /**
    * Handle root request (documentation)
    */
@@ -188,8 +192,8 @@ scrape_configs:
 </body>
 </html>
     `;
-    
-    res.writeHead(200, { 'Content-Type': 'text/html; charset=utf-8' });
+
+    res.writeHead(200, { "Content-Type": "text/html; charset=utf-8" });
     res.end(html);
   }
 }

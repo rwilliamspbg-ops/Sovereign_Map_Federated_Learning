@@ -1,26 +1,26 @@
 /**
  * Compression Engine Tests
- * 
+ *
  * Verifies quantization, delta encoding, and compression pipeline
  */
 
-import { describe, it, expect, beforeEach } from 'vitest';
+import { describe, it, expect, beforeEach } from "vitest";
 import {
   Quantizer,
   DeltaEncoder,
   CompressionEngine,
   PrivacyAwareCompression,
-  QuantizationType
-} from '../src/compression-engine';
+  QuantizationType,
+} from "../src/compression-engine";
 
-describe('Quantizer', () => {
+describe("Quantizer", () => {
   let quantizer: Quantizer;
 
   beforeEach(() => {
     quantizer = new Quantizer(8, QuantizationType.UNIFORM);
   });
 
-  it('should quantize values consistently', () => {
+  it("should quantize values consistently", () => {
     const data = [0, 1, 0.5, -1, 100];
     quantizer.calibrate(data);
 
@@ -30,13 +30,13 @@ describe('Quantizer', () => {
     expect(quantized1).toBe(quantized2);
   });
 
-  it('should dequantize with bounded error', () => {
+  it("should dequantize with bounded error", () => {
     const data = Array.from({ length: 100 }, (_, i) => (i - 50) * 0.1);
     quantizer.calibrate(data);
 
     const maxError = quantizer.getMaxError();
 
-    data.forEach(original => {
+    data.forEach((original) => {
       const quantized = quantizer.quantize(original);
       const dequantized = quantizer.dequantize(quantized);
       const error = Math.abs(dequantized - original);
@@ -45,7 +45,7 @@ describe('Quantizer', () => {
     });
   });
 
-  it('should handle different quantization types', () => {
+  it("should handle different quantization types", () => {
     const exponentialData = [1, 10, 100, 1000, 10000];
 
     // Test logarithmic quantization
@@ -64,14 +64,14 @@ describe('Quantizer', () => {
     expect(adaptQuantized).toBeGreaterThan(0);
   });
 
-  it('should support different bit depths', () => {
+  it("should support different bit depths", () => {
     const data = Array.from({ length: 10 }, (_, i) => i * 10);
 
     for (const bits of [1, 4, 8, 16]) {
       const q = new Quantizer(bits, QuantizationType.UNIFORM);
       q.calibrate(data);
 
-      data.forEach(val => {
+      data.forEach((val) => {
         const quantized = q.quantize(val);
         const maxVal = Math.pow(2, bits) - 1;
         expect(quantized).toBeLessThanOrEqual(maxVal);
@@ -80,25 +80,25 @@ describe('Quantizer', () => {
     }
   });
 
-  it('should throw on invalid bit depth', () => {
+  it("should throw on invalid bit depth", () => {
     expect(() => new Quantizer(0)).toThrow();
     expect(() => new Quantizer(33)).toThrow();
   });
 });
 
-describe('DeltaEncoder', () => {
-  it('should encode deltas correctly', () => {
+describe("DeltaEncoder", () => {
+  it("should encode deltas correctly", () => {
     const values = new Uint8Array([10, 12, 12, 15, 14]);
     const deltas = DeltaEncoder.encode(values);
 
     expect(deltas[0]).toBe(10);
-    expect(deltas[1]).toBe(2);  // 12 - 10
-    expect(deltas[2]).toBe(0);  // 12 - 12
-    expect(deltas[3]).toBe(3);  // 15 - 12
+    expect(deltas[1]).toBe(2); // 12 - 10
+    expect(deltas[2]).toBe(0); // 12 - 12
+    expect(deltas[3]).toBe(3); // 15 - 12
     expect(deltas[4]).toBe(255); // (14 - 15) wrapped
   });
 
-  it('should decode deltas back to original', () => {
+  it("should decode deltas back to original", () => {
     const original = new Uint8Array([10, 12, 12, 15, 14]);
     const deltas = DeltaEncoder.encode(original);
     const decoded = DeltaEncoder.decode(deltas);
@@ -108,7 +108,7 @@ describe('DeltaEncoder', () => {
     }
   });
 
-  it('should work with Uint16Array', () => {
+  it("should work with Uint16Array", () => {
     const values = new Uint16Array([100, 150, 140, 200]);
     const deltas = DeltaEncoder.encode(values);
     const decoded = DeltaEncoder.decode(deltas);
@@ -119,13 +119,13 @@ describe('DeltaEncoder', () => {
   });
 });
 
-describe('CompressionEngine', () => {
+describe("CompressionEngine", () => {
   let engine: CompressionEngine;
   let testData: Float32Array;
 
   beforeEach(() => {
     engine = new CompressionEngine(8, 3, QuantizationType.ADAPTIVE);
-    
+
     // Create realistic gradient data (normally distributed)
     testData = new Float32Array(1000);
     for (let i = 0; i < testData.length; i++) {
@@ -135,7 +135,7 @@ describe('CompressionEngine', () => {
     }
   });
 
-  it('should compress data successfully', async () => {
+  it("should compress data successfully", async () => {
     const result = await engine.compress(testData);
 
     expect(result.compressed).toBeDefined();
@@ -145,7 +145,7 @@ describe('CompressionEngine', () => {
     expect(result.stats).toBeDefined();
   });
 
-  it('should achieve target compression ratio', async () => {
+  it("should achieve target compression ratio", async () => {
     const result = await engine.compress(testData);
 
     // Should achieve 4× compression (float32: 32 bits → 8 bits + overhead)
@@ -153,7 +153,7 @@ describe('CompressionEngine', () => {
     expect(ratio).toBeGreaterThan(3);
   });
 
-  it('should decompress to reasonable approximation', async () => {
+  it("should decompress to reasonable approximation", async () => {
     const compressed = await engine.compress(testData);
     const decompressed = await engine.decompress(
       compressed.compressed,
@@ -167,11 +167,11 @@ describe('CompressionEngine', () => {
       sumSqError += error * error;
     }
     const mse = sumSqError / 100;
-    
+
     expect(mse).toBeLessThan(0.5); // MSE should be small
   });
 
-  it('should provide compression statistics', async () => {
+  it("should provide compression statistics", async () => {
     const result = await engine.compress(testData);
     const stats = result.stats;
 
@@ -182,26 +182,32 @@ describe('CompressionEngine', () => {
     expect(stats.compressionTime).toBeGreaterThan(0);
   });
 
-  it('should emit events during compression', async () => {
+  it("should emit events during compression", async () => {
     let eventsFired = 0;
-    
-    engine.on('calibrationComplete', () => { eventsFired |= 1; });
-    engine.on('quantizationComplete', () => { eventsFired |= 2; });
-    engine.on('compressionComplete', () => { eventsFired |= 4; });
+
+    engine.on("calibrationComplete", () => {
+      eventsFired |= 1;
+    });
+    engine.on("quantizationComplete", () => {
+      eventsFired |= 2;
+    });
+    engine.on("compressionComplete", () => {
+      eventsFired |= 4;
+    });
 
     await engine.compress(testData);
 
     expect(eventsFired).toBe(7); // All 3 events fired
   });
 
-  it('should estimate compression ratio', () => {
+  it("should estimate compression ratio", () => {
     const ratio = engine.estimateCompressionRatio(testData);
 
     expect(ratio).toBeGreaterThan(0);
     expect(ratio).toBeLessThan(1); // Should be less than 100%
   });
 
-  it('should validate compressed data', async () => {
+  it("should validate compressed data", async () => {
     const result = await engine.compress(testData);
 
     const isValid = engine.validateCompressed(
@@ -212,15 +218,19 @@ describe('CompressionEngine', () => {
     expect(isValid).toBe(true);
   });
 
-  it('should handle compression with privacy epsilon', async () => {
+  it("should handle compression with privacy epsilon", async () => {
     const result = await engine.compress(testData, 1.0);
 
     expect(result.stats.privacyOverhead).toBeGreaterThanOrEqual(0);
     expect(result.stats.privacyOverhead).toBeLessThan(100);
   });
 
-  it('should support different quantization types', async () => {
-    for (const qType of [QuantizationType.UNIFORM, QuantizationType.LOGARITHMIC, QuantizationType.ADAPTIVE]) {
+  it("should support different quantization types", async () => {
+    for (const qType of [
+      QuantizationType.UNIFORM,
+      QuantizationType.LOGARITHMIC,
+      QuantizationType.ADAPTIVE,
+    ]) {
       const eng = new CompressionEngine(8, 3, qType);
       const result = await eng.compress(testData);
 
@@ -229,20 +239,20 @@ describe('CompressionEngine', () => {
   });
 });
 
-describe('PrivacyAwareCompression', () => {
+describe("PrivacyAwareCompression", () => {
   let privacy: PrivacyAwareCompression;
   let testGradient: Float32Array;
 
   beforeEach(() => {
     privacy = new PrivacyAwareCompression(8, 1.0, QuantizationType.ADAPTIVE);
-    
+
     testGradient = new Float32Array(100);
     for (let i = 0; i < testGradient.length; i++) {
       testGradient[i] = (Math.random() - 0.5) * 2;
     }
   });
 
-  it('should compress gradient updates', async () => {
+  it("should compress gradient updates", async () => {
     const result = await privacy.compressUpdate(testGradient, 0.5);
 
     expect(result.compressed).toBeDefined();
@@ -251,7 +261,7 @@ describe('PrivacyAwareCompression', () => {
     expect(result.stats).toBeDefined();
   });
 
-  it('should decompress gradient updates', async () => {
+  it("should decompress gradient updates", async () => {
     const compressed = await privacy.compressUpdate(testGradient, 0.5);
     const decompressed = await privacy.decompressUpdate(
       compressed.compressed,
@@ -262,7 +272,7 @@ describe('PrivacyAwareCompression', () => {
     expect(decompressed.length).toBe(testGradient.length);
   });
 
-  it('should track compression history', async () => {
+  it("should track compression history", async () => {
     // Compress multiple updates
     for (let i = 0; i < 5; i++) {
       const gradient = new Float32Array(100);
@@ -278,7 +288,7 @@ describe('PrivacyAwareCompression', () => {
     expect(stats!.compressionRatio).toBeGreaterThan(0.5);
   });
 
-  it('should calculate memory savings', async () => {
+  it("should calculate memory savings", async () => {
     for (let i = 0; i < 3; i++) {
       const gradient = new Float32Array(100);
       for (let j = 0; j < gradient.length; j++) {
@@ -295,10 +305,10 @@ describe('PrivacyAwareCompression', () => {
   });
 });
 
-describe('End-to-End Compression Pipeline', () => {
-  it('should compress and decompress large batch', async () => {
+describe("End-to-End Compression Pipeline", () => {
+  it("should compress and decompress large batch", async () => {
     const engine = new CompressionEngine(16, 3, QuantizationType.ADAPTIVE);
-    
+
     // Create large gradient matrix (10K × 100)
     const largeGradient = new Float32Array(10000);
     for (let i = 0; i < largeGradient.length; i++) {
@@ -330,7 +340,7 @@ describe('End-to-End Compression Pipeline', () => {
     expect(maxError).toBeLessThan(1); // Max error < 1.0
   });
 
-  it('should achieve 10× compression on typical FL gradients', async () => {
+  it("should achieve 10× compression on typical FL gradients", async () => {
     const engine = new CompressionEngine(4, 5, QuantizationType.LOGARITHMIC);
 
     // Typical gradient: many small values, few large ones
@@ -351,8 +361,8 @@ describe('End-to-End Compression Pipeline', () => {
   });
 });
 
-describe.skip('Compression Benchmarks (run with npm run test:benchmark)', () => {
-  it('compresses 100 float values quickly', async () => {
+describe.skip("Compression Benchmarks (run with npm run test:benchmark)", () => {
+  it("compresses 100 float values quickly", async () => {
     const engine = new CompressionEngine(8);
     const data = new Float32Array(100);
     for (let i = 0; i < data.length; i++) {
@@ -366,7 +376,7 @@ describe.skip('Compression Benchmarks (run with npm run test:benchmark)', () => 
     expect(duration).toBeLessThan(5000);
   });
 
-  it('decompresses 100 float values quickly', async () => {
+  it("decompresses 100 float values quickly", async () => {
     const engine = new CompressionEngine(8);
     const data = new Float32Array(100);
     for (let i = 0; i < data.length; i++) {

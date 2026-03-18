@@ -297,6 +297,38 @@ services:
       test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:9091/health', timeout=3)"]
       interval: 15s
       timeout: 5s
+
+  fl-performance:
+    image: python:3.11-slim
+    container_name: sovereign-fl-performance
+    volumes:
+      - ./fl_performance_exporter.py:/app/fl_performance_exporter.py:ro
+    working_dir: /app
+    command: ["sh", "-c", "python -m pip install --no-cache-dir prometheus_client && python fl_performance_exporter.py"]
+    ports:
+      - "8001:8001"
+    networks:
+      - sovereign-network
+
+  auto-tuner:
+    image: python:3.11-slim
+    container_name: sovereign-auto-tuner
+    volumes:
+      - ./hardware_auto_tuner.py:/app/hardware_auto_tuner.py:ro
+    working_dir: /app
+    command: ["python", "hardware_auto_tuner.py"]
+    networks:
+      - sovereign-network
+
+  auto-tuner:
+    image: python:3.11-slim
+    container_name: sovereign-auto-tuner
+    volumes:
+      - ./hardware_auto_tuner.py:/app/hardware_auto_tuner.py:ro
+    working_dir: /app
+    command: ["python", "hardware_auto_tuner.py"]
+    networks:
+      - sovereign-network
       retries: 3
       start_period: 10s
     restart: unless-stopped

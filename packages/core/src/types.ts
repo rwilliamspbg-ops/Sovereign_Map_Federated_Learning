@@ -2,7 +2,7 @@
  * Core type definitions for Sovereign Map SDK
  */
 
-import { NodeState } from './node.js';
+import { NodeState } from "./node.js";
 
 // Geographic types
 export interface Coordinates {
@@ -19,7 +19,7 @@ export interface GeoPolygon {
 export interface PrivacyBudget {
   epsilon: number;
   delta: number;
-  mechanism: 'gaussian' | 'laplace';
+  mechanism: "gaussian" | "laplace";
 }
 
 export interface PrivacyStatus {
@@ -50,7 +50,7 @@ export interface PrivatizedUpdate extends MapUpdate {
 
 export interface SubmissionResult {
   updateId: string;
-  status: 'confirmed' | 'pending' | 'queued' | 'failed';
+  status: "confirmed" | "pending" | "queued" | "failed";
   proof: string;
   estimatedConfirmationTime?: number;
   error?: string;
@@ -98,9 +98,9 @@ export interface RoundResult {
 
 export interface AggregatorConfig {
   regionBoundary?: GeoPolygon;
-  specialization?: 'urban' | 'highway' | 'offroad' | 'indoor';
+  specialization?: "urban" | "highway" | "offroad" | "indoor";
   maxChildren?: number;
-  tier: 'edge' | 'regional' | 'global';
+  tier: "edge" | "regional" | "global";
 }
 
 // Node status types
@@ -124,7 +124,7 @@ export interface HardwareCapabilities {
 }
 
 export interface IslandStatus {
-  mode: 'online' | 'island';
+  mode: "online" | "island";
   updatesQueued: number;
   lastSync: number;
   storageUsed: number;
@@ -173,11 +173,11 @@ export interface NodeConfig {
   };
   consensus?: {
     enabled?: boolean;
-    aggregatorTier?: 'none' | 'edge' | 'regional' | 'global';
+    aggregatorTier?: "none" | "edge" | "regional" | "global";
     maxAggregationChildren?: number;
   };
   logging?: {
-    level?: 'trace' | 'debug' | 'info' | 'warn' | 'error';
+    level?: "trace" | "debug" | "info" | "warn" | "error";
     pretty?: boolean;
   };
 }

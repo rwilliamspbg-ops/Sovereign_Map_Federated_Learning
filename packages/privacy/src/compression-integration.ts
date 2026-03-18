@@ -1,17 +1,17 @@
 /**
  * Compression Integration for Privacy Engine
- * 
+ *
  * Provides transparent integration of data compression with DP-SGD
  * Hooks into gradient generation and compression events
  */
 
-import { EventEmitter } from 'eventemitter3';
+import { EventEmitter } from "eventemitter3";
 import {
   CompressionEngine,
   PrivacyAwareCompression,
   CompressionStats,
-  QuantizationType
-} from '@sovereignmap/compression';
+  QuantizationType,
+} from "@sovereignmap/compression";
 
 /**
  * Configuration for privacy-aware compression
@@ -40,12 +40,12 @@ export interface CompressionIntegrationStats {
 
 /**
  * Privacy-aware compression integration layer
- * 
+ *
  * Combines compression engine with privacy tracking:
  * - Post-DP-SGD compression (no epsilon cost)
  * - Automatic calibration on first gradient
  * - Event-driven integration with PrivacyEngine
- * 
+ *
  * @example
  * ```typescript
  * const integration = new CompressionIntegration({
@@ -55,10 +55,10 @@ export interface CompressionIntegrationStats {
  *   compressionLevel: 6,
  *   targetCompressionRatio: 4.0
  * });
- * 
+ *
  * const compressed = integration.compressGradient(noisyGradient);
  * const decompressed = integration.decompressGradient(compressed.data, compressed.metadata);
- * 
+ *
  * const stats = integration.getStatistics();
  * console.log(`Average compression: ${stats.averageCompressionRatio}×`);
  * ```
@@ -74,7 +74,7 @@ export class CompressionIntegration extends EventEmitter {
     averageMaxError: 0,
     totalCompressionTimeMs: 0,
     totalDecompressionTimeMs: 0,
-    privacyOverhead: 0
+    privacyOverhead: 0,
   };
   private config: CompressionIntegrationConfig;
   private calibrationComplete: boolean = false;
@@ -97,19 +97,19 @@ export class CompressionIntegration extends EventEmitter {
     );
 
     // Event handling
-    this.engine.on('calibrationComplete', (calibStats: unknown) => {
+    this.engine.on("calibrationComplete", (calibStats: unknown) => {
       this.calibrationComplete = true;
-      this.emit('calibrationComplete', calibStats);
+      this.emit("calibrationComplete", calibStats);
     });
 
-    this.engine.on('compressionComplete', (compStats: unknown) => {
-      this.emit('compressionComplete', compStats);
+    this.engine.on("compressionComplete", (compStats: unknown) => {
+      this.emit("compressionComplete", compStats);
     });
   }
 
   /**
    * Compress a gradient update
-   * 
+   *
    * @param gradient Float32Array of gradient values
    * @param epsilonRemaining Current privacy budget (informational only, not consumed)
    * @returns Compressed data with metadata and statistics
@@ -138,7 +138,7 @@ export class CompressionIntegration extends EventEmitter {
         : 0;
     const normalizedStats: CompressionStats = {
       ...result.stats,
-      compressionRatio
+      compressionRatio,
     };
 
     const endTime = performance.now();
@@ -146,8 +146,8 @@ export class CompressionIntegration extends EventEmitter {
 
     if (!this.calibrationComplete) {
       this.calibrationComplete = true;
-      this.emit('calibrationComplete', {
-        sampleSize: Math.max(100, Math.floor(gradient.length * 0.1))
+      this.emit("calibrationComplete", {
+        sampleSize: Math.max(100, Math.floor(gradient.length * 0.1)),
       });
     }
 
@@ -160,35 +160,32 @@ export class CompressionIntegration extends EventEmitter {
     // Recalculate average metrics
     this.updateAverageMetrics(normalizedStats);
 
-    this.emit('compressionComplete', normalizedStats);
+    this.emit("compressionComplete", normalizedStats);
 
     // Emit event
-    this.emit('gradientCompressed', {
+    this.emit("gradientCompressed", {
       originalSize: gradient.byteLength,
       compressedSize: result.compressed.byteLength,
       ratio: normalizedStats.compressionRatio,
-      timeMs: compressionTimeMs
+      timeMs: compressionTimeMs,
     });
 
     return {
       data: result.compressed,
       metadata: result.metadata,
       stats: normalizedStats,
-      privacySpent: 0 // Post-DP compression has no privacy cost
+      privacySpent: 0, // Post-DP compression has no privacy cost
     };
   }
 
   /**
    * Decompress a gradient update
-   * 
+   *
    * @param compressed Compressed data buffer
    * @param metadata Compression metadata from compression operation
    * @returns Decompressed Float32Array
    */
-  decompressGradient(
-    compressed: Uint8Array,
-    metadata: any
-  ): Float32Array {
+  decompressGradient(compressed: Uint8Array, metadata: any): Float32Array {
     const startTime = performance.now();
 
     const decompressed = this.privacyAware.decompressUpdate(
@@ -203,10 +200,10 @@ export class CompressionIntegration extends EventEmitter {
     this.stats.totalDecompressionTimeMs += decompressionTimeMs;
 
     // Emit event
-    this.emit('gradientDecompressed', {
+    this.emit("gradientDecompressed", {
       compressedSize: compressed.byteLength,
       decompressedSize: decompressed.byteLength,
-      timeMs: decompressionTimeMs
+      timeMs: decompressionTimeMs,
     });
 
     return decompressed as Float32Array;
@@ -214,7 +211,7 @@ export class CompressionIntegration extends EventEmitter {
 
   /**
    * Validate compression configuration matches target
-   * 
+   *
    * @param gradient Sample gradient for validation
    * @returns true if compression meets target ratio and error bounds
    */
@@ -240,7 +237,7 @@ export class CompressionIntegration extends EventEmitter {
 
   /**
    * Get current compression statistics
-   * 
+   *
    * @returns Aggregated statistics across all operations
    */
   getStatistics(): CompressionIntegrationStats {
@@ -259,7 +256,7 @@ export class CompressionIntegration extends EventEmitter {
       averageMaxError: 0,
       totalCompressionTimeMs: 0,
       totalDecompressionTimeMs: 0,
-      privacyOverhead: 0
+      privacyOverhead: 0,
     };
   }
 
@@ -279,7 +276,7 @@ export class CompressionIntegration extends EventEmitter {
 
   /**
    * Update privacy overhead calculation
-   * 
+   *
    * @param compressionStats Statistics from compression operation
    * @private
    */
@@ -307,7 +304,7 @@ export class CompressionIntegration extends EventEmitter {
 
 /**
  * Hook for integrating compression into PrivacyEngine
- * 
+ *
  * @param privacyEngine PrivacyEngine instance
  * @param config Compression configuration
  * @returns Compression integration instance
@@ -319,18 +316,18 @@ export function createCompressionHook(
   const integration = new CompressionIntegration(config);
 
   // Subscribe to privacy engine events
-  privacyEngine.on('gradientNoiseInjected', (event: any) => {
+  privacyEngine.on("gradientNoiseInjected", (event: any) => {
     const compressed = integration.compressGradient(
       event.noisyGradient,
       event.epsilonUsed
     );
 
     // Forward compressed gradient
-    privacyEngine.emit('gradientCompressed', {
+    privacyEngine.emit("gradientCompressed", {
       gradient: compressed.data,
       metadata: compressed.metadata,
       stats: compressed.stats,
-      originalGradient: event.noisyGradient
+      originalGradient: event.noisyGradient,
     });
   });
 
@@ -341,8 +338,7 @@ export function createCompressionHook(
   privacyEngine.decompressGradient = (data: Uint8Array, metadata: any) =>
     integration.decompressGradient(data, metadata);
 
-  privacyEngine.getCompressionStats = () =>
-    integration.getStatistics();
+  privacyEngine.getCompressionStats = () => integration.getStatistics();
 
   return integration;
 }

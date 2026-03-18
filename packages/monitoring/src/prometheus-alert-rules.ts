@@ -1,6 +1,6 @@
 /**
  * Prometheus Alerting Rules for Sovereign Map FL
- * 
+ *
  * Add to prometheus.yml:
  * rule_files:
  *   - '/path/to/prometheus-alert-rules.yml'
@@ -323,81 +323,81 @@ export const ALERT_RULES = {
       name: "HighPrivacyOverhead",
       expr: "privacy_overhead_percent > 20",
       severity: "warning",
-      threshold: 20
+      threshold: 20,
     },
     budgetExhausted: {
       name: "PrivacyBudgetExhausted",
       expr: "privacy_epsilon_remaining < 0.1",
       severity: "critical",
-      threshold: 0.1
-    }
+      threshold: 0.1,
+    },
   },
   gpu: {
     detectionFailure: {
       name: "GPUDetectionFailure",
       expr: "rate(gpu_detection_failures[5m]) > 0.1",
-      severity: "warning"
+      severity: "warning",
     },
     memoryExhaustion: {
       name: "GPUMemoryExhaustion",
       expr: "(gpu_memory_used_bytes / gpu_memory_total_bytes) * 100 > 90",
       severity: "critical",
-      threshold: 90
-    }
+      threshold: 90,
+    },
   },
   consensus: {
     lowParticipation: {
       name: "LowConsensusParticipation",
       expr: "consensus_participation_rate < 66.7",
       severity: "critical",
-      threshold: 66.7
+      threshold: 66.7,
     },
     byzantineDetected: {
       name: "ByzantineNodesDetected",
       expr: "byzantine_nodes_currently_detected >= 1",
-      severity: "critical"
-    }
+      severity: "critical",
+    },
   },
   network: {
     partitionDetected: {
       name: "NetworkPartitionDetected",
       expr: "network_partitions_detected_total > 0",
-      severity: "warning"
+      severity: "warning",
     },
     partitionPersists: {
       name: "PartitionPersists",
       expr: "network_partition_isolated_nodes > 0",
       severity: "critical",
-      duration: "5m"
-    }
+      duration: "5m",
+    },
   },
   system: {
     highCPU: {
       name: "HighCPUUsage",
       expr: "system_cpu_usage_percent > 90",
       severity: "warning",
-      threshold: 90
+      threshold: 90,
     },
     processDown: {
       name: "ProcessDown",
       expr: 'up{job="sovereign-map"} == 0',
-      severity: "critical"
-    }
+      severity: "critical",
+    },
   },
   sla: {
     privacyBreach: {
       name: "PrivacyOverheadSLABreach",
       expr: "privacy_overhead_percent > 12",
       severity: "critical",
-      slaTarget: 12
+      slaTarget: 12,
     },
     byzantineBreach: {
       name: "ByzantineSLABreach",
       expr: "consensus_byzantine_node_ratio > 0.33",
       severity: "critical",
-      slaTarget: 0.33
-    }
-  }
+      slaTarget: 0.33,
+    },
+  },
 };
 
 export default PROMETHEUS_ALERT_RULES;
