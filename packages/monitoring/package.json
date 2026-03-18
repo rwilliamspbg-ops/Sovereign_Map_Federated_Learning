@@ -1,0 +1,43 @@
+{
+  "name": "@sovereign-map/monitoring",
+  "version": "1.0.0",
+  "description": "Real-time monitoring and observability for Sovereign Map Federated Learning",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "license": "MIT",
+  "files": [
+    "dist",
+    "src"
+  ],
+  "scripts": {
+    "build": "tsc",
+    "test": "vitest",
+    "test:ci": "vitest run --coverage",
+    "test:integration": "vitest run packages/monitoring/src/index.test.ts",
+    "lint": "eslint src --ext .ts",
+    "clean": "rm -rf dist coverage"
+  },
+  "dependencies": {
+    "eventemitter3": "^5.0.0"
+  },
+  "devDependencies": {
+    "@types/node": "^20.0.0",
+    "typescript": "^5.0.0",
+    "vitest": "^0.34.0",
+    "@vitest/coverage-v8": "^0.34.0"
+  },
+  "keywords": [
+    "sovereign-map",
+    "federated-learning",
+    "monitoring",
+    "prometheus",
+    "grafana",
+    "observability",
+    "metrics"
+  ],
+  "author": "Sovereign Map Team",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/rwilliamspbg-ops/Sovereign_Map_Federated_Learning"
+  }
+}

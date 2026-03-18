@@ -5,7 +5,8 @@
     "packages/core",
     "packages/privacy",
     "packages/consensus",
-    "packages/island"
+    "packages/island",
+    "packages/monitoring"
   ],
   "scripts": {
     "build:libs": "npm --prefix packages/privacy ci && npm --prefix packages/privacy run build && npm --prefix packages/consensus ci && npm --prefix packages/consensus run build && npm --prefix packages/island ci && npm --prefix packages/island run build && npm --prefix packages/core ci && npm --prefix packages/core run build",
