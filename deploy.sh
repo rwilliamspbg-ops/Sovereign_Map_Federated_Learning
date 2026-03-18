@@ -206,7 +206,7 @@ elif [ "$PROFILE" = "full" ]; then
 elif [ "$PROFILE" = "large-scale" ]; then
     read -r -p "Enter number of nodes (default 500): " NODES
     NODES=${NODES:-500}
-    compose_cmd up -d --scale node-agent=$NODES
+    compose_cmd up -d --scale node-agent="$NODES"
 else
     compose_cmd up -d
 fi

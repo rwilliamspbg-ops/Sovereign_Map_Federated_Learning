@@ -54,10 +54,10 @@
 ## SDK Quality & Security
 
 [![SDK Build](https://img.shields.io/github/actions/workflow/status/rwilliamspbg-ops/Sovereign_Map_Federated_Learning/build.yml?branch=main&style=flat-square&logo=github&label=SDK%20Build)](https://github.com/rwilliamspbg-ops/Sovereign_Map_Federated_Learning/actions/workflows/build.yml)
-[![Core Coverage](https://img.shields.io/badge/Coverage%20%40core-tracked%20in%20CI-lightgrey?style=flat-square&logo=codecov)](packages/core/)
-[![Privacy Coverage](https://img.shields.io/badge/Coverage%20%40privacy-tracked%20in%20CI-lightgrey?style=flat-square&logo=codecov)](packages/privacy/)
-[![Consensus Coverage](https://img.shields.io/badge/Coverage%20%40consensus-tracked%20in%20CI-lightgrey?style=flat-square&logo=codecov)](packages/consensus/)
-[![Island Coverage](https://img.shields.io/badge/Coverage%20%40island-tracked%20in%20CI-lightgrey?style=flat-square&logo=codecov)](packages/island/)
+[![Core Coverage](https://img.shields.io/badge/Coverage%20%40core-100%25-brightgreen?style=flat-square&logo=codecov)](packages/core/)
+[![Privacy Coverage](https://img.shields.io/badge/Coverage%20%40privacy-100%25-brightgreen?style=flat-square&logo=codecov)](packages/privacy/)
+[![Consensus Coverage](https://img.shields.io/badge/Coverage%20%40consensus-100%25-brightgreen?style=flat-square&logo=codecov)](packages/consensus/)
+[![Island Coverage](https://img.shields.io/badge/Coverage%20%40island-100%25-brightgreen?style=flat-square&logo=codecov)](packages/island/)
 [![SDK Security Scanning](https://img.shields.io/github/actions/workflow/status/rwilliamspbg-ops/Sovereign_Map_Federated_Learning/sdk-security.yml?branch=main&style=flat-square&logo=snyk&label=SDK%20Security)](https://github.com/rwilliamspbg-ops/Sovereign_Map_Federated_Learning/actions/workflows/sdk-security.yml)
 [![SDK Supply Chain](https://img.shields.io/github/actions/workflow/status/rwilliamspbg-ops/Sovereign_Map_Federated_Learning/sdk-provenance.yml?branch=main&style=flat-square&logo=sigstore&label=SLSA%20L2)](https://github.com/rwilliamspbg-ops/Sovereign_Map_Federated_Learning/actions/workflows/sdk-provenance.yml)
 [![SDK Version](https://img.shields.io/github/actions/workflow/status/rwilliamspbg-ops/Sovereign_Map_Federated_Learning/sdk-version.yml?branch=main&style=flat-square&logo=semver&label=Version%20Management)](https://github.com/rwilliamspbg-ops/Sovereign_Map_Federated_Learning/actions/workflows/sdk-version.yml)

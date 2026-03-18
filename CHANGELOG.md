@@ -89,3 +89,6 @@ Each SDK release follows this process:
    - Tagging strategy: stable, latest, @next for prereleases
 
 See [SDK_API_STABILITY.md](./SDK_API_STABILITY.md) for detailed versioning policy.
+
+### Fixes
+- Fixed SDK publish lockfile mismatch
