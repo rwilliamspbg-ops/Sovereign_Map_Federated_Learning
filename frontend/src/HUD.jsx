@@ -32,7 +32,7 @@ export default function HUD({
     <div className="hud-container">
       <header className="hud-section-header">
         <h2>🛰️ Network Intelligence HUD</h2>
-        {loading && <div className="loading-spinner">Synchronizing Node State...</div>}
+        {loading && <div className="loading-spinner">ESTABLISHING SECURE NEURAL LINK...</div>}
       </header>
 
       <div className="hud-grid">
