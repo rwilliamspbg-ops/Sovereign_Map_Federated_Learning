@@ -1,0 +1,39 @@
+groups:
+- name: fl_performance_alerts
+  rules:
+  # SLA Violations
+  - alert: HighPrivacyOverhead
+    expr: fl_privacy_overhead_percent > 20
+    for: 5m
+    labels:
+      severity: warning
+    annotations:
+      summary: "High Privacy Overhead on {{ $labels.node_id }}"
+      description: "Privacy mechanisms are consuming >20% compute overhead for more than 5 minutes."
+
+  - alert: ByzantineNodesDetected
+    expr: rate(fl_byzantine_nodes_total[5m]) > 0
+    for: 1m
+    labels:
+      severity: critical
+    annotations:
+      summary: "Byzantine nodes detected in {{ $labels.region }}"
+      description: "Active Byzantine behavior detected. Review FL anomaly logs."
+
+  - alert: GPUMemoryExhaustion
+    expr: fl_gpu_memory_usage_bytes > 15000000000
+    for: 5m
+    labels:
+      severity: critical
+    annotations:
+      summary: "GPU Memory Exhaustion on {{ $labels.node_id }}"
+      description: "GPU Memory usage is dangerously high."
+
+  - alert: NetworkPartitionActive
+    expr: fl_network_partition_events_total > 0
+    for: 5m
+    labels:
+      severity: error
+    annotations:
+      summary: "Network Partition >5m in {{ $labels.region }}"
+      description: "A network partition block is persisting."
