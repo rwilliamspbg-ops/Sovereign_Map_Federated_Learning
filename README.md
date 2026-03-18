@@ -175,6 +175,18 @@ docker compose -f docker-compose.full.yml up -d --scale node-agent=5
 docker compose ps
 ```
 
+### Option C: Phase 3D Production Automation (ECR + Kubernetes + CDN)
+
+```bash
+# Phase 3D backend (ECR + Kubernetes)
+./deploy/production/deploy-phase3d-production.sh
+
+# Frontend static publish (S3 + optional CloudFront invalidation)
+./deploy/production/publish-frontend-cdn.sh
+```
+
+See [docs/PHASE_3D_PRODUCTION_DEPLOYMENT.md](docs/PHASE_3D_PRODUCTION_DEPLOYMENT.md) for required AWS/EKS/CDN environment variables and rollout validation steps.
+
 ### Side-by-Side Stack Profiles
 
 Use stack-specific env files to run multiple stacks on one host without manual port edits:

@@ -19,6 +19,9 @@ make smoke
 - [ ] Documentation updated for behavior/config changes
 - [ ] No secrets or credentials committed
 - [ ] Any `.github/workflows/*.yml` `uses:` refs are pinned to 40-char commit SHAs
+- [ ] If deployment logic changed: `deploy.yml` staging and production paths validated
+- [ ] If frontend assets changed: CDN publish/invalidation plan verified
+- [ ] If Phase 3D changed: dataset/device/multi-GPU config compatibility validated
 
 ## Risk and Rollback
 

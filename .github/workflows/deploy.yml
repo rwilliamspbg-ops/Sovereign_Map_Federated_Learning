@@ -411,6 +411,112 @@ jobs:
           echo "Prometheus Metrics: http://${PROD_HOST}:9090"
           echo "TPM Metrics: http://${PROD_HOST}:9091"
           echo "=========================================="
+
+  # ========================================================================
+  # PHASE 3D K8S DEPLOY (Optional)
+  # ========================================================================
+
+  deploy-phase3d-k8s:
+    name: Deploy Phase 3D to K8s
+    runs-on: ubuntu-latest
+    needs: deploy-production
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    permissions:
+      id-token: write
+      contents: read
+    environment:
+      name: production
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd
+
+      - name: Validate Phase 3D deploy inputs
+        id: phase3d_inputs
+        run: |
+          if [ -z "${{ secrets.AWS_DEPLOY_ROLE_ARN }}" ] || [ -z "${{ secrets.AWS_REGION }}" ] || [ -z "${{ secrets.EKS_CLUSTER_NAME }}" ] || [ -z "${{ secrets.PHASE3D_ECR_REPOSITORY }}" ]; then
+            echo "ready=false" >> "$GITHUB_OUTPUT"
+            echo "⚠️ Missing AWS/EKS/ECR secrets for Phase 3D deployment; skipping"
+            exit 0
+          fi
+          echo "ready=true" >> "$GITHUB_OUTPUT"
+
+      - name: Configure AWS Credentials
+        if: steps.phase3d_inputs.outputs.ready == 'true'
+        uses: aws-actions/configure-aws-credentials@e3dd6a429d7300a6f3c7dd0d8f4f95f1f1a7f6b4
+        with:
+          role-to-assume: ${{ secrets.AWS_DEPLOY_ROLE_ARN }}
+          aws-region: ${{ secrets.AWS_REGION }}
+
+      - name: Deploy Phase 3D training service
+        if: steps.phase3d_inputs.outputs.ready == 'true'
+        env:
+          AWS_REGION: ${{ secrets.AWS_REGION }}
+          AWS_ACCOUNT_ID: ${{ secrets.AWS_ACCOUNT_ID }}
+          ECR_REPOSITORY: ${{ secrets.PHASE3D_ECR_REPOSITORY }}
+          EKS_CLUSTER_NAME: ${{ secrets.EKS_CLUSTER_NAME }}
+          K8S_NAMESPACE: ${{ secrets.K8S_NAMESPACE }}
+          IMAGE_TAG: ${{ github.sha }}
+          ENABLE_GPU: ${{ secrets.PHASE3D_ENABLE_GPU || 'true' }}
+        run: |
+          chmod +x deploy/production/deploy-phase3d-production.sh
+          ./deploy/production/deploy-phase3d-production.sh
+
+  # ========================================================================
+  # FRONTEND CDN PUBLISH (Optional)
+  # ========================================================================
+
+  publish-frontend-cdn:
+    name: Publish Frontend CDN
+    runs-on: ubuntu-latest
+    needs:
+      - deploy-production
+      - deploy-phase3d-k8s
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    permissions:
+      id-token: write
+      contents: read
+    environment:
+      name: production
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd
+
+      - name: Validate CDN deploy inputs
+        id: cdn_inputs
+        run: |
+          if [ -z "${{ secrets.AWS_DEPLOY_ROLE_ARN }}" ] || [ -z "${{ secrets.AWS_REGION }}" ] || [ -z "${{ secrets.FRONTEND_S3_BUCKET }}" ]; then
+            echo "ready=false" >> "$GITHUB_OUTPUT"
+            echo "⚠️ Missing CDN secrets for frontend publish; skipping"
+            exit 0
+          fi
+          echo "ready=true" >> "$GITHUB_OUTPUT"
+
+      - name: Configure AWS Credentials
+        if: steps.cdn_inputs.outputs.ready == 'true'
+        uses: aws-actions/configure-aws-credentials@e3dd6a429d7300a6f3c7dd0d8f4f95f1f1a7f6b4
+        with:
+          role-to-assume: ${{ secrets.AWS_DEPLOY_ROLE_ARN }}
+          aws-region: ${{ secrets.AWS_REGION }}
+
+      - name: Build frontend
+        if: steps.cdn_inputs.outputs.ready == 'true'
+        run: |
+          cd frontend
+          npm ci
+          npm run build
+
+      - name: Publish frontend assets
+        if: steps.cdn_inputs.outputs.ready == 'true'
+        env:
+          AWS_REGION: ${{ secrets.AWS_REGION }}
+          FRONTEND_DIST_DIR: frontend/dist
+          FRONTEND_S3_BUCKET: ${{ secrets.FRONTEND_S3_BUCKET }}
+          CLOUDFRONT_DISTRIBUTION_ID: ${{ secrets.CLOUDFRONT_DISTRIBUTION_ID }}
+        run: |
+          chmod +x deploy/production/publish-frontend-cdn.sh
+          ./deploy/production/publish-frontend-cdn.sh
   
   # ========================================================================
   # ROLLBACK PLAN (Manual)
