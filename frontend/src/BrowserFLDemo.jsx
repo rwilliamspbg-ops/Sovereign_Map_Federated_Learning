@@ -27,6 +27,10 @@ function randomFloat(min, max) {
 
 export default function BrowserFLDemo({ enableBackendMetrics = false }) {
   const [participants, setParticipants] = useState(120);
+    const [trainingMode, setTrainingMode] = useState('simulation');  // 'simulation' or 'real'
+    const [phase3dStatus, setPhase3dStatus] = useState('idle');  // idle, training, completed
+    const [phase3dRound, setPhase3dRound] = useState(0);
+    const [phase3dTotal, setPhase3dTotal] = useState(10);
   const [localEpochs, setLocalEpochs] = useState(2);
   const [targetRounds, setTargetRounds] = useState(DEFAULT_ROUNDS);
   const [epsilon, setEpsilon] = useState(1.2);
@@ -49,6 +53,9 @@ export default function BrowserFLDemo({ enableBackendMetrics = false }) {
   const [backendMetrics, setBackendMetrics] = useState(null);
   const [usingBackendData, setUsingBackendData] = useState(false);
   const [backendError, setBackendError] = useState(null);
+
+  // Phase 3D training backend URL
+  const TRAINING_API_BASE = import.meta.env.VITE_TRAINING_API_BASE || 'http://localhost:5001';
 
   useEffect(() => {
     const detectWebGPU = async () => {
@@ -92,8 +99,46 @@ export default function BrowserFLDemo({ enableBackendMetrics = false }) {
     return () => clearInterval(interval);
   }, [enableBackendMetrics]);
 
+  // Phase 3D training polling
   useEffect(() => {
-    if (!running) return undefined;
+    if (trainingMode !== 'real' || phase3dStatus !== 'training') return undefined;
+
+    const pollTrainingStatus = async () => {
+      try {
+        const response = await fetch(`${TRAINING_API_BASE}/training/status`);
+        if (response.ok) {
+          const status = await response.json();
+          setPhase3dRound(status.current_round);
+          setPhase3dTotal(status.total_rounds);
+          
+          // Update metrics from real training
+          if (status.current_metrics) {
+            setAccuracy(status.current_metrics.accuracy);
+            setLoss(status.current_metrics.round_loss);
+            setCompressionRatio(status.current_metrics.compression_ratio);
+          }
+          
+          // Check if training completed
+          if (status.status === 'completed') {
+            setPhase3dStatus('completed');
+          } else if (status.status === 'error') {
+            setPhase3dStatus('idle');
+            console.error('Training error:', status.error);
+          }
+        }
+      } catch (err) {
+        console.warn('Failed to poll training status:', err);
+        setPhase3dStatus('idle');
+      }
+    };
+
+    const interval = setInterval(pollTrainingStatus, 2000); // Poll every 2s
+    pollTrainingStatus(); // Immediate poll
+    return () => clearInterval(interval);
+  }, [trainingMode, phase3dStatus]);
+
+  useEffect(() => {
+    if (!running || trainingMode === 'real') return undefined;
 
     const tick = () => {
       setRound((previousRound) => {
@@ -163,6 +208,7 @@ export default function BrowserFLDemo({ enableBackendMetrics = false }) {
     return () => clearInterval(timer);
   }, [
     running,
+      trainingMode,
     targetRounds,
     participants,
     localEpochs,
@@ -194,6 +240,52 @@ export default function BrowserFLDemo({ enableBackendMetrics = false }) {
     setLatencyMs(0);
     setBandwidthKB(0);
     setHistory([]);
+
+    const startPhase3dTraining = async () => {
+      try {
+        const config = {
+          num_rounds: phase3dTotal,
+          num_clients: participants,
+          learning_rate: learningRate,
+          epsilon: epsilon,
+          compression_bits: compressionBits,
+          local_epochs: localEpochs,
+          use_compression: true,
+          use_privacy: true
+        };
+
+        const response = await fetch(`${TRAINING_API_BASE}/training/start`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(config)
+        });
+
+        if (response.ok) {
+          setPhase3dStatus('training');
+          setPhase3dRound(0);
+          setRunning(false);
+          setRound(0);
+          // Reset metrics for fresh training
+          setAccuracy(0.1);
+          setLoss(2.3);
+          setHistory([]);
+        } else {
+          console.error('Failed to start training');
+        }
+      } catch (err) {
+        console.error('Training API error:', err);
+        setPhase3dStatus('idle');
+      }
+    };
+
+    const cancelPhase3dTraining = async () => {
+      try {
+        await fetch(`${TRAINING_API_BASE}/training/cancel`, { method: 'POST' });
+        setPhase3dStatus('idle');
+      } catch (err) {
+        console.error('Cancel error:', err);
+      }
+    };
   };
 
   return (
@@ -202,8 +294,11 @@ export default function BrowserFLDemo({ enableBackendMetrics = false }) {
         <div>
           <h2>Browser Federated Learning Studio</h2>
           <p>
-            Interactive simulation of local training, privacy noise, gradient compression, and
-            network bandwidth tradeoffs.{usingBackendData ? ' (Real network metrics enabled)' : ''}
+            {trainingMode === 'simulation' 
+              ? 'Interactive simulation of local training, privacy noise, gradient compression, and network bandwidth tradeoffs.'
+              : 'Real federated learning with MNIST dataset, actual gradient compression, and differential privacy.'
+            }
+            {usingBackendData ? ' (Real network metrics enabled)' : ''}
           </p>
         </div>
         <div style={{ display: 'flex', gap: '8px' }}>
@@ -213,6 +308,11 @@ export default function BrowserFLDemo({ enableBackendMetrics = false }) {
               {usingBackendData ? '🔄 Network Live' : '⚠️ Simulation Only'}
             </div>
           )}
+                  {trainingMode === 'real' && (
+                    <div className={`runtime-badge ${phase3dStatus === 'training' ? 'badge-sync' : phase3dStatus === 'completed' ? 'badge-webgpu' : 'badge-offline'}`}>
+                      {phase3dStatus === 'training' ? '🔄 Training Live' : phase3dStatus === 'completed' ? '✅ Training Complete' : '⏸️ Phase 3D Ready'}
+                    </div>
+                  )}
         </div>
       </div>
 
@@ -220,12 +320,47 @@ export default function BrowserFLDemo({ enableBackendMetrics = false }) {
         <aside className="control-card">
           <h3>Round Controls</h3>
 
+          <label style={{ marginBottom: '16px' }}>
+            <strong>Training Mode</strong>
+            <div style={{ display: 'flex', gap: '8px', marginTop: '4px' }}>
+              <button
+                style={{
+                  flex: 1,
+                  padding: '8px',
+                  background: trainingMode === 'simulation' ? '#007AFF' : '#e0e0e0',
+                  color: trainingMode === 'simulation' ? 'white' : 'black',
+                  border: 'none',
+                  borderRadius: '4px',
+                  cursor: 'pointer'
+                }}
+                onClick={() => { trainingMode === 'real' && setTrainingMode('simulation'); setPhase3dStatus('idle'); }}
+              >
+                Simulation
+              </button>
+              <button
+                style={{
+                  flex: 1,
+                  padding: '8px',
+                  background: trainingMode === 'real' ? '#007AFF' : '#e0e0e0',
+                  color: trainingMode === 'real' ? 'white' : 'black',
+                  border: 'none',
+                  borderRadius: '4px',
+                  cursor: 'pointer'
+                }}
+                onClick={() => { trainingMode === 'simulation' && setTrainingMode('real'); }}
+              >
+                Phase 3D (Real)
+              </button>
+            </div>
+          </label>
+
           <label>
             Participants
             <input
               type="range"
               min="10"
               max="500"
+                            disabled={trainingMode === 'real' && phase3dStatus === 'training'}
               value={participants}
               onChange={(event) => setParticipants(Number(event.target.value))}
             />
@@ -238,6 +373,7 @@ export default function BrowserFLDemo({ enableBackendMetrics = false }) {
               type="range"
               min="1"
               max="10"
+                            disabled={trainingMode === 'real' && phase3dStatus === 'training'}
               value={localEpochs}
               onChange={(event) => setLocalEpochs(Number(event.target.value))}
             />
@@ -251,6 +387,7 @@ export default function BrowserFLDemo({ enableBackendMetrics = false }) {
               min="0.2"
               max="3"
               step="0.1"
+                            disabled={trainingMode === 'real' && phase3dStatus === 'training'}
               value={epsilon}
               onChange={(event) => setEpsilon(Number(event.target.value))}
             />
@@ -264,6 +401,7 @@ export default function BrowserFLDemo({ enableBackendMetrics = false }) {
               min="4"
               max="16"
               step="1"
+                            disabled={trainingMode === 'real' && phase3dStatus === 'training'}
               value={compressionBits}
               onChange={(event) => setCompressionBits(Number(event.target.value))}
             />
@@ -277,6 +415,7 @@ export default function BrowserFLDemo({ enableBackendMetrics = false }) {
               min="0.005"
               max="0.08"
               step="0.001"
+                            disabled={trainingMode === 'real' && phase3dStatus === 'training'}
               value={learningRate}
               onChange={(event) => setLearningRate(Number(event.target.value))}
             />
@@ -289,15 +428,34 @@ export default function BrowserFLDemo({ enableBackendMetrics = false }) {
               type="number"
               min="5"
               max="400"
-              value={targetRounds}
-              onChange={(event) => setTargetRounds(clamp(Number(event.target.value) || 1, 5, 400))}
+              disabled={trainingMode === 'real' && phase3dStatus === 'training'}
+              value={trainingMode === 'real' ? phase3dTotal : targetRounds}
+              onChange={(event) => {
+                const val = clamp(Number(event.target.value) || 1, 5, 400);
+                if (trainingMode === 'simulation') {
+                  setTargetRounds(val);
+                } else {
+                  setPhase3dTotal(val);
+                }
+              }}
             />
           </label>
 
           <div className="control-actions">
+                        {trainingMode === 'simulation' ? (
             <button onClick={() => setRunning((value) => !value)}>
               {running ? 'Pause Training' : 'Start Training'}
             </button>
+            ) : (
+              <>
+                <button 
+                  onClick={phase3dStatus === 'training' ? cancelPhase3dTraining : startPhase3dTraining}
+                  style={{ background: phase3dStatus === 'training' ? '#ff6b6b' : '#007AFF' }}
+                >
+                  {phase3dStatus === 'training' ? 'Cancel Training' : 'Start Real Training'}
+                </button>
+              </>
+            )}
             <button className="ghost" onClick={resetScenario}>
               Reset
             </button>
@@ -308,6 +466,7 @@ export default function BrowserFLDemo({ enableBackendMetrics = false }) {
           <div className="kpi-grid">
             <article>
               <h4>Round</h4>
+                            <p>{trainingMode === 'real' ? `${phase3dRound}/${phase3dTotal}` : round}</p>
               <p>{round}</p>
             </article>
             <article>
@@ -329,12 +488,19 @@ export default function BrowserFLDemo({ enableBackendMetrics = false }) {
             <article>
               <h4>Round Latency</h4>
               <p>{latencyMs} ms</p>
+                        {trainingMode === 'real' && (
+                          <article>
+                            <h4>Training Mode</h4>
+                            <p>{phase3dStatus.toUpperCase()}</p>
+                          </article>
+                        )}
             </article>
           </div>
 
           <div className="progress-wrap">
             <div className="progress-labels">
               <span>Progress</span>
+                            <span>{(trainingMode === 'real' ? (phase3dRound / phase3dTotal) * 100 : progressPercent).toFixed(0)}%</span>
               <span>{progressPercent.toFixed(0)}%</span>
             </div>
             <div className="progress-track">
