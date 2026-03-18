@@ -5,9 +5,7 @@ import './App.css';
 import PrivacyUtilityDashboard from './PrivacyUtilityDashboard';
 
 const API_BASE = import.meta.env.VITE_HUD_API_BASE || (import.meta.env.DEV ? '/backend' : 'http://localhost:8000');
-const TRUST_API_BASE =
-  import.meta.env.VITE_TRUST_API_BASE ||
-  (import.meta.env.DEV ? '/node-api/api/v1' : 'http://localhost:8082/api/v1');
+const TRUST_API_BASE = API_BASE;
 
 function App() {
   const [mode, setMode] = useState('browser-demo');

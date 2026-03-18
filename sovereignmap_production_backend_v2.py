@@ -654,6 +654,71 @@ def chat_query():
     return jsonify({"response": resp, "status": "ok"}), 200
 
 
+
+# Trust and Verification mocking for the HUD
+@app.route("/trust_snapshot", methods=["GET"])
+def trust_snapshot():
+    return jsonify({
+        "trust_status": {
+            "trust_mode": "Strict Verification",
+            "fl_verification": {
+                "verified_rounds": strategy.round_num if strategy else 0,
+                "failed_rounds": 0,
+                "average_confidence_bps": 9850
+            },
+            "verification_policy": {
+                "require_proof": True,
+                "min_confidence_bps": 7500,
+                "reject_on_verification_failure": True,
+                "allow_consensus_proof": True,
+                "allow_zk_proof": True,
+                "allow_tee_proof": True
+            }
+        },
+        "policy_history": [
+            {
+                "source": "governance",
+                "proposal_id": "prop-001",
+                "new_policy": {
+                    "min_confidence_bps": 7500
+                }
+            }
+        ]
+    }), 200
+
+@app.route("/verification_policy", methods=["POST"])
+def update_verification_policy():
+    data = request.json or {}
+    logger.info(f"Verification policy update requested: {data}")
+    return jsonify({"status": "ok", "message": "Policy applied successfully"}), 200
+
+
+
+# Phase 3D Training Mock Endpoints
+@app.route("/training/start", methods=["POST"])
+def start_training():
+    return jsonify({"status": "training", "message": "Phase 3D hardware training started via HUD"}), 200
+
+@app.route("/training/stop", methods=["POST"])
+def stop_training():
+    return jsonify({"status": "idle", "message": "Training halted"}), 200
+
+@app.route("/training/status", methods=["GET"])
+def training_status():
+    return jsonify({
+        "status": "idle", 
+        "round": strategy.round_num if strategy else 0,
+        "total_rounds": 50,
+        "current_metrics": {
+            "accuracy": strategy.convergence_history["accuracies"][-1] if strategy and strategy.convergence_history["accuracies"] else 0.5,
+            "loss": 0.5,
+            "latency_ms": 125,
+            "bandwidth_kb": 25.4,
+            "compression_ratio": 4.1
+        }
+    }), 200
+
+
 @app.route("/health", methods=["GET"])
 def health():
     return (

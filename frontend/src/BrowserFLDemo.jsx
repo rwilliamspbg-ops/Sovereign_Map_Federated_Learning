@@ -16,7 +16,7 @@ import './BrowserFLDemo.css';
 const MAX_POINTS = 120;
 const DEFAULT_ROUNDS = 50;
 const API_BASE = import.meta.env.VITE_HUD_API_BASE || (import.meta.env.DEV ? '/backend' : 'http://localhost:8000');
-const TRAINING_API_BASE = import.meta.env.VITE_TRAINING_API_BASE || 'http://localhost:5001';
+const TRAINING_API_BASE = API_BASE;
 
 function clamp(value, min, max) {
   return Math.max(min, Math.min(max, value));
