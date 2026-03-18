@@ -17,12 +17,12 @@ COPY requirements-backend.txt .
 RUN pip install --no-cache-dir -r requirements-backend.txt
 
 # Copy application files
-COPY archive/legacy/code/fl_metrics_translator.py ./fl_metrics_translator.py
-COPY archive/legacy/code/spatial_threat_analyzer.py ./spatial_threat_analyzer.py
-COPY archive/legacy/code/sovereign_federation_backend.py ./sovereign_federation_backend.py
-COPY archive/legacy/code/sovereignmap_production_backend.py ./sovereignmap_production_backend.py
+COPY docs/archive/legacy/code/fl_metrics_translator.py ./fl_metrics_translator.py
+COPY docs/archive/legacy/code/spatial_threat_analyzer.py ./spatial_threat_analyzer.py
+COPY docs/archive/legacy/code/sovereign_federation_backend.py ./sovereign_federation_backend.py
+COPY docs/archive/legacy/code/sovereignmap_production_backend.py ./sovereignmap_production_backend.py
 COPY sovereignmap_production_backend_v2.py ./sovereignmap_production_backend_v2.py
-COPY bft_week2_*.py ./tests/
+COPY docs/archive/week2/bft_week2_*.py ./tests/
 
 # Create data directory
 RUN mkdir -p /app/data
