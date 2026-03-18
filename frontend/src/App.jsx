@@ -123,24 +123,26 @@ function App() {
     }
   };
 
-  const submitVoiceQuery = async () => {
+    const submitVoiceQuery = async () => {
     if (!voiceQuery.trim()) {
       return;
     }
 
     try {
-      const response = await fetch(`${API_BASE}/status`);
+      const response = await fetch(`${API_BASE}/chat`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ query: voiceQuery })
+      });
       if (response.ok) {
-        const status = await response.json();
-        setVoiceResponse(
-          `System ${status.status}. Flower on ${status.flower_server_port}, Metrics API on ${status.metrics_api_port}.`
-        );
+        const result = await response.json();
+        setVoiceResponse(result.response);
       } else {
         setVoiceResponse('Unable to retrieve system status');
       }
     } catch (err) {
       console.error('Voice query error:', err);
-      setVoiceResponse('Voice query failed: backend unreachable');
+      setVoiceResponse('Connection error communicating with node');
     }
   };
 
