@@ -1,4 +1,20 @@
 services:
+
+  frontend:
+    build:
+      context: .
+      dockerfile: Dockerfile.frontend
+    image: frontend:latest
+    container_name: sovereign-frontend
+    ports:
+      - "${FRONTEND_HOST_PORT:-3000}:80"
+    environment:
+      - NODE_ENV=production
+    depends_on:
+      - backend
+    networks:
+      - sovereign_network
+    restart: always
   # ========================================================================
   # SOVEREIGN MAPS BACKEND (Flower Aggregator + Flask Metrics)
   # ========================================================================
@@ -372,7 +388,7 @@ services:
     image: grafana/grafana:10.2.3
     container_name: sovereign-grafana
     ports:
-      - "${FRONTEND_HOST_PORT:-3000}:3000"
+      - "${GRAFANA_HOST_PORT:-3001}:3000"
     environment:
       - GF_SECURITY_ADMIN_USER=${GRAFANA_USER:-admin}
       - GF_SECURITY_ADMIN_PASSWORD=${GRAFANA_PASSWORD:-CHANGE_ME_GRAFANA}
