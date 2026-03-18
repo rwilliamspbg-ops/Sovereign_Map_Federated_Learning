@@ -59,7 +59,11 @@ def main() -> int:
         for line_no, line in enumerate(lines, start=1):
             for match in LINK_RE.finditer(line):
                 raw_target = match.group(1).strip()
-                if not raw_target or raw_target.startswith("#") or is_external(raw_target):
+                if (
+                    not raw_target
+                    or raw_target.startswith("#")
+                    or is_external(raw_target)
+                ):
                     continue
 
                 clean_target = raw_target.split("#", 1)[0].split("?", 1)[0].strip()

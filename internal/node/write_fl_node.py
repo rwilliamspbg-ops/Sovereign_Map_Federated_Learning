@@ -1,4 +1,4 @@
-content = '''\
+content = """\
 // Copyright 2026 Sovereign-Mohawk Core Team
 // Licensed under the Apache License, Version 2.0
 package node
@@ -401,8 +401,10 @@ func computeWeightsHash(weights []byte) string {
 \th := sha256.Sum256(weights)
 \treturn fmt.Sprintf("%x", h)
 }
-'''
+"""
 
-with open('/workspaces/Sovereign_Map_Federated_Learning/internal/node/fl_node.go', 'w') as f:
+with open(
+    "/workspaces/Sovereign_Map_Federated_Learning/internal/node/fl_node.go", "w"
+) as f:
     f.write(content)
-print('fl_node.go written successfully')
+print("fl_node.go written successfully")

@@ -284,7 +284,9 @@ class SovereignClient(fl.client.NumPyClient):
                 if mps_backend.is_available():
                     mps_device = torch.device("mps")
                     if self._probe_device(mps_device):
-                        logger.info(f"Node {self.node_id}: Using MPS device {mps_device}")
+                        logger.info(
+                            f"Node {self.node_id}: Using MPS device {mps_device}"
+                        )
                         return mps_device
             except Exception as e:
                 logger.warning(

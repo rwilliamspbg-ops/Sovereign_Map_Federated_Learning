@@ -2,6 +2,7 @@
 """
 Analyze GPU acceleration test results with increasing node sizes
 """
+
 import json
 import glob
 

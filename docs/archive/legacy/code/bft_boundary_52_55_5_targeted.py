@@ -16,6 +16,7 @@ from collections import defaultdict
 # DETAILED RECOVERY TRACKER
 # ============================================================================
 
+
 class DetailedRecoveryTracker:
     """Track recovery metrics at round-level granularity"""
 
@@ -90,9 +91,11 @@ class DetailedRecoveryTracker:
             "baseline_accuracy": baseline,
             "divergence_round": divergence_round,
             "recovery_round": recovery_round,
-            "recovery_time_rounds": (recovery_round - divergence_round)
-            if (divergence_round and recovery_round)
-            else -1,
+            "recovery_time_rounds": (
+                (recovery_round - divergence_round)
+                if (divergence_round and recovery_round)
+                else -1
+            ),
             "self_correction_rounds": self_correction_rounds,
             "accuracy_floor": accuracy_floor,
             "max_amplification": max_amplification,
@@ -116,17 +119,13 @@ class OptimizedAggregator:
     def robust_mean(updates, trim_pct=0.15):
         """Trimmed mean with Byzantine robustness"""
         if len(updates) < 2:
-            return (
-                np.mean(updates, axis=0)
-                if len(updates) > 0
-                else np.zeros(50)
-            )
+            return np.mean(updates, axis=0) if len(updates) > 0 else np.zeros(50)
 
         trim_count = max(2, int(len(updates) * trim_pct))
         norms = np.linalg.norm(updates, axis=1)
         indices = np.argsort(norms)
 
-        kept_idx = indices[trim_count : -trim_count]
+        kept_idx = indices[trim_count:-trim_count]
         if len(kept_idx) == 0:
             return np.mean(updates, axis=0)
 
@@ -146,9 +145,7 @@ class OptimizedAggregator:
             end = min(i + group_size, len(updates))
             group = updates[i:end]
             if len(group) > 0:
-                group_aggs.append(
-                    OptimizedAggregator.robust_mean(group, trim_pct)
-                )
+                group_aggs.append(OptimizedAggregator.robust_mean(group, trim_pct))
 
         if len(group_aggs) > 1:
             group_aggs = np.array(group_aggs)
@@ -175,7 +172,9 @@ class ByzantineAttackSimulator:
     }
 
     @staticmethod
-    def generate_byzantine_gradient(honest_grad, attack_type="sign_flip", intensity=1.0):
+    def generate_byzantine_gradient(
+        honest_grad, attack_type="sign_flip", intensity=1.0
+    ):
         """Generate Byzantine gradient update"""
         if attack_type in ByzantineAttackSimulator.attack_patterns:
             return ByzantineAttackSimulator.attack_patterns[attack_type](
@@ -241,7 +240,7 @@ class TargetedBoundaryTest:
         if self.bft_pct > 50:
             byzantine_excess = (self.bft_pct - 50.0) / 50.0
             linear_impact = (1.0 - honest_ratio) * 15.0
-            exponential_penalty = (byzantine_excess ** 1.5) * 12.0
+            exponential_penalty = (byzantine_excess**1.5) * 12.0
             total_impact = linear_impact + exponential_penalty
         else:
             total_impact = (1.0 - honest_ratio) * 10.0
@@ -313,9 +312,7 @@ class TargetedBoundaryTest:
         print(
             f"    Self-Correction:     {recovery.get('self_correction_rounds', 0):6d} rounds"
         )
-        print(
-            f"    Max Amplification:   {recovery.get('max_amplification', 0):6.2f}x"
-        )
+        print(f"    Max Amplification:   {recovery.get('max_amplification', 0):6.2f}x")
         print()
 
         return recovery
@@ -330,9 +327,7 @@ def run_targeted_boundary_test():
     """Run targeted 52-55.5% boundary analysis"""
 
     print("\n" + "=" * 80)
-    print(
-        "  TARGETED BYZANTINE BOUNDARY ANALYSIS: 52-55.5% AT 100K NODES"
-    )
+    print("  TARGETED BYZANTINE BOUNDARY ANALYSIS: 52-55.5% AT 100K NODES")
     print("=" * 80)
 
     # Test levels with finer granularity
@@ -435,15 +430,23 @@ def run_targeted_boundary_test():
     else:
         print(f"\n  DEGRADATION THRESHOLD: >55.5% (beyond test range)")
 
-    print(f"\n  EXACT BOUNDARY ESTIMATE: ~{((critical_threshold or 55.5) + (degradation_threshold or 55.0)) / 2:.1f}%")
+    print(
+        f"\n  EXACT BOUNDARY ESTIMATE: ~{((critical_threshold or 55.5) + (degradation_threshold or 55.0)) / 2:.1f}%"
+    )
 
     # Summary statistics
     print("\n  Performance Summary:\n")
-    print(f"  Total Test Time:      {total_elapsed:.1f}s ({total_elapsed / len(byzantine_levels):.1f}s per level)")
+    print(
+        f"  Total Test Time:      {total_elapsed:.1f}s ({total_elapsed / len(byzantine_levels):.1f}s per level)"
+    )
     print(f"  Byzantine Range:      {byzantine_levels[0]}% to {byzantine_levels[-1]}%")
-    print(f"  Accuracy Range:       {min(r.get('final_accuracy', 0) for r in all_results.values()):.1f}% to "
-          f"{max(r.get('final_accuracy', 0) for r in all_results.values()):.1f}%")
-    print(f"  Recovery Range:       -1 to {max(r.get('recovery_time_rounds', -1) for r in all_results.values())} rounds")
+    print(
+        f"  Accuracy Range:       {min(r.get('final_accuracy', 0) for r in all_results.values()):.1f}% to "
+        f"{max(r.get('final_accuracy', 0) for r in all_results.values()):.1f}%"
+    )
+    print(
+        f"  Recovery Range:       -1 to {max(r.get('recovery_time_rounds', -1) for r in all_results.values())} rounds"
+    )
 
     print("\n" + "=" * 80 + "\n")
 

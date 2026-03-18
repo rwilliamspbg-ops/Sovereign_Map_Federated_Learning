@@ -21,6 +21,7 @@ class ThreatLevel(Enum):
 @dataclass
 class BFTMetrics:
     """Byzantine Fault Tolerance metrics for analysis"""
+
     byzantine_percentage: float  # 0-100
     amplification_factor: float  # >1.0 = amplified
     recovery_time_rounds: int
@@ -36,6 +37,7 @@ class BFTMetrics:
 @dataclass
 class ThreatAnalysis:
     """Result of threat analysis"""
+
     threat_level: ThreatLevel
     severity_score: float  # 0-100
     risk_factors: List[str]
@@ -64,9 +66,7 @@ class SpatialThreatAnalyzer:
                 genai.configure(api_key=self.api_key)
                 self.model = genai.GenerativeModel("gemini-3-pro")
             except Exception as e:
-                print(
-                    f"[WARNING] Failed to initialize Gemini: {e}. Using mock mode."
-                )
+                print(f"[WARNING] Failed to initialize Gemini: {e}. Using mock mode.")
                 self.mock_mode = True
 
         self.analysis_history: List[ThreatAnalysis] = []
@@ -159,10 +159,14 @@ Prioritize actionable, specific recommendations that can be executed autonomousl
                 severity_score=float(data.get("severity_score", 50)),
                 risk_factors=data.get("risk_factors", []),
                 immediate_actions=data.get("immediate_actions", []),
-                mitigation_strategy=data.get("mitigation_strategy", "Standard defense protocol"),
+                mitigation_strategy=data.get(
+                    "mitigation_strategy", "Standard defense protocol"
+                ),
                 estimated_recovery_time=float(data.get("estimated_recovery_time", 1.0)),
                 confidence=float(data.get("confidence", 70)),
-                recommended_defense=data.get("recommended_defense", "Hierarchical aggregation with trim"),
+                recommended_defense=data.get(
+                    "recommended_defense", "Hierarchical aggregation with trim"
+                ),
                 ai_insights=data.get("ai_insights", "Analysis complete"),
             )
         except Exception as e:
@@ -269,9 +273,11 @@ Prioritize actionable, specific recommendations that can be executed autonomousl
         return {
             "recent_analyses": len(recent),
             "avg_severity": sum(severity_scores) / len(severity_scores),
-            "severity_trend": "increasing"
-            if severity_scores[-1] > severity_scores[0]
-            else "decreasing",
+            "severity_trend": (
+                "increasing"
+                if severity_scores[-1] > severity_scores[0]
+                else "decreasing"
+            ),
             "threat_levels": threat_levels,
             "latest_threat_level": threat_levels[-1],
             "max_severity": max(severity_scores),

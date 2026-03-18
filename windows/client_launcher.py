@@ -21,7 +21,9 @@ import urllib.request
 from typing import Any, Dict, Optional
 
 
-def _post_json(url: str, payload: Dict[str, Any], headers: Optional[Dict[str, str]] = None) -> Dict[str, Any]:
+def _post_json(
+    url: str, payload: Dict[str, Any], headers: Optional[Dict[str, str]] = None
+) -> Dict[str, Any]:
     data = json.dumps(payload).encode("utf-8")
     req_headers = {"Content-Type": "application/json"}
     if headers:
@@ -66,9 +68,15 @@ def _bootstrap_join(
     )
 
     certificates = registration.get("certificates", {})
-    (cert_dir / "node-cert.pem").write_text(certificates.get("node_cert_pem", ""), encoding="utf-8")
-    (cert_dir / "node-key.pem").write_text(certificates.get("node_key_pem", ""), encoding="utf-8")
-    (cert_dir / "ca-cert.pem").write_text(certificates.get("ca_cert_pem", ""), encoding="utf-8")
+    (cert_dir / "node-cert.pem").write_text(
+        certificates.get("node_cert_pem", ""), encoding="utf-8"
+    )
+    (cert_dir / "node-key.pem").write_text(
+        certificates.get("node_key_pem", ""), encoding="utf-8"
+    )
+    (cert_dir / "ca-cert.pem").write_text(
+        certificates.get("ca_cert_pem", ""), encoding="utf-8"
+    )
     (out_dir / "join-registration.json").write_text(
         json.dumps(registration, indent=2), encoding="utf-8"
     )
@@ -77,9 +85,15 @@ def _bootstrap_join(
 
 
 def _apply_llm_policy_env(policy: Dict[str, Any]):
-    os.environ["LLM_ADAPTER_MODEL_FAMILY"] = str(policy.get("model_family", "llama-3.1"))
-    os.environ["LLM_ADAPTER_MODEL_VERSION"] = str(policy.get("model_version", "8b-instruct"))
-    os.environ["LLM_ADAPTER_TOKENIZER_HASH"] = str(policy.get("tokenizer_hash", "local-dev-tokenizer-v1"))
+    os.environ["LLM_ADAPTER_MODEL_FAMILY"] = str(
+        policy.get("model_family", "llama-3.1")
+    )
+    os.environ["LLM_ADAPTER_MODEL_VERSION"] = str(
+        policy.get("model_version", "8b-instruct")
+    )
+    os.environ["LLM_ADAPTER_TOKENIZER_HASH"] = str(
+        policy.get("tokenizer_hash", "local-dev-tokenizer-v1")
+    )
 
     ranks = policy.get("allowed_adapter_ranks") or [16]
     os.environ["LLM_ADAPTER_RANK"] = str(ranks[0])
@@ -89,7 +103,9 @@ def _apply_llm_policy_env(policy: Dict[str, Any]):
 
 
 def _acceleration_report(torch_mod) -> Dict[str, Any]:
-    gpu_backend = "rocm" if getattr(getattr(torch_mod, "version", None), "hip", None) else "cuda"
+    gpu_backend = (
+        "rocm" if getattr(getattr(torch_mod, "version", None), "hip", None) else "cuda"
+    )
     report: Dict[str, Any] = {
         "torch_version": torch_mod.__version__,
         "cuda_available": bool(torch_mod.cuda.is_available()),
@@ -163,16 +179,38 @@ def _acceleration_report(torch_mod) -> Dict[str, Any]:
 
 
 def parse_args() -> argparse.Namespace:
-    parser = argparse.ArgumentParser(description="Sovereign Map Windows FL Client Launcher")
-    parser.add_argument("--aggregator", default="localhost:8080", help="Aggregator host:port")
-    parser.add_argument("--node-id", type=int, default=1, help="Node ID for this participant")
-    parser.add_argument("--byzantine", action="store_true", help="Run as Byzantine test node")
+    parser = argparse.ArgumentParser(
+        description="Sovereign Map Windows FL Client Launcher"
+    )
+    parser.add_argument(
+        "--aggregator", default="localhost:8080", help="Aggregator host:port"
+    )
+    parser.add_argument(
+        "--node-id", type=int, default=1, help="Node ID for this participant"
+    )
+    parser.add_argument(
+        "--byzantine", action="store_true", help="Run as Byzantine test node"
+    )
 
-    parser.add_argument("--backend-url", default="http://localhost:8000", help="Backend URL for join bootstrap")
-    parser.add_argument("--participant-name", default="windows-client", help="Participant name for registration")
+    parser.add_argument(
+        "--backend-url",
+        default="http://localhost:8000",
+        help="Backend URL for join bootstrap",
+    )
+    parser.add_argument(
+        "--participant-name",
+        default="windows-client",
+        help="Participant name for registration",
+    )
     parser.add_argument("--invite-code", default="", help="Existing invite code")
-    parser.add_argument("--admin-token", default="", help="Join admin token (for local testing only)")
-    parser.add_argument("--skip-bootstrap", action="store_true", help="Skip join bootstrap and connect directly")
+    parser.add_argument(
+        "--admin-token", default="", help="Join admin token (for local testing only)"
+    )
+    parser.add_argument(
+        "--skip-bootstrap",
+        action="store_true",
+        help="Skip join bootstrap and connect directly",
+    )
 
     parser.add_argument(
         "--output-dir",
@@ -212,7 +250,9 @@ def main() -> int:
             if isinstance(reg_node, int):
                 args.node_id = reg_node
 
-            print(f"Join bootstrap OK: node_id={args.node_id}, aggregator={args.aggregator}")
+            print(
+                f"Join bootstrap OK: node_id={args.node_id}, aggregator={args.aggregator}"
+            )
         except (RuntimeError, urllib.error.URLError, TimeoutError) as exc:
             print(f"Join bootstrap failed: {exc}")
             return 1

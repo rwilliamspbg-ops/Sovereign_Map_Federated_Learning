@@ -1,4 +1,4 @@
-content = r'''// Copyright 2026 Sovereign-Mohawk Core Team
+content = r"""// Copyright 2026 Sovereign-Mohawk Core Team
 // Licensed under the Apache License, Version 2.0
 package vm
 
@@ -464,8 +464,10 @@ func hashString(data string) string {
 	}
 	return fmt.Sprintf("%040x", h)
 }
-'''
+"""
 
-with open('/workspaces/Sovereign_Map_Federated_Learning/internal/blockchain/vm/vm.go', 'w') as f:
+with open(
+    "/workspaces/Sovereign_Map_Federated_Learning/internal/blockchain/vm/vm.go", "w"
+) as f:
     f.write(content)
-print('vm.go written successfully')
+print("vm.go written successfully")

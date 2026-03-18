@@ -227,16 +227,20 @@ class DemoResultsReporter:
             "summary": log_summary or {},
             "metrics_iterations": metrics,
             "final_state": final_state or {},
-            "statistics": {
-                "total_iterations": len(metrics),
-                "avg_containers": stats.mean(
-                    [m.get("running", 0) for m in metrics if "running" in m]
-                )
+            "statistics": (
+                {
+                    "total_iterations": len(metrics),
+                    "avg_containers": (
+                        stats.mean(
+                            [m.get("running", 0) for m in metrics if "running" in m]
+                        )
+                        if metrics
+                        else 0
+                    ),
+                }
                 if metrics
-                else 0,
-            }
-            if metrics
-            else {},
+                else {}
+            ),
         }
 
     def save_reports(self):

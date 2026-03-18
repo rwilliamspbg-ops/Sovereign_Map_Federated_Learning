@@ -5,12 +5,19 @@ from pathlib import Path
 
 
 class _FakeNPU:
-    def __init__(self, available: bool = False, raise_on_check: bool = False, device_count: int = 1):
+    def __init__(
+        self,
+        available: bool = False,
+        raise_on_check: bool = False,
+        device_count: int = 1,
+    ):
         self._available = available
         self._raise_on_check = raise_on_check
         self._device_count = device_count
         self.selected_device = None
-        self._memory_per_device = {i: 80 * 1024 * 1024 * 1024 for i in range(device_count)}  # 80GB each
+        self._memory_per_device = {
+            i: 80 * 1024 * 1024 * 1024 for i in range(device_count)
+        }  # 80GB each
 
     def is_available(self) -> bool:
         if self._raise_on_check:
@@ -30,7 +37,9 @@ class _FakeNPU:
             raise RuntimeError(f"NPU device {device_id} not available")
         return types.SimpleNamespace(
             name=f"Huawei Ascend NPU {device_id}",
-            total_memory=self._memory_per_device.get(device_id, 80 * 1024 * 1024 * 1024),
+            total_memory=self._memory_per_device.get(
+                device_id, 80 * 1024 * 1024 * 1024
+            ),
             capability=(8, 0),
         )
 
@@ -40,11 +49,18 @@ class _FakeNPU:
 
 
 class _FakeCUDA:
-    def __init__(self, available: bool = False, device_count: int = 1, device_prefix: str = "NVIDIA Tesla V"):
+    def __init__(
+        self,
+        available: bool = False,
+        device_count: int = 1,
+        device_prefix: str = "NVIDIA Tesla V",
+    ):
         self._available = available
         self._device_count = device_count
         self._device_prefix = device_prefix
-        self._memory_per_device = {i: 24 * 1024 * 1024 * 1024 for i in range(device_count)}  # 24GB each
+        self._memory_per_device = {
+            i: 24 * 1024 * 1024 * 1024 for i in range(device_count)
+        }  # 24GB each
 
     def is_available(self) -> bool:
         return self._available
@@ -59,7 +75,9 @@ class _FakeCUDA:
             raise RuntimeError(f"CUDA device {device_id} not available")
         return types.SimpleNamespace(
             name=f"{self._device_prefix}{100 + device_id}",
-            total_memory=self._memory_per_device.get(device_id, 24 * 1024 * 1024 * 1024),
+            total_memory=self._memory_per_device.get(
+                device_id, 24 * 1024 * 1024 * 1024
+            ),
             capability=(7, 0),
         )
 
@@ -79,7 +97,9 @@ class _FakeXPU:
         self._available = available
         self._device_count = device_count
         self.selected_device = None
-        self._memory_per_device = {i: 16 * 1024 * 1024 * 1024 for i in range(device_count)}
+        self._memory_per_device = {
+            i: 16 * 1024 * 1024 * 1024 for i in range(device_count)
+        }
 
     def is_available(self) -> bool:
         return self._available
@@ -95,7 +115,9 @@ class _FakeXPU:
             raise RuntimeError(f"XPU device {device_id} not available")
         return types.SimpleNamespace(
             name=f"Intel XPU Flex {device_id}",
-            total_memory=self._memory_per_device.get(device_id, 16 * 1024 * 1024 * 1024),
+            total_memory=self._memory_per_device.get(
+                device_id, 16 * 1024 * 1024 * 1024
+            ),
             capability=(1, 0),
         )
 
@@ -133,16 +155,24 @@ def _install_module_stubs(
     mps_available=False,
 ):
     fake_torch = types.ModuleType("torch")
-    fake_torch.npu = _FakeNPU(available=npu_available, raise_on_check=npu_raises, device_count=npu_device_count)
+    fake_torch.npu = _FakeNPU(
+        available=npu_available,
+        raise_on_check=npu_raises,
+        device_count=npu_device_count,
+    )
     fake_torch.cuda = _FakeCUDA(
         available=cuda_available,
         device_count=cuda_device_count,
-        device_prefix=("AMD Radeon Instinct MI" if cuda_backend == "rocm" else "NVIDIA Tesla V"),
+        device_prefix=(
+            "AMD Radeon Instinct MI" if cuda_backend == "rocm" else "NVIDIA Tesla V"
+        ),
     )
     fake_torch.xpu = _FakeXPU(available=xpu_available, device_count=xpu_device_count)
     fake_torch.device = lambda name: name
     fake_torch.__version__ = "2.1.0"
-    fake_torch.version = types.SimpleNamespace(cuda="12.1", hip=("6.1" if cuda_backend == "rocm" else None))
+    fake_torch.version = types.SimpleNamespace(
+        cuda="12.1", hip=("6.1" if cuda_backend == "rocm" else None)
+    )
     fake_torch.backends = types.SimpleNamespace(mps=_FakeMPS(available=mps_available))
 
     fake_torch_nn = types.ModuleType("torch.nn")
@@ -216,9 +246,11 @@ def _load_client_module(
     spec.loader.exec_module(module)
     return module, fake_torch
 
+
 # ============================================================================
 # BASIC DEVICE SELECTION TESTS
 # ============================================================================
+
 
 def test_select_device_force_cpu(monkeypatch):
     """Force CPU override takes precedence over all accelerators"""
@@ -285,6 +317,7 @@ def test_select_device_falls_back_to_cpu_when_no_accelerator(monkeypatch):
 # MULTI-GPU DEVICE AFFINITY TESTS
 # ============================================================================
 
+
 def test_multi_npu_device_selection_preferred_device(monkeypatch):
     """Select first available device from ASCEND_RT_VISIBLE_DEVICES"""
     module, fake_torch = _load_client_module(
@@ -308,7 +341,9 @@ def test_multi_npu_device_selection_preferred_device(monkeypatch):
         client = module.SovereignClient.__new__(module.SovereignClient)
         client.node_id = 0
         selected = client._select_device()
-        assert selected == expected_device, f"With ASCEND_RT_VISIBLE_DEVICES={visible_devices}, expected {expected_device}, got {selected}"
+        assert (
+            selected == expected_device
+        ), f"With ASCEND_RT_VISIBLE_DEVICES={visible_devices}, expected {expected_device}, got {selected}"
 
 
 def test_multi_cuda_device_selection(monkeypatch):
@@ -347,6 +382,7 @@ def test_npu_visible_devices_environment_variable(monkeypatch):
 # NPU DISABLED MODE TESTS
 # ============================================================================
 
+
 def test_npu_disabled_falls_back_to_cuda(monkeypatch):
     """When NPU_ENABLED=false, skip NPU and try CUDA"""
     module, _ = _load_client_module(
@@ -380,6 +416,7 @@ def test_npu_disabled_falls_back_to_cpu(monkeypatch):
 # ============================================================================
 # XPU / ROCM / MPS SUPPORT TESTS
 # ============================================================================
+
 
 def test_xpu_selected_when_npu_unavailable(monkeypatch):
     """Select XPU when NPU is unavailable and XPU is present"""
@@ -491,6 +528,7 @@ def test_mps_selected_when_other_accelerators_unavailable(monkeypatch):
 # ENVIRONMENT VARIABLE EDGE CASES
 # ============================================================================
 
+
 def test_force_cpu_empty_string(monkeypatch):
     """FORCE_CPU empty string should be treated as false"""
     module, _ = _load_client_module(
@@ -542,6 +580,7 @@ def test_visible_devices_with_all_devices(monkeypatch):
 # NPU EXCEPTION HANDLING TESTS
 # ============================================================================
 
+
 def test_npu_runtime_exception_fallback(monkeypatch):
     """NPU runtime exception should fallback to next device"""
     module, _ = _load_client_module(
@@ -576,6 +615,7 @@ def test_npu_exception_cuda_unavailable(monkeypatch):
 # NODE ID DISTRIBUTION TESTS
 # ============================================================================
 
+
 def test_large_node_id_has_no_effect_on_device_selection(monkeypatch):
     """Large node IDs don't affect which NPU device is selected"""
     module, _ = _load_client_module(
@@ -587,12 +627,14 @@ def test_large_node_id_has_no_effect_on_device_selection(monkeypatch):
 
     # Device selection is determined by ASCEND_RT_VISIBLE_DEVICES, not node_id
     test_cases = [0, 1, 2, 100, 1000]
-    
+
     for node_id in test_cases:
         client = module.SovereignClient.__new__(module.SovereignClient)
         client.node_id = node_id
         selected = client._select_device()
-        assert selected == "npu:0", f"Node {node_id} should always use first visible device (npu:0)"
+        assert (
+            selected == "npu:0"
+        ), f"Node {node_id} should always use first visible device (npu:0)"
 
 
 def test_sequential_node_ids_use_same_device(monkeypatch):
@@ -613,12 +655,15 @@ def test_sequential_node_ids_use_same_device(monkeypatch):
         selected_devices.append(selected)
 
     # All should be the first visible device
-    assert all(d == "npu:0" for d in selected_devices), f"All nodes should use npu:0, got {set(selected_devices)}"
+    assert all(
+        d == "npu:0" for d in selected_devices
+    ), f"All nodes should use npu:0, got {set(selected_devices)}"
 
 
 # ============================================================================
 # DEVICE PROPERTIES QUERY TESTS
 # ============================================================================
+
 
 def test_query_npu_device_properties(monkeypatch):
     """Query NPU device properties (memory, compute capability)"""
@@ -701,6 +746,7 @@ def test_device_count_unavailable(monkeypatch):
 # MEMORY CACHE CLEARING TESTS
 # ============================================================================
 
+
 def test_npu_empty_cache(monkeypatch):
     """NPU empty_cache() should be callable without error"""
     module, fake_torch = _load_client_module(
@@ -724,6 +770,7 @@ def test_cuda_empty_cache(monkeypatch):
 # ============================================================================
 # DEVICE FORMAT STRING TESTS
 # ============================================================================
+
 
 def test_device_string_format_npu(monkeypatch):
     """Device string format 'npu:N' is correctly formatted"""
@@ -774,6 +821,7 @@ def test_device_string_format_cpu(monkeypatch):
 # ============================================================================
 # ADDITIONAL COMPREHENSIVE DEVICE SELECTION TESTS
 # ============================================================================
+
 
 def test_npu_device_selection_with_probe_failure(monkeypatch):
     """Fall back to CUDA if NPU device probe fails"""
@@ -930,4 +978,3 @@ def test_visible_devices_with_spaces(monkeypatch):
     selected = client._select_device()
     # Should strip spaces and use first device
     assert "npu:" in selected
-

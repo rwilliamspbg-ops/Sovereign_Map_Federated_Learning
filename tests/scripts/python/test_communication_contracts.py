@@ -10,7 +10,6 @@ from __future__ import annotations
 
 from pathlib import Path
 
-
 ROOT = Path(__file__).resolve().parents[3]
 BACKEND_FILE = ROOT / "sovereignmap_production_backend_v2.py"
 FRONTEND_APP_FILE = ROOT / "frontend" / "src" / "App.jsx"

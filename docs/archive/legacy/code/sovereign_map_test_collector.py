@@ -9,6 +9,7 @@ import subprocess
 import numpy as np
 import matplotlib.pyplot as plt
 
+
 def load_mega_results(path: str) -> dict:
     if not os.path.exists(path):
         raise FileNotFoundError(f"Mega test output not found: {path}")
@@ -29,7 +30,9 @@ def generate_report(mega_data: dict):
         "final_accuracy": mega_data["final_accuracy"],
         "peak_accuracy": mega_data["peak_accuracy"],
         "min_accuracy_after_breach": mega_data["min_accuracy_after_breach"],
-        "recovery_delta": round(mega_data["final_accuracy"] - mega_data["breach_accuracy"], 2)
+        "recovery_delta": round(
+            mega_data["final_accuracy"] - mega_data["breach_accuracy"], 2
+        ),
     }
 
     summary = {
@@ -38,21 +41,35 @@ def generate_report(mega_data: dict):
         "tests": [
             {
                 "section": "mega_test.py values",
-                **{k: v for k, v in mega_data.items() if k not in [
-                    "accuracy_per_round", "timestamp", "breach_round",
-                    "breach_accuracy", "final_accuracy", "peak_accuracy",
-                    "min_accuracy_after_breach", "recovery_delta"
-                ]}
+                **{
+                    k: v
+                    for k, v in mega_data.items()
+                    if k
+                    not in [
+                        "accuracy_per_round",
+                        "timestamp",
+                        "breach_round",
+                        "breach_accuracy",
+                        "final_accuracy",
+                        "peak_accuracy",
+                        "min_accuracy_after_breach",
+                        "recovery_delta",
+                    ]
+                },
             },
-            conv
+            conv,
         ],
         "consistency_checks": {
             "bft_claim_matches_plot": mega_data["malicious_fraction"] >= 0.555,
             "breach_accuracy_in_plot": abs(mega_data["breach_accuracy"] - 88.2) < 1.0,
-            "avg_recovery_matches_mega": abs(mega_data["average_recovery_accuracy"] - 92.5) < 1.0,
+            "avg_recovery_matches_mega": abs(
+                mega_data["average_recovery_accuracy"] - 92.5
+            )
+            < 1.0,
             "final_accuracy_claim": mega_data["final_accuracy"] >= 96.0,
-            "compression_factor_sane": mega_data["compression_reduction_factor"] > 1_000_000
-        }
+            "compression_factor_sane": mega_data["compression_reduction_factor"]
+            > 1_000_000,
+        },
     }
 
     return summary, conv
@@ -71,7 +88,7 @@ def save_report(summary: dict, malicious: float):
     txt_path = f"audit_results/{base}.txt"
     with open(txt_path, "w", encoding="utf-8") as f:
         f.write("SOVEREIGN MAP / MOHAWK PROTO – COLLECTED TEST VALUES\n")
-        f.write("="*60 + "\n\n")
+        f.write("=" * 60 + "\n\n")
         f.write(f"Generated: {summary['timestamp_utc']}\n\n")
         for sec in summary["tests"]:
             f.write(f"[{sec['section']}]\n")
@@ -90,7 +107,7 @@ def plot_convergence(conv: dict, malicious: float):
     ts = datetime.datetime.utcnow().strftime("%Y%m%d_%H%M%S")
     path = f"audit_results/convergence_{ts}_mal{int(malicious*100)}.png"
 
-    plt.figure(figsize=(10,6))
+    plt.figure(figsize=(10, 6))
     plt.plot(conv["rounds"], conv["accuracy_per_round"], "b-o", label="Accuracy")
     plt.axvline(conv["breach_round"], color="r", ls="--", label=conv["breach_label"])
     plt.title(f"Convergence – malicious = {malicious:.2%}")
@@ -107,16 +124,24 @@ def main():
     parser = argparse.ArgumentParser()
     parser.add_argument("--malicious", type=float, default=0.55)
     parser.add_argument("--mega-output", default="mega_test_output.json")
-    parser.add_argument("--run-mega", action="store_true", help="Run mega_test.py first")
+    parser.add_argument(
+        "--run-mega", action="store_true", help="Run mega_test.py first"
+    )
     args = parser.parse_args()
 
     if args.run_mega:
         print("Running mega_test simulation...")
-        subprocess.run([
-            "python", "mega_test.py",
-            "--malicious", str(args.malicious),
-            "--output", args.mega_output
-        ], check=True)
+        subprocess.run(
+            [
+                "python",
+                "mega_test.py",
+                "--malicious",
+                str(args.malicious),
+                "--output",
+                args.mega_output,
+            ],
+            check=True,
+        )
 
     print("Loading results...")
     mega = load_mega_results(args.mega_output)

@@ -11,62 +11,62 @@ import time
 # PROMETHEUS METRICS EXPORTER
 # ============================================================================
 
+
 class BFTMetricsExporter:
     """Export BFT metrics in Prometheus format"""
-    
+
     def __init__(self, port=8000):
         self.port = port
         self.metrics = {
-            'bft_convergence_accuracy': {},
-            'bft_byzantine_level': {},
-            'bft_amplification_factor': {},
-            'bft_recovery_time': {},
-            'bft_throughput': {},
-            'bft_memory_usage': {},
-            'bft_consensus_rounds': {},
-            'bft_attack_detected': {}
+            "bft_convergence_accuracy": {},
+            "bft_byzantine_level": {},
+            "bft_amplification_factor": {},
+            "bft_recovery_time": {},
+            "bft_throughput": {},
+            "bft_memory_usage": {},
+            "bft_consensus_rounds": {},
+            "bft_attack_detected": {},
         }
-    
+
     def update_metric(self, metric_name, value, labels=None):
         """Update a metric value"""
         if metric_name not in self.metrics:
             self.metrics[metric_name] = {}
-        
-        key = str(labels) if labels else 'default'
-        self.metrics[metric_name][key] = {
-            'value': value,
-            'timestamp': time.time()
-        }
-    
+
+        key = str(labels) if labels else "default"
+        self.metrics[metric_name][key] = {"value": value, "timestamp": time.time()}
+
     def export_prometheus_format(self):
         """Export metrics in Prometheus format"""
         lines = []
-        
+
         for metric_name, values in self.metrics.items():
             # Add HELP and TYPE
             lines.append(f"# HELP {metric_name} Byzantine Fault Tolerance metric")
             lines.append(f"# TYPE {metric_name} gauge")
-            
+
             # Add metric values
             for label_key, data in values.items():
-                if label_key == 'default':
+                if label_key == "default":
                     lines.append(f"{metric_name} {data['value']}")
                 else:
                     lines.append(f"{metric_name}{label_key} {data['value']}")
-        
+
         return "\n".join(lines)
-    
+
     def get_http_response(self):
         """Format for HTTP response"""
         return self.export_prometheus_format()
+
 
 # ============================================================================
 # GRAFANA DASHBOARD JSON
 # ============================================================================
 
+
 def create_bft_dashboard():
     """Create comprehensive BFT monitoring dashboard"""
-    
+
     dashboard = {
         "dashboard": {
             "title": "Byzantine Fault Tolerance Monitoring - 100K Nodes",
@@ -83,20 +83,15 @@ def create_bft_dashboard():
                         {
                             "expr": "bft_convergence_accuracy",
                             "legendFormat": "Byzantine {{byzantine_level}}%",
-                            "refId": "A"
+                            "refId": "A",
                         }
                     ],
-                    "yaxes": [
-                        {"format": "percent", "label": "Accuracy"}
-                    ],
+                    "yaxes": [{"format": "percent", "label": "Accuracy"}],
                     "alert": {
-                        "conditions": [
-                            {"evaluator": {"params": [70], "type": "lt"}}
-                        ],
-                        "message": "Convergence accuracy below 70%"
-                    }
+                        "conditions": [{"evaluator": {"params": [70], "type": "lt"}}],
+                        "message": "Convergence accuracy below 70%",
+                    },
                 },
-                
                 # Panel 2: Byzantine Detection
                 {
                     "id": 2,
@@ -107,17 +102,14 @@ def create_bft_dashboard():
                         {
                             "expr": "bft_attack_detected",
                             "legendFormat": "{{attack_type}}",
-                            "refId": "A"
+                            "refId": "A",
                         }
                     ],
                     "alert": {
-                        "conditions": [
-                            {"evaluator": {"params": [1], "type": "gt"}}
-                        ],
-                        "message": "Byzantine attack detected!"
-                    }
+                        "conditions": [{"evaluator": {"params": [1], "type": "gt"}}],
+                        "message": "Byzantine attack detected!",
+                    },
                 },
-                
                 # Panel 3: Amplification Factor
                 {
                     "id": 3,
@@ -128,18 +120,15 @@ def create_bft_dashboard():
                         {
                             "expr": "bft_amplification_factor",
                             "legendFormat": "Amplification {{strategy}}",
-                            "refId": "A"
+                            "refId": "A",
                         }
                     ],
                     "thresholds": "2.0, 3.0",
                     "alert": {
-                        "conditions": [
-                            {"evaluator": {"params": [2.5], "type": "gt"}}
-                        ],
-                        "message": "High amplification factor detected"
-                    }
+                        "conditions": [{"evaluator": {"params": [2.5], "type": "gt"}}],
+                        "message": "High amplification factor detected",
+                    },
                 },
-                
                 # Panel 4: Recovery Time
                 {
                     "id": 4,
@@ -150,17 +139,14 @@ def create_bft_dashboard():
                         {
                             "expr": "bft_recovery_time",
                             "legendFormat": "Recovery {{byzantine_level}}%",
-                            "refId": "A"
+                            "refId": "A",
                         }
                     ],
                     "alert": {
-                        "conditions": [
-                            {"evaluator": {"params": [10], "type": "gt"}}
-                        ],
-                        "message": "Recovery time exceeds 10 rounds"
-                    }
+                        "conditions": [{"evaluator": {"params": [10], "type": "gt"}}],
+                        "message": "Recovery time exceeds 10 rounds",
+                    },
                 },
-                
                 # Panel 5: Throughput
                 {
                     "id": 5,
@@ -171,20 +157,17 @@ def create_bft_dashboard():
                         {
                             "expr": "bft_throughput",
                             "legendFormat": "Throughput {{node_count}}",
-                            "refId": "A"
+                            "refId": "A",
                         }
                     ],
-                    "yaxes": [
-                        {"format": "short", "label": "Updates/sec"}
-                    ],
+                    "yaxes": [{"format": "short", "label": "Updates/sec"}],
                     "alert": {
                         "conditions": [
                             {"evaluator": {"params": [50000], "type": "lt"}}
                         ],
-                        "message": "Throughput below expected threshold"
-                    }
+                        "message": "Throughput below expected threshold",
+                    },
                 },
-                
                 # Panel 6: Memory Usage
                 {
                     "id": 6,
@@ -195,20 +178,17 @@ def create_bft_dashboard():
                         {
                             "expr": "bft_memory_usage",
                             "legendFormat": "Memory {{component}}",
-                            "refId": "A"
+                            "refId": "A",
                         }
                     ],
-                    "yaxes": [
-                        {"format": "bytes", "label": "Memory"}
-                    ],
+                    "yaxes": [{"format": "bytes", "label": "Memory"}],
                     "alert": {
                         "conditions": [
                             {"evaluator": {"params": [1000000000], "type": "gt"}}
                         ],
-                        "message": "Memory usage exceeds 1GB"
-                    }
+                        "message": "Memory usage exceeds 1GB",
+                    },
                 },
-                
                 # Panel 7: Byzantine Tolerance Heatmap
                 {
                     "id": 7,
@@ -220,12 +200,11 @@ def create_bft_dashboard():
                             "expr": "bft_convergence_accuracy",
                             "format": "heatmap",
                             "legendFormat": "{{byzantine_level}}% Byzantine",
-                            "refId": "A"
+                            "refId": "A",
                         }
                     ],
-                    "dataFormat": "timeseries"
+                    "dataFormat": "timeseries",
                 },
-                
                 # Panel 8: System Status (SingleStat)
                 {
                     "id": 8,
@@ -234,45 +213,32 @@ def create_bft_dashboard():
                     "gridPos": {"h": 4, "w": 6, "x": 0, "y": 32},
                     "targets": [
                         {
-                            "expr": "bft_convergence_accuracy{byzantine_level=\"0\"}",
-                            "refId": "A"
+                            "expr": 'bft_convergence_accuracy{byzantine_level="0"}',
+                            "refId": "A",
                         }
                     ],
                     "thresholds": "60,80",
                     "colors": ["#FF0000", "#FFFF00", "#00FF00"],
-                    "sparkline": {"show": True}
+                    "sparkline": {"show": True},
                 },
-                
                 # Panel 9: Active Byzantine Attacks
                 {
                     "id": 9,
                     "title": "Active Attack Types",
                     "type": "singlestat",
                     "gridPos": {"h": 4, "w": 6, "x": 6, "y": 32},
-                    "targets": [
-                        {
-                            "expr": "sum(bft_attack_detected)",
-                            "refId": "A"
-                        }
-                    ],
-                    "thresholds": "0,1"
+                    "targets": [{"expr": "sum(bft_attack_detected)", "refId": "A"}],
+                    "thresholds": "0,1",
                 },
-                
                 # Panel 10: Nodes Status
                 {
                     "id": 10,
                     "title": "Active Nodes",
                     "type": "singlestat",
                     "gridPos": {"h": 4, "w": 6, "x": 12, "y": 32},
-                    "targets": [
-                        {
-                            "expr": "bft_active_nodes",
-                            "refId": "A"
-                        }
-                    ],
-                    "format": "short"
+                    "targets": [{"expr": "bft_active_nodes", "refId": "A"}],
+                    "format": "short",
                 },
-                
                 # Panel 11: Alert Status
                 {
                     "id": 11,
@@ -280,55 +246,53 @@ def create_bft_dashboard():
                     "type": "singlestat",
                     "gridPos": {"h": 4, "w": 6, "x": 18, "y": 32},
                     "targets": [
-                        {
-                            "expr": "sum(ALERTS{severity=\"critical\"})",
-                            "refId": "A"
-                        }
+                        {"expr": 'sum(ALERTS{severity="critical"})', "refId": "A"}
                     ],
                     "colorBackground": True,
-                    "thresholds": "0,1"
-                }
+                    "thresholds": "0,1",
+                },
             ],
-            
             "alerts": [
                 {
                     "name": "Low Convergence Accuracy",
                     "condition": "bft_convergence_accuracy < 70",
-                    "message": "Convergence accuracy dropped below 70% - Byzantine attack or network issue"
+                    "message": "Convergence accuracy dropped below 70% - Byzantine attack or network issue",
                 },
                 {
                     "name": "High Byzantine Load",
                     "condition": "bft_byzantine_level > 45",
-                    "message": "Byzantine node percentage approaching critical threshold"
+                    "message": "Byzantine node percentage approaching critical threshold",
                 },
                 {
                     "name": "High Amplification",
                     "condition": "bft_amplification_factor > 2.5",
-                    "message": "Byzantine amplification factor too high - coordinated attack detected"
+                    "message": "Byzantine amplification factor too high - coordinated attack detected",
                 },
                 {
                     "name": "Slow Recovery",
                     "condition": "bft_recovery_time > 10",
-                    "message": "System recovery time exceeds threshold"
+                    "message": "System recovery time exceeds threshold",
                 },
                 {
                     "name": "Low Throughput",
                     "condition": "bft_throughput < 50000",
-                    "message": "System throughput below expected level"
-                }
-            ]
+                    "message": "System throughput below expected level",
+                },
+            ],
         }
     }
-    
+
     return dashboard
+
 
 # ============================================================================
 # DOCKER COMPOSE FOR MONITORING STACK
 # ============================================================================
 
+
 def create_monitoring_docker_compose():
     """Create docker-compose for Prometheus + Grafana stack"""
-    
+
     compose = """
 version: '3.8'
 
@@ -400,16 +364,18 @@ networks:
   monitoring:
     driver: bridge
 """
-    
+
     return compose
+
 
 # ============================================================================
 # PROMETHEUS CONFIGURATION
 # ============================================================================
 
+
 def create_prometheus_config():
     """Create Prometheus configuration"""
-    
+
     config = """
 # Prometheus configuration for BFT monitoring
 
@@ -455,16 +421,18 @@ scrape_configs:
     static_configs:
       - targets: ['localhost:9100']
 """
-    
+
     return config
+
 
 # ============================================================================
 # ALERTING RULES
 # ============================================================================
 
+
 def create_alert_rules():
     """Create Prometheus alert rules for BFT"""
-    
+
     rules = """
 # Byzantine Fault Tolerance Alert Rules
 
@@ -528,44 +496,45 @@ groups:
           summary: "Significant node failure"
           description: "More than 5% of nodes offline"
 """
-    
+
     return rules
+
 
 # ============================================================================
 # MAIN
 # ============================================================================
 
 if __name__ == "__main__":
-    print("\n" + "="*100)
+    print("\n" + "=" * 100)
     print("  GRAFANA BFT MONITORING DASHBOARD CONFIGURATION")
-    print("="*100 + "\n")
-    
+    print("=" * 100 + "\n")
+
     # Generate dashboard
     dashboard = create_bft_dashboard()
-    
+
     # Save dashboard JSON
-    with open('grafana_bft_dashboard.json', 'w') as f:
+    with open("grafana_bft_dashboard.json", "w") as f:
         json.dump(dashboard, f, indent=2)
     print("  [OK] Generated grafana_bft_dashboard.json")
-    
+
     # Generate docker-compose
     compose = create_monitoring_docker_compose()
-    with open('docker-compose.monitoring.yml', 'w') as f:
+    with open("docker-compose.monitoring.yml", "w") as f:
         f.write(compose)
     print("  [OK] Generated docker-compose.monitoring.yml")
-    
+
     # Generate prometheus config
     prom_config = create_prometheus_config()
-    with open('prometheus.yml', 'w') as f:
+    with open("prometheus.yml", "w") as f:
         f.write(prom_config)
     print("  [OK] Generated prometheus.yml")
-    
+
     # Generate alert rules
     rules = create_alert_rules()
-    with open('bft_rules.yml', 'w') as f:
+    with open("bft_rules.yml", "w") as f:
         f.write(rules)
     print("  [OK] Generated bft_rules.yml")
-    
+
     print("\n  DEPLOYMENT INSTRUCTIONS:\n")
     print("  1. Start monitoring stack:")
     print("     docker-compose -f docker-compose.monitoring.yml up -d")
@@ -581,4 +550,4 @@ if __name__ == "__main__":
     print("  4. Configure alerts:")
     print("     Update alertmanager.yml with email/Slack webhooks")
     print()
-    print("="*100 + "\n")
+    print("=" * 100 + "\n")

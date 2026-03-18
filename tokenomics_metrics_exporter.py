@@ -256,15 +256,11 @@ class TokenomicsMetricsExporter:
             self.top_10_holder_concentration, top_10_holder_concentration
         )
         self._set_if_present(self.wallet_liquidity_ratio, wallet_liquidity_ratio)
-        self._set_if_present(
-            self.wallets_by_balance_bucket_large, wallets_bucket_large
-        )
+        self._set_if_present(self.wallets_by_balance_bucket_large, wallets_bucket_large)
         self._set_if_present(
             self.wallets_by_balance_bucket_medium, wallets_bucket_medium
         )
-        self._set_if_present(
-            self.wallets_by_balance_bucket_small, wallets_bucket_small
-        )
+        self._set_if_present(self.wallets_by_balance_bucket_small, wallets_bucket_small)
         self.last_update_ts.set(time.time())
 
     def _persist_payload(self, payload: Dict[str, Any]):

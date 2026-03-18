@@ -1,4 +1,5 @@
 import React from 'react';
+import LiveTerminal from './LiveTerminal';
 
 /**
  * Sovereign Map Federated Learning HUD
@@ -62,6 +63,8 @@ export default function HUD({
             </div>
           </div>
         </div>
+
+        <LiveTerminal />
 
         {/* Federated Learning Controls */}
         <div className="hud-section">

@@ -206,7 +206,8 @@ class ByzantineRobustFedAvg(FedAvg):
 
         if not validated_results:
             logger.warning(
-                "All client updates were rejected by LLM adapter policy", extra={"fl_round": server_round}
+                "All client updates were rejected by LLM adapter policy",
+                extra={"fl_round": server_round},
             )
             return None, {"accepted_updates": 0, "rejected_updates": len(results)}
 
@@ -541,8 +542,7 @@ def build_tokenomics_payload(
     quality_factor = max(0.15, accuracy_ratio)
     mint_rate = max(
         0.5,
-        (round_factor * active_nodes * 0.22 * quality_factor)
-        + (server_round * 0.035),
+        (round_factor * active_nodes * 0.22 * quality_factor) + (server_round * 0.035),
     )
     total_supply = max(
         1500.0,
@@ -551,7 +551,9 @@ def build_tokenomics_payload(
     )
     bridge_inflow = mint_rate * (0.24 + (accuracy_ratio * 0.08) + (round_factor * 0.01))
     bridge_outflow = mint_rate * (0.14 + (loss * 0.02) + (round_factor * 0.005))
-    escrow_total = total_supply * max(0.18, min(0.34, 0.3 - (accuracy_ratio * 0.05) + (loss * 0.015)))
+    escrow_total = total_supply * max(
+        0.18, min(0.34, 0.3 - (accuracy_ratio * 0.05) + (loss * 0.015))
+    )
     circulating_supply = max(total_supply - escrow_total, total_supply * 0.48)
     validator_count = max(4, int(round((active_nodes * 0.16) + (round_factor * 1.8))))
     unique_wallets = max(
@@ -562,16 +564,25 @@ def build_tokenomics_payload(
     stake_participation = max(0.25, min(0.96, 0.52 + (accuracy_ratio * 0.38)))
     stake_gini = max(
         0.14,
-        min(0.78, 0.54 - (accuracy_ratio * 0.18) + (loss * 0.025) - (round_factor * 0.01)),
+        min(
+            0.78,
+            0.54 - (accuracy_ratio * 0.18) + (loss * 0.025) - (round_factor * 0.01),
+        ),
     )
     top_10_concentration = max(0.12, min(0.72, 0.18 + (stake_gini * 0.55)))
     wallet_liquidity = max(
         0.1, min(0.82, 0.26 + ((bridge_inflow / max(mint_rate, 0.001)) * 0.55))
     )
-    large_wallets = max(1, int(round(unique_wallets * max(0.018, 0.032 - (round_factor * 0.001)))))
-    medium_wallets = max(1, int(round(unique_wallets * min(0.34, 0.18 + (round_factor * 0.01)))))
+    large_wallets = max(
+        1, int(round(unique_wallets * max(0.018, 0.032 - (round_factor * 0.001))))
+    )
+    medium_wallets = max(
+        1, int(round(unique_wallets * min(0.34, 0.18 + (round_factor * 0.01))))
+    )
     small_wallets = max(1, unique_wallets - large_wallets - medium_wallets)
-    collateral_ratio = max(105.0, (escrow_total / max(total_supply * 0.22, 1.0)) * 100.0)
+    collateral_ratio = max(
+        105.0, (escrow_total / max(total_supply * 0.22, 1.0)) * 100.0
+    )
 
     return {
         "mint_rate_per_min": round(mint_rate, 4),
@@ -635,12 +646,11 @@ def run_tokenomics_publisher():
         time.sleep(20)
 
 
-
 @app.route("/chat", methods=["POST"])
 def chat_query():
     data = request.json or {}
     query = data.get("query", "").lower()
-    
+
     # Simple simulated LLM responses for HUD actions
     if "status" in query or "health" in query:
         resp = f"System online. Enclave is {enclave_status}. Current accuracy: {strategy.convergence_history['accuracies'][-1] if strategy and strategy.convergence_history['accuracies'] else 'N/A'}%."
@@ -650,41 +660,44 @@ def chat_query():
         resp = "LLM adapters are calibrated against latest local gradients. Current rank: 16. Alpha scaling: 32."
     else:
         resp = "As a Sovereign Map Operational Node, I am currently syncing spatial and telemetric updates. My models are ready for the next round."
-        
-    return jsonify({"response": resp, "status": "ok"}), 200
 
+    return jsonify({"response": resp, "status": "ok"}), 200
 
 
 # Trust and Verification mocking for the HUD
 @app.route("/trust_snapshot", methods=["GET"])
 def trust_snapshot():
-    return jsonify({
-        "trust_status": {
-            "trust_mode": "Strict Verification",
-            "fl_verification": {
-                "verified_rounds": strategy.round_num if strategy else 0,
-                "failed_rounds": 0,
-                "average_confidence_bps": 9850
-            },
-            "verification_policy": {
-                "require_proof": True,
-                "min_confidence_bps": 7500,
-                "reject_on_verification_failure": True,
-                "allow_consensus_proof": True,
-                "allow_zk_proof": True,
-                "allow_tee_proof": True
-            }
-        },
-        "policy_history": [
+    return (
+        jsonify(
             {
-                "source": "governance",
-                "proposal_id": "prop-001",
-                "new_policy": {
-                    "min_confidence_bps": 7500
-                }
+                "trust_status": {
+                    "trust_mode": "Strict Verification",
+                    "fl_verification": {
+                        "verified_rounds": strategy.round_num if strategy else 0,
+                        "failed_rounds": 0,
+                        "average_confidence_bps": 9850,
+                    },
+                    "verification_policy": {
+                        "require_proof": True,
+                        "min_confidence_bps": 7500,
+                        "reject_on_verification_failure": True,
+                        "allow_consensus_proof": True,
+                        "allow_zk_proof": True,
+                        "allow_tee_proof": True,
+                    },
+                },
+                "policy_history": [
+                    {
+                        "source": "governance",
+                        "proposal_id": "prop-001",
+                        "new_policy": {"min_confidence_bps": 7500},
+                    }
+                ],
             }
-        ]
-    }), 200
+        ),
+        200,
+    )
+
 
 @app.route("/verification_policy", methods=["POST"])
 def update_verification_policy():
@@ -693,43 +706,61 @@ def update_verification_policy():
     return jsonify({"status": "ok", "message": "Policy applied successfully"}), 200
 
 
-
 # Phase 3D Training Mock Endpoints
 @app.route("/training/start", methods=["POST"])
 def start_training():
-    return jsonify({"status": "training", "message": "Phase 3D hardware training started via HUD"}), 200
+    return (
+        jsonify(
+            {
+                "status": "training",
+                "message": "Phase 3D hardware training started via HUD",
+            }
+        ),
+        200,
+    )
+
 
 @app.route("/training/stop", methods=["POST"])
 def stop_training():
     return jsonify({"status": "idle", "message": "Training halted"}), 200
 
+
 @app.route("/training/status", methods=["GET"])
 def training_status():
-    return jsonify({
-        "status": "idle", 
-        "round": strategy.round_num if strategy else 0,
-        "total_rounds": 50,
-        "current_metrics": {
-            "accuracy": strategy.convergence_history["accuracies"][-1] if strategy and strategy.convergence_history["accuracies"] else 0.5,
-            "loss": 0.5,
-            "latency_ms": 125,
-            "bandwidth_kb": 25.4,
-            "compression_ratio": 4.1
-        }
-    }), 200
+    return (
+        jsonify(
+            {
+                "status": "idle",
+                "round": strategy.round_num if strategy else 0,
+                "total_rounds": 50,
+                "current_metrics": {
+                    "accuracy": (
+                        strategy.convergence_history["accuracies"][-1]
+                        if strategy and strategy.convergence_history["accuracies"]
+                        else 0.5
+                    ),
+                    "loss": 0.5,
+                    "latency_ms": 125,
+                    "bandwidth_kb": 25.4,
+                    "compression_ratio": 4.1,
+                },
+            }
+        ),
+        200,
+    )
 
 
 @app.route("/health", methods=["GET"])
 def health():
     import random
     import time
-    
+
     # Simulate slightly varying API telemetry for the UI HUD
     latency_ms = random.randint(10, 45)
     ingress_mbps = random.randint(120, 300)
     api_error_rate = round(random.uniform(0.01, 0.15), 2)
     saturation = random.randint(40, 60)
-    
+
     return (
         jsonify(
             {
@@ -741,8 +772,8 @@ def health():
                     "api_latency_ms": latency_ms,
                     "ingress_mbps": ingress_mbps,
                     "api_error_rate": api_error_rate,
-                    "global_saturation_pct": saturation
-                }
+                    "global_saturation_pct": saturation,
+                },
             }
         ),
         200,
@@ -783,30 +814,38 @@ def trigger_fl_round():
         current_acc = 0.85
         if strategy.convergence_history["accuracies"]:
             current_acc = strategy.convergence_history["accuracies"][-1]
-        
+
         # Simulate slight improvement with diminishing returns
-        new_acc = current_acc + ((100.0 - current_acc) * 0.05) if current_acc > 1.0 else current_acc + ((1.0 - current_acc) * 0.05)
+        new_acc = (
+            current_acc + ((100.0 - current_acc) * 0.05)
+            if current_acc > 1.0
+            else current_acc + ((1.0 - current_acc) * 0.05)
+        )
         # Ensure it's in percentage format if that's what's expected, actually the history seems to store either float or percent.
         # Let's see how hud_data displays it: f"{current_accuracy:.2f}%" so it stores percentages like 85.0
         if new_acc < 1.0:
             new_acc *= 100.0
-            
+
         strategy.convergence_history["rounds"].append(strategy.round_num)
         strategy.convergence_history["accuracies"].append(round(min(99.9, new_acc), 2))
-        strategy.convergence_history["losses"].append(round(max(0.01, 10.0 / strategy.round_num), 4))
+        strategy.convergence_history["losses"].append(
+            round(max(0.01, 10.0 / strategy.round_num), 4)
+        )
         strategy.convergence_history["timestamps"].append(time.time())
 
         # Update prometheus metrics
         fl_rounds_total.inc()
         fl_model_accuracy.set(strategy.convergence_history["accuracies"][-1])
         cxl_memory_utilization.set(min(1.0, 0.4 + (strategy.round_num * 0.02)))
-        
+
     return (
-        jsonify({
-            "status": "accepted",
-            "message": "FL round started and metrics updated",
-            "current_round": strategy.round_num if strategy is not None else 0,
-        }),
+        jsonify(
+            {
+                "status": "accepted",
+                "message": "FL round started and metrics updated",
+                "current_round": strategy.round_num if strategy is not None else 0,
+            }
+        ),
         202,
     )
 
@@ -818,7 +857,7 @@ def create_enclave():
         enclave_status = "Initialized"
     elif enclave_status == "Initialized":
         enclave_status = "Attested & Locked"
-    
+
     logger.info(f"Secure enclave transitioned to: {enclave_status}")
     return jsonify({"status": "ok", "enclave_status": enclave_status}), 200
 
@@ -936,7 +975,9 @@ def create_join_invite():
         return jsonify({"error": "unauthorized"}), 401
 
     payload = request.get_json(silent=True) or {}
-    participant_name = str(payload.get("participant_name", "participant")).strip() or "participant"
+    participant_name = (
+        str(payload.get("participant_name", "participant")).strip() or "participant"
+    )
     max_uses = int(payload.get("max_uses", 1))
     expires_in_hours = int(payload.get("expires_in_hours", 24))
 
@@ -977,7 +1018,9 @@ def register_join_participant():
     """Exchange an invite code for a node ID and certificate bundle."""
     payload = request.get_json(silent=True) or {}
     invite_code = str(payload.get("invite_code", "")).strip()
-    participant_name = str(payload.get("participant_name", "participant")).strip() or "participant"
+    participant_name = (
+        str(payload.get("participant_name", "participant")).strip() or "participant"
+    )
 
     if not invite_code:
         return jsonify({"error": "invite_code is required"}), 400
@@ -986,7 +1029,9 @@ def register_join_participant():
         invites = _load_json_file(JOIN_INVITES_PATH, [])
         registrations = _load_json_file(JOIN_REGISTRATIONS_PATH, [])
 
-        invite = next((item for item in invites if item.get("invite_code") == invite_code), None)
+        invite = next(
+            (item for item in invites if item.get("invite_code") == invite_code), None
+        )
         if invite is None:
             return jsonify({"error": "invalid_invite"}), 400
         if invite.get("revoked"):
@@ -1060,7 +1105,10 @@ def revoke_join_participant(node_id: int):
     cert_manager = _get_cert_manager()
     revoked = cert_manager.revoke_node_certificate(node_id)
     if not revoked:
-        return jsonify({"status": "error", "message": "node certificate not found"}), 404
+        return (
+            jsonify({"status": "error", "message": "node certificate not found"}),
+            404,
+        )
     return jsonify({"status": "ok", "node_id": node_id, "revoked": True})
 
 

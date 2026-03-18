@@ -1,6 +1,6 @@
 import re
 
-with open('README.md', 'r') as f:
+with open("README.md", "r") as f:
     content = f.read()
 
 phase3_injection = """
@@ -14,8 +14,10 @@ The latest Phase 3 enhancements deliver full edge-hardware parity, seamlessly co
 """
 
 if "## 🔥 Phase 3 Active" not in content:
-    content = content.replace("## Platform Capabilities", phase3_injection + "## Platform Capabilities")
-    with open('README.md', 'w') as f:
+    content = content.replace(
+        "## Platform Capabilities", phase3_injection + "## Platform Capabilities"
+    )
+    with open("README.md", "w") as f:
         f.write(content)
     print("README updated.")
 else:
