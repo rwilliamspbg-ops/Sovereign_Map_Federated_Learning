@@ -1,53 +1,60 @@
-import { useState, useEffect } from 'react'
-import HUD from './HUD'
-import './App.css'
+import { useState, useEffect } from 'react';
+import HUD from './HUD';
+import BrowserFLDemo from './BrowserFLDemo';
+import './App.css';
 
-const API_BASE = import.meta.env.VITE_HUD_API_BASE || (import.meta.env.DEV ? '/backend' : 'http://localhost:8000')
-const TRUST_API_BASE = import.meta.env.VITE_TRUST_API_BASE || (import.meta.env.DEV ? '/node-api/api/v1' : 'http://localhost:8082/api/v1')
+const API_BASE = import.meta.env.VITE_HUD_API_BASE || (import.meta.env.DEV ? '/backend' : 'http://localhost:8000');
+const TRUST_API_BASE =
+  import.meta.env.VITE_TRUST_API_BASE ||
+  (import.meta.env.DEV ? '/node-api/api/v1' : 'http://localhost:8082/api/v1');
 
 function App() {
-  const [hudData, setHudData] = useState(null)
-  const [health, setHealth] = useState(null)
-  const [metricsSummary, setMetricsSummary] = useState(null)
-  const [trustStatus, setTrustStatus] = useState(null)
-  const [policyHistory, setPolicyHistory] = useState([])
-  const [founders, setFounders] = useState([])
-  const [voiceQuery, setVoiceQuery] = useState('')
-  const [voiceResponse, setVoiceResponse] = useState('')
+  const [mode, setMode] = useState('browser-demo');
+
+  const [hudData, setHudData] = useState(null);
+  const [health, setHealth] = useState(null);
+  const [metricsSummary, setMetricsSummary] = useState(null);
+  const [trustStatus, setTrustStatus] = useState(null);
+  const [policyHistory, setPolicyHistory] = useState([]);
+  const [founders, setFounders] = useState([]);
+  const [voiceQuery, setVoiceQuery] = useState('');
+  const [voiceResponse, setVoiceResponse] = useState('');
   const [policyDraft, setPolicyDraft] = useState({
     require_proof: false,
     min_confidence_bps: 7000,
     reject_on_verification_failure: false,
     allow_consensus_proof: true,
     allow_zk_proof: true,
-    allow_tee_proof: true,
-  })
-  const [policyInitialized, setPolicyInitialized] = useState(false)
-  const [policyToken, setPolicyToken] = useState('')
-  const [policyRole, setPolicyRole] = useState('admin')
-  const [policyMessage, setPolicyMessage] = useState('')
-  const [loading, setLoading] = useState(false)
-  const [error, setError] = useState(null)
+    allow_tee_proof: true
+  });
+  const [policyInitialized, setPolicyInitialized] = useState(false);
+  const [policyToken, setPolicyToken] = useState('');
+  const [policyRole, setPolicyRole] = useState('admin');
+  const [policyMessage, setPolicyMessage] = useState('');
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState(null);
 
   useEffect(() => {
-    fetchData()
-    const interval = setInterval(fetchData, 5000)
-    return () => clearInterval(interval)
-  }, [])
+    fetchData();
+    const interval = setInterval(fetchData, 5000);
+    return () => clearInterval(interval);
+  }, []);
 
   const fetchTrustSnapshot = async () => {
-    const trustRes = await fetch(`${TRUST_API_BASE}/trust_snapshot`)
+    const trustRes = await fetch(`${TRUST_API_BASE}/trust_snapshot`);
     if (!trustRes.ok) {
-      throw new Error(`Trust snapshot failed with ${trustRes.status}`)
+      throw new Error(`Trust snapshot failed with ${trustRes.status}`);
     }
-    const snapshot = await trustRes.json()
-    setTrustStatus(snapshot.trust_status || null)
-    setPolicyHistory(snapshot.policy_history || [])
+
+    const snapshot = await trustRes.json();
+    setTrustStatus(snapshot.trust_status || null);
+    setPolicyHistory(snapshot.policy_history || []);
+
     if (!policyInitialized && snapshot.trust_status?.verification_policy) {
-      setPolicyDraft({ ...snapshot.trust_status.verification_policy })
-      setPolicyInitialized(true)
+      setPolicyDraft({ ...snapshot.trust_status.verification_policy });
+      setPolicyInitialized(true);
     }
-  }
+  };
 
   const fetchData = async () => {
     setLoading(true);
@@ -71,46 +78,42 @@ function App() {
       setMetricsSummary(metrics);
       setFounders(foundersData);
 
-    try {
-      await fetchTrustSnapshot()
-    } catch (trustErr) {
-      console.warn('Trust status unavailable:', trustErr)
-    }
+      try {
+        await fetchTrustSnapshot();
+      } catch (trustErr) {
+        console.warn('Trust status unavailable:', trustErr);
+      }
 
       setError(null);
     } catch (err) {
-      console.error("Fetch error:", err);
-      setError("Failed to sync with Sovereign Node");
+      console.error('Fetch error:', err);
+      setError('Failed to sync with Sovereign Node');
     } finally {
       setLoading(false);
     }
   };
 
-  // Logic to trigger a Federated Learning round from the UI
   const triggerFLRound = async () => {
     try {
       const response = await fetch(`${API_BASE}/trigger_fl`, { method: 'POST' });
       if (response.ok) {
-        alert("Federated Learning Round Started!");
-        fetchData(); 
+        fetchData();
       }
     } catch (err) {
-      console.error("Trigger FL round error:", err);
-      setError("Failed to trigger FL round");
+      console.error('Trigger FL round error:', err);
+      setError('Failed to trigger FL round');
     }
   };
 
-  // Logic to create a Secure Enclave
   const createEnclave = async () => {
     try {
       const response = await fetch(`${API_BASE}/create_enclave`, { method: 'POST' });
       if (response.ok) {
-        alert("Secure Enclave Initialized");
         fetchData();
       }
     } catch (err) {
-      console.error("Enclave creation error:", err);
-      setError("Enclave creation failed");
+      console.error('Enclave creation error:', err);
+      setError('Enclave creation failed');
     }
   };
 
@@ -123,29 +126,32 @@ function App() {
       const response = await fetch(`${API_BASE}/status`);
       if (response.ok) {
         const status = await response.json();
-        setVoiceResponse(`System ${status.status}. Flower on ${status.flower_server_port}, Metrics API on ${status.metrics_api_port}.`);
+        setVoiceResponse(
+          `System ${status.status}. Flower on ${status.flower_server_port}, Metrics API on ${status.metrics_api_port}.`
+        );
       } else {
-        setVoiceResponse("Unable to retrieve system status");
+        setVoiceResponse('Unable to retrieve system status');
       }
     } catch (err) {
-      console.error("Voice query error:", err);
-      setVoiceResponse("Voice query failed: backend unreachable");
+      console.error('Voice query error:', err);
+      setVoiceResponse('Voice query failed: backend unreachable');
     }
   };
 
   const updatePolicyField = (field, value) => {
-    setPolicyDraft(current => ({ ...current, [field]: value }))
-  }
+    setPolicyDraft((current) => ({ ...current, [field]: value }));
+  };
 
   const submitVerificationPolicy = async () => {
     try {
-      setPolicyMessage('Submitting verification policy...')
+      setPolicyMessage('Submitting verification policy...');
       const headers = {
         'Content-Type': 'application/json',
-        'X-API-Role': policyRole || 'admin',
-      }
+        'X-API-Role': policyRole || 'admin'
+      };
+
       if (policyToken.trim()) {
-        headers.Authorization = `Bearer ${policyToken.trim()}`
+        headers.Authorization = `Bearer ${policyToken.trim()}`;
       }
 
       const response = await fetch(`${TRUST_API_BASE}/verification_policy`, {
@@ -153,86 +159,112 @@ function App() {
         headers,
         body: JSON.stringify({
           ...policyDraft,
-          min_confidence_bps: Number(policyDraft.min_confidence_bps) || 0,
-        }),
-      })
+          min_confidence_bps: Number(policyDraft.min_confidence_bps) || 0
+        })
+      });
 
       if (!response.ok) {
-        const failure = await response.text()
-        setPolicyMessage(`Policy update failed: ${failure}`)
-        return
+        const failure = await response.text();
+        setPolicyMessage(`Policy update failed: ${failure}`);
+        return;
       }
 
-      const result = await response.json()
-      setTrustStatus(current => ({
+      const result = await response.json();
+      setTrustStatus((current) => ({
         ...current,
         trust_mode: 'p2p-reputation+governed-proof-verification',
         verification_policy: result.verification_policy,
-        fl_verification: result.fl_verification,
-      }))
-      setPolicyHistory(result.policy_history || [])
-      setPolicyDraft({ ...result.verification_policy })
-      setPolicyMessage('Verification policy updated')
+        fl_verification: result.fl_verification
+      }));
+      setPolicyHistory(result.policy_history || []);
+      setPolicyDraft({ ...result.verification_policy });
+      setPolicyMessage('Verification policy updated');
     } catch (err) {
-      console.error('Verification policy update error:', err)
-      setPolicyMessage('Verification policy update failed: backend unreachable')
+      console.error('Verification policy update error:', err);
+      setPolicyMessage('Verification policy update failed: backend unreachable');
     }
-  }
+  };
 
   return (
     <div className="hud-container">
       <header className="hud-header">
-        <h1>🗺️ Sovereign Map - Federated Learning HUD</h1>
+        <div>
+          <h1>Sovereign Map Federated Interface</h1>
+          <p>
+            Switch between the live network operations HUD and the in-browser WebGPU-focused
+            federated learning simulator.
+          </p>
+        </div>
+
         <div className="status-bar">
-          {error ? (
-            <span className="status-error">⚠️ {error}</span>
-          ) : (
-            <span className="status-ok">✅ System Online</span>
-          )}
-          {loading && <span className="status-loading"> 🔄 Syncing...</span>}
+          {error ? <span className="status-error">{error}</span> : <span className="status-ok">Network Reachable</span>}
+          {loading && <span className="status-loading"> Syncing...</span>}
         </div>
       </header>
 
-      <HUD 
-        hudData={hudData} 
-        health={health} 
-        metricsSummary={metricsSummary} 
-        trustStatus={trustStatus}
-        policyHistory={policyHistory}
-        founders={founders} 
-        voiceQuery={voiceQuery} 
-        voiceResponse={voiceResponse} 
-        policyDraft={policyDraft}
-        policyToken={policyToken}
-        policyRole={policyRole}
-        policyMessage={policyMessage}
-        loading={loading} 
-        error={error} 
-        onTriggerFLRound={triggerFLRound} 
-        onCreateEnclave={createEnclave}
-        onSubmitVoiceQuery={submitVoiceQuery}
-        onPolicyChange={updatePolicyField}
-        onPolicyTokenChange={setPolicyToken}
-        onPolicyRoleChange={setPolicyRole}
-        onSubmitVerificationPolicy={submitVerificationPolicy}
-        setVoiceQuery={setVoiceQuery}
-      />
+      <nav className="mode-nav" aria-label="View selector">
+        <button
+          className={mode === 'browser-demo' ? 'active' : ''}
+          onClick={() => setMode('browser-demo')}
+          type="button"
+        >
+          Browser FL Demo
+        </button>
+        <button
+          className={mode === 'network-hud' ? 'active' : ''}
+          onClick={() => setMode('network-hud')}
+          type="button"
+        >
+          Network Operations HUD
+        </button>
+      </nav>
 
-      {metricsSummary && (
-        <div className="metrics-footer">
-          <div className="summary-item">
-            <strong>Total FL Rounds:</strong> {metricsSummary.fl_rounds_total}
-          </div>
-          <div className="summary-item">
-            <strong>Avg FL Duration:</strong> {metricsSummary.avg_fl_duration?.toFixed(2) || 'N/A'}s
-          </div>
-          <div className="summary-item">
-            <strong>Total Stake:</strong> {metricsSummary.total_stake?.toFixed(2) || 'N/A'}
-          </div>
-          <div className="summary-item">
-            <strong>CXL Utilization:</strong> {(metricsSummary.cxl_utilization * 100)?.toFixed(1) || 'N/A'}%
-          </div>
-        </div>
+      {mode === 'browser-demo' ? (
+        <BrowserFLDemo />
+      ) : (
+        <>
+          <HUD
+            hudData={hudData}
+            health={health}
+            metricsSummary={metricsSummary}
+            trustStatus={trustStatus}
+            policyHistory={policyHistory}
+            founders={founders}
+            voiceQuery={voiceQuery}
+            voiceResponse={voiceResponse}
+            policyDraft={policyDraft}
+            policyToken={policyToken}
+            policyRole={policyRole}
+            policyMessage={policyMessage}
+            loading={loading}
+            error={error}
+            onTriggerFLRound={triggerFLRound}
+            onCreateEnclave={createEnclave}
+            onSubmitVoiceQuery={submitVoiceQuery}
+            onPolicyChange={updatePolicyField}
+            onPolicyTokenChange={setPolicyToken}
+            onPolicyRoleChange={setPolicyRole}
+            onSubmitVerificationPolicy={submitVerificationPolicy}
+            setVoiceQuery={setVoiceQuery}
+          />
+
+          {metricsSummary && (
+            <div className="metrics-footer">
+              <div className="summary-item">
+                <strong>Total FL Rounds:</strong> {metricsSummary.fl_rounds_total}
+              </div>
+              <div className="summary-item">
+                <strong>Avg FL Duration:</strong> {metricsSummary.avg_fl_duration?.toFixed(2) || 'N/A'}s
+              </div>
+              <div className="summary-item">
+                <strong>Total Stake:</strong> {metricsSummary.total_stake?.toFixed(2) || 'N/A'}
+              </div>
+              <div className="summary-item">
+                <strong>CXL Utilization:</strong> {(metricsSummary.cxl_utilization * 100)?.toFixed(1) || 'N/A'}%
+              </div>
+            </div>
+          )}
+        </>
       )}
     </div>
   );

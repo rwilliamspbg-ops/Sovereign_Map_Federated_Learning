@@ -1,90 +1,159 @@
 :root {
-  --bg-dark: #0a0b10;
-  --card-bg: #161b22;
-  --accent-blue: #58a6ff;
-  --accent-green: #3fb950;
-  --accent-red: #f85149;
-  --text-main: #c9d1d9;
-  --border-color: #30363d;
-}
-
-body {
-  background-color: var(--bg-dark);
-  color: var(--text-main);
-  font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
-  margin: 0;
-  overflow-x: hidden;
+  --bg-canvas: #f4f8ff;
+  --card-bg: #ffffff;
+  --text-main: #1c2f43;
+  --text-muted: #47627a;
+  --stroke: #d2def0;
+  --brand: #136f8a;
+  --brand-2: #0ca678;
+  --danger: #c92a2a;
 }
 
 .hud-container {
-  padding: 2rem;
+  padding: 1.25rem;
   max-width: 1400px;
   margin: 0 auto;
   min-height: 100vh;
+  color: var(--text-main);
+}
+
+.hud-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 1rem;
+  margin-bottom: 1rem;
+  padding: 1rem;
+  border-radius: 18px;
+  border: 1px solid var(--stroke);
+  background:
+    radial-gradient(circle at top right, #d9f3ff 0%, transparent 42%),
+    radial-gradient(circle at bottom left, #d9ffe8 0%, transparent 45%),
+    #ffffff;
+}
+
+.hud-header h1 {
+  margin: 0;
+  font-size: clamp(1.25rem, 2.2vw, 2rem);
+  line-height: 1.2;
+  letter-spacing: 0.02em;
+}
+
+.hud-header p {
+  margin: 0.45rem 0 0;
+  color: var(--text-muted);
+  max-width: 68ch;
+}
+
+.status-bar {
+  display: inline-flex;
+  flex-direction: column;
+  gap: 0.45rem;
+  font-weight: 700;
+  font-size: 0.88rem;
+}
+
+.status-ok {
+  color: #2b8a3e;
+}
+
+.status-error {
+  color: var(--danger);
+}
+
+.status-loading {
+  color: #0b7285;
+}
+
+.mode-nav {
+  display: inline-flex;
+  gap: 0.45rem;
+  background: #eaf1fb;
+  border: 1px solid #ccdaf0;
+  border-radius: 999px;
+  padding: 0.32rem;
+  margin-bottom: 1rem;
+}
+
+.mode-nav button {
+  border: none;
+  border-radius: 999px;
+  background: transparent;
+  color: #1f4768;
+  font-weight: 700;
+  padding: 0.55rem 0.95rem;
+  cursor: pointer;
+}
+
+.mode-nav button.active {
+  background: #ffffff;
+  color: #0f3f61;
+  box-shadow: 0 3px 8px rgba(15, 63, 97, 0.18);
 }
 
 .hud-section-header {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  border-bottom: 2px solid var(--border-color);
-  margin-bottom: 2rem;
-  padding-bottom: 1rem;
+  border-bottom: 2px solid var(--stroke);
+  margin-bottom: 1.4rem;
+  padding-bottom: 0.8rem;
 }
 
 .hud-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
-  gap: 1.5rem;
+  grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+  gap: 1rem;
 }
 
 .hud-section {
   background: var(--card-bg);
-  border: 1px solid var(--border-color);
-  border-radius: 12px;
-  padding: 1.5rem;
-  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.4);
-  transition: all 0.3s ease;
+  border: 1px solid var(--stroke);
+  border-radius: 14px;
+  padding: 1rem;
+  box-shadow: 0 9px 25px rgba(10, 40, 80, 0.06);
 }
 
 .hud-section:hover {
-  border-color: var(--accent-blue);
-  transform: translateY(-2px);
+  border-color: #a8bfdf;
 }
 
 .stats-row {
   display: flex;
   flex-direction: column;
   gap: 10px;
-  margin-bottom: 1.5rem;
-  font-family: 'JetBrains Mono', monospace;
+  margin-bottom: 1rem;
+  font-family: 'JetBrains Mono', 'Fira Code', monospace;
+  color: #234763;
 }
 
-.btn-primary, .btn-secondary {
+.btn-primary,
+.btn-secondary {
   width: 100%;
   padding: 12px;
-  border-radius: 6px;
+  border-radius: 8px;
   font-weight: 700;
   cursor: pointer;
   text-transform: uppercase;
-  letter-spacing: 0.5px;
-}
-
-.btn-primary {
-  background: var(--accent-blue);
-  color: #fff;
+  letter-spacing: 0.4px;
   border: none;
 }
 
-.btn-secondary {
-  background: transparent;
-  border: 1px solid var(--accent-blue);
-  color: var(--accent-blue);
+.btn-primary {
+  background: linear-gradient(90deg, #0ca678 0%, #0b7285 100%);
+  color: #fff;
 }
 
-.btn-primary:disabled {
-  background: #30363d;
-  color: #8b949e;
+.btn-secondary {
+  background: #eff5ff;
+  border: 1px solid #b8cbeb;
+  color: #1a4d77;
+}
+
+.btn-primary:disabled,
+.btn-secondary:disabled {
+  background: #d9e2ef;
+  color: #6f8498;
   cursor: not-allowed;
 }
 
@@ -104,15 +173,15 @@ body {
   font-size: 0.92rem;
 }
 
-.policy-grid input[type="checkbox"] {
+.policy-grid input[type='checkbox'] {
   margin-right: 0.5rem;
 }
 
 .policy-number input,
 .api-input {
-  background: #0d1117;
-  border: 1px solid var(--border-color);
-  border-radius: 6px;
+  background: #f7fbff;
+  border: 1px solid var(--stroke);
+  border-radius: 8px;
   color: var(--text-main);
   padding: 0.7rem 0.8rem;
 }
@@ -121,14 +190,14 @@ body {
   margin-top: 0.85rem;
   padding: 0.75rem 0.9rem;
   border-radius: 8px;
-  background: rgba(88, 166, 255, 0.12);
-  color: var(--accent-blue);
+  background: #e7f8ff;
+  color: #0c5e80;
   font-size: 0.92rem;
 }
 
 .policy-history {
   margin-top: 1rem;
-  border-top: 1px solid var(--border-color);
+  border-top: 1px solid var(--stroke);
   padding-top: 1rem;
 }
 
@@ -143,32 +212,65 @@ body {
 
 .policy-history-list li,
 .policy-history-empty {
-  background: #0d1117;
-  border: 1px solid var(--border-color);
+  background: #f8fbff;
+  border: 1px solid var(--stroke);
   border-radius: 8px;
   padding: 0.8rem;
   font-size: 0.9rem;
 }
 
 .telemetry details {
-  background: #0d1117;
+  background: #f5f9ff;
   padding: 10px;
-  border-radius: 6px;
+  border-radius: 8px;
   margin-top: 10px;
+  border: 1px solid #d3e0f2;
 }
 
 pre {
   font-size: 0.8rem;
-  color: #8b949e;
+  color: #34536e;
   overflow-x: auto;
 }
 
 .loading-spinner {
-  color: var(--accent-blue);
+  color: #0b7285;
   font-weight: bold;
   animation: blink 1s infinite;
 }
 
+.metrics-footer {
+  margin-top: 1rem;
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  gap: 0.7rem;
+}
+
+.summary-item {
+  background: #ffffff;
+  border: 1px solid var(--stroke);
+  border-radius: 12px;
+  padding: 0.8rem;
+}
+
 @keyframes blink {
-  50% { opacity: 0.3; }
+  50% {
+    opacity: 0.3;
+  }
+}
+
+@media (max-width: 900px) {
+  .hud-header {
+    flex-direction: column;
+  }
+
+  .mode-nav {
+    display: flex;
+    width: 100%;
+    border-radius: 14px;
+  }
+
+  .mode-nav button {
+    flex: 1;
+  }
 }
