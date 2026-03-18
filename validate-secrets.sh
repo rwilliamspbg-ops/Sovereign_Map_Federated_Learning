@@ -74,12 +74,15 @@ assert_valid_secret() {
 
 MONGO_PASSWORD_VALUE=$(load_from_env_file_if_missing "MONGO_PASSWORD" "${MONGO_PASSWORD:-}")
 REDIS_PASSWORD_VALUE=$(load_from_env_file_if_missing "REDIS_PASSWORD" "${REDIS_PASSWORD:-}")
-GRAFANA_PASSWORD_VALUE=$(load_from_env_file_if_missing "GRAFANA_ADMIN_PASSWORD" "${GRAFANA_ADMIN_PASSWORD:-}")
+GRAFANA_PASSWORD_VALUE=$(load_from_env_file_if_missing "GRAFANA_PASSWORD" "${GRAFANA_PASSWORD:-}")
+if [ -z "$GRAFANA_PASSWORD_VALUE" ]; then
+  GRAFANA_PASSWORD_VALUE=$(load_from_env_file_if_missing "GRAFANA_ADMIN_PASSWORD" "${GRAFANA_ADMIN_PASSWORD:-}")
+fi
 
 FAIL=0
 assert_valid_secret "MONGO_PASSWORD" "$MONGO_PASSWORD_VALUE" 20 || FAIL=1
 assert_valid_secret "REDIS_PASSWORD" "$REDIS_PASSWORD_VALUE" 20 || FAIL=1
-assert_valid_secret "GRAFANA_ADMIN_PASSWORD" "$GRAFANA_PASSWORD_VALUE" 16 || FAIL=1
+assert_valid_secret "GRAFANA_PASSWORD" "$GRAFANA_PASSWORD_VALUE" 16 || FAIL=1
 
 if [ "$FAIL" -ne 0 ]; then
   echo ""

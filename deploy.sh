@@ -132,7 +132,7 @@ if [ "$PROFILE" = "prod" ] || [ "$PROFILE" = "production" ] || [ "$PROFILE" = "l
 
     MONGO_PASSWORD_VALUE="${MONGO_PASSWORD:-}"
     REDIS_PASSWORD_VALUE="${REDIS_PASSWORD:-}"
-    GRAFANA_PASSWORD_VALUE="${GRAFANA_ADMIN_PASSWORD:-}"
+    GRAFANA_PASSWORD_VALUE="${GRAFANA_PASSWORD:-${GRAFANA_ADMIN_PASSWORD:-}}"
 
     if [ -f ".env" ]; then
         if [ -z "$MONGO_PASSWORD_VALUE" ]; then
@@ -140,6 +140,9 @@ if [ "$PROFILE" = "prod" ] || [ "$PROFILE" = "production" ] || [ "$PROFILE" = "l
         fi
         if [ -z "$REDIS_PASSWORD_VALUE" ]; then
             REDIS_PASSWORD_VALUE=$(grep -E '^REDIS_PASSWORD=' .env | tail -n1 | cut -d '=' -f2-)
+        fi
+        if [ -z "$GRAFANA_PASSWORD_VALUE" ]; then
+            GRAFANA_PASSWORD_VALUE=$(grep -E '^GRAFANA_PASSWORD=' .env | tail -n1 | cut -d '=' -f2-)
         fi
         if [ -z "$GRAFANA_PASSWORD_VALUE" ]; then
             GRAFANA_PASSWORD_VALUE=$(grep -E '^GRAFANA_ADMIN_PASSWORD=' .env | tail -n1 | cut -d '=' -f2-)
@@ -152,6 +155,9 @@ if [ "$PROFILE" = "prod" ] || [ "$PROFILE" = "production" ] || [ "$PROFILE" = "l
         fi
         if [ -z "$REDIS_PASSWORD_VALUE" ]; then
             REDIS_PASSWORD_VALUE=$(grep -E '^REDIS_PASSWORD=' "$COMPOSE_ENV_FILE" | tail -n1 | cut -d '=' -f2-)
+        fi
+        if [ -z "$GRAFANA_PASSWORD_VALUE" ]; then
+            GRAFANA_PASSWORD_VALUE=$(grep -E '^GRAFANA_PASSWORD=' "$COMPOSE_ENV_FILE" | tail -n1 | cut -d '=' -f2-)
         fi
         if [ -z "$GRAFANA_PASSWORD_VALUE" ]; then
             GRAFANA_PASSWORD_VALUE=$(grep -E '^GRAFANA_ADMIN_PASSWORD=' "$COMPOSE_ENV_FILE" | tail -n1 | cut -d '=' -f2-)
@@ -176,7 +182,7 @@ if [ "$PROFILE" = "prod" ] || [ "$PROFILE" = "production" ] || [ "$PROFILE" = "l
 
     case "$GRAFANA_PASSWORD_VALUE" in
         ""|CHANGE_ME*|changeme|dev_only_not_for_production)
-            echo -e "${RED}✗ GRAFANA_ADMIN_PASSWORD is missing or insecure placeholder.${NC}"
+            echo -e "${RED}✗ GRAFANA_PASSWORD is missing or insecure placeholder.${NC}"
             echo "  Set a strong value in environment or .env before production deployment."
             exit 1
             ;;
@@ -228,7 +234,7 @@ echo ""
 echo -e "${BLUE}Access Points:${NC}"
 echo "  Frontend:     ${GREEN}http://localhost:${FRONTEND_PORT}${NC}"
 echo "  Backend API:  ${GREEN}http://localhost:${BACKEND_API_PORT}${NC}"
-echo "  Grafana:      ${GREEN}http://localhost:${GRAFANA_PORT}${NC}  (credentials from GRAFANA_USER/GRAFANA_ADMIN_PASSWORD)"
+echo "  Grafana:      ${GREEN}http://localhost:${GRAFANA_PORT}${NC}  (credentials from GRAFANA_USER/GRAFANA_PASSWORD)"
 echo "  Prometheus:   ${GREEN}http://localhost:${PROMETHEUS_PORT}${NC}"
 echo ""
 

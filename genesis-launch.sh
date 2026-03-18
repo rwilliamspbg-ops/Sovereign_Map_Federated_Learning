@@ -217,7 +217,7 @@ launch_monitoring() {
     # Check Grafana
     if curl -s "http://localhost:${GRAFANA_PORT}/api/health" > /dev/null 2>&1; then
         log_success "Grafana is healthy (http://localhost:${GRAFANA_PORT})"
-        log_info "Grafana credentials: admin/${GRAFANA_ADMIN_PASSWORD:-CHANGE_ME_GRAFANA}"
+        log_info "Grafana credentials: admin/${GRAFANA_PASSWORD:-${GRAFANA_ADMIN_PASSWORD:-CHANGE_ME_GRAFANA}}"
     else
         log_warn "Grafana health check failed"
     fi

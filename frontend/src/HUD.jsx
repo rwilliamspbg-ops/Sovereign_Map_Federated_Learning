@@ -78,7 +78,7 @@ export default function HUD({
               onChange={e => setVoiceQuery(e.target.value)} 
               placeholder="Query the sovereign agent..." 
             />
-            <button onClick={onSubmitVoiceQuery} disabled={loading || !voiceQuery}>
+            <button onClick={onSubmitVoiceQuery} disabled={loading || !voiceQuery.trim()}>
               Submit
             </button>
           </div>

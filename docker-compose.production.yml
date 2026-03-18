@@ -99,48 +99,6 @@ services:
     environment:
       MONGO_INITDB_ROOT_USERNAME: ${MONGO_USER:-admin}
       MONGO_INITDB_ROOT_PASSWORD: ${MONGO_PASSWORD:-CHANGE_ME_MONGO}
-
-  # Frontend: React/Nginx Web UI
-  frontend:
-    build:
-      context: .
-      dockerfile: Dockerfile.frontend.optimized
-    image: sovereignmap/frontend:latest
-    ports:
-      - "${FRONTEND_HOST_PORT:-3000}:80"
-    depends_on:
-      - backend
-    restart: always
-    healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost/health"]
-      interval: 15s
-      timeout: 5s
-      retries: 3
-      start_period: 10s
-    networks:
-      - sovereignmap
-    logging:
-      driver: json-file
-      options:
-        max-size: "10m"
-        max-file: "3"
-    deploy:
-      resources:
-        limits:
-          cpus: '1'
-          memory: 512M
-        reservations:
-          cpus: '0.5'
-          memory: 256M
-
-  # MongoDB: Primary Data Store
-  mongo:
-    image: mongo:7.0
-    ports:
-      - "127.0.0.1:${MONGO_HOST_PORT:-27017}:27017"
-    environment:
-      MONGO_INITDB_ROOT_USERNAME: ${MONGO_USER:-admin}
-      MONGO_INITDB_ROOT_PASSWORD: ${MONGO_PASSWORD:-CHANGE_ME_MONGO}
       MONGO_INITDB_DATABASE: sovereignmap
     restart: always
     healthcheck:
@@ -460,7 +418,7 @@ services:
     ports:
       - "${GRAFANA_HOST_PORT:-3001}:3000"
     environment:
-      - GF_SECURITY_ADMIN_PASSWORD=${GRAFANA_ADMIN_PASSWORD:-CHANGE_ME_GRAFANA}
+      - GF_SECURITY_ADMIN_PASSWORD=${GRAFANA_PASSWORD:-CHANGE_ME_GRAFANA}
       - GF_SECURITY_ADMIN_USER=${GRAFANA_USER:-admin}
       - GF_USERS_ALLOW_SIGN_UP=false
       - GF_INSTALL_PLUGINS=grafana-piechart-panel

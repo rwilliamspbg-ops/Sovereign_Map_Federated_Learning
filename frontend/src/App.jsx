@@ -20,7 +20,7 @@ function App() {
   const [founders, setFounders] = useState([]);
   const [voiceQuery, setVoiceQuery] = useState('');
   const [voiceResponse, setVoiceResponse] = useState('');
-    const [trainingMetrics, setTrainingMetrics] = useState([]);
+  const [trainingMetrics, setTrainingMetrics] = useState([]);
   const [policyDraft, setPolicyDraft] = useState({
     require_proof: false,
     min_confidence_bps: 7000,
@@ -35,6 +35,10 @@ function App() {
   const [policyMessage, setPolicyMessage] = useState('');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
+
+  const avgFlDuration = Number(metricsSummary?.avg_fl_duration);
+  const totalStake = Number(metricsSummary?.total_stake);
+  const cxlUtilization = Number(metricsSummary?.cxl_utilization);
 
   useEffect(() => {
     fetchData();
@@ -218,13 +222,13 @@ function App() {
           type="button"
         >
           Network Operations HUD
-               <button
-                 className={mode === 'privacy-dashboard' ? 'active' : ''}
-                 onClick={() => setMode('privacy-dashboard')}
-                 type="button"
-               >
-                 Privacy-Utility Analysis
-               </button>
+        </button>
+        <button
+          className={mode === 'privacy-dashboard' ? 'active' : ''}
+          onClick={() => setMode('privacy-dashboard')}
+          type="button"
+        >
+          Privacy-Utility Analysis
         </button>
       </nav>
 
@@ -265,13 +269,13 @@ function App() {
                 <strong>Total FL Rounds:</strong> {metricsSummary.fl_rounds_total}
               </div>
               <div className="summary-item">
-                <strong>Avg FL Duration:</strong> {metricsSummary.avg_fl_duration?.toFixed(2) || 'N/A'}s
+                <strong>Avg FL Duration:</strong> {Number.isFinite(avgFlDuration) ? `${avgFlDuration.toFixed(2)}s` : 'N/A'}
               </div>
               <div className="summary-item">
-                <strong>Total Stake:</strong> {metricsSummary.total_stake?.toFixed(2) || 'N/A'}
+                <strong>Total Stake:</strong> {Number.isFinite(totalStake) ? totalStake.toFixed(2) : 'N/A'}
               </div>
               <div className="summary-item">
-                <strong>CXL Utilization:</strong> {(metricsSummary.cxl_utilization * 100)?.toFixed(1) || 'N/A'}%
+                <strong>CXL Utilization:</strong> {Number.isFinite(cxlUtilization) ? `${(cxlUtilization * 100).toFixed(1)}%` : 'N/A'}
               </div>
             </div>
           )}
