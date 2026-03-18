@@ -42,7 +42,7 @@ services:
   node-agent-secure:
     build:
       context: .
-      dockerfile: Dockerfile.node
+      dockerfile: Dockerfile.node-agent
     environment:
       - NODE_ID=${NODE_ID:-1}
       - BACKEND_URL=http://backend-secure:8000
