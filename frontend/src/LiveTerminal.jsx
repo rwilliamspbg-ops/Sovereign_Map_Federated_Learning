@@ -15,7 +15,7 @@ const MESSAGES = [
 
 export default function LiveTerminal() {
   const [logs, setLogs] = useState([]);
-  const bottomRef = useRef(null);
+  const containerRef = useRef(null);
 
   useEffect(() => {
     // Start with a few initial logs
@@ -38,19 +38,18 @@ export default function LiveTerminal() {
   }, []);
 
   useEffect(() => {
-    if (bottomRef.current) {
-      bottomRef.current.scrollIntoView({ behavior: 'smooth' });
+    if (containerRef.current) {
+      containerRef.current.scrollTop = containerRef.current.scrollHeight;
     }
   }, [logs]);
 
   return (
     <div className="terminal-container hud-section">
       <h3>🖥️ System Operations Log</h3>
-      <div className="terminal-output">
+      <div className="terminal-output" ref={containerRef}>
         {logs.map((log, index) => (
           <div key={index} className="terminal-line">{log}</div>
         ))}
-        <div ref={bottomRef} />
       </div>
     </div>
   );
