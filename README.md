@@ -64,6 +64,14 @@ Production-grade federated learning platform that combines Byzantine-resilient a
 [![Windows Client EXE](https://img.shields.io/github/actions/workflow/status/rwilliamspbg-ops/Sovereign_Map_Federated_Learning/windows-client-exe.yml?branch=main&style=flat-square&label=Windows%20Client%20EXE)](https://github.com/rwilliamspbg-ops/Sovereign_Map_Federated_Learning/actions/workflows/windows-client-exe.yml)
 [![Phase3D Production Deploy](https://img.shields.io/github/actions/workflow/status/rwilliamspbg-ops/Sovereign_Map_Federated_Learning/phase3d-production-deploy.yml?branch=main&style=flat-square&label=Phase3D%20Production%20Deploy)](https://github.com/rwilliamspbg-ops/Sovereign_Map_Federated_Learning/actions/workflows/phase3d-production-deploy.yml)
 
+## What To Use This Software For
+
+- Running secure, federated ML training across distributed nodes where raw data must stay local.
+- Operating Byzantine-resilient model aggregation in adversarial or partially trusted environments.
+- Building trust-aware AI infrastructure with policy controls, attestation signals, and auditable telemetry.
+- Monitoring real-time FL, tokenomics, and system health through Prometheus and Grafana surfaces.
+- Prototyping and scaling from local Docker deployments to large Compose/Kubernetes profiles.
+
 ## Technical Brief
 
 Sovereign Map Federated Learning is a dual-plane runtime:
