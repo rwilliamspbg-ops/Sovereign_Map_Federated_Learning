@@ -20,6 +20,30 @@ function Log {
     $LogMsg | Add-Content "$OutDir/demo.log"
 }
 
+function Invoke-ComposeUp {
+    param(
+        [string]$StepName,
+        [string]$LogFile,
+        [string[]]$Services
+    )
+
+    Log "$StepName..."
+
+    # Use exit code checks for native commands. Docker pull/progress text can be
+    # emitted on stderr during normal operation and should not be treated as failure.
+    & docker compose -f $ComposeFile up -d @Services *>> $LogFile
+    $ExitCode = $LASTEXITCODE
+
+    if ($ExitCode -ne 0) {
+        $Tail = @()
+        if (Test-Path $LogFile) {
+            $Tail = Get-Content $LogFile -Tail 20
+        }
+        $TailText = ($Tail -join "`
+
+        throw "docker compose failed for '$StepName' (exit $ExitCode). Recent output: $TailText"
+    }
+}
 Log "=========================================="
 Log "Sovereign Map Federated Learning Demo"
 Log "=========================================="
@@ -35,10 +59,8 @@ if (-not (Test-Path $ComposeFile)) {
     exit 1
 }
 
-# Start monitoring stack
-Log "Starting Prometheus and Grafana..."
 try {
-    & docker compose -f $ComposeFile up -d prometheus grafana alertmanager 2>&1 | Add-Content "$OutDir/startup.log"
+    Invoke-ComposeUp -StepName "Starting Prometheus and Grafana" -LogFile "$OutDir/startup.log" -Services @("prometheus", "grafana", "alertmanager")
     Log "✅ Monitoring stack started"
 } catch {
     Log "ERROR: Failed to start monitoring: $_"
@@ -72,9 +94,8 @@ try {
 }
 
 # Start backend services
-Log "Starting backend infrastructure..."
 try {
-    & docker compose -f $ComposeFile up -d mongo redis backend 2>&1 | Add-Content "$OutDir/backend.log"
+    Invoke-ComposeUp -StepName "Starting backend infrastructure" -LogFile "$OutDir/backend.log" -Services @("mongo", "redis", "backend")
     Log "✅ Backend started"
     Start-Sleep -Seconds 5
 } catch {
