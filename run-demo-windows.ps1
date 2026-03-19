@@ -44,6 +44,7 @@ function Invoke-ComposeUp {
         [string]$LogFile,
         [string[]]$Services,
         [switch]$NoDeps,
+        [switch]$NoBuild,
         [switch]$RetriedWithoutAccel
     )
 
@@ -61,6 +62,9 @@ function Invoke-ComposeUp {
     $ArgList += @("up", "-d")
     if ($NoDeps) {
         $ArgList += "--no-deps"
+    }
+    if ($NoBuild) {
+        $ArgList += "--no-build"
     }
     $ArgList += $Services
     $Proc = Start-Process -FilePath "docker" -ArgumentList $ArgList -NoNewWindow -Wait -PassThru -RedirectStandardOutput $StdOut -RedirectStandardError $StdErr
@@ -82,7 +86,7 @@ function Invoke-ComposeUp {
             # Fallback if host Docker runtime cannot satisfy GPU requests.
             $script:UseAccelerationOverride = $false
             Log "⚠️  Acceleration override failed; retrying without GPU compose override"
-            Invoke-ComposeUp -StepName $StepName -LogFile $LogFile -Services $Services -NoDeps:$NoDeps -RetriedWithoutAccel
+            Invoke-ComposeUp -StepName $StepName -LogFile $LogFile -Services $Services -NoDeps:$NoDeps -NoBuild:$NoBuild -RetriedWithoutAccel
             return
         }
 
@@ -92,6 +96,56 @@ function Invoke-ComposeUp {
         }
         $TailText = ($Tail -join [Environment]::NewLine)
         throw "docker compose failed for '$StepName' (exit $ExitCode). Recent output: $TailText"
+    }
+}
+
+function Invoke-ComposeBuild {
+    param(
+        [string]$StepName,
+        [string]$LogFile,
+        [string[]]$Services,
+        [switch]$RetriedWithoutAccel
+    )
+
+    Log "$StepName..."
+
+    $StdOut = [System.IO.Path]::GetTempFileName()
+    $StdErr = [System.IO.Path]::GetTempFileName()
+
+    $ArgList = @("compose", "-f", $ComposeFile)
+    if ($script:UseAccelerationOverride) {
+        $ArgList += @("-f", $script:AccelComposeFile)
+    }
+    $ArgList += @("build") + $Services
+
+    $Proc = Start-Process -FilePath "docker" -ArgumentList $ArgList -NoNewWindow -Wait -PassThru -RedirectStandardOutput $StdOut -RedirectStandardError $StdErr
+
+    if (Test-Path $StdOut) {
+        Get-Content $StdOut | Add-Content $LogFile
+    }
+    if (Test-Path $StdErr) {
+        Get-Content $StdErr | Add-Content $LogFile
+    }
+
+    $ExitCode = $Proc.ExitCode
+
+    Remove-Item $StdOut -ErrorAction SilentlyContinue
+    Remove-Item $StdErr -ErrorAction SilentlyContinue
+
+    if ($ExitCode -ne 0) {
+        if ($script:UseAccelerationOverride -and -not $RetriedWithoutAccel) {
+            $script:UseAccelerationOverride = $false
+            Log "⚠️  Acceleration override failed during build; retrying without GPU compose override"
+            Invoke-ComposeBuild -StepName $StepName -LogFile $LogFile -Services $Services -RetriedWithoutAccel
+            return
+        }
+
+        $Tail = @()
+        if (Test-Path $LogFile) {
+            $Tail = Get-Content $LogFile -Tail 20
+        }
+        $TailText = ($Tail -join [Environment]::NewLine)
+        throw "docker compose build failed for '$StepName' (exit $ExitCode). Recent output: $TailText"
     }
 }
 Log "=========================================="
@@ -166,7 +220,14 @@ try {
 }
 
 try {
-    Invoke-ComposeUp -StepName "Starting FL node agents" -LogFile "$OutDir/backend.log" -Services @("node-agent-1", "node-agent-2", "node-agent-3") -NoDeps
+    Invoke-ComposeBuild -StepName "Prebuilding FL node-agent image" -LogFile "$OutDir/backend.log" -Services @("node-agent-1")
+    Log "✅ Node-agent image prebuilt"
+} catch {
+    Log "⚠️  Node-agent prebuild issue: $_"
+}
+
+try {
+    Invoke-ComposeUp -StepName "Starting FL node agents" -LogFile "$OutDir/backend.log" -Services @("node-agent-1", "node-agent-2", "node-agent-3") -NoDeps -NoBuild
     Log "✅ Node agents started"
 } catch {
     Log "⚠️  Node agent startup issue: $_"
