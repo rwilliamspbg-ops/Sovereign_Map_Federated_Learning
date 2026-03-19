@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import LiveTerminal from './LiveTerminal';
 
 /**
@@ -22,6 +22,7 @@ export default function HUD({
   error,
   onTriggerFLRound,
   onCreateEnclave,
+  onTriggerSimulation,
   onSubmitVoiceQuery,
   onPolicyChange,
   onPolicyTokenChange,
@@ -36,12 +37,20 @@ export default function HUD({
     hardwareFaults: 0
   });
 
-  const triggerSimulation = (type) => {
+  useEffect(() => {
+    if (hudData?.simulation_counters) {
+      setSimulationState((prev) => ({ ...prev, ...hudData.simulation_counters }));
+    }
+  }, [hudData]);
+
+  const triggerSimulation = async (type) => {
     setSimulationState(prev => ({
       ...prev,
       [type]: prev[type] + 1
     }));
-    // In a real implementation this would hit the backend simulation endpoint
+    if (onTriggerSimulation) {
+      await onTriggerSimulation(type);
+    }
   };
 
   return (

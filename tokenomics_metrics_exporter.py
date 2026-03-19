@@ -28,7 +28,7 @@ logger = logging.getLogger(__name__)
 
 class TokenomicsMetricsExporter:
     def __init__(self, source_file: str):
-        self.source_file = source_file
+        self.source_file = self._resolve_source_file(source_file)
         self.registry = CollectorRegistry()
         self._lock = Lock()
         self._last_payload: Dict[str, Any] = {}
@@ -163,6 +163,17 @@ class TokenomicsMetricsExporter:
             return
         gauge.set(max(minimum, value))
 
+    @staticmethod
+    def _resolve_source_file(source_file: str) -> str:
+        expanded = os.path.expanduser(source_file)
+        if os.path.isdir(expanded):
+            resolved = os.path.join(expanded, "tokenomics-telemetry.json")
+            logger.warning(
+                "TOKENOMICS_SOURCE_FILE points to a directory; using %s", resolved
+            )
+            return resolved
+        return expanded
+
     def _apply_payload(self, payload: Dict[str, Any]):
         self._last_payload = dict(payload)
         mint_rate = self._safe_float(payload, "mint_rate_per_min")
@@ -267,8 +278,10 @@ class TokenomicsMetricsExporter:
         directory = os.path.dirname(self.source_file)
         if directory:
             os.makedirs(directory, exist_ok=True)
-        with open(self.source_file, "w", encoding="utf-8") as handle:
+        temp_file = f"{self.source_file}.tmp"
+        with open(temp_file, "w", encoding="utf-8") as handle:
             json.dump(payload, handle, indent=2)
+        os.replace(temp_file, self.source_file)
 
     def load_source_file(self):
         try:
@@ -281,11 +294,20 @@ class TokenomicsMetricsExporter:
             logger.warning("Tokenomics source file missing: %s", self.source_file)
         except json.JSONDecodeError as exc:
             logger.error("Invalid tokenomics source JSON: %s", exc)
+        except OSError as exc:
+            logger.error("Unable to read tokenomics source file %s: %s", self.source_file, exc)
 
     def ingest_event(self, payload: Dict[str, Any]):
         with self._lock:
             self._apply_payload(payload)
-            self._persist_payload(self._last_payload)
+            try:
+                self._persist_payload(self._last_payload)
+            except OSError as exc:
+                logger.error(
+                    "Unable to persist tokenomics payload to %s: %s",
+                    self.source_file,
+                    exc,
+                )
 
     def generate_metrics(self) -> bytes:
         return generate_latest(self.registry)
@@ -321,6 +343,7 @@ def run_simulation(exporter):
 def create_app(source_file: str):
     app = Flask(__name__)
     exporter = TokenomicsMetricsExporter(source_file=source_file)
+    exporter.load_source_file()
     import threading
 
     t = threading.Thread(target=run_simulation, args=(exporter,), daemon=True)

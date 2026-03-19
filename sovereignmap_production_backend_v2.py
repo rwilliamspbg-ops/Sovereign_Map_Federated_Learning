@@ -342,6 +342,11 @@ dao = None
 strategy = None
 convergence_history = {"rounds": [], "accuracies": [], "losses": [], "timestamps": []}
 enclave_status = "Not initialized"
+simulation_counters = {
+    "byzantineAttacks": 0,
+    "networkPartitions": 0,
+    "hardwareFaults": 0,
+}
 MODEL_REGISTRY_PATH = os.getenv("MODEL_REGISTRY_PATH", "/app/data/model_registry.jsonl")
 TPM_METRICS_ENDPOINT = os.getenv(
     "TPM_METRICS_ENDPOINT", "http://tpm-metrics:9091/event/attestation"
@@ -750,6 +755,32 @@ def training_status():
     )
 
 
+@app.route("/simulate/<simulation_type>", methods=["POST"])
+def trigger_hud_simulation(simulation_type: str):
+    if simulation_type not in simulation_counters:
+        return jsonify({"status": "error", "error": "unsupported simulation type"}), 400
+
+    simulation_counters[simulation_type] += 1
+    logger.info(
+        "HUD simulation triggered",
+        extra={
+            "simulation_type": simulation_type,
+            "count": simulation_counters[simulation_type],
+        },
+    )
+    return (
+        jsonify(
+            {
+                "status": "ok",
+                "simulation_type": simulation_type,
+                "count": simulation_counters[simulation_type],
+                "all_counters": simulation_counters,
+            }
+        ),
+        200,
+    )
+
+
 @app.route("/health", methods=["GET"])
 def health():
     import random
@@ -800,6 +831,7 @@ def hud_data():
                 "dao_signatures": (
                     len(dao.founding_signatures) if dao else len(FOUNDERS)
                 ),
+                "simulation_counters": simulation_counters,
             }
         ),
         200,

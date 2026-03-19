@@ -121,6 +121,21 @@ function App() {
     }
   };
 
+  const triggerSimulation = async (simulationType) => {
+    try {
+      const response = await fetch(`${API_BASE}/simulate/${simulationType}`, {
+        method: 'POST'
+      });
+      if (!response.ok) {
+        throw new Error(`Simulation endpoint failed with ${response.status}`);
+      }
+      fetchData();
+    } catch (err) {
+      console.error('Simulation trigger error:', err);
+      setError(`Failed to trigger simulation: ${simulationType}`);
+    }
+  };
+
     const submitVoiceQuery = async () => {
     if (!voiceQuery.trim()) {
       return;
@@ -255,6 +270,7 @@ function App() {
             error={error}
             onTriggerFLRound={triggerFLRound}
             onCreateEnclave={createEnclave}
+            onTriggerSimulation={triggerSimulation}
             onSubmitVoiceQuery={submitVoiceQuery}
             onPolicyChange={updatePolicyField}
             onPolicyTokenChange={setPolicyToken}
