@@ -10,13 +10,30 @@ on:
         description: Use GPU Kubernetes manifest
         required: false
         default: 'true'
+  push:
+    branches: [main]
+    paths:
+      - '.github/workflows/phase3d-production-deploy.yml'
+      - 'deploy/production/deploy-phase3d-production.sh'
 
 permissions:
   id-token: write
   contents: read
 
 jobs:
+  validate-workflow:
+    name: Validate Deploy Script Wiring
+    if: github.event_name != 'workflow_dispatch'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd
+
+      - name: Validate deploy script syntax
+        run: bash -n deploy/production/deploy-phase3d-production.sh
+
   deploy:
+    if: github.event_name == 'workflow_dispatch'
     runs-on: ubuntu-latest
     steps:
       - name: Checkout

@@ -80,6 +80,19 @@ def main() -> int:
                     continue
 
                 if not candidate.exists():
+                    # Historical docs links commonly point to /archive/** while
+                    # archived content now lives under docs/archive/**.
+                    try:
+                        candidate_rel = candidate.relative_to(REPO_ROOT).as_posix()
+                    except ValueError:
+                        candidate_rel = ""
+
+                    if candidate_rel == "archive" or candidate_rel.startswith("archive/"):
+                        archive_fallback = (REPO_ROOT / "docs" / candidate_rel).resolve()
+                        if archive_fallback.exists():
+                            candidate = archive_fallback
+
+                if not candidate.exists():
                     broken.append(
                         (
                             rel_file,

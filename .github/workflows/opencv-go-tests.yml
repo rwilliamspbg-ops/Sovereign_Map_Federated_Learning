@@ -50,6 +50,11 @@ jobs:
         run: |
           pkg-config --modversion opencv4
 
+      - name: Pin GoCV version for Ubuntu OpenCV compatibility
+        run: |
+          go mod edit -require=gocv.io/x/gocv@v0.32.0
+          go mod download gocv.io/x/gocv@v0.32.0
+
       - name: Run OpenCV-tagged package tests
         env:
           CGO_ENABLED: 1

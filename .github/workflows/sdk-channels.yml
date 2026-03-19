@@ -18,10 +18,26 @@ on:
           - latest
           - next
           - stable
+  push:
+    branches: [main]
+    paths:
+      - '.github/workflows/sdk-channels.yml'
+      - 'scripts/release-channels.sh'
 
 jobs:
+  validate-workflow:
+    name: Validate Workflow Wiring
+    if: github.event_name != 'workflow_dispatch'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd
+
+      - name: Validate release channel script syntax
+        run: bash -n scripts/release-channels.sh
+
   manage-channels:
     name: Manage Release Channels
+    if: github.event_name == 'workflow_dispatch'
     runs-on: ubuntu-latest
     permissions:
       contents: write
