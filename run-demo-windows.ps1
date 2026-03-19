@@ -17,6 +17,10 @@ $DurationSeconds = 300
 $Timestamp = Get-Date -Format "yyyyMMdd-HHmmss"
 $OutDir = "test-results/demo-windows/$Timestamp"
 
+# Keep Windows demo flow resilient: TPM bootstrap can be slow/fragile on first run
+# and is not required for basic monitoring/backend demo validation.
+$env:TPM_ENABLED = "false"
+
 if (-not (Test-Path $OutDir)) {
     New-Item -ItemType Directory -Path $OutDir -Force | Out-Null
 }
@@ -101,7 +105,7 @@ Start-Sleep -Seconds 10
 # Check Prometheus health
 Log "Checking Prometheus health..."
 try {
-    $Response = Invoke-WebRequest -Uri "http://localhost:9090/-/healthy" -ErrorAction SilentlyContinue
+    $Response = Invoke-WebRequest -Uri "http://localhost:9090/-/healthy" -UseBasicParsing -ErrorAction SilentlyContinue
     if ($Response.StatusCode -eq 200) {
         Log "✅ Prometheus is healthy"
     }
@@ -112,7 +116,7 @@ try {
 # Check Grafana health
 Log "Checking Grafana health..."
 try {
-    $Response = Invoke-WebRequest -Uri "http://localhost:3001/api/health" -ErrorAction SilentlyContinue
+    $Response = Invoke-WebRequest -Uri "http://localhost:3001/api/health" -UseBasicParsing -ErrorAction SilentlyContinue
     if ($Response.StatusCode -eq 200) {
         Log "✅ Grafana is healthy"
     }
@@ -122,7 +126,7 @@ try {
 
 # Start backend services
 try {
-    Invoke-ComposeUp -StepName "Starting backend infrastructure" -LogFile "$OutDir/backend.log" -Services @("mongo", "redis", "backend")
+    Invoke-ComposeUp -StepName "Starting backend infrastructure" -LogFile "$OutDir/backend.log" -Services @("mongo", "redis", "backend") -NoDeps
     Log "✅ Backend started"
     Start-Sleep -Seconds 5
 } catch {
@@ -164,7 +168,7 @@ for ($i = 1; $i -le $Iterations; $i++) {
     "" | Add-Content $StatsFile
     "## Prometheus Status" | Add-Content $StatsFile
     try {
-        $Metrics = Invoke-WebRequest -Uri "http://localhost:9090/api/v1/label/__name__/values" -ErrorAction SilentlyContinue
+        $Metrics = Invoke-WebRequest -Uri "http://localhost:9090/api/v1/label/__name__/values" -UseBasicParsing -ErrorAction SilentlyContinue
         if ($Metrics.StatusCode -eq 200) {
             $MetricCount = ($Metrics.Content | ConvertFrom-Json).data.Count
             "Available metrics: $MetricCount" | Add-Content $StatsFile
