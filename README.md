@@ -1,156 +1,66 @@
-<!-- markdownlint-disable MD013 -->
+# Sovereign Map Federated Learning
 
-# Sovereign Map
+Production-grade federated learning platform that combines Byzantine-resilient aggregation, trust verification, governance policy controls, and full-stack observability.
 
-## Live Project Pulse
+## Badges
 
-[![Release](https://img.shields.io/github/v/release/rwilliamspbg-ops/Sovereign_Map_Federated_Learning?display_name=tag&style=flat-square&logo=github&color=0b7285)](https://github.com/rwilliamspbg-ops/Sovereign_Map_Federated_Learning/releases)
-[![Last Commit](https://img.shields.io/github/last-commit/rwilliamspbg-ops/Sovereign_Map_Federated_Learning?style=flat-square&logo=git&color=1c7ed6)](https://github.com/rwilliamspbg-ops/Sovereign_Map_Federated_Learning/commits/main)
-[![Repo Size](https://img.shields.io/github/repo-size/rwilliamspbg-ops/Sovereign_Map_Federated_Learning?style=flat-square&logo=files&color=2b8a3e)](https://github.com/rwilliamspbg-ops/Sovereign_Map_Federated_Learning)
-[![Contributors](https://img.shields.io/github/contributors/rwilliamspbg-ops/Sovereign_Map_Federated_Learning?style=flat-square&logo=github&color=087f5b)](https://github.com/rwilliamspbg-ops/Sovereign_Map_Federated_Learning/graphs/contributors)
-[![Issues](https://img.shields.io/github/issues/rwilliamspbg-ops/Sovereign_Map_Federated_Learning?style=flat-square&logo=github&color=364fc7)](https://github.com/rwilliamspbg-ops/Sovereign_Map_Federated_Learning/issues)
-[![Pull Requests](https://img.shields.io/github/issues-pr/rwilliamspbg-ops/Sovereign_Map_Federated_Learning?style=flat-square&logo=github&color=5f3dc4)](https://github.com/rwilliamspbg-ops/Sovereign_Map_Federated_Learning/pulls)
-[![Stars](https://img.shields.io/github/stars/rwilliamspbg-ops/Sovereign_Map_Federated_Learning?style=flat-square&logo=github&color=f08c00)](https://github.com/rwilliamspbg-ops/Sovereign_Map_Federated_Learning/stargazers)
-[![Forks](https://img.shields.io/github/forks/rwilliamspbg-ops/Sovereign_Map_Federated_Learning?style=flat-square&logo=github&color=e67700)](https://github.com/rwilliamspbg-ops/Sovereign_Map_Federated_Learning/network/members)
+### Quality and Delivery
 
+[![Build and Test](https://img.shields.io/github/actions/workflow/status/rwilliamspbg-ops/Sovereign_Map_Federated_Learning/build.yml?branch=main&label=Build%20and%20Test)](https://github.com/rwilliamspbg-ops/Sovereign_Map_Federated_Learning/actions/workflows/build.yml)
+[![Lint Code Base](https://img.shields.io/github/actions/workflow/status/rwilliamspbg-ops/Sovereign_Map_Federated_Learning/lint.yml?branch=main&label=Lint)](https://github.com/rwilliamspbg-ops/Sovereign_Map_Federated_Learning/actions/workflows/lint.yml)
+[![HIL Tests](https://img.shields.io/github/actions/workflow/status/rwilliamspbg-ops/Sovereign_Map_Federated_Learning/hil-tests.yml?branch=main&label=HIL%20Tests)](https://github.com/rwilliamspbg-ops/Sovereign_Map_Federated_Learning/actions/workflows/hil-tests.yml)
+[![Reproducibility Check](https://img.shields.io/github/actions/workflow/status/rwilliamspbg-ops/Sovereign_Map_Federated_Learning/reproducibility-check.yml?branch=main&label=Reproducibility)](https://github.com/rwilliamspbg-ops/Sovereign_Map_Federated_Learning/actions/workflows/reproducibility-check.yml)
 
-## 🔥 Phase 3 Active: Edge Sensoring & Differential Privacy
-[![Bandwidth Saved](https://img.shields.io/badge/Compression-90%25%20(Int8%2BDP)-2b8a3e?style=flat-square&logo=webpack&logoColor=white)](packages/compression)
-[![Edge Integration](https://img.shields.io/badge/Hardware-Android%20ARCore%20%7C%20Web%20Sensor-1c7ed6?style=flat-square&logo=android&logoColor=white)](client/mobile-sdk/android)
-[![Performance](https://img.shields.io/badge/Self--Healing-Auto%20Tuning-f08c00?style=flat-square&logo=grafana&logoColor=white)](hardware_auto_tuner.py)
+### Security and Governance
 
-The latest Phase 3 enhancements deliver full edge-hardware parity, seamlessly connecting **Camera/LiDAR data streams** directly to secure TEE enclaves over Self-Healing networks.
+[![CodeQL Security Analysis](https://img.shields.io/github/actions/workflow/status/rwilliamspbg-ops/Sovereign_Map_Federated_Learning/codeql-analysis.yml?branch=main&label=CodeQL)](https://github.com/rwilliamspbg-ops/Sovereign_Map_Federated_Learning/actions/workflows/codeql-analysis.yml)
+[![Security Supply Chain](https://img.shields.io/github/actions/workflow/status/rwilliamspbg-ops/Sovereign_Map_Federated_Learning/security-supply-chain.yml?branch=main&label=Supply%20Chain)](https://github.com/rwilliamspbg-ops/Sovereign_Map_Federated_Learning/actions/workflows/security-supply-chain.yml)
+[![Secret Scan](https://img.shields.io/github/actions/workflow/status/rwilliamspbg-ops/Sovereign_Map_Federated_Learning/secret-scan.yml?branch=main&label=Secret%20Scan)](https://github.com/rwilliamspbg-ops/Sovereign_Map_Federated_Learning/actions/workflows/secret-scan.yml)
+[![Governance Check](https://img.shields.io/github/actions/workflow/status/rwilliamspbg-ops/Sovereign_Map_Federated_Learning/governance-check.yml?branch=main&label=Governance)](https://github.com/rwilliamspbg-ops/Sovereign_Map_Federated_Learning/actions/workflows/governance-check.yml)
+[![Workflow Action Pin Check](https://img.shields.io/github/actions/workflow/status/rwilliamspbg-ops/Sovereign_Map_Federated_Learning/workflow-action-pin-check.yml?branch=main&label=Action%20Pinning)](https://github.com/rwilliamspbg-ops/Sovereign_Map_Federated_Learning/actions/workflows/workflow-action-pin-check.yml)
 
-## Platform Capabilities
+### Operations and Release
 
-[![Federated Learning](https://img.shields.io/badge/Capability-Federated%20Learning-2f9e44?style=flat-square&logo=tensorflow&logoColor=white)](Documentation/Architecture/ARCHITECTURE.md)
-[![Blockchain Ledger](https://img.shields.io/badge/Capability-Blockchain%20Ledger-1864ab?style=flat-square&logo=blockchaindotcom&logoColor=white)](internal/blockchain/README.md)
-[![Governance Engine](https://img.shields.io/badge/Capability-Governance%20Engine-5f3dc4?style=flat-square&logo=openpolicyagent&logoColor=white)](Documentation/Project/ROADMAP.md)
-[![TPM Trust](https://img.shields.io/badge/Capability-TPM%20Trust%20Attestation-0b7285?style=flat-square&logo=letsencrypt&logoColor=white)](Documentation/Security/TPM_TRUST_GUIDE.md)
-[![Proof Verification](https://img.shields.io/badge/Capability-Proof%20Verification-c2255c?style=flat-square&logo=vercel&logoColor=white)](Documentation/Project/CAPABILITIES_SCHEMA_V1.md)
-[![Wallet and Staking](https://img.shields.io/badge/Capability-Wallet%20%26%20Staking-f08c00?style=flat-square&logo=bitcoin&logoColor=white)](docs/RELEASE_NOTES_v1.2.0.md)
-[![Observability Stack](https://img.shields.io/badge/Capability-Observability-1c7ed6?style=flat-square&logo=grafana&logoColor=white)](Documentation/DEPLOYMENT_INDEX.md)
-[![SDK Surface](https://img.shields.io/badge/Capability-TypeScript%20%2B%20Python%20SDKs-2b8a3e?style=flat-square&logo=typescript&logoColor=white)](packages/core/package.json)
+[![Observability CI](https://img.shields.io/github/actions/workflow/status/rwilliamspbg-ops/Sovereign_Map_Federated_Learning/observability-ci.yml?branch=main&label=Observability)](https://github.com/rwilliamspbg-ops/Sovereign_Map_Federated_Learning/actions/workflows/observability-ci.yml)
+[![Build and Deploy](https://img.shields.io/github/actions/workflow/status/rwilliamspbg-ops/Sovereign_Map_Federated_Learning/deploy.yml?branch=main&label=Build%20and%20Deploy)](https://github.com/rwilliamspbg-ops/Sovereign_Map_Federated_Learning/actions/workflows/deploy.yml)
+[![Docker Build](https://img.shields.io/github/actions/workflow/status/rwilliamspbg-ops/Sovereign_Map_Federated_Learning/docker-build.yml?branch=main&label=Docker%20Build)](https://github.com/rwilliamspbg-ops/Sovereign_Map_Federated_Learning/actions/workflows/docker-build.yml)
+[![License](https://img.shields.io/github/license/rwilliamspbg-ops/Sovereign_Map_Federated_Learning)](LICENSE)
 
-## Runtime Functions
+## Technical Brief
 
-[![Node Agent API](https://img.shields.io/badge/Function-Node%20Agent%20API-364fc7?style=flat-square&logo=go&logoColor=white)](cmd/node-agent/main.go)
-[![Capabilities Contract](https://img.shields.io/badge/Function-Capabilities%20Contract-495057?style=flat-square&logo=json&logoColor=white)](capabilities.json)
-[![Verification Policy](https://img.shields.io/badge/Function-Verification%20Policy-862e9c?style=flat-square&logo=shield&logoColor=white)](config/llm_adapter_policy.json)
-[![Secure Channels](https://img.shields.io/badge/Function-Secure%20Communication-087f5b?style=flat-square&logo=openssl&logoColor=white)](secure_communication.py)
-[![Metrics Exporters](https://img.shields.io/badge/Function-Metrics%20Exporters-1971c2?style=flat-square&logo=prometheus&logoColor=white)](cmd/metrics-exporter/)
-[![Dashboard Provisioning](https://img.shields.io/badge/Function-Grafana%20Provisioning-e67700?style=flat-square&logo=grafana&logoColor=white)](grafana/provisioning/dashboards)
-[![Docker Deployment](https://img.shields.io/badge/Function-Docker%20Deploy-0c8599?style=flat-square&logo=docker&logoColor=white)](docker-compose.production.yml)
-[![Kubernetes Manifests](https://img.shields.io/badge/Function-Kubernetes%20Scale%20Profiles-0b7285?style=flat-square&logo=kubernetes&logoColor=white)](kubernetes-5000-node-manifests.yaml)
+Sovereign Map Federated Learning is a dual-plane system:
 
-## CI and Security Gates
+1. Aggregation plane: Flower-based federated coordination with Byzantine-robust aggregation.
+2. Control and telemetry plane: Flask APIs for health, HUD data, trust status, policy controls, and metrics publication.
 
-[![Build and Test](https://img.shields.io/github/actions/workflow/status/rwilliamspbg-ops/Sovereign_Map_Federated_Learning/build.yml?branch=main&style=flat-square&logo=githubactions&label=Build%20and%20Test)](https://github.com/rwilliamspbg-ops/Sovereign_Map_Federated_Learning/actions/workflows/build.yml)
-[![Lint Code Base](https://img.shields.io/github/actions/workflow/status/rwilliamspbg-ops/Sovereign_Map_Federated_Learning/lint.yml?branch=main&style=flat-square&logo=eslint&label=Lint)](https://github.com/rwilliamspbg-ops/Sovereign_Map_Federated_Learning/actions/workflows/lint.yml)
-[![Reproducibility Check](https://img.shields.io/github/actions/workflow/status/rwilliamspbg-ops/Sovereign_Map_Federated_Learning/reproducibility-check.yml?branch=main&style=flat-square&logo=dependabot&label=Reproducibility)](https://github.com/rwilliamspbg-ops/Sovereign_Map_Federated_Learning/actions/workflows/reproducibility-check.yml)
-[![Governance Check](https://img.shields.io/github/actions/workflow/status/rwilliamspbg-ops/Sovereign_Map_Federated_Learning/governance-check.yml?branch=main&style=flat-square&logo=buffer&label=Governance)](https://github.com/rwilliamspbg-ops/Sovereign_Map_Federated_Learning/actions/workflows/governance-check.yml)
-[![CodeQL Security Analysis](https://img.shields.io/github/actions/workflow/status/rwilliamspbg-ops/Sovereign_Map_Federated_Learning/codeql-analysis.yml?branch=main&style=flat-square&logo=github&label=CodeQL)](https://github.com/rwilliamspbg-ops/Sovereign_Map_Federated_Learning/actions/workflows/codeql-analysis.yml)
-[![Security Supply Chain](https://img.shields.io/github/actions/workflow/status/rwilliamspbg-ops/Sovereign_Map_Federated_Learning/security-supply-chain.yml?branch=main&style=flat-square&logo=snyk&label=Supply%20Chain)](https://github.com/rwilliamspbg-ops/Sovereign_Map_Federated_Learning/actions/workflows/security-supply-chain.yml)
-[![Secret Scan](https://img.shields.io/github/actions/workflow/status/rwilliamspbg-ops/Sovereign_Map_Federated_Learning/secret-scan.yml?branch=main&style=flat-square&logo=datadog&label=Secret%20Scan)](https://github.com/rwilliamspbg-ops/Sovereign_Map_Federated_Learning/actions/workflows/secret-scan.yml)
-[![Docs Link Check](https://img.shields.io/github/actions/workflow/status/rwilliamspbg-ops/Sovereign_Map_Federated_Learning/docs-link-check.yml?branch=main&style=flat-square&logo=readthedocs&label=Docs%20Links)](https://github.com/rwilliamspbg-ops/Sovereign_Map_Federated_Learning/actions/workflows/docs-link-check.yml)
-[![Observability CI](https://img.shields.io/github/actions/workflow/status/rwilliamspbg-ops/Sovereign_Map_Federated_Learning/observability-ci.yml?branch=main&style=flat-square&logo=grafana&label=Observability%20CI)](https://github.com/rwilliamspbg-ops/Sovereign_Map_Federated_Learning/actions/workflows/observability-ci.yml)
-[![HIL Tests](https://img.shields.io/github/actions/workflow/status/rwilliamspbg-ops/Sovereign_Map_Federated_Learning/hil-tests.yml?branch=main&style=flat-square&logo=pytest&label=HIL%20Tests)](https://github.com/rwilliamspbg-ops/Sovereign_Map_Federated_Learning/actions/workflows/hil-tests.yml)
-[![Docker Build](https://img.shields.io/github/actions/workflow/status/rwilliamspbg-ops/Sovereign_Map_Federated_Learning/docker-build.yml?branch=main&style=flat-square&logo=docker&label=Docker%20Build)](https://github.com/rwilliamspbg-ops/Sovereign_Map_Federated_Learning/actions/workflows/docker-build.yml)
-[![SDK Publish](https://img.shields.io/github/actions/workflow/status/rwilliamspbg-ops/Sovereign_Map_Federated_Learning/sdk-publish.yml?branch=main&style=flat-square&logo=npm&label=SDK%20Publish)](https://github.com/rwilliamspbg-ops/Sovereign_Map_Federated_Learning/actions/workflows/sdk-publish.yml)
-[![Windows Client EXE](https://img.shields.io/github/actions/workflow/status/rwilliamspbg-ops/Sovereign_Map_Federated_Learning/windows-client-exe.yml?branch=main&style=flat-square&logo=windows&label=Windows%20EXE)](https://github.com/rwilliamspbg-ops/Sovereign_Map_Federated_Learning/actions/workflows/windows-client-exe.yml)
+Core characteristics:
 
-## SDK Quality & Security
+- Byzantine-resilient training strategy with convergence tracking.
+- Trust and verification APIs for attestation-style workflows.
+- Governance and policy interfaces for runtime safety controls.
+- Prometheus-compatible metrics exporters and Grafana-ready dashboard provisioning.
+- Multi-profile deployment via Docker Compose and Kubernetes manifests.
+- Hardware-aware test coverage including NPU, XPU, CUDA/ROCm, MPS, and CPU fallback paths.
 
-[![SDK Build](https://img.shields.io/github/actions/workflow/status/rwilliamspbg-ops/Sovereign_Map_Federated_Learning/build.yml?branch=main&style=flat-square&logo=github&label=SDK%20Build)](https://github.com/rwilliamspbg-ops/Sovereign_Map_Federated_Learning/actions/workflows/build.yml)
-[![Core Coverage](https://img.shields.io/badge/Coverage%20%40core-100%25-brightgreen?style=flat-square&logo=codecov)](packages/core/)
-[![Privacy Coverage](https://img.shields.io/badge/Coverage%20%40privacy-100%25-brightgreen?style=flat-square&logo=codecov)](packages/privacy/)
-[![Consensus Coverage](https://img.shields.io/badge/Coverage%20%40consensus-100%25-brightgreen?style=flat-square&logo=codecov)](packages/consensus/)
-[![Island Coverage](https://img.shields.io/badge/Coverage%20%40island-100%25-brightgreen?style=flat-square&logo=codecov)](packages/island/)
-[![SDK Security Scanning](https://img.shields.io/github/actions/workflow/status/rwilliamspbg-ops/Sovereign_Map_Federated_Learning/sdk-security.yml?branch=main&style=flat-square&logo=snyk&label=SDK%20Security)](https://github.com/rwilliamspbg-ops/Sovereign_Map_Federated_Learning/actions/workflows/sdk-security.yml)
-[![SDK Supply Chain](https://img.shields.io/github/actions/workflow/status/rwilliamspbg-ops/Sovereign_Map_Federated_Learning/sdk-provenance.yml?branch=main&style=flat-square&logo=sigstore&label=SLSA%20L2)](https://github.com/rwilliamspbg-ops/Sovereign_Map_Federated_Learning/actions/workflows/sdk-provenance.yml)
-[![SDK Version](https://img.shields.io/github/actions/workflow/status/rwilliamspbg-ops/Sovereign_Map_Federated_Learning/sdk-version.yml?branch=main&style=flat-square&logo=semver&label=Version%20Management)](https://github.com/rwilliamspbg-ops/Sovereign_Map_Federated_Learning/actions/workflows/sdk-version.yml)
-[![API Stability](https://img.shields.io/badge/API%20Stability-3%20Tiers-blue?style=flat-square&logo=contractsaregoverned)](SDK_API_STABILITY.md)
-[![License](https://img.shields.io/github/license/rwilliamspbg-ops/Sovereign_Map_Federated_Learning?style=flat-square&logo=creativecommons)](LICENSE)
+## System Layout
 
-## Hardware Acceleration & Testing
+- Backend aggregation and APIs: [sovereignmap_production_backend_v2.py](sovereignmap_production_backend_v2.py)
+- Tokenomics metrics exporter: [tokenomics_metrics_exporter.py](tokenomics_metrics_exporter.py)
+- TPM metrics exporter: [tpm_metrics_exporter.py](tpm_metrics_exporter.py)
+- Frontend HUD: [frontend/src/HUD.jsx](frontend/src/HUD.jsx)
+- Compose profiles: [docker-compose.dev.yml](docker-compose.dev.yml), [docker-compose.production.yml](docker-compose.production.yml), [docker-compose.full.yml](docker-compose.full.yml)
+- Kubernetes scale profile: [kubernetes-5000-node-manifests.yaml](kubernetes-5000-node-manifests.yaml)
 
-[![GPU/NPU Device Tests](https://img.shields.io/badge/GPU%2FNPU%20Tests-42%2F42-brightgreen?style=flat-square&logo=pytorch&logoColor=white)](GPU_PERFORMANCE_VALIDATION_REPORT.md)
-[![Hardware Acceleration](https://img.shields.io/badge/Acceleration-NPU%20%2F%20XPU%20%2F%20CUDA%20%2F%20MPS%20%2F%20CPU-2B8A3E?style=flat-square&logo=pytorch&logoColor=white)](Documentation/Performance/NPU_GPU_CPU_PERFORMANCE_ANALYSIS.md)
-[![NPU Support](https://img.shields.io/badge/Support-Ascend%20NPU%20%2B%20XPU%20Backends-FF0000?style=flat-square&logo=huawei&logoColor=white)](tests/hil/test_npu_device_selection.py)
-[![GPU Support](https://img.shields.io/badge/Support-NVIDIA%20CUDA%20%2B%20AMD%20ROCm-76B900?style=flat-square&logo=amd&logoColor=white)](tests/hil/test_npu_device_selection.py)
-[![Device Fallback](https://img.shields.io/badge/Fallback%20Chain-NPU%20%E2%86%92%20XPU%20%E2%86%92%20CUDA%2FROCm%20%E2%86%92%20MPS%20%E2%86%92%20CPU-0066CC?style=flat-square&logo=codeigniter&logoColor=white)](src/client.py)
-[![Multi-Device Selection](https://img.shields.io/badge/Multi%20Device-Ascend%20%2B%20ROCm%20%2B%20XPU%20Ready-4730FF?style=flat-square&logo=json&logoColor=white)](tests/hil/test_npu_device_selection.py)
+## Capability Map
 
-Sovereign Map is a sovereign intelligence coordination platform that combines federated learning, blockchain governance, trust attestation, and observability into one deployable stack.
-
-Intellectual Property Notice: this repository implements parts of the Sovereign Mohawk Protocol. Portions are patent pending (U.S. Provisional Patent Application filed March 2026).
-
-## Current Status (March 2026)
-
-- Current release: [v1.2.0](https://github.com/rwilliamspbg-ops/Sovereign_Map_Federated_Learning/releases/tag/v1.2.0)
-- Default branch: `main`
-- **SDK Coverage**: Package-level coverage is enforced and reported in CI test jobs
-- **Workflow Status**: Live status is shown by the CI badges above (GitHub Actions)
-- **Security**: SLSA provenance, CodeQL, and supply-chain checks are configured in CI
-- CI baseline: npm-based SDK build/test workflows are aligned with repository lockfiles
-- Local baseline validation commands:
-  - `cp .env.template .env` (and edit `.env` with your settings)
-  - `docker-compose up -d`
-  - `docker-compose -f docker-compose.dev.yml up -d`
-  - `docker-compose -f docker-compose.production.yml up -d`
-
-### Recent Improvements (March 2026)
-
-- **Coverage Expansion**: Added targeted branch and fallback path tests across SDK packages
-- **Workflow Hardening**: All GitHub Actions pinned to immutable SHAs; SDK version workflow now resilient with strict tests intact
-- **TypeScript Quality**: Fixed aggregate handler typing issue ensuring strict null checks across all test suites
-- **Security Finalization**: Security gates include CodeQL, secret scanning, and supply-chain verification with SLSA L2 attestation
-- **SDK Readiness**: Changesets-based release management is operational with automated npm publish workflow
-- **Hardware Acceleration**: Complete device selection support with comprehensive testing (42 tests covering Ascend NPU, XPU, NVIDIA CUDA, AMD ROCm, Apple MPS, CPU fallback, multi-device scenarios, environment variable handling, error recovery, and device properties)
-- **🎉 GPU/NPU Acceleration**: Integrated hardware-accelerated noise generation for differential privacy
-  - **Automatic hardware detection**: CUDA → ROCm → Ascend → WebGPU → SIMD → CPU
-  - **Performance**: 10-50× faster Gaussian noise generation on GPU
-  - **Privacy overhead**: <12% with GPU (vs 2400% CPU baseline)
-  - **Mechanisms**: Gaussian and Laplace differential privacy with hardware acceleration
-  - **Seamless integration**: Transparent to existing PrivacyEngine code
-  - **Documentation**: [GPU/NPU Acceleration Guide](docs/GPU_NPU_ACCELERATION.md)
-
-## What Is Included
-
-- Intelligence layer: federated training/inference orchestration and model lifecycle control
-- Trust layer: TPM-style attestation, proof verification, secure transport, trust status snapshots
-- Governance layer: proposal execution, policy updates, validator reputation and enforcement hooks
-- Economic layer: wallet-aware blockchain state, staking flows, reward path integration
-- Operations layer: Prometheus metrics, Grafana dashboards, alerting rules, reproducibility and governance CI gates
-
-## Capability and Function Coverage
-
-| Capability Domain | Primary Runtime Functions | Main Surfaces |
+| Domain | Runtime Surfaces | Purpose |
 | --- | --- | --- |
-| Federated Intelligence | Round coordination, convergence and model quality flow, distributed execution | `internal/convergence/`, `internal/node/`, `simulate-demo.py` |
-| Trust and Verification | Proof checks, trust status snapshots, verification policy enforcement | `internal/api/`, `internal/tpm/`, `capabilities.json` |
-| Governance and Policy | Proposal execution, policy updates, validator controls | `internal/blockchain/`, `internal/consensus/`, `Documentation/Project/ROADMAP.md` |
-| Economic Rails | Wallet-aware ledger, staking and rewards, transaction settlement | `internal/blockchain/`, `docs/RELEASE_NOTES_v1.2.0.md` |
-| Observability and Ops | Metrics export, SLO alerts, dashboards, operational checks | `cmd/metrics-exporter/`, `grafana/`, `prometheus.yml` |
-| Developer and Client Tooling | SDK package build/test flow, frontend and client integration | `packages/core/`, `packages/privacy/`, `frontend/`, `client/` |
-
-## Areas for Development
-
-1. Proof-system depth: strengthen ZK and hybrid verification backends with broader negative-path and adversarial coverage.
-2. Scale confidence: expand staged scale campaigns (10 -> 100 -> 1000+) with repeatable performance baselines.
-3. Policy automation: improve governance policy rollout and rollback safety with stronger contract/version migration checks.
-4. SDK maturity: add richer end-to-end SDK examples and conformance tests across TypeScript and Python surfaces.
-5. Operator hardening: expand production runbooks for incident response, token rotation cadence, and trust-event recovery.
-6. Multi-environment reproducibility: tighten parity between local/devcontainer/CI toolchain versions for deterministic outcomes.
-
-## Areas of Interest
-
-1. Byzantine resilience under mixed proof modes and changing trust assumptions.
-2. Reward fairness linked to verification confidence and real contribution quality.
-3. Attestation-aware scheduler strategies for secure model participation.
-4. Privacy-preserving aggregation and model update integrity in heterogeneous hardware environments.
-5. Explainable governance outcomes with auditable policy-to-behavior traceability.
-6. Cost-efficient observability for long-running, large-node federated deployments.
+| Federated learning | [sovereignmap_production_backend_v2.py](sovereignmap_production_backend_v2.py), [src/client.py](src/client.py) | Round orchestration, aggregation, convergence |
+| Trust and attestation | [tpm_cert_manager.py](tpm_cert_manager.py), [tpm_metrics_exporter.py](tpm_metrics_exporter.py), [secure_communication.py](secure_communication.py) | Identity, verification, trust signals |
+| Governance and policy | [bridge-policies.json](bridge-policies.json), [capabilities.json](capabilities.json) | Runtime controls and policy surfaces |
+| Tokenomics and economics | [tokenomics_metrics_exporter.py](tokenomics_metrics_exporter.py), [tokenomics_metrics_exporter.py](tokenomics_metrics_exporter.py) | Economic telemetry and dashboard inputs |
+| Observability | [prometheus.yml](prometheus.yml), [alertmanager.yml](alertmanager.yml), [fl_slo_alerts.yml](fl_slo_alerts.yml) | Metrics collection, alerting, SLO validation |
+| Operations | [deploy.sh](deploy.sh), [deploy_demo.sh](deploy_demo.sh), [Makefile](Makefile) | Deployment and repeatable operator workflows |
 
 ## Quick Start
 
@@ -159,10 +69,10 @@ Intellectual Property Notice: this repository implements parts of the Sovereign 
 - Go 1.25+
 - Node.js 20+
 - npm 10+
-- Python 3.12+
-- Docker + Docker Compose plugin
+- Python 3.11+
+- Docker with Compose plugin
 
-### Option A: Genesis Launch
+### Option A: Genesis bootstrap
 
 ```bash
 git clone https://github.com/rwilliamspbg-ops/Sovereign_Map_Federated_Learning.git
@@ -170,236 +80,92 @@ cd Sovereign_Map_Federated_Learning
 ./genesis-launch.sh
 ```
 
-Scale override for one run:
+### Option B: Local dev stack
 
 ```bash
-MIN_NODES=25 ./genesis-launch.sh
-```
-
-### Option B: Compose Stack
-
-```bash
-docker compose -f docker-compose.full.yml up -d --scale node-agent=5
+docker compose -f docker-compose.dev.yml up -d
 docker compose ps
 ```
 
-### Option C: Phase 3D Production Automation (ECR + Kubernetes + CDN)
+### Option C: Full profile with participant scaling
 
 ```bash
-# Phase 3D backend (ECR + Kubernetes)
-./deploy/production/deploy-phase3d-production.sh
-
-# Frontend static publish (S3 + optional CloudFront invalidation)
-./deploy/production/publish-frontend-cdn.sh
+docker compose -f docker-compose.full.yml up -d --scale node-agent=5
 ```
 
-See [docs/PHASE_3D_PRODUCTION_DEPLOYMENT.md](docs/PHASE_3D_PRODUCTION_DEPLOYMENT.md) for required AWS/EKS/CDN environment variables and rollout validation steps.
-
-### Side-by-Side Stack Profiles
-
-Use stack-specific env files to run multiple stacks on one host without manual port edits:
-
-- `.env.dev`
-- `.env.production`
-- `.env.full`
-
-Direct compose commands:
+## Build and Validation Commands
 
 ```bash
-docker compose --env-file .env.dev -f docker-compose.dev.yml up -d
-docker compose --env-file .env.production -f docker-compose.production.yml up -d
-docker compose --env-file .env.full -f docker-compose.full.yml up -d --scale node-agent=5
-```
+# Go and backend tests
+go test ./... -count=1
 
-Launch scripts now auto-load matching env profiles:
-
-- `./deploy.sh dev` -> `.env.dev`
-- `./deploy.sh prod` -> `.env.production`
-- `./deploy.sh full` -> `.env.full`
-- `./genesis-launch.sh` -> `.env.production`
-- `./deploy_demo.sh --compose docker-compose.full.yml` -> `.env.full`
-
-## Required Validation Before Promotion
-
-```bash
-go test ./internal/blockchain/... -count=1
-go test ./internal/node/... -count=1
-go test ./internal/consensus/... -count=1
-go build ./cmd/metrics-exporter
+# Monorepo package build and tests
 npm ci
 npm run build:libs
 npm run test:ci
+
+# Frontend build
 npm --prefix frontend ci
 npm --prefix frontend run build
-make testnet-wallet-readiness
 ```
 
-## Hardware Acceleration Configuration
+## API Surfaces (Operational)
 
-### Device Support and Auto-Detection
+Representative endpoints from the backend and exporters:
 
-Sovereign Map clients automatically detect and prioritize available hardware accelerators:
+- GET /health
+- GET /status
+- GET /hud_data
+- POST /trigger_fl
+- POST /create_enclave
+- POST /event/tokenomics
+- GET /metrics
 
-1. **Huawei Ascend and `torch.npu` NPUs** (Priority 1)
+See implementation in [sovereignmap_production_backend_v2.py](sovereignmap_production_backend_v2.py) and [tokenomics_metrics_exporter.py](tokenomics_metrics_exporter.py).
 
-- Environment: `NPU_ENABLED=true` (default)
-- Device selection: First device from `ASCEND_RT_VISIBLE_DEVICES` (default: 0)
-- Memory: ~80GB per device
-- Multi-device support: Load balancing across visible devices
-- Status: ✅ Fully tested
+## Deployment Profiles
 
-1. **Intel / oneAPI `xpu` accelerators** (Priority 2)
-
-- Environment: `XPU_ENABLED=true` (default)
-- Device selection: First device from `XPU_VISIBLE_DEVICES` or `ZE_AFFINITY_MASK`
-- Device family: Intel GPU and XPU-class accelerator backends exposed through PyTorch
-- Status: ✅ Added and covered by device-selection tests
-
-1. **NVIDIA CUDA and AMD ROCm GPUs** (Priority 3)
-
-- Fallback when NPU unavailable
-- Multi-GPU support: Automatic device enumeration
-- ROCm support: AMD GPUs use PyTorch's `cuda` namespace with `HIP_VISIBLE_DEVICES` / `ROCR_VISIBLE_DEVICES`
-- Memory detection: Device properties and allocation tracking
-- Status: ✅ Fully tested with CUDA and ROCm-aware fallback scenarios
-
-1. **Apple Metal Performance Shaders (MPS)** (Priority 4)
-
-- Environment: `MPS_ENABLED=true` (default)
-- Fallback path: Used when NPU, XPU, and CUDA/ROCm are unavailable
-- Target platform: Apple Silicon and macOS Metal backends
-- Status: ✅ Added and covered by device-selection tests
-
-1. **CPU** (Priority 5)
-
-- Final fallback: Always available
-- Override: `FORCE_CPU=true` bypasses accelerators
-- Performance: Suitable for development and validation
-
-### Environment Variables
-
-| Variable | Values | Purpose | Example |
-| -------- | ------ | ------- | ------- |
-| `FORCE_CPU` | `true` / `false` | Force CPU-only execution | `FORCE_CPU=true` |
-| `NPU_ENABLED` | `true` / `false` | Enable/disable NPU detection | `NPU_ENABLED=true` |
-| `XPU_ENABLED` | `true` / `false` | Enable/disable XPU detection | `XPU_ENABLED=true` |
-| `GPU_ENABLED` | `true` / `false` | Enable/disable CUDA or ROCm GPU detection | `GPU_ENABLED=true` |
-| `MPS_ENABLED` | `true` / `false` | Enable/disable Apple MPS fallback | `MPS_ENABLED=true` |
-| `ASCEND_RT_VISIBLE_DEVICES` | Device IDs (comma-separated) | Visible NPU devices | `ASCEND_RT_VISIBLE_DEVICES=0,1,2,3` |
-| `XPU_VISIBLE_DEVICES` | Device IDs (comma-separated) | Visible XPU devices | `XPU_VISIBLE_DEVICES=0,1` |
-| `CUDA_VISIBLE_DEVICES` | Device IDs (comma-separated) | Visible NVIDIA CUDA devices | `CUDA_VISIBLE_DEVICES=0,1` |
-| `HIP_VISIBLE_DEVICES` | Device IDs (comma-separated) | Visible AMD ROCm devices | `HIP_VISIBLE_DEVICES=0,1` |
-
-### Usage Examples
-
-```bash
-# Use default device detection (NPU > XPU > CUDA/ROCm > MPS > CPU)
-./client.py --node-id=0
-
-# Force NPU with specific devices
-ASCEND_RT_VISIBLE_DEVICES=2,3,1 NPU_ENABLED=true ./client.py --node-id=1
-
-# Use Intel XPU / oneAPI backend
-XPU_VISIBLE_DEVICES=1 XPU_ENABLED=true NPU_ENABLED=false ./client.py --node-id=2
-
-# Use only NVIDIA CUDA or AMD ROCm GPUs
-NPU_ENABLED=false ./client.py --node-id=2
-
-# Use AMD ROCm-visible devices
-HIP_VISIBLE_DEVICES=1,0 NPU_ENABLED=false ./client.py --node-id=3
-
-# Use Apple MPS after disabling higher-priority accelerators
-NPU_ENABLED=false XPU_ENABLED=false GPU_ENABLED=false MPS_ENABLED=true ./client.py --node-id=4
-
-# Force CPU (development/testing)
-FORCE_CPU=true ./client.py --node-id=5
-
-# Multi-GPU with Docker (CUDA or ROCm)
-docker run -e NPU_ENABLED=false -e CUDA_VISIBLE_DEVICES=0,1 sovereign-client
-```
-
-### Device Properties and Capabilities
-
-The platform queries device properties including:
-
-- Device count and enumeration
-- Memory capacity per device
-- Capability tuples and compute version
-- Device name and manufacturer info
-- Cache clearing and memory management
-
-See [GPU_PERFORMANCE_VALIDATION_REPORT.md](GPU_PERFORMANCE_VALIDATION_REPORT.md) for complete test coverage of device detection, fallback chains, and error recovery.
-
-## Operations and Monitoring
-
+- Development: [docker-compose.dev.yml](docker-compose.dev.yml)
+- Production: [docker-compose.production.yml](docker-compose.production.yml)
+- Full topology: [docker-compose.full.yml](docker-compose.full.yml)
 - Monitoring stack: [docker-compose.monitoring.yml](docker-compose.monitoring.yml)
-- Prometheus config: [prometheus.yml](prometheus.yml)
-- Alertmanager config: [alertmanager.yml](alertmanager.yml)
-- FL SLO alerts: [fl_slo_alerts.yml](fl_slo_alerts.yml)
-- TPM alerts: [tpm_alerts.yml](tpm_alerts.yml)
-- Dashboard assets: [grafana/provisioning/dashboards](grafana/provisioning/dashboards)
+- Large-scale variants: [docker-compose.large-scale.yml](docker-compose.large-scale.yml), [docker-compose.1000nodes.yml](docker-compose.1000nodes.yml), [docker-compose.200nodes.yml](docker-compose.200nodes.yml)
 
-## Documentation Map
+## Repository Standards
 
-- Main docs hub: [Documentation/README.md](Documentation/README.md)
-- Project roadmap: [Documentation/Project/ROADMAP.md](Documentation/Project/ROADMAP.md)
-- Latest readiness summary: [Documentation/Project/RELEASE_READINESS_2026-03-16.md](Documentation/Project/RELEASE_READINESS_2026-03-16.md)
-- Release notes: [docs/RELEASE_NOTES_v1.2.0.md](docs/RELEASE_NOTES_v1.2.0.md)
-- Wallet readiness gate: [docs/TESTNET_WALLET_READINESS.md](docs/TESTNET_WALLET_READINESS.md)
-- Contribution standards: [CONTRIBUTING.md](CONTRIBUTING.md)
+- Contribution guidelines: [CONTRIBUTING.md](CONTRIBUTING.md)
+- Security policy: [SECURITY.md](SECURITY.md)
+- Changelog: [CHANGELOG.md](CHANGELOG.md)
+- License: [LICENSE](LICENSE)
 
-## Contributing
+## Sanity Report
 
-All changes that affect runtime behavior, security posture, CI gates, or deployment defaults must include documentation updates in the same PR. See [CONTRIBUTING.md](CONTRIBUTING.md).
+Timestamp: 2026-03-19
 
-## Contribution Paths
+### Functional sanity checks completed
 
-### For Developers
+- Tokenomics exporter handles directory-valued source path safely and persists payload without IsADirectoryError.
+- HUD simulation controls are wired end-to-end (frontend action -> backend endpoint -> HUD counter surface).
+- Backend and exporter modules compile successfully with Python syntax checks.
 
-- Core protocol and consensus implementation:
-  - `internal/blockchain/`
-  - `internal/consensus/`
-  - `internal/node/`
-- API and trust features:
-  - `internal/api/`
-  - `cmd/node-agent/`
-  - `tpm_cert_manager.py`
-- SDK and client surfaces:
-  - `packages/core/`
-  - `packages/privacy/`
-  - `frontend/`
-  - `client/python-sdk/`
-- Recommended local validation before PR:
-  - `npm ci`
-  - `npm run build:libs`
-  - `npm run test:ci`
-  - `go test ./internal/... -count=1`
-  - `python3 scripts/check_active_doc_links.py`
+### CI sanity checks completed
 
-### For Researchers
+Verified green on main after latest changes:
 
-- Federated learning behavior, convergence, and robustness experiments:
-  - `internal/convergence/`
-  - `simulate-demo.py`
-  - `verify_consensus.py`
-  - `results/`
-- Trust and security evaluation areas:
-  - `internal/tpm/`
-  - `secure_communication.py`
-  - `Documentation/Security/`
-- Performance and scale studies:
-  - `Documentation/Testing/`
-  - `Documentation/Performance/`
-  - `generate-k8s-5000-node-plots.py`
-- Research contribution expectations:
-  - Document methodology, assumptions, and reproducibility steps.
-  - Include raw artifacts and summaries under `results/` and `Documentation/Reports/`.
-  - Add or update runbooks when findings change operator guidance.
+- Build and Test
+- Lint Code Base
+- HIL Tests
+- Reproducibility Check
+- Governance Check
+- Workflow Action Pin Check
+- CodeQL Security Analysis
+- Security Supply Chain
+- Secret Scan
+- Observability CI
+- Build and Deploy
 
-### How to Submit High-Impact PRs
+### Operational recommendation
 
-1. Open an issue that defines the problem, constraints, and expected measurable outcome.
-2. Link code changes to tests and a reproducible validation command set.
-3. Update README and impacted docs in the same PR.
-4. Include baseline vs improved metrics when changing performance, trust, or model quality behavior.
-5. Use the repository PR template at `.github/pull_request_template.md`.
+For release candidates, run one additional live smoke test using [docker-compose.full.yml](docker-compose.full.yml) and verify /health, /hud_data, and /event/tokenomics before tagging.
+
+Standalone report: [SANITY_REPORT.md](SANITY_REPORT.md)
