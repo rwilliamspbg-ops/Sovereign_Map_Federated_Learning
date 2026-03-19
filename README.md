@@ -74,7 +74,7 @@ The latest Phase 3 enhancements deliver full edge-hardware parity, seamlessly co
 
 ## Hardware Acceleration & Testing
 
-[![GPU/NPU Device Tests](https://img.shields.io/badge/GPU%2FNPU%20Tests-42%2F42-brightgreen?style=flat-square&logo=pytorch&logoColor=white)](GPU_NPU_TEST_ENHANCEMENTS_REPORT.md)
+[![GPU/NPU Device Tests](https://img.shields.io/badge/GPU%2FNPU%20Tests-42%2F42-brightgreen?style=flat-square&logo=pytorch&logoColor=white)](GPU_PERFORMANCE_VALIDATION_REPORT.md)
 [![Hardware Acceleration](https://img.shields.io/badge/Acceleration-NPU%20%2F%20XPU%20%2F%20CUDA%20%2F%20MPS%20%2F%20CPU-2B8A3E?style=flat-square&logo=pytorch&logoColor=white)](Documentation/Performance/NPU_GPU_CPU_PERFORMANCE_ANALYSIS.md)
 [![NPU Support](https://img.shields.io/badge/Support-Ascend%20NPU%20%2B%20XPU%20Backends-FF0000?style=flat-square&logo=huawei&logoColor=white)](tests/hil/test_npu_device_selection.py)
 [![GPU Support](https://img.shields.io/badge/Support-NVIDIA%20CUDA%20%2B%20AMD%20ROCm-76B900?style=flat-square&logo=amd&logoColor=white)](tests/hil/test_npu_device_selection.py)
@@ -328,7 +328,7 @@ The platform queries device properties including:
 - Device name and manufacturer info
 - Cache clearing and memory management
 
-See [GPU_NPU_TEST_ENHANCEMENTS_REPORT.md](GPU_NPU_TEST_ENHANCEMENTS_REPORT.md) for complete test coverage of device detection, fallback chains, and error recovery.
+See [GPU_PERFORMANCE_VALIDATION_REPORT.md](GPU_PERFORMANCE_VALIDATION_REPORT.md) for complete test coverage of device detection, fallback chains, and error recovery.
 
 ## Operations and Monitoring
 
