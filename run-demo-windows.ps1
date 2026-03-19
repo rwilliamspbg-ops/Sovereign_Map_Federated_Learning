@@ -193,7 +193,11 @@ Log "Collecting final metrics..."
 
 # Container stats
 "# Container Statistics" | Add-Content "$OutDir/final-state.txt"
-& docker stats --no-stream --format "table {{.Names}}\t{{.CPUPerc}}\t{{.MemUsage}}\t{{.MemPerc}}" 2>&1 | Add-Content "$OutDir/final-state.txt"
+try {
+    & docker stats --no-stream --format "table {{.Name}}\t{{.CPUPerc}}\t{{.MemUsage}}\t{{.MemPerc}}" 2>&1 | Add-Content "$OutDir/final-state.txt"
+} catch {
+    "Error collecting final docker stats: $_" | Add-Content "$OutDir/final-state.txt"
+}
 
 # Backend logs
 Log "Capturing backend logs..."
