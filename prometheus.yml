@@ -37,7 +37,7 @@ scrape_configs:
   - job_name: 'fl-performance-metrics'
     static_configs:
       - targets: ['fl-performance:8001']
-    metrics_path: '/'
+    metrics_path: '/metrics'
     scrape_interval: 15s
 
   - job_name: 'alertmanager'

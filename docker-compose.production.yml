@@ -436,6 +436,38 @@ services:
           cpus: '0.1'
           memory: 128M
 
+  # FL Performance Metrics: GPU/NPU telemetry used by Grafana core/tokenomics dashboards
+  fl-performance:
+    image: python:3.11-slim
+    volumes:
+      - ./fl_performance_exporter.py:/app/fl_performance_exporter.py:ro
+    working_dir: /app
+    command: ["sh", "-c", "python -m pip install --no-cache-dir prometheus-client && python fl_performance_exporter.py"]
+    expose:
+      - "8001"
+    networks:
+      - sovereignmap
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:8001/metrics', timeout=3)"]
+      interval: 15s
+      timeout: 5s
+      retries: 3
+      start_period: 10s
+    restart: always
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "3"
+    deploy:
+      resources:
+        limits:
+          cpus: '0.5'
+          memory: 256M
+        reservations:
+          cpus: '0.1'
+          memory: 128M
+
   # Grafana: Visualization & Dashboards
   grafana:
     image: grafana/grafana:10.2.3
@@ -455,6 +487,7 @@ services:
     depends_on:
       - prometheus
       - tokenomics-metrics
+      - fl-performance
     restart: always
     healthcheck:
       test: ["CMD", "wget", "--quiet", "--tries=1", "--spider", "http://localhost:3000/api/health"]

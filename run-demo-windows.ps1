@@ -84,8 +84,16 @@ function Invoke-ComposeUp {
     if ($ExitCode -ne 0) {
         if ($script:UseAccelerationOverride -and -not $RetriedWithoutAccel) {
             # Fallback if host Docker runtime cannot satisfy GPU requests.
+            $FailureHint = ""
+            if (Test-Path $LogFile) {
+                $FailureHint = ((Get-Content $LogFile -Tail 80) | Select-String -Pattern "gpu|nvidia|runtime|device driver|capabilities" -CaseSensitive:$false | Select-Object -Last 1).Line
+            }
             $script:UseAccelerationOverride = $false
-            Log "⚠️  Acceleration override failed; retrying without GPU compose override"
+            if ($FailureHint) {
+                Log "⚠️  Acceleration override failed; retrying without GPU compose override. Reason: $FailureHint"
+            } else {
+                Log "⚠️  Acceleration override failed; retrying without GPU compose override"
+            }
             Invoke-ComposeUp -StepName $StepName -LogFile $LogFile -Services $Services -NoDeps:$NoDeps -NoBuild:$NoBuild -RetriedWithoutAccel
             return
         }
@@ -134,8 +142,16 @@ function Invoke-ComposeBuild {
 
     if ($ExitCode -ne 0) {
         if ($script:UseAccelerationOverride -and -not $RetriedWithoutAccel) {
+            $FailureHint = ""
+            if (Test-Path $LogFile) {
+                $FailureHint = ((Get-Content $LogFile -Tail 80) | Select-String -Pattern "gpu|nvidia|runtime|device driver|capabilities" -CaseSensitive:$false | Select-Object -Last 1).Line
+            }
             $script:UseAccelerationOverride = $false
-            Log "⚠️  Acceleration override failed during build; retrying without GPU compose override"
+            if ($FailureHint) {
+                Log "⚠️  Acceleration override failed during build; retrying without GPU compose override. Reason: $FailureHint"
+            } else {
+                Log "⚠️  Acceleration override failed during build; retrying without GPU compose override"
+            }
             Invoke-ComposeBuild -StepName $StepName -LogFile $LogFile -Services $Services -RetriedWithoutAccel
             return
         }
@@ -213,7 +229,7 @@ try {
 
 # Start exporters and node agents so dashboards have live metric sources.
 try {
-    Invoke-ComposeUp -StepName "Starting metrics exporters" -LogFile "$OutDir/backend.log" -Services @("tokenomics-metrics", "tpm-metrics") -NoDeps
+    Invoke-ComposeUp -StepName "Starting metrics exporters" -LogFile "$OutDir/backend.log" -Services @("tokenomics-metrics", "tpm-metrics", "fl-performance") -NoDeps
     Log "✅ Metrics exporters started"
 } catch {
     Log "⚠️  Metrics exporters startup issue: $_"

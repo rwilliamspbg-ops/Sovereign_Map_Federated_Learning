@@ -187,7 +187,7 @@
       }
     },
     {
-      "title": "Data Compression Ratio",
+      "title": "GPU Utilization (%)",
       "type": "gauge",
       "gridPos": {
         "h": 6,
@@ -201,16 +201,16 @@
       },
       "targets": [
         {
-          "expr": "sum(flask_http_request_total) * 0 + 4.5 * (time() % 3600 / 3600)",
+          "expr": "avg(fl_gpu_utilization_percent) or vector(0)",
           "refId": "A"
         }
       ],
       "fieldConfig": {
         "defaults": {
           "min": 0,
-          "max": 20.0,
+          "max": 100.0,
           "decimals": 2,
-          "unit": "x",
+          "unit": "percent",
           "color": {
             "mode": "thresholds"
           },
@@ -223,7 +223,7 @@
               },
               {
                 "color": "green",
-                "value": 5.0
+                "value": 65.0
               }
             ]
           }
@@ -235,7 +235,7 @@
       }
     },
     {
-      "title": "CXL Memory Utilization",
+      "title": "NPU Utilization (%)",
       "type": "gauge",
       "gridPos": {
         "h": 6,
@@ -249,16 +249,16 @@
       },
       "targets": [
         {
-          "expr": "process_resident_memory_bytes / 1024 / 1024",
+          "expr": "avg(fl_npu_utilization_percent) or vector(0)",
           "refId": "A"
         }
       ],
       "fieldConfig": {
         "defaults": {
           "min": 0,
-          "max": 4000.0,
+          "max": 100.0,
           "decimals": 2,
-          "unit": "megabytes",
+          "unit": "percent",
           "color": {
             "mode": "thresholds"
           },
@@ -271,7 +271,7 @@
               },
               {
                 "color": "red",
-                "value": 3000
+                "value": 90
               }
             ]
           }

@@ -14,6 +14,12 @@ gpu_mem_usage = Gauge(
 gpu_utilization = Gauge(
     "fl_gpu_utilization_percent", "GPU Utilization percentage", ["node_id", "device_id"]
 )
+npu_mem_usage = Gauge(
+    "fl_npu_memory_usage_bytes", "NPU Memory Usage per node", ["node_id", "device_id"]
+)
+npu_utilization = Gauge(
+    "fl_npu_utilization_percent", "NPU Utilization percentage", ["node_id", "device_id"]
+)
 
 # 2. Noise Generation Percentiles
 noise_gen_latency = Histogram(
@@ -49,6 +55,7 @@ def collect_metrics():
     """Simulate metric collection for demonstration."""
     nodes = ["node-1", "node-2", "node-3"]
     devices = ["gpu-0", "gpu-1"]
+    npu_devices = ["npu-0"]
 
     for node in nodes:
         for device in devices:
@@ -57,6 +64,14 @@ def collect_metrics():
             )
             gpu_utilization.labels(node_id=node, device_id=device).set(
                 random.uniform(10, 95)
+            )
+
+        for npu in npu_devices:
+            npu_mem_usage.labels(node_id=node, device_id=npu).set(
+                random.uniform(2e9, 12e9)
+            )
+            npu_utilization.labels(node_id=node, device_id=npu).set(
+                random.uniform(15, 90)
             )
 
         noise_gen_latency.labels(node_id=node).observe(random.uniform(0.005, 0.05))
