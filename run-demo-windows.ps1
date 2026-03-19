@@ -37,10 +37,25 @@ function Invoke-ComposeUp {
 
     Log "$StepName..."
 
-    # Use exit code checks for native commands. Docker pull/progress text can be
-    # emitted on stderr during normal operation and should not be treated as failure.
-    & docker compose -f $ComposeFile up -d @Services *>> $LogFile
-    $ExitCode = $LASTEXITCODE
+    # Use Start-Process so docker stderr/status text does not become a PowerShell
+    # exception in Windows PowerShell. We rely strictly on process exit code.
+    $StdOut = [System.IO.Path]::GetTempFileName()
+    $StdErr = [System.IO.Path]::GetTempFileName()
+
+    $ArgList = @("compose", "-f", $ComposeFile, "up", "-d") + $Services
+    $Proc = Start-Process -FilePath "docker" -ArgumentList $ArgList -NoNewWindow -Wait -PassThru -RedirectStandardOutput $StdOut -RedirectStandardError $StdErr
+
+    if (Test-Path $StdOut) {
+        Get-Content $StdOut | Add-Content $LogFile
+    }
+    if (Test-Path $StdErr) {
+        Get-Content $StdErr | Add-Content $LogFile
+    }
+
+    $ExitCode = $Proc.ExitCode
+
+    Remove-Item $StdOut -ErrorAction SilentlyContinue
+    Remove-Item $StdErr -ErrorAction SilentlyContinue
 
     if ($ExitCode -ne 0) {
         $Tail = @()
