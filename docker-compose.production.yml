@@ -192,7 +192,7 @@ services:
       - PYTHONUNBUFFERED=1
       - NODE_PEER_ID=node_agent_1
       - NODE_ID=1
-      - TPM_ENABLED=true
+      - TPM_ENABLED=${TPM_ENABLED:-true}
       - GPU_ENABLED=${GPU_ENABLED:-true}
       - NPU_ENABLED=${NPU_ENABLED:-true}
       - CUDA_VISIBLE_DEVICES=${CUDA_VISIBLE_DEVICES:-0}
@@ -251,7 +251,7 @@ services:
       - PYTHONUNBUFFERED=1
       - NODE_PEER_ID=node_agent_2
       - NODE_ID=2
-      - TPM_ENABLED=true
+      - TPM_ENABLED=${TPM_ENABLED:-true}
       - GPU_ENABLED=${GPU_ENABLED:-true}
       - NPU_ENABLED=${NPU_ENABLED:-true}
       - CUDA_VISIBLE_DEVICES=${CUDA_VISIBLE_DEVICES:-0}
@@ -310,7 +310,7 @@ services:
       - PYTHONUNBUFFERED=1
       - NODE_PEER_ID=node_agent_3
       - NODE_ID=3
-      - TPM_ENABLED=true
+      - TPM_ENABLED=${TPM_ENABLED:-true}
       - GPU_ENABLED=${GPU_ENABLED:-true}
       - NPU_ENABLED=${NPU_ENABLED:-true}
       - CUDA_VISIBLE_DEVICES=${CUDA_VISIBLE_DEVICES:-0}

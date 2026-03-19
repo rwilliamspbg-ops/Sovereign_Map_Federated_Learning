@@ -157,6 +157,21 @@ try {
     Log "ERROR: Failed to start backend: $_"
 }
 
+# Start exporters and node agents so dashboards have live metric sources.
+try {
+    Invoke-ComposeUp -StepName "Starting metrics exporters" -LogFile "$OutDir/backend.log" -Services @("tokenomics-metrics", "tpm-metrics") -NoDeps
+    Log "✅ Metrics exporters started"
+} catch {
+    Log "⚠️  Metrics exporters startup issue: $_"
+}
+
+try {
+    Invoke-ComposeUp -StepName "Starting FL node agents" -LogFile "$OutDir/backend.log" -Services @("node-agent-1", "node-agent-2", "node-agent-3") -NoDeps
+    Log "✅ Node agents started"
+} catch {
+    Log "⚠️  Node agent startup issue: $_"
+}
+
 # Create monitoring loop
 Log "Collecting system metrics for $Duration..."
 $Iterations = [math]::Max(1, [int]($DurationSeconds / 60))
@@ -240,6 +255,7 @@ Log "Capturing backend logs..."
 ## Execution Summary
 - **Timestamp:** $Timestamp
 - **Nodes Configured:** $Nodes
+- **Nodes Started (compose profile):** 3
 - **Duration:** $Duration ($DurationSeconds seconds)
 - **Monitoring Intervals:** $Iterations
 - **Platform:** Windows with Docker Desktop
