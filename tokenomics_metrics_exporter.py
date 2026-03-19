@@ -226,11 +226,13 @@ class TokenomicsMetricsExporter:
             payload,
             "top_10_holder_concentration",
             "top_10_holder_concentration_ratio",
+            "top_10_holder_concentration_percent",
         )
         wallet_liquidity_ratio = self._safe_optional_float(
             payload,
             "wallet_liquidity_ratio",
             "liquidity_ratio",
+            "wallet_liquidity_ratio_percent",
         )
         wallets_bucket_large = self._safe_optional_float(
             payload,
@@ -335,8 +337,9 @@ def run_simulation(exporter):
             "bridge_collateral_ratio_percent": random.uniform(150.0, 160.0),
             "unique_wallets_count": last_wallets,
             "wallet_average_balance": last_balance,
-            "top_10_holder_concentration_percent": 12.4,
-            "wallet_liquidity_ratio_percent": random.uniform(34.0, 35.0),
+            # Ratios are represented as 0..1 values for downstream dashboard formulas.
+            "top_10_holder_concentration": 0.124,
+            "wallet_liquidity_ratio": random.uniform(0.34, 0.35),
         }
         exporter.ingest_event(payload)
         time.sleep(10)
