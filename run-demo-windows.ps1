@@ -1,7 +1,15 @@
 $ErrorActionPreference = "Stop"
 
-# Navigation
-Set-Location "Sovereign_Map_Federated_Learning"
+# In PowerShell 7+, native stderr can be elevated to ErrorRecord when
+# ErrorActionPreference=Stop. Disable that behavior for docker CLI output.
+if (Get-Variable -Name PSNativeCommandUseErrorActionPreference -ErrorAction SilentlyContinue) {
+    $PSNativeCommandUseErrorActionPreference = $false
+}
+
+# Always run from the script's directory so relative paths resolve correctly
+# regardless of the caller's current location.
+$ScriptRoot = Split-Path -Parent $MyInvocation.MyCommand.Path
+Set-Location $ScriptRoot
 $ComposeFile = "docker-compose.production.yml"
 $Nodes = 50  # Reduced for Windows testing
 $Duration = "5m"
