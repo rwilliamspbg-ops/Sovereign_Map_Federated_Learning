@@ -11,6 +11,8 @@ if (Get-Variable -Name PSNativeCommandUseErrorActionPreference -ErrorAction Sile
 $ScriptRoot = Split-Path -Parent $MyInvocation.MyCommand.Path
 Set-Location $ScriptRoot
 $ComposeFile = "docker-compose.production.yml"
+$AccelComposeFile = "docker-compose.acceleration.yml"
+$UseAccelerationOverride = Test-Path $AccelComposeFile
 $Nodes = 50  # Reduced for Windows testing
 $Duration = "5m"
 $DurationSeconds = 300
@@ -20,6 +22,10 @@ $OutDir = "test-results/demo-windows/$Timestamp"
 # Keep Windows demo flow resilient: TPM bootstrap can be slow/fragile on first run
 # and is not required for basic monitoring/backend demo validation.
 $env:TPM_ENABLED = "false"
+$env:GPU_ENABLED = "true"
+$env:NPU_ENABLED = "true"
+if (-not $env:CUDA_VISIBLE_DEVICES) { $env:CUDA_VISIBLE_DEVICES = "0" }
+if (-not $env:ASCEND_RT_VISIBLE_DEVICES) { $env:ASCEND_RT_VISIBLE_DEVICES = "0" }
 
 if (-not (Test-Path $OutDir)) {
     New-Item -ItemType Directory -Path $OutDir -Force | Out-Null
@@ -37,7 +43,8 @@ function Invoke-ComposeUp {
         [string]$StepName,
         [string]$LogFile,
         [string[]]$Services,
-        [switch]$NoDeps
+        [switch]$NoDeps,
+        [switch]$RetriedWithoutAccel
     )
 
     Log "$StepName..."
@@ -47,7 +54,11 @@ function Invoke-ComposeUp {
     $StdOut = [System.IO.Path]::GetTempFileName()
     $StdErr = [System.IO.Path]::GetTempFileName()
 
-    $ArgList = @("compose", "-f", $ComposeFile, "up", "-d")
+    $ArgList = @("compose", "-f", $ComposeFile)
+    if ($script:UseAccelerationOverride) {
+        $ArgList += @("-f", $script:AccelComposeFile)
+    }
+    $ArgList += @("up", "-d")
     if ($NoDeps) {
         $ArgList += "--no-deps"
     }
@@ -67,6 +78,14 @@ function Invoke-ComposeUp {
     Remove-Item $StdErr -ErrorAction SilentlyContinue
 
     if ($ExitCode -ne 0) {
+        if ($script:UseAccelerationOverride -and -not $RetriedWithoutAccel) {
+            # Fallback if host Docker runtime cannot satisfy GPU requests.
+            $script:UseAccelerationOverride = $false
+            Log "⚠️  Acceleration override failed; retrying without GPU compose override"
+            Invoke-ComposeUp -StepName $StepName -LogFile $LogFile -Services $Services -NoDeps:$NoDeps -RetriedWithoutAccel
+            return
+        }
+
         $Tail = @()
         if (Test-Path $LogFile) {
             $Tail = Get-Content $LogFile -Tail 20
@@ -81,6 +100,11 @@ Log "=========================================="
 Log "Nodes: $Nodes"
 Log "Duration: $Duration"
 Log "Compose: $ComposeFile"
+if ($UseAccelerationOverride) {
+    Log "Acceleration Compose Override: $AccelComposeFile"
+} else {
+    Log "Acceleration Compose Override: not found (CPU fallback mode)"
+}
 Log "Output: $OutDir"
 Log "=========================================="
 
@@ -188,7 +212,11 @@ Log "Collecting final metrics..."
 
 # Docker state
 "# Final Docker State" | Out-File "$OutDir/final-state.txt"
-& docker compose -f $ComposeFile ps 2>&1 | Add-Content "$OutDir/final-state.txt"
+if ($UseAccelerationOverride) {
+    & docker compose -f $ComposeFile -f $AccelComposeFile ps 2>&1 | Add-Content "$OutDir/final-state.txt"
+} else {
+    & docker compose -f $ComposeFile ps 2>&1 | Add-Content "$OutDir/final-state.txt"
+}
 "" | Add-Content "$OutDir/final-state.txt"
 
 # Container stats
