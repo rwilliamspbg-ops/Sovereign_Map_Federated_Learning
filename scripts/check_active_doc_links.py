@@ -87,8 +87,12 @@ def main() -> int:
                     except ValueError:
                         candidate_rel = ""
 
-                    if candidate_rel == "archive" or candidate_rel.startswith("archive/"):
-                        archive_fallback = (REPO_ROOT / "docs" / candidate_rel).resolve()
+                    if candidate_rel == "archive" or candidate_rel.startswith(
+                        "archive/"
+                    ):
+                        archive_fallback = (
+                            REPO_ROOT / "docs" / candidate_rel
+                        ).resolve()
                         if archive_fallback.exists():
                             candidate = archive_fallback
 
