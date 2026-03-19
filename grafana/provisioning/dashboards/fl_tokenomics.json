@@ -64,7 +64,7 @@
       "id": 101,
       "targets": [
         {
-          "expr": "clamp_max(clamp_min((((tokenomics_mint_rate_per_min or sovereignmap_token_mint_rate_per_min or vector(0)) / 150) * 100 * 0.4) + ((((tokenomics_token_supply_minted or sovereignmap_token_supply_minted or vector(0)) / clamp_min((tokenomics_token_supply_total or sovereignmap_token_supply_total or vector(1)), 1)) * 100) * 0.6), 100), 0)",
+          "expr": "clamp_max(clamp_min(((((max(tokenomics_mint_rate_per_min or sovereignmap_token_mint_rate_per_min) or vector(0))) / 150) * 100 * 0.4) + (((((max(tokenomics_token_supply_minted or sovereignmap_token_supply_minted) or vector(0))) / clamp_min((max(tokenomics_token_supply_total or sovereignmap_token_supply_total) or vector(1)), 1)) * 100) * 0.6), 100), 0)",
           "refId": "A"
         }
       ],
@@ -127,7 +127,7 @@
       "id": 102,
       "targets": [
         {
-          "expr": "clamp_max(clamp_min((((tokenomics_bridge_collateral_ratio_percent or sovereignmap_bridge_collateral_ratio_percent or vector(0)) / 150) * 100 * 0.7) + ((clamp_min(clamp_max((tokenomics_bridge_net_flow_per_min or sovereignmap_bridge_net_flow_per_min or vector(0)) + 20, 0), 40) / 40) * 100 * 0.3), 100), 0)",
+          "expr": "clamp_max(clamp_min(((((max(tokenomics_bridge_collateral_ratio_percent or sovereignmap_bridge_collateral_ratio_percent) or vector(0))) / 150) * 100 * 0.7) + ((clamp_min(clamp_max(((max(tokenomics_bridge_net_flow_per_min or sovereignmap_bridge_net_flow_per_min) or vector(0))) + 20, 0), 40) / 40) * 100 * 0.3), 100), 0)",
           "refId": "A"
         }
       ],
@@ -190,7 +190,7 @@
       "id": 103,
       "targets": [
         {
-          "expr": "clamp_max(clamp_min((((tokenomics_stake_participation_ratio or sovereignmap_stake_participation_ratio or vector(0)) * 100) * 0.7) + (((1 - (tokenomics_stake_concentration_gini or sovereignmap_stake_concentration_gini or vector(0))) * 100) * 0.3), 100), 0)",
+          "expr": "clamp_max(clamp_min(((((max(tokenomics_stake_participation_ratio or sovereignmap_stake_participation_ratio) or vector(0))) * 100) * 0.7) + (((1 - ((max(tokenomics_stake_concentration_gini or sovereignmap_stake_concentration_gini) or vector(0)))) * 100) * 0.3), 100), 0)",
           "refId": "A"
         }
       ],
@@ -253,7 +253,7 @@
       "id": 104,
       "targets": [
         {
-          "expr": "clamp_max(clamp_min((((tokenomics_wallet_liquidity_ratio or sovereignmap_wallet_liquidity_ratio or vector(0)) * 100) * 0.5) + ((100 - ((tokenomics_top_10_holder_concentration or sovereignmap_top_10_holder_concentration or vector(0)) * 100)) * 0.5), 100), 0)",
+          "expr": "clamp_max(clamp_min(((((max(tokenomics_wallet_liquidity_ratio or sovereignmap_wallet_liquidity_ratio) or vector(0))) * 100) * 0.5) + ((100 - (((max(tokenomics_top_10_holder_concentration or sovereignmap_top_10_holder_concentration) or vector(0))) * 100)) * 0.5), 100), 0)",
           "refId": "A"
         }
       ],
@@ -329,7 +329,7 @@
       "id": 2,
       "targets": [
         {
-          "expr": "tokenomics_mint_rate_per_min or sovereignmap_token_mint_rate_per_min or vector(0)",
+          "expr": "(max(tokenomics_mint_rate_per_min or sovereignmap_token_mint_rate_per_min) or vector(0))",
           "refId": "A"
         }
       ],
@@ -375,7 +375,7 @@
       "id": 3,
       "targets": [
         {
-          "expr": "tokenomics_token_supply_total or sovereignmap_token_supply_total or vector(0)",
+          "expr": "(max(tokenomics_token_supply_total or sovereignmap_token_supply_total) or vector(0))",
           "refId": "A"
         }
       ],
@@ -421,7 +421,7 @@
       "id": 4,
       "targets": [
         {
-          "expr": "tokenomics_token_supply_minted or sovereignmap_token_supply_minted or vector(0)",
+          "expr": "(max(tokenomics_token_supply_minted or sovereignmap_token_supply_minted) or vector(0))",
           "refId": "A"
         }
       ],
@@ -486,7 +486,7 @@
       "id": 5,
       "targets": [
         {
-          "expr": "((tokenomics_token_supply_minted or sovereignmap_token_supply_minted or vector(0)) / clamp_min((tokenomics_token_supply_total or sovereignmap_token_supply_total or vector(1)), 1)) * 100",
+          "expr": "(((max(tokenomics_token_supply_minted or sovereignmap_token_supply_minted) or vector(0))) / clamp_min((max(tokenomics_token_supply_total or sovereignmap_token_supply_total) or vector(1)), 1)) * 100",
           "refId": "A"
         }
       ],
@@ -560,17 +560,17 @@
       "id": 6,
       "targets": [
         {
-          "expr": "tokenomics_mint_rate_per_min or sovereignmap_token_mint_rate_per_min or vector(0)",
+          "expr": "(max(tokenomics_mint_rate_per_min or sovereignmap_token_mint_rate_per_min) or vector(0))",
           "legendFormat": "mint_per_min",
           "refId": "A"
         },
         {
-          "expr": "tokenomics_token_supply_minted or sovereignmap_token_supply_minted or vector(0)",
+          "expr": "(max(tokenomics_token_supply_minted or sovereignmap_token_supply_minted) or vector(0))",
           "legendFormat": "minted_supply",
           "refId": "B"
         },
         {
-          "expr": "tokenomics_token_supply_total or sovereignmap_token_supply_total or vector(0)",
+          "expr": "(max(tokenomics_token_supply_total or sovereignmap_token_supply_total) or vector(0))",
           "legendFormat": "total_supply",
           "refId": "C"
         }
@@ -649,7 +649,7 @@
       "id": 8,
       "targets": [
         {
-          "expr": "tokenomics_bridge_net_flow_per_min or sovereignmap_bridge_net_flow_per_min or vector(0)",
+          "expr": "(max(tokenomics_bridge_net_flow_per_min or sovereignmap_bridge_net_flow_per_min) or vector(0))",
           "refId": "A"
         }
       ],
@@ -714,7 +714,7 @@
       "id": 9,
       "targets": [
         {
-          "expr": "tokenomics_bridge_collateral_ratio_percent or sovereignmap_bridge_collateral_ratio_percent or vector(0)",
+          "expr": "(max(tokenomics_bridge_collateral_ratio_percent or sovereignmap_bridge_collateral_ratio_percent) or vector(0))",
           "refId": "A"
         }
       ],
@@ -777,7 +777,7 @@
       "id": 10,
       "targets": [
         {
-          "expr": "tokenomics_bridge_settlement_share_percent or sovereignmap_bridge_settlement_share_percent or vector(0)",
+          "expr": "(max(tokenomics_bridge_settlement_share_percent or sovereignmap_bridge_settlement_share_percent) or vector(0))",
           "refId": "A"
         }
       ],
@@ -821,7 +821,7 @@
       "id": 11,
       "targets": [
         {
-          "expr": "tokenomics_bridge_escrow_total or sovereignmap_bridge_escrow_total or vector(0)",
+          "expr": "(max(tokenomics_bridge_escrow_total or sovereignmap_bridge_escrow_total) or vector(0))",
           "refId": "A"
         }
       ],
@@ -897,17 +897,17 @@
       "id": 12,
       "targets": [
         {
-          "expr": "tokenomics_bridge_inflow_per_min or sovereignmap_bridge_inflow_per_min or vector(0)",
+          "expr": "(max(tokenomics_bridge_inflow_per_min or sovereignmap_bridge_inflow_per_min) or vector(0))",
           "legendFormat": "inflow",
           "refId": "A"
         },
         {
-          "expr": "tokenomics_bridge_outflow_per_min or sovereignmap_bridge_outflow_per_min or vector(0)",
+          "expr": "(max(tokenomics_bridge_outflow_per_min or sovereignmap_bridge_outflow_per_min) or vector(0))",
           "legendFormat": "outflow",
           "refId": "B"
         },
         {
-          "expr": "tokenomics_bridge_net_flow_per_min or sovereignmap_bridge_net_flow_per_min or vector(0)",
+          "expr": "(max(tokenomics_bridge_net_flow_per_min or sovereignmap_bridge_net_flow_per_min) or vector(0))",
           "legendFormat": "net",
           "refId": "C"
         }
@@ -986,12 +986,12 @@
       "id": 13,
       "targets": [
         {
-          "expr": "tokenomics_bridge_escrow_total or sovereignmap_bridge_escrow_total or vector(0)",
+          "expr": "(max(tokenomics_bridge_escrow_total or sovereignmap_bridge_escrow_total) or vector(0))",
           "legendFormat": "escrow_total",
           "refId": "A"
         },
         {
-          "expr": "tokenomics_bridge_volume_24h or sovereignmap_bridge_volume_24h or vector(0)",
+          "expr": "(max(tokenomics_bridge_volume_24h or sovereignmap_bridge_volume_24h) or vector(0))",
           "legendFormat": "volume_24h",
           "refId": "B"
         }
@@ -1070,7 +1070,7 @@
       "id": 15,
       "targets": [
         {
-          "expr": "tokenomics_validator_count or sovereignmap_validators_count or vector(0)",
+          "expr": "(max(tokenomics_validator_count or sovereignmap_validators_count) or vector(0))",
           "refId": "A"
         }
       ],
@@ -1135,7 +1135,7 @@
       "id": 16,
       "targets": [
         {
-          "expr": "(tokenomics_stake_participation_ratio or sovereignmap_stake_participation_ratio or vector(0)) * 100",
+          "expr": "((max(tokenomics_stake_participation_ratio or sovereignmap_stake_participation_ratio) or vector(0))) * 100",
           "refId": "A"
         }
       ],
@@ -1198,7 +1198,7 @@
       "id": 17,
       "targets": [
         {
-          "expr": "tokenomics_stake_concentration_gini or sovereignmap_stake_concentration_gini or vector(0)",
+          "expr": "(max(tokenomics_stake_concentration_gini or sovereignmap_stake_concentration_gini) or vector(0))",
           "refId": "A"
         }
       ],
@@ -1272,17 +1272,17 @@
       "id": 18,
       "targets": [
         {
-          "expr": "tokenomics_validator_count or sovereignmap_validators_count or vector(0)",
+          "expr": "(max(tokenomics_validator_count or sovereignmap_validators_count) or vector(0))",
           "legendFormat": "validators",
           "refId": "A"
         },
         {
-          "expr": "(tokenomics_stake_participation_ratio or sovereignmap_stake_participation_ratio or vector(0)) * 100",
+          "expr": "((max(tokenomics_stake_participation_ratio or sovereignmap_stake_participation_ratio) or vector(0))) * 100",
           "legendFormat": "stake_participation_percent",
           "refId": "B"
         },
         {
-          "expr": "(tokenomics_stake_concentration_gini or sovereignmap_stake_concentration_gini or vector(0)) * 100",
+          "expr": "((max(tokenomics_stake_concentration_gini or sovereignmap_stake_concentration_gini) or vector(0))) * 100",
           "legendFormat": "gini_percent",
           "refId": "C"
         }
@@ -1344,7 +1344,7 @@
       "id": 20,
       "targets": [
         {
-          "expr": "tokenomics_unique_wallets_count or sovereignmap_unique_wallets_count or vector(0)",
+          "expr": "(max(tokenomics_unique_wallets_count or sovereignmap_unique_wallets_count) or vector(0))",
           "refId": "A"
         }
       ],
@@ -1390,7 +1390,7 @@
       "id": 21,
       "targets": [
         {
-          "expr": "tokenomics_wallet_average_balance or sovereignmap_wallet_average_balance or vector(0)",
+          "expr": "(max(tokenomics_wallet_average_balance or sovereignmap_wallet_average_balance) or vector(0))",
           "refId": "A"
         }
       ],
@@ -1455,7 +1455,7 @@
       "id": 22,
       "targets": [
         {
-          "expr": "(tokenomics_top_10_holder_concentration or sovereignmap_top_10_holder_concentration or vector(0)) * 100",
+          "expr": "((max(tokenomics_top_10_holder_concentration or sovereignmap_top_10_holder_concentration) or vector(0))) * 100",
           "refId": "A"
         }
       ],
@@ -1518,7 +1518,7 @@
       "id": 23,
       "targets": [
         {
-          "expr": "(tokenomics_wallet_liquidity_ratio or sovereignmap_wallet_liquidity_ratio or vector(0)) * 100",
+          "expr": "((max(tokenomics_wallet_liquidity_ratio or sovereignmap_wallet_liquidity_ratio) or vector(0))) * 100",
           "refId": "A"
         }
       ],
@@ -1592,17 +1592,17 @@
       "id": 24,
       "targets": [
         {
-          "expr": "tokenomics_wallets_by_balance_bucket_large or sovereignmap_wallets_by_balance_bucket_large or vector(0)",
+          "expr": "(max(tokenomics_wallets_by_balance_bucket_large or sovereignmap_wallets_by_balance_bucket_large) or vector(0))",
           "legendFormat": "large",
           "refId": "A"
         },
         {
-          "expr": "tokenomics_wallets_by_balance_bucket_medium or sovereignmap_wallets_by_balance_bucket_medium or vector(0)",
+          "expr": "(max(tokenomics_wallets_by_balance_bucket_medium or sovereignmap_wallets_by_balance_bucket_medium) or vector(0))",
           "legendFormat": "medium",
           "refId": "B"
         },
         {
-          "expr": "tokenomics_wallets_by_balance_bucket_small or sovereignmap_wallets_by_balance_bucket_small or vector(0)",
+          "expr": "(max(tokenomics_wallets_by_balance_bucket_small or sovereignmap_wallets_by_balance_bucket_small) or vector(0))",
           "legendFormat": "small",
           "refId": "C"
         }
@@ -1681,12 +1681,12 @@
       "id": 25,
       "targets": [
         {
-          "expr": "(tokenomics_top_10_holder_concentration or sovereignmap_top_10_holder_concentration or vector(0)) * 100",
+          "expr": "((max(tokenomics_top_10_holder_concentration or sovereignmap_top_10_holder_concentration) or vector(0))) * 100",
           "legendFormat": "top10_concentration_percent",
           "refId": "A"
         },
         {
-          "expr": "(tokenomics_wallet_liquidity_ratio or sovereignmap_wallet_liquidity_ratio or vector(0)) * 100",
+          "expr": "((max(tokenomics_wallet_liquidity_ratio or sovereignmap_wallet_liquidity_ratio) or vector(0))) * 100",
           "legendFormat": "wallet_liquidity_percent",
           "refId": "B"
         }

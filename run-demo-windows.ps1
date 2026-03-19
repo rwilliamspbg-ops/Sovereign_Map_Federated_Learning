@@ -227,6 +227,18 @@ try {
     Log "ERROR: Failed to start backend: $_"
 }
 
+try {
+    Log "Triggering LLM policy warm-up event..."
+    $Warmup = Invoke-RestMethod -Uri "http://localhost:8000/simulate/llmPolicyValid" -Method POST -ContentType "application/json" -Body "{}" -ErrorAction SilentlyContinue
+    if ($Warmup.status -eq "ok") {
+        Log "✅ LLM policy warm-up event emitted"
+    } else {
+        Log "⚠️  LLM policy warm-up returned unexpected response"
+    }
+} catch {
+    Log "⚠️  LLM policy warm-up failed: $_"
+}
+
 # Start exporters and node agents so dashboards have live metric sources.
 try {
     Invoke-ComposeUp -StepName "Starting metrics exporters" -LogFile "$OutDir/backend.log" -Services @("tokenomics-metrics", "tpm-metrics", "fl-performance") -NoDeps

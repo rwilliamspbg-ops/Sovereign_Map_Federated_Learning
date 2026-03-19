@@ -346,6 +346,8 @@ simulation_counters = {
     "byzantineAttacks": 0,
     "networkPartitions": 0,
     "hardwareFaults": 0,
+    "llmPolicyValid": 0,
+    "llmPolicyRejected": 0,
 }
 MODEL_REGISTRY_PATH = os.getenv("MODEL_REGISTRY_PATH", "/app/data/model_registry.jsonl")
 TPM_METRICS_ENDPOINT = os.getenv(
@@ -761,6 +763,11 @@ def trigger_hud_simulation(simulation_type: str):
         return jsonify({"status": "error", "error": "unsupported simulation type"}), 400
 
     simulation_counters[simulation_type] += 1
+    if simulation_type == "llmPolicyValid":
+        llm_policy_valid_updates_total.inc()
+    elif simulation_type == "llmPolicyRejected":
+        llm_policy_rejected_updates_total.labels(reason="demo_warmup").inc()
+
     logger.info(
         "HUD simulation triggered",
         extra={
