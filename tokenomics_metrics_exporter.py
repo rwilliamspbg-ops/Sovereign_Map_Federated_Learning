@@ -295,7 +295,9 @@ class TokenomicsMetricsExporter:
         except json.JSONDecodeError as exc:
             logger.error("Invalid tokenomics source JSON: %s", exc)
         except OSError as exc:
-            logger.error("Unable to read tokenomics source file %s: %s", self.source_file, exc)
+            logger.error(
+                "Unable to read tokenomics source file %s: %s", self.source_file, exc
+            )
 
     def ingest_event(self, payload: Dict[str, Any]):
         with self._lock:
