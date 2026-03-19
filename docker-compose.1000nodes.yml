@@ -84,7 +84,9 @@ services:
       - DATABASE_URI=mongodb://admin:${MONGO_PASSWORD:-CHANGE_ME_MONGO}@mongo:27017/sovereignmap_1000?authSource=admin
       - REDIS_URL=redis://redis:6379/0
       - WORKERS=8
-      - NPU_ENABLED=true
+      - NPU_ENABLED=${NPU_ENABLED:-true}
+      - XPU_ENABLED=${XPU_ENABLED:-true}
+      - GPU_ENABLED=${GPU_ENABLED:-true}
       - NPU_DEVICE_ID=0
       - PYTHONUNBUFFERED=1
     depends_on:
@@ -170,7 +172,9 @@ services:
       - NODE_AGENT_MODE=true
       - BACKEND_URL=http://backend:8000
       - PYTHONUNBUFFERED=1
-      - NPU_ENABLED=true
+      - NPU_ENABLED=${NPU_ENABLED:-true}
+      - XPU_ENABLED=${XPU_ENABLED:-true}
+      - GPU_ENABLED=${GPU_ENABLED:-true}
       - NODE_PEER_ID={{.Node.ID}}
       - REDIS_URL=redis://redis:6379/0
       - DATABASE_URI=mongodb://admin:${MONGO_PASSWORD:-CHANGE_ME_MONGO}@mongo:27017/sovereignmap_1000?authSource=admin
@@ -178,7 +182,7 @@ services:
       - BATCH_SIZE=${NODE_AGENT_BATCH_SIZE:-4}
       - LOCAL_EPOCHS=${NODE_AGENT_LOCAL_EPOCHS:-1}
       - MAX_SAMPLES_PER_NODE=${NODE_AGENT_MAX_SAMPLES_PER_NODE:-32}
-      - FORCE_CPU=${NODE_AGENT_FORCE_CPU:-true}
+      - FORCE_CPU=${NODE_AGENT_FORCE_CPU:-false}
       - PYTHONMALLOC=${NODE_AGENT_PYTHONMALLOC:-malloc}
       - MALLOC_ARENA_MAX=${NODE_AGENT_MALLOC_ARENA_MAX:-2}
     depends_on:

@@ -81,6 +81,26 @@ if [ -n "$COMPOSE_ENV_FILE" ] && [ -f "$COMPOSE_ENV_FILE" ]; then
     COMPOSE_ENV_ARGS=(--env-file "$COMPOSE_ENV_FILE")
 fi
 
+# Default launch behavior: auto-detect and prefer hardware acceleration.
+# Respect explicit overrides from environment or env files.
+if [ -z "${NODE_AGENT_FORCE_CPU:-}" ]; then
+    NODE_AGENT_FORCE_CPU="false"
+fi
+if [ -z "${NPU_ENABLED:-}" ]; then
+    NPU_ENABLED="true"
+fi
+if [ -z "${XPU_ENABLED:-}" ]; then
+    XPU_ENABLED="true"
+fi
+if [ -z "${GPU_ENABLED:-}" ]; then
+    GPU_ENABLED="true"
+fi
+
+export NODE_AGENT_FORCE_CPU
+export NPU_ENABLED
+export XPU_ENABLED
+export GPU_ENABLED
+
 compose_cmd() {
     docker compose "${COMPOSE_ENV_ARGS[@]}" -f "$COMPOSE_FILE" "$@"
 }
@@ -104,6 +124,10 @@ if [ -n "$COMPOSE_ENV_FILE" ] && [ -f "$COMPOSE_ENV_FILE" ]; then
 else
     echo "  Env file: none (using compose defaults)"
 fi
+echo "  Node agent FORCE_CPU: $NODE_AGENT_FORCE_CPU"
+echo "  NPU_ENABLED: $NPU_ENABLED"
+echo "  XPU_ENABLED: $XPU_ENABLED"
+echo "  GPU_ENABLED: $GPU_ENABLED"
 echo ""
 
 # Pre-flight checks

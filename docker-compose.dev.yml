@@ -109,7 +109,9 @@ services:
       - NODE_PEER_ID=dev_node_1
       - NODE_ID=${NODE_ID:-1}
       - NPU_ENABLED=${NPU_ENABLED:-true}
-      - FORCE_CPU=true
+      - XPU_ENABLED=${XPU_ENABLED:-true}
+      - GPU_ENABLED=${GPU_ENABLED:-true}
+      - FORCE_CPU=${NODE_AGENT_FORCE_CPU:-false}
       - ENABLE_DP=false
       - MAX_SAMPLES_PER_NODE=64
       - ASCEND_RT_VISIBLE_DEVICES=${ASCEND_RT_VISIBLE_DEVICES:-0}
