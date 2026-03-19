@@ -305,9 +305,19 @@ try {
 
 # Backend logs
 Log "Capturing backend logs..."
-& docker logs sovereignmap-backend > "$OutDir/backend-final.log" 2>&1
-& docker logs sovereignmap-prometheus > "$OutDir/prometheus-final.log" 2>&1
-& docker logs sovereignmap-grafana > "$OutDir/grafana-final.log" 2>&1
+try {
+    if ($UseAccelerationOverride) {
+        & docker compose -f $ComposeFile -f $AccelComposeFile logs --no-color backend > "$OutDir/backend-final.log" 2>&1
+        & docker compose -f $ComposeFile -f $AccelComposeFile logs --no-color prometheus > "$OutDir/prometheus-final.log" 2>&1
+        & docker compose -f $ComposeFile -f $AccelComposeFile logs --no-color grafana > "$OutDir/grafana-final.log" 2>&1
+    } else {
+        & docker compose -f $ComposeFile logs --no-color backend > "$OutDir/backend-final.log" 2>&1
+        & docker compose -f $ComposeFile logs --no-color prometheus > "$OutDir/prometheus-final.log" 2>&1
+        & docker compose -f $ComposeFile logs --no-color grafana > "$OutDir/grafana-final.log" 2>&1
+    }
+} catch {
+    Log "⚠️  Could not capture one or more service logs: $_"
+}
 
 # Create summary report
 @"
