@@ -1,6 +1,6 @@
 import re
 
-with open('tokenomics_metrics_exporter.py', 'r') as f:
+with open("tokenomics_metrics_exporter.py", "r") as f:
     content = f.read()
 
 replacement = """
@@ -39,8 +39,12 @@ def create_app(source_file: str):
 """
 
 # Replace the create_app definition
-content = re.sub(r'def create_app\(source_file: str\):(.*?)exporter = TokenomicsMetricsExporter\(source_file=source_file\)', replacement, content, flags=re.DOTALL)
+content = re.sub(
+    r"def create_app\(source_file: str\):(.*?)exporter = TokenomicsMetricsExporter\(source_file=source_file\)",
+    replacement,
+    content,
+    flags=re.DOTALL,
+)
 
-with open('tokenomics_metrics_exporter.py', 'w') as f:
+with open("tokenomics_metrics_exporter.py", "w") as f:
     f.write(content)
-

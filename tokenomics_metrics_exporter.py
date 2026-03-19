@@ -322,6 +322,7 @@ def create_app(source_file: str):
     app = Flask(__name__)
     exporter = TokenomicsMetricsExporter(source_file=source_file)
     import threading
+
     t = threading.Thread(target=run_simulation, args=(exporter,), daemon=True)
     t.start()
 

@@ -38,9 +38,10 @@ for line in lines:
     out.append(line)
     if "exporter = TokenomicsMetricsExporter(source_file=source_file)" in line:
         out.append("    import threading\n")
-        out.append("    t = threading.Thread(target=run_simulation, args=(exporter,), daemon=True)\n")
+        out.append(
+            "    t = threading.Thread(target=run_simulation, args=(exporter,), daemon=True)\n"
+        )
         out.append("    t.start()\n")
 
 with open("tokenomics_metrics_exporter.py", "w") as f:
     f.writelines(out)
-
