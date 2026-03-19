@@ -39,8 +39,7 @@ function Invoke-ComposeUp {
         if (Test-Path $LogFile) {
             $Tail = Get-Content $LogFile -Tail 20
         }
-        $TailText = ($Tail -join "`
-
+        $TailText = ($Tail -join [Environment]::NewLine)
         throw "docker compose failed for '$StepName' (exit $ExitCode). Recent output: $TailText"
     }
 }
