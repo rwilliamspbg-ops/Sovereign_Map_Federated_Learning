@@ -169,7 +169,7 @@ services:
       - sovereign-logs:/var/log/sovereign
     working_dir: /app
     command: >
-      bash -c "pip install --quiet cryptography && chmod +x /app/tpm-bootstrap.sh && /app/tpm-bootstrap.sh"
+      sh -c "python3 -m pip install --quiet cryptography && chmod +x /app/tpm-bootstrap.sh && sh /app/tpm-bootstrap.sh"
     networks:
       - sovereignmap
     restart: "no"

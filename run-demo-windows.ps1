@@ -32,7 +32,8 @@ function Invoke-ComposeUp {
     param(
         [string]$StepName,
         [string]$LogFile,
-        [string[]]$Services
+        [string[]]$Services,
+        [switch]$NoDeps
     )
 
     Log "$StepName..."
@@ -42,7 +43,11 @@ function Invoke-ComposeUp {
     $StdOut = [System.IO.Path]::GetTempFileName()
     $StdErr = [System.IO.Path]::GetTempFileName()
 
-    $ArgList = @("compose", "-f", $ComposeFile, "up", "-d") + $Services
+    $ArgList = @("compose", "-f", $ComposeFile, "up", "-d")
+    if ($NoDeps) {
+        $ArgList += "--no-deps"
+    }
+    $ArgList += $Services
     $Proc = Start-Process -FilePath "docker" -ArgumentList $ArgList -NoNewWindow -Wait -PassThru -RedirectStandardOutput $StdOut -RedirectStandardError $StdErr
 
     if (Test-Path $StdOut) {
@@ -82,7 +87,7 @@ if (-not (Test-Path $ComposeFile)) {
 }
 
 try {
-    Invoke-ComposeUp -StepName "Starting Prometheus and Grafana" -LogFile "$OutDir/startup.log" -Services @("prometheus", "grafana", "alertmanager")
+    Invoke-ComposeUp -StepName "Starting Prometheus and Grafana" -LogFile "$OutDir/startup.log" -Services @("prometheus", "grafana", "alertmanager") -NoDeps
     Log "✅ Monitoring stack started"
 } catch {
     Log "ERROR: Failed to start monitoring: $_"
