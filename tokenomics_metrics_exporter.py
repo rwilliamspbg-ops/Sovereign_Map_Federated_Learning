@@ -324,7 +324,8 @@ def create_app(source_file: str):
     import threading
     t = threading.Thread(target=run_simulation, args=(exporter,), daemon=True)
     t.start()
-@app.route("/metrics", methods=["GET"])
+
+    @app.route("/metrics", methods=["GET"])
     def metrics():
         return Response(exporter.generate_metrics(), mimetype=CONTENT_TYPE_LATEST)
 
