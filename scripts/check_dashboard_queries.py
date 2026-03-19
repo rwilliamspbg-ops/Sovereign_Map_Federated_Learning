@@ -31,6 +31,7 @@ PROMQL_KEYWORDS = {
     "predict_linear",
     "histogram_quantile",
     "clamp_min",
+    "clamp_max",
     "vector",
     "by",
     "without",

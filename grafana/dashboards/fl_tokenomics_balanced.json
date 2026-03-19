@@ -1715,7 +1715,7 @@
   "schemaVersion": 38,
   "style": "dark",
   "tags": [
-    "tokenomics-overview"
+    "tokenomics-overview-(balanced-profile)"
   ],
   "templating": {
     "list": []
@@ -1726,7 +1726,7 @@
   },
   "timepicker": {},
   "timezone": "",
-  "title": "Tokenomics Overview",
-  "uid": "tok-1",
+  "title": "Tokenomics Overview (Balanced Profile)",
+  "uid": "tok-1-balanced",
   "version": 2
 }
