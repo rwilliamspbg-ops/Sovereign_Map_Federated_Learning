@@ -7,7 +7,7 @@
   "graphTooltip": 1,
   "id": null,
   "links": [],
-  "liveNow": false,
+  "liveNow": true,
   "panels": [
     {
       "id": 200,
@@ -20,11 +20,14 @@
         "h": 1
       },
       "collapsed": false,
-      "panels": []
+      "panels": [],
+      "fieldConfig": {
+        "defaults": {}
+      }
     },
     {
       "id": 201,
-      "type": "stat",
+      "type": "gauge",
       "title": "Economic Growth Score",
       "datasource": {
         "type": "prometheus",
@@ -65,15 +68,13 @@
                 "value": 75
               }
             ]
-          }
+          },
+          "min": 0,
+          "max": 100
         },
         "overrides": []
       },
       "options": {
-        "colorMode": "background",
-        "graphMode": "area",
-        "justifyMode": "center",
-        "orientation": "auto",
         "reduceOptions": {
           "calcs": [
             "lastNotNull"
@@ -81,12 +82,14 @@
           "fields": "",
           "values": false
         },
-        "textMode": "auto"
+        "showThresholdLabels": true,
+        "showThresholdMarkers": true,
+        "orientation": "auto"
       }
     },
     {
       "id": 202,
-      "type": "stat",
+      "type": "gauge",
       "title": "Bridge Health Score",
       "datasource": {
         "type": "prometheus",
@@ -127,15 +130,13 @@
                 "value": 75
               }
             ]
-          }
+          },
+          "min": 0,
+          "max": 100
         },
         "overrides": []
       },
       "options": {
-        "colorMode": "background",
-        "graphMode": "area",
-        "justifyMode": "center",
-        "orientation": "auto",
         "reduceOptions": {
           "calcs": [
             "lastNotNull"
@@ -143,12 +144,14 @@
           "fields": "",
           "values": false
         },
-        "textMode": "auto"
+        "showThresholdLabels": true,
+        "showThresholdMarkers": true,
+        "orientation": "auto"
       }
     },
     {
       "id": 203,
-      "type": "stat",
+      "type": "gauge",
       "title": "Validator Health Score",
       "datasource": {
         "type": "prometheus",
@@ -189,15 +192,13 @@
                 "value": 75
               }
             ]
-          }
+          },
+          "min": 0,
+          "max": 100
         },
         "overrides": []
       },
       "options": {
-        "colorMode": "background",
-        "graphMode": "area",
-        "justifyMode": "center",
-        "orientation": "auto",
         "reduceOptions": {
           "calcs": [
             "lastNotNull"
@@ -205,12 +206,14 @@
           "fields": "",
           "values": false
         },
-        "textMode": "auto"
+        "showThresholdLabels": true,
+        "showThresholdMarkers": true,
+        "orientation": "auto"
       }
     },
     {
       "id": 204,
-      "type": "stat",
+      "type": "gauge",
       "title": "Wallet Health Score",
       "datasource": {
         "type": "prometheus",
@@ -251,15 +254,13 @@
                 "value": 75
               }
             ]
-          }
+          },
+          "min": 0,
+          "max": 100
         },
         "overrides": []
       },
       "options": {
-        "colorMode": "background",
-        "graphMode": "area",
-        "justifyMode": "center",
-        "orientation": "auto",
         "reduceOptions": {
           "calcs": [
             "lastNotNull"
@@ -267,7 +268,9 @@
           "fields": "",
           "values": false
         },
-        "textMode": "auto"
+        "showThresholdLabels": true,
+        "showThresholdMarkers": true,
+        "orientation": "auto"
       }
     },
     {
@@ -281,7 +284,10 @@
         "h": 1
       },
       "collapsed": false,
-      "panels": []
+      "panels": [],
+      "fieldConfig": {
+        "defaults": {}
+      }
     },
     {
       "id": 211,
@@ -509,9 +515,10 @@
           "custom": {
             "drawStyle": "line",
             "lineWidth": 2,
-            "fillOpacity": 12,
+            "fillOpacity": 14,
             "showPoints": "never",
-            "lineInterpolation": "smooth"
+            "lineInterpolation": "smooth",
+            "gradientMode": "opacity"
           }
         },
         "overrides": []
@@ -539,7 +546,10 @@
         "h": 1
       },
       "collapsed": false,
-      "panels": []
+      "panels": [],
+      "fieldConfig": {
+        "defaults": {}
+      }
     },
     {
       "id": 221,
@@ -829,9 +839,10 @@
           "custom": {
             "drawStyle": "line",
             "lineWidth": 2,
-            "fillOpacity": 12,
+            "fillOpacity": 14,
             "showPoints": "never",
-            "lineInterpolation": "smooth"
+            "lineInterpolation": "smooth",
+            "gradientMode": "opacity"
           }
         },
         "overrides": []
@@ -888,9 +899,10 @@
           "custom": {
             "drawStyle": "line",
             "lineWidth": 2,
-            "fillOpacity": 12,
+            "fillOpacity": 14,
             "showPoints": "never",
-            "lineInterpolation": "smooth"
+            "lineInterpolation": "smooth",
+            "gradientMode": "opacity"
           }
         },
         "overrides": []
@@ -918,7 +930,10 @@
         "h": 1
       },
       "collapsed": false,
-      "panels": []
+      "panels": [],
+      "fieldConfig": {
+        "defaults": {}
+      }
     },
     {
       "id": 231,
@@ -1208,9 +1223,10 @@
           "custom": {
             "drawStyle": "line",
             "lineWidth": 2,
-            "fillOpacity": 12,
+            "fillOpacity": 14,
             "showPoints": "never",
-            "lineInterpolation": "smooth"
+            "lineInterpolation": "smooth",
+            "gradientMode": "opacity"
           }
         },
         "overrides": []
@@ -1267,9 +1283,10 @@
           "custom": {
             "drawStyle": "line",
             "lineWidth": 2,
-            "fillOpacity": 12,
+            "fillOpacity": 14,
             "showPoints": "never",
-            "lineInterpolation": "smooth"
+            "lineInterpolation": "smooth",
+            "gradientMode": "opacity"
           }
         },
         "overrides": []
@@ -1287,26 +1304,29 @@
       }
     }
   ],
-  "refresh": "10s",
+  "refresh": "5s",
   "schemaVersion": 38,
   "style": "dark",
   "tags": [
-    "tokenomics",
-    "economy",
     "bridge",
-    "wallets",
-    "vivid"
+    "economy",
+    "live",
+    "professional",
+    "sovereignmap",
+    "tokenomics",
+    "vivid",
+    "wallets"
   ],
   "templating": {
     "list": []
   },
   "time": {
-    "from": "now-6h",
+    "from": "now-3h",
     "to": "now"
   },
   "timepicker": {},
   "timezone": "",
-  "title": "SovereignMap Tokenomics Overview",
+  "title": "SovereignMap | Tokenomics Overview",
   "uid": "sovereign-tokenomics-overview",
   "version": 1,
   "weekStart": ""

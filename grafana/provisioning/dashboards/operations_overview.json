@@ -7,12 +7,12 @@
   "graphTooltip": 1,
   "id": null,
   "links": [],
-  "liveNow": false,
+  "liveNow": true,
   "panels": [
     {
       "id": 100,
       "type": "row",
-      "title": "Executive Network Health",
+      "title": "Live Operations Command Deck",
       "gridPos": {
         "x": 0,
         "y": 0,
@@ -20,10 +20,389 @@
         "h": 1
       },
       "collapsed": false,
-      "panels": []
+      "panels": [],
+      "fieldConfig": {
+        "defaults": {}
+      }
     },
     {
       "id": 101,
+      "type": "gauge",
+      "title": "Model Accuracy",
+      "datasource": {
+        "type": "prometheus",
+        "uid": "prometheus"
+      },
+      "gridPos": {
+        "x": 0,
+        "y": 1,
+        "w": 4,
+        "h": 5
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "expr": "max(sovereignmap_fl_accuracy) or vector(0)"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "percent",
+          "min": 0,
+          "max": 100,
+          "decimals": 2,
+          "color": {
+            "mode": "thresholds"
+          },
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "red",
+                "value": null
+              },
+              {
+                "color": "orange",
+                "value": 70
+              },
+              {
+                "color": "yellow",
+                "value": 85
+              },
+              {
+                "color": "green",
+                "value": 92
+              }
+            ]
+          }
+        },
+        "overrides": []
+      },
+      "options": {
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "showThresholdLabels": true,
+        "showThresholdMarkers": true,
+        "orientation": "auto"
+      }
+    },
+    {
+      "id": 102,
+      "type": "gauge",
+      "title": "Training Loss",
+      "datasource": {
+        "type": "prometheus",
+        "uid": "prometheus"
+      },
+      "gridPos": {
+        "x": 4,
+        "y": 1,
+        "w": 4,
+        "h": 5
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "expr": "max(sovereignmap_fl_loss) or vector(0)"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "short",
+          "min": 0,
+          "max": 3,
+          "decimals": 4,
+          "color": {
+            "mode": "thresholds"
+          },
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              },
+              {
+                "color": "yellow",
+                "value": 0.8
+              },
+              {
+                "color": "red",
+                "value": 1.6
+              }
+            ]
+          }
+        },
+        "overrides": []
+      },
+      "options": {
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "showThresholdLabels": true,
+        "showThresholdMarkers": true,
+        "orientation": "auto"
+      }
+    },
+    {
+      "id": 103,
+      "type": "gauge",
+      "title": "Node Capacity %",
+      "datasource": {
+        "type": "prometheus",
+        "uid": "prometheus"
+      },
+      "gridPos": {
+        "x": 8,
+        "y": 1,
+        "w": 4,
+        "h": 5
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "expr": "((max(sovereignmap_active_nodes) or vector(0)) / clamp_min((max(sovereignmap_active_nodes) or vector(1)),1)) * 100"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "percent",
+          "min": 0,
+          "max": 100,
+          "decimals": 1,
+          "color": {
+            "mode": "thresholds"
+          },
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "red",
+                "value": null
+              },
+              {
+                "color": "yellow",
+                "value": 75
+              },
+              {
+                "color": "green",
+                "value": 95
+              }
+            ]
+          }
+        },
+        "overrides": []
+      },
+      "options": {
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "showThresholdLabels": true,
+        "showThresholdMarkers": true,
+        "orientation": "auto"
+      }
+    },
+    {
+      "id": 104,
+      "type": "gauge",
+      "title": "GPU Utilization",
+      "datasource": {
+        "type": "prometheus",
+        "uid": "prometheus"
+      },
+      "gridPos": {
+        "x": 12,
+        "y": 1,
+        "w": 4,
+        "h": 5
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "expr": "avg(fl_gpu_utilization_percent) or vector(0)"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "percent",
+          "min": 0,
+          "max": 100,
+          "decimals": 1,
+          "color": {
+            "mode": "thresholds"
+          },
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "red",
+                "value": null
+              },
+              {
+                "color": "yellow",
+                "value": 40
+              },
+              {
+                "color": "green",
+                "value": 75
+              }
+            ]
+          }
+        },
+        "overrides": []
+      },
+      "options": {
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "showThresholdLabels": true,
+        "showThresholdMarkers": true,
+        "orientation": "auto"
+      }
+    },
+    {
+      "id": 105,
+      "type": "gauge",
+      "title": "NPU Utilization",
+      "datasource": {
+        "type": "prometheus",
+        "uid": "prometheus"
+      },
+      "gridPos": {
+        "x": 16,
+        "y": 1,
+        "w": 4,
+        "h": 5
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "expr": "avg(fl_npu_utilization_percent) or vector(0)"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "percent",
+          "min": 0,
+          "max": 100,
+          "decimals": 1,
+          "color": {
+            "mode": "thresholds"
+          },
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "red",
+                "value": null
+              },
+              {
+                "color": "yellow",
+                "value": 40
+              },
+              {
+                "color": "green",
+                "value": 75
+              }
+            ]
+          }
+        },
+        "overrides": []
+      },
+      "options": {
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "showThresholdLabels": true,
+        "showThresholdMarkers": true,
+        "orientation": "auto"
+      }
+    },
+    {
+      "id": 106,
+      "type": "gauge",
+      "title": "Trust Score",
+      "datasource": {
+        "type": "prometheus",
+        "uid": "prometheus"
+      },
+      "gridPos": {
+        "x": 20,
+        "y": 1,
+        "w": 4,
+        "h": 5
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "expr": "avg(tpm_node_trust_score) or vector(0)"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "short",
+          "min": 0,
+          "max": 100,
+          "decimals": 1,
+          "color": {
+            "mode": "thresholds"
+          },
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "red",
+                "value": null
+              },
+              {
+                "color": "yellow",
+                "value": 70
+              },
+              {
+                "color": "green",
+                "value": 90
+              }
+            ]
+          }
+        },
+        "overrides": []
+      },
+      "options": {
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "showThresholdLabels": true,
+        "showThresholdMarkers": true,
+        "orientation": "auto"
+      }
+    },
+    {
+      "id": 107,
       "type": "stat",
       "title": "Active Nodes",
       "datasource": {
@@ -32,8 +411,8 @@
       },
       "gridPos": {
         "x": 0,
-        "y": 1,
-        "w": 6,
+        "y": 6,
+        "w": 4,
         "h": 5
       },
       "targets": [
@@ -45,10 +424,10 @@
       "fieldConfig": {
         "defaults": {
           "unit": "short",
+          "decimals": 0,
           "color": {
             "mode": "thresholds"
           },
-          "decimals": 0,
           "thresholds": {
             "mode": "absolute",
             "steps": [
@@ -85,7 +464,7 @@
       }
     },
     {
-      "id": 102,
+      "id": 108,
       "type": "stat",
       "title": "Current FL Round",
       "datasource": {
@@ -93,9 +472,9 @@
         "uid": "prometheus"
       },
       "gridPos": {
-        "x": 6,
-        "y": 1,
-        "w": 6,
+        "x": 4,
+        "y": 6,
+        "w": 4,
         "h": 5
       },
       "targets": [
@@ -107,10 +486,10 @@
       "fieldConfig": {
         "defaults": {
           "unit": "short",
+          "decimals": 0,
           "color": {
             "mode": "thresholds"
           },
-          "decimals": 0,
           "thresholds": {
             "mode": "absolute",
             "steps": [
@@ -143,112 +522,42 @@
       }
     },
     {
-      "id": 103,
+      "id": 109,
       "type": "stat",
-      "title": "Model Accuracy",
+      "title": "Rounds Completed",
       "datasource": {
         "type": "prometheus",
         "uid": "prometheus"
       },
       "gridPos": {
-        "x": 12,
-        "y": 1,
-        "w": 6,
+        "x": 8,
+        "y": 6,
+        "w": 4,
         "h": 5
       },
       "targets": [
         {
           "refId": "A",
-          "expr": "max(sovereignmap_fl_accuracy) or vector(0)"
-        }
-      ],
-      "fieldConfig": {
-        "defaults": {
-          "unit": "percent",
-          "color": {
-            "mode": "thresholds"
-          },
-          "decimals": 2,
-          "thresholds": {
-            "mode": "absolute",
-            "steps": [
-              {
-                "color": "red",
-                "value": null
-              },
-              {
-                "color": "orange",
-                "value": 60
-              },
-              {
-                "color": "yellow",
-                "value": 80
-              },
-              {
-                "color": "green",
-                "value": 90
-              }
-            ]
-          }
-        },
-        "overrides": []
-      },
-      "options": {
-        "colorMode": "background",
-        "graphMode": "area",
-        "justifyMode": "center",
-        "orientation": "auto",
-        "reduceOptions": {
-          "calcs": [
-            "lastNotNull"
-          ],
-          "fields": "",
-          "values": false
-        },
-        "textMode": "auto"
-      }
-    },
-    {
-      "id": 104,
-      "type": "stat",
-      "title": "Training Loss",
-      "datasource": {
-        "type": "prometheus",
-        "uid": "prometheus"
-      },
-      "gridPos": {
-        "x": 18,
-        "y": 1,
-        "w": 6,
-        "h": 5
-      },
-      "targets": [
-        {
-          "refId": "A",
-          "expr": "max(sovereignmap_fl_loss) or vector(0)"
+          "expr": "max(sovereignmap_fl_rounds_total) or vector(0)"
         }
       ],
       "fieldConfig": {
         "defaults": {
           "unit": "short",
+          "decimals": 0,
           "color": {
             "mode": "thresholds"
           },
-          "decimals": 4,
           "thresholds": {
             "mode": "absolute",
             "steps": [
               {
-                "color": "green",
+                "color": "blue",
                 "value": null
               },
               {
-                "color": "yellow",
-                "value": 0.8
-              },
-              {
-                "color": "red",
-                "value": 1.5
+                "color": "green",
+                "value": 50
               }
             ]
           }
@@ -272,127 +581,6 @@
     },
     {
       "id": 110,
-      "type": "timeseries",
-      "title": "FL Accuracy and Loss Trends",
-      "datasource": {
-        "type": "prometheus",
-        "uid": "prometheus"
-      },
-      "gridPos": {
-        "x": 0,
-        "y": 6,
-        "w": 12,
-        "h": 7
-      },
-      "targets": [
-        {
-          "refId": "A",
-          "expr": "sovereignmap_fl_accuracy",
-          "legendFormat": "Accuracy (%)"
-        },
-        {
-          "refId": "B",
-          "expr": "sovereignmap_fl_loss",
-          "legendFormat": "Loss"
-        }
-      ],
-      "fieldConfig": {
-        "defaults": {
-          "unit": "short",
-          "color": {
-            "mode": "palette-classic"
-          },
-          "custom": {
-            "drawStyle": "line",
-            "lineWidth": 2,
-            "fillOpacity": 12,
-            "showPoints": "never",
-            "lineInterpolation": "smooth"
-          }
-        },
-        "overrides": []
-      },
-      "options": {
-        "legend": {
-          "displayMode": "table",
-          "placement": "bottom",
-          "showLegend": true
-        },
-        "tooltip": {
-          "mode": "multi",
-          "sort": "none"
-        }
-      }
-    },
-    {
-      "id": 111,
-      "type": "timeseries",
-      "title": "FL Throughput and Node Participation",
-      "datasource": {
-        "type": "prometheus",
-        "uid": "prometheus"
-      },
-      "gridPos": {
-        "x": 12,
-        "y": 6,
-        "w": 12,
-        "h": 7
-      },
-      "targets": [
-        {
-          "refId": "A",
-          "expr": "rate(sovereignmap_fl_rounds_total[5m])",
-          "legendFormat": "Rounds/sec"
-        },
-        {
-          "refId": "B",
-          "expr": "sovereignmap_active_nodes",
-          "legendFormat": "Active nodes"
-        }
-      ],
-      "fieldConfig": {
-        "defaults": {
-          "unit": "short",
-          "color": {
-            "mode": "palette-classic"
-          },
-          "custom": {
-            "drawStyle": "line",
-            "lineWidth": 2,
-            "fillOpacity": 12,
-            "showPoints": "never",
-            "lineInterpolation": "smooth"
-          }
-        },
-        "overrides": []
-      },
-      "options": {
-        "legend": {
-          "displayMode": "table",
-          "placement": "bottom",
-          "showLegend": true
-        },
-        "tooltip": {
-          "mode": "multi",
-          "sort": "none"
-        }
-      }
-    },
-    {
-      "id": 120,
-      "type": "row",
-      "title": "Transport and API Reliability",
-      "gridPos": {
-        "x": 0,
-        "y": 13,
-        "w": 24,
-        "h": 1
-      },
-      "collapsed": false,
-      "panels": []
-    },
-    {
-      "id": 121,
       "type": "stat",
       "title": "API Requests (5m)",
       "datasource": {
@@ -400,9 +588,9 @@
         "uid": "prometheus"
       },
       "gridPos": {
-        "x": 0,
-        "y": 14,
-        "w": 6,
+        "x": 12,
+        "y": 6,
+        "w": 4,
         "h": 5
       },
       "targets": [
@@ -414,10 +602,10 @@
       "fieldConfig": {
         "defaults": {
           "unit": "short",
+          "decimals": 0,
           "color": {
             "mode": "thresholds"
           },
-          "decimals": 0,
           "thresholds": {
             "mode": "absolute",
             "steps": [
@@ -454,7 +642,7 @@
       }
     },
     {
-      "id": 122,
+      "id": 111,
       "type": "stat",
       "title": "API p95 Latency",
       "datasource": {
@@ -462,9 +650,9 @@
         "uid": "prometheus"
       },
       "gridPos": {
-        "x": 6,
-        "y": 14,
-        "w": 6,
+        "x": 16,
+        "y": 6,
+        "w": 4,
         "h": 5
       },
       "targets": [
@@ -476,10 +664,10 @@
       "fieldConfig": {
         "defaults": {
           "unit": "s",
+          "decimals": 3,
           "color": {
             "mode": "thresholds"
           },
-          "decimals": 3,
           "thresholds": {
             "mode": "absolute",
             "steps": [
@@ -516,79 +704,17 @@
       }
     },
     {
-      "id": 123,
+      "id": 112,
       "type": "stat",
-      "title": "Prometheus p95 Latency",
+      "title": "Prom Request Rate (5m)",
       "datasource": {
         "type": "prometheus",
         "uid": "prometheus"
       },
       "gridPos": {
-        "x": 12,
-        "y": 14,
-        "w": 6,
-        "h": 5
-      },
-      "targets": [
-        {
-          "refId": "A",
-          "expr": "(sum(rate(prometheus_http_request_duration_seconds_sum[5m])) / clamp_min(sum(rate(prometheus_http_request_duration_seconds_count[5m])), 1e-9)) or vector(0)"
-        }
-      ],
-      "fieldConfig": {
-        "defaults": {
-          "unit": "s",
-          "color": {
-            "mode": "thresholds"
-          },
-          "decimals": 3,
-          "thresholds": {
-            "mode": "absolute",
-            "steps": [
-              {
-                "color": "green",
-                "value": null
-              },
-              {
-                "color": "yellow",
-                "value": 0.4
-              },
-              {
-                "color": "red",
-                "value": 1.2
-              }
-            ]
-          }
-        },
-        "overrides": []
-      },
-      "options": {
-        "colorMode": "background",
-        "graphMode": "area",
-        "justifyMode": "center",
-        "orientation": "auto",
-        "reduceOptions": {
-          "calcs": [
-            "lastNotNull"
-          ],
-          "fields": "",
-          "values": false
-        },
-        "textMode": "auto"
-      }
-    },
-    {
-      "id": 124,
-      "type": "stat",
-      "title": "Prometheus Requests (5m)",
-      "datasource": {
-        "type": "prometheus",
-        "uid": "prometheus"
-      },
-      "gridPos": {
-        "x": 18,
-        "y": 14,
-        "w": 6,
+        "x": 20,
+        "y": 6,
+        "w": 4,
         "h": 5
       },
       "targets": [
@@ -600,10 +726,10 @@
       "fieldConfig": {
         "defaults": {
           "unit": "short",
+          "decimals": 0,
           "color": {
             "mode": "thresholds"
           },
-          "decimals": 0,
           "thresholds": {
             "mode": "absolute",
             "steps": [
@@ -640,29 +766,45 @@
       }
     },
     {
-      "id": 125,
+      "id": 120,
+      "type": "row",
+      "title": "Operational Trend Wall",
+      "gridPos": {
+        "x": 0,
+        "y": 11,
+        "w": 24,
+        "h": 1
+      },
+      "collapsed": false,
+      "panels": [],
+      "fieldConfig": {
+        "defaults": {}
+      }
+    },
+    {
+      "id": 121,
       "type": "timeseries",
-      "title": "API and Prometheus Traffic",
+      "title": "FL Quality: Accuracy vs Loss",
       "datasource": {
         "type": "prometheus",
         "uid": "prometheus"
       },
       "gridPos": {
         "x": 0,
-        "y": 19,
+        "y": 12,
         "w": 12,
-        "h": 7
+        "h": 8
       },
       "targets": [
         {
           "refId": "A",
-          "expr": "sum(rate(flask_http_request_total[1m]))",
-          "legendFormat": "API req/s"
+          "expr": "sovereignmap_fl_accuracy",
+          "legendFormat": "Accuracy (%)"
         },
         {
           "refId": "B",
-          "expr": "sum(rate(prometheus_http_requests_total[1m]))",
-          "legendFormat": "Prometheus req/s"
+          "expr": "sovereignmap_fl_loss",
+          "legendFormat": "Loss"
         }
       ],
       "fieldConfig": {
@@ -674,9 +816,10 @@
           "custom": {
             "drawStyle": "line",
             "lineWidth": 2,
-            "fillOpacity": 12,
+            "fillOpacity": 14,
             "showPoints": "never",
-            "lineInterpolation": "smooth"
+            "lineInterpolation": "smooth",
+            "gradientMode": "opacity"
           }
         },
         "overrides": []
@@ -694,29 +837,29 @@
       }
     },
     {
-      "id": 126,
+      "id": 122,
       "type": "timeseries",
-      "title": "Infrastructure CPU Signals",
+      "title": "Throughput and Participation",
       "datasource": {
         "type": "prometheus",
         "uid": "prometheus"
       },
       "gridPos": {
         "x": 12,
-        "y": 19,
+        "y": 12,
         "w": 12,
-        "h": 7
+        "h": 8
       },
       "targets": [
         {
           "refId": "A",
-          "expr": "sum(rate(node_cpu_seconds_total{mode!='idle'}[5m]))",
-          "legendFormat": "Host CPU busy"
+          "expr": "rate(sovereignmap_fl_rounds_total[5m])",
+          "legendFormat": "Rounds/sec"
         },
         {
           "refId": "B",
-          "expr": "sum(rate(process_cpu_seconds_total[5m]))",
-          "legendFormat": "Backend CPU"
+          "expr": "sovereignmap_active_nodes",
+          "legendFormat": "Active nodes"
         }
       ],
       "fieldConfig": {
@@ -728,9 +871,130 @@
           "custom": {
             "drawStyle": "line",
             "lineWidth": 2,
-            "fillOpacity": 12,
+            "fillOpacity": 14,
             "showPoints": "never",
-            "lineInterpolation": "smooth"
+            "lineInterpolation": "smooth",
+            "gradientMode": "opacity"
+          }
+        },
+        "overrides": []
+      },
+      "options": {
+        "legend": {
+          "displayMode": "table",
+          "placement": "bottom",
+          "showLegend": true
+        },
+        "tooltip": {
+          "mode": "multi",
+          "sort": "none"
+        }
+      }
+    },
+    {
+      "id": 123,
+      "type": "timeseries",
+      "title": "Traffic and CPU Pressure",
+      "datasource": {
+        "type": "prometheus",
+        "uid": "prometheus"
+      },
+      "gridPos": {
+        "x": 0,
+        "y": 20,
+        "w": 12,
+        "h": 8
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "expr": "sum(rate(flask_http_request_total[1m]))",
+          "legendFormat": "API req/s"
+        },
+        {
+          "refId": "B",
+          "expr": "sum(rate(prometheus_http_requests_total[1m]))",
+          "legendFormat": "Prom req/s"
+        },
+        {
+          "refId": "C",
+          "expr": "sum(rate(process_cpu_seconds_total[5m]))",
+          "legendFormat": "Backend CPU rate"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "short",
+          "color": {
+            "mode": "palette-classic"
+          },
+          "custom": {
+            "drawStyle": "line",
+            "lineWidth": 2,
+            "fillOpacity": 14,
+            "showPoints": "never",
+            "lineInterpolation": "smooth",
+            "gradientMode": "opacity"
+          }
+        },
+        "overrides": []
+      },
+      "options": {
+        "legend": {
+          "displayMode": "table",
+          "placement": "bottom",
+          "showLegend": true
+        },
+        "tooltip": {
+          "mode": "multi",
+          "sort": "none"
+        }
+      }
+    },
+    {
+      "id": 124,
+      "type": "timeseries",
+      "title": "Attestation Latency Profile",
+      "datasource": {
+        "type": "prometheus",
+        "uid": "prometheus"
+      },
+      "gridPos": {
+        "x": 12,
+        "y": 20,
+        "w": 12,
+        "h": 8
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "expr": "quantile(0.50, tpm_node_attestation_latency_ms) or vector(0)",
+          "legendFormat": "p50 ms"
+        },
+        {
+          "refId": "B",
+          "expr": "quantile(0.95, tpm_node_attestation_latency_ms) or vector(0)",
+          "legendFormat": "p95 ms"
+        },
+        {
+          "refId": "C",
+          "expr": "quantile(0.99, tpm_node_attestation_latency_ms) or vector(0)",
+          "legendFormat": "p99 ms"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "short",
+          "color": {
+            "mode": "palette-classic"
+          },
+          "custom": {
+            "drawStyle": "line",
+            "lineWidth": 2,
+            "fillOpacity": 14,
+            "showPoints": "never",
+            "lineInterpolation": "smooth",
+            "gradientMode": "opacity"
           }
         },
         "overrides": []
@@ -750,399 +1014,269 @@
     {
       "id": 130,
       "type": "row",
-      "title": "Accelerator and Trust Health",
+      "title": "Reliability and Security Bars",
       "gridPos": {
         "x": 0,
-        "y": 26,
+        "y": 28,
         "w": 24,
         "h": 1
       },
       "collapsed": false,
-      "panels": []
+      "panels": [],
+      "fieldConfig": {
+        "defaults": {}
+      }
     },
     {
       "id": 131,
-      "type": "stat",
-      "title": "GPU Utilization (avg)",
+      "type": "bargauge",
+      "title": "Validator Reliability (15m)",
       "datasource": {
         "type": "prometheus",
         "uid": "prometheus"
       },
       "gridPos": {
         "x": 0,
-        "y": 27,
-        "w": 6,
-        "h": 5
-      },
-      "targets": [
-        {
-          "refId": "A",
-          "expr": "avg(fl_gpu_utilization_percent) or vector(0)"
-        }
-      ],
-      "fieldConfig": {
-        "defaults": {
-          "unit": "percent",
-          "color": {
-            "mode": "thresholds"
-          },
-          "decimals": 1,
-          "thresholds": {
-            "mode": "absolute",
-            "steps": [
-              {
-                "color": "red",
-                "value": null
-              },
-              {
-                "color": "yellow",
-                "value": 35
-              },
-              {
-                "color": "green",
-                "value": 70
-              }
-            ]
-          }
-        },
-        "overrides": []
-      },
-      "options": {
-        "colorMode": "background",
-        "graphMode": "area",
-        "justifyMode": "center",
-        "orientation": "auto",
-        "reduceOptions": {
-          "calcs": [
-            "lastNotNull"
-          ],
-          "fields": "",
-          "values": false
-        },
-        "textMode": "auto"
-      }
-    },
-    {
-      "id": 132,
-      "type": "stat",
-      "title": "NPU Utilization (avg)",
-      "datasource": {
-        "type": "prometheus",
-        "uid": "prometheus"
-      },
-      "gridPos": {
-        "x": 6,
-        "y": 27,
-        "w": 6,
-        "h": 5
-      },
-      "targets": [
-        {
-          "refId": "A",
-          "expr": "avg(fl_npu_utilization_percent) or vector(0)"
-        }
-      ],
-      "fieldConfig": {
-        "defaults": {
-          "unit": "percent",
-          "color": {
-            "mode": "thresholds"
-          },
-          "decimals": 1,
-          "thresholds": {
-            "mode": "absolute",
-            "steps": [
-              {
-                "color": "red",
-                "value": null
-              },
-              {
-                "color": "yellow",
-                "value": 35
-              },
-              {
-                "color": "green",
-                "value": 70
-              }
-            ]
-          }
-        },
-        "overrides": []
-      },
-      "options": {
-        "colorMode": "background",
-        "graphMode": "area",
-        "justifyMode": "center",
-        "orientation": "auto",
-        "reduceOptions": {
-          "calcs": [
-            "lastNotNull"
-          ],
-          "fields": "",
-          "values": false
-        },
-        "textMode": "auto"
-      }
-    },
-    {
-      "id": 133,
-      "type": "stat",
-      "title": "Trust Verification Failures (15m)",
-      "datasource": {
-        "type": "prometheus",
-        "uid": "prometheus"
-      },
-      "gridPos": {
-        "x": 12,
-        "y": 27,
-        "w": 6,
-        "h": 5
-      },
-      "targets": [
-        {
-          "refId": "A",
-          "expr": "sum(increase(tpm_trust_verification_failures_total[15m])) or vector(0)"
-        }
-      ],
-      "fieldConfig": {
-        "defaults": {
-          "unit": "short",
-          "color": {
-            "mode": "thresholds"
-          },
-          "decimals": 0,
-          "thresholds": {
-            "mode": "absolute",
-            "steps": [
-              {
-                "color": "green",
-                "value": null
-              },
-              {
-                "color": "yellow",
-                "value": 1
-              },
-              {
-                "color": "red",
-                "value": 5
-              }
-            ]
-          }
-        },
-        "overrides": []
-      },
-      "options": {
-        "colorMode": "background",
-        "graphMode": "area",
-        "justifyMode": "center",
-        "orientation": "auto",
-        "reduceOptions": {
-          "calcs": [
-            "lastNotNull"
-          ],
-          "fields": "",
-          "values": false
-        },
-        "textMode": "auto"
-      }
-    },
-    {
-      "id": 134,
-      "type": "stat",
-      "title": "Average Node Trust Score",
-      "datasource": {
-        "type": "prometheus",
-        "uid": "prometheus"
-      },
-      "gridPos": {
-        "x": 18,
-        "y": 27,
-        "w": 6,
-        "h": 5
-      },
-      "targets": [
-        {
-          "refId": "A",
-          "expr": "avg(tpm_node_trust_score) or vector(0)"
-        }
-      ],
-      "fieldConfig": {
-        "defaults": {
-          "unit": "short",
-          "color": {
-            "mode": "thresholds"
-          },
-          "decimals": 1,
-          "thresholds": {
-            "mode": "absolute",
-            "steps": [
-              {
-                "color": "red",
-                "value": null
-              },
-              {
-                "color": "yellow",
-                "value": 70
-              },
-              {
-                "color": "green",
-                "value": 90
-              }
-            ]
-          }
-        },
-        "overrides": []
-      },
-      "options": {
-        "colorMode": "background",
-        "graphMode": "area",
-        "justifyMode": "center",
-        "orientation": "auto",
-        "reduceOptions": {
-          "calcs": [
-            "lastNotNull"
-          ],
-          "fields": "",
-          "values": false
-        },
-        "textMode": "auto"
-      }
-    },
-    {
-      "id": 135,
-      "type": "timeseries",
-      "title": "Attestation Latency and Trust Chain",
-      "datasource": {
-        "type": "prometheus",
-        "uid": "prometheus"
-      },
-      "gridPos": {
-        "x": 0,
-        "y": 32,
-        "w": 12,
-        "h": 7
-      },
-      "targets": [
-        {
-          "refId": "A",
-          "expr": "quantile(0.50, tpm_node_attestation_latency_ms) or vector(0)",
-          "legendFormat": "Attestation p50 ms"
-        },
-        {
-          "refId": "B",
-          "expr": "quantile(0.95, tpm_node_attestation_latency_ms) or vector(0)",
-          "legendFormat": "Attestation p95 ms"
-        },
-        {
-          "refId": "C",
-          "expr": "sum(tpm_trust_chain_valid)",
-          "legendFormat": "Trust chain valid count"
-        }
-      ],
-      "fieldConfig": {
-        "defaults": {
-          "unit": "short",
-          "color": {
-            "mode": "palette-classic"
-          },
-          "custom": {
-            "drawStyle": "line",
-            "lineWidth": 2,
-            "fillOpacity": 12,
-            "showPoints": "never",
-            "lineInterpolation": "smooth"
-          }
-        },
-        "overrides": []
-      },
-      "options": {
-        "legend": {
-          "displayMode": "table",
-          "placement": "bottom",
-          "showLegend": true
-        },
-        "tooltip": {
-          "mode": "multi",
-          "sort": "none"
-        }
-      }
-    },
-    {
-      "id": 136,
-      "type": "timeseries",
-      "title": "Validator Fault Signals",
-      "datasource": {
-        "type": "prometheus",
-        "uid": "prometheus"
-      },
-      "gridPos": {
-        "x": 12,
-        "y": 32,
-        "w": 12,
+        "y": 29,
+        "w": 8,
         "h": 7
       },
       "targets": [
         {
           "refId": "A",
           "expr": "sum(increase(sovereign_validators_missing_attestation_total[15m])) or vector(0)",
-          "legendFormat": "Missing attestation events (15m)"
+          "legendFormat": "Missing attestations"
         },
         {
           "refId": "B",
           "expr": "sum(increase(sovereign_validators_attestation_failures_total[15m])) or vector(0)",
-          "legendFormat": "Attestation failures (15m)"
+          "legendFormat": "Attestation failures"
+        },
+        {
+          "refId": "C",
+          "expr": "sum(increase(sovereign_validators_stale_attestation_total[15m])) or vector(0)",
+          "legendFormat": "Stale attestations"
         }
       ],
       "fieldConfig": {
         "defaults": {
           "unit": "short",
+          "min": 0,
+          "max": 25,
+          "decimals": 0,
           "color": {
-            "mode": "palette-classic"
+            "mode": "continuous-GrYlRd"
           },
-          "custom": {
-            "drawStyle": "line",
-            "lineWidth": 2,
-            "fillOpacity": 12,
-            "showPoints": "never",
-            "lineInterpolation": "smooth"
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "red",
+                "value": null
+              },
+              {
+                "color": "yellow",
+                "value": 45
+              },
+              {
+                "color": "green",
+                "value": 75
+              }
+            ]
           }
         },
         "overrides": []
       },
       "options": {
-        "legend": {
-          "displayMode": "table",
-          "placement": "bottom",
-          "showLegend": true
+        "orientation": "horizontal",
+        "displayMode": "gradient",
+        "showUnfilled": true,
+        "minVizHeight": 18,
+        "minVizWidth": 16,
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        }
+      }
+    },
+    {
+      "id": 132,
+      "type": "bargauge",
+      "title": "LLM Policy Health (15m)",
+      "datasource": {
+        "type": "prometheus",
+        "uid": "prometheus"
+      },
+      "gridPos": {
+        "x": 8,
+        "y": 29,
+        "w": 8,
+        "h": 7
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "expr": "sum(increase(sovereignmap_llm_policy_valid_updates_total[15m])) or vector(0)",
+          "legendFormat": "Valid updates"
         },
-        "tooltip": {
-          "mode": "multi",
-          "sort": "none"
+        {
+          "refId": "B",
+          "expr": "sum(increase(sovereignmap_llm_policy_rejected_updates_total[15m])) or vector(0)",
+          "legendFormat": "Rejected updates"
+        },
+        {
+          "refId": "C",
+          "expr": "(sum(increase(sovereignmap_llm_policy_valid_updates_total[15m])) / clamp_min(sum(increase(sovereignmap_llm_policy_valid_updates_total[15m])) + sum(increase(sovereignmap_llm_policy_rejected_updates_total[15m])),1)) * 100 or vector(0)",
+          "legendFormat": "Acceptance %"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "short",
+          "min": 0,
+          "max": 100,
+          "decimals": 1,
+          "color": {
+            "mode": "continuous-GrYlRd"
+          },
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "red",
+                "value": null
+              },
+              {
+                "color": "yellow",
+                "value": 45
+              },
+              {
+                "color": "green",
+                "value": 75
+              }
+            ]
+          }
+        },
+        "overrides": []
+      },
+      "options": {
+        "orientation": "horizontal",
+        "displayMode": "gradient",
+        "showUnfilled": true,
+        "minVizHeight": 18,
+        "minVizWidth": 16,
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        }
+      }
+    },
+    {
+      "id": 133,
+      "type": "bargauge",
+      "title": "TPM Trust Health (15m)",
+      "datasource": {
+        "type": "prometheus",
+        "uid": "prometheus"
+      },
+      "gridPos": {
+        "x": 16,
+        "y": 29,
+        "w": 8,
+        "h": 7
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "expr": "sum(tpm_trust_chain_valid) or vector(0)",
+          "legendFormat": "Trust chain valid"
+        },
+        {
+          "refId": "B",
+          "expr": "sum(increase(tpm_trust_verification_failures_total[15m])) or vector(0)",
+          "legendFormat": "Trust failures"
+        },
+        {
+          "refId": "C",
+          "expr": "sum(increase(tpm_node_attestation_events_total[15m])) or vector(0)",
+          "legendFormat": "Attestation events"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "short",
+          "min": 0,
+          "max": 100,
+          "decimals": 0,
+          "color": {
+            "mode": "continuous-GrYlRd"
+          },
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "red",
+                "value": null
+              },
+              {
+                "color": "yellow",
+                "value": 45
+              },
+              {
+                "color": "green",
+                "value": 75
+              }
+            ]
+          }
+        },
+        "overrides": []
+      },
+      "options": {
+        "orientation": "horizontal",
+        "displayMode": "gradient",
+        "showUnfilled": true,
+        "minVizHeight": 18,
+        "minVizWidth": 16,
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
         }
       }
     }
   ],
-  "refresh": "10s",
+  "refresh": "5s",
   "schemaVersion": 38,
   "style": "dark",
   "tags": [
-    "operations",
+    "live",
     "network-health",
-    "fl",
-    "trust",
+    "noc",
+    "operations",
+    "professional",
+    "sovereignmap",
     "vivid"
   ],
   "templating": {
     "list": []
   },
   "time": {
-    "from": "now-6h",
+    "from": "now-3h",
     "to": "now"
   },
   "timepicker": {},
   "timezone": "",
-  "title": "SovereignMap Operations Overview",
+  "title": "SovereignMap | Operations Overview",
   "uid": "sovereign-operations-overview",
-  "version": 1,
-  "weekStart": ""
+  "version": 2,
+  "weekStart": "",
+  "description": "NOC-style operations dashboard with gauge-first KPIs, vivid thresholds, and live trend walls for federated network health."
 }

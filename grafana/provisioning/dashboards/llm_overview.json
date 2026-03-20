@@ -7,7 +7,7 @@
   "graphTooltip": 1,
   "id": null,
   "links": [],
-  "liveNow": false,
+  "liveNow": true,
   "panels": [
     {
       "id": 300,
@@ -20,11 +20,14 @@
         "h": 1
       },
       "collapsed": false,
-      "panels": []
+      "panels": [],
+      "fieldConfig": {
+        "defaults": {}
+      }
     },
     {
       "id": 301,
-      "type": "stat",
+      "type": "gauge",
       "title": "Policy Acceptance (15m)",
       "datasource": {
         "type": "prometheus",
@@ -65,15 +68,13 @@
                 "value": 90
               }
             ]
-          }
+          },
+          "min": 0,
+          "max": 100
         },
         "overrides": []
       },
       "options": {
-        "colorMode": "background",
-        "graphMode": "area",
-        "justifyMode": "center",
-        "orientation": "auto",
         "reduceOptions": {
           "calcs": [
             "lastNotNull"
@@ -81,7 +82,9 @@
           "fields": "",
           "values": false
         },
-        "textMode": "auto"
+        "showThresholdLabels": true,
+        "showThresholdMarkers": true,
+        "orientation": "auto"
       }
     },
     {
@@ -305,9 +308,10 @@
           "custom": {
             "drawStyle": "line",
             "lineWidth": 2,
-            "fillOpacity": 12,
+            "fillOpacity": 14,
             "showPoints": "never",
-            "lineInterpolation": "smooth"
+            "lineInterpolation": "smooth",
+            "gradientMode": "opacity"
           }
         },
         "overrides": []
@@ -364,9 +368,10 @@
           "custom": {
             "drawStyle": "line",
             "lineWidth": 2,
-            "fillOpacity": 12,
+            "fillOpacity": 14,
             "showPoints": "never",
-            "lineInterpolation": "smooth"
+            "lineInterpolation": "smooth",
+            "gradientMode": "opacity"
           }
         },
         "overrides": []
@@ -394,7 +399,10 @@
         "h": 1
       },
       "collapsed": false,
-      "panels": []
+      "panels": [],
+      "fieldConfig": {
+        "defaults": {}
+      }
     },
     {
       "id": 321,
@@ -684,9 +692,10 @@
           "custom": {
             "drawStyle": "line",
             "lineWidth": 2,
-            "fillOpacity": 12,
+            "fillOpacity": 14,
             "showPoints": "never",
-            "lineInterpolation": "smooth"
+            "lineInterpolation": "smooth",
+            "gradientMode": "opacity"
           }
         },
         "overrides": []
@@ -704,26 +713,29 @@
       }
     }
   ],
-  "refresh": "10s",
+  "refresh": "5s",
   "schemaVersion": 38,
   "style": "dark",
   "tags": [
+    "federated-learning",
+    "live",
     "llm",
     "policy",
+    "professional",
     "quality",
-    "federated-learning",
+    "sovereignmap",
     "vivid"
   ],
   "templating": {
     "list": []
   },
   "time": {
-    "from": "now-6h",
+    "from": "now-3h",
     "to": "now"
   },
   "timepicker": {},
   "timezone": "",
-  "title": "SovereignMap LLM Overview",
+  "title": "SovereignMap | LLM Overview",
   "uid": "sovereign-llm-overview",
   "version": 1,
   "weekStart": ""
