@@ -32,6 +32,9 @@ function App() {
   const [policyRole, setPolicyRole] = useState('admin');
   const [policyMessage, setPolicyMessage] = useState('');
   const [trainingStatus, setTrainingStatus] = useState({ status: 'idle', active: false, round: 0 });
+  const [opsHealth, setOpsHealth] = useState(null);
+  const [opsEvents, setOpsEvents] = useState([]);
+  const [opsStreamStatus, setOpsStreamStatus] = useState('disconnected');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
 
@@ -43,6 +46,58 @@ function App() {
     fetchData();
     const interval = setInterval(fetchData, 5000);
     return () => clearInterval(interval);
+  }, []);
+
+  useEffect(() => {
+    let stream;
+    let cancelled = false;
+
+    const connect = async () => {
+      try {
+        setOpsStreamStatus('connecting');
+
+        // Prime timeline with recent events before opening stream.
+        const recent = await fetch(`${API_BASE}/ops/events/recent?limit=80`);
+        if (recent.ok) {
+          const recentPayload = await recent.json();
+          setOpsEvents(Array.isArray(recentPayload?.events) ? recentPayload.events : []);
+        }
+
+        if (cancelled) {
+          return;
+        }
+
+        stream = new EventSource(`${API_BASE}/ops/events`);
+        stream.onopen = () => setOpsStreamStatus('connected');
+        stream.onerror = () => setOpsStreamStatus('degraded');
+        stream.onmessage = (evt) => {
+          try {
+            const payload = JSON.parse(evt.data);
+            if (payload?.kind === 'heartbeat') {
+              return;
+            }
+            setOpsEvents((prev) => {
+              const next = [...prev, payload];
+              return next.slice(-220);
+            });
+          } catch (parseErr) {
+            console.warn('Failed to parse ops event', parseErr);
+          }
+        };
+      } catch (streamErr) {
+        console.warn('Ops event stream unavailable:', streamErr);
+        setOpsStreamStatus('disconnected');
+      }
+    };
+
+    connect();
+
+    return () => {
+      cancelled = true;
+      if (stream) {
+        stream.close();
+      }
+    };
   }, []);
 
   const fetchTrustSnapshot = async () => {
@@ -64,20 +119,22 @@ function App() {
   const fetchData = async () => {
     setLoading(true);
     try {
-      const [hudRes, healthRes, metricsRes, foundersRes, trainingRes] = await Promise.all([
+      const [hudRes, healthRes, metricsRes, foundersRes, trainingRes, opsHealthRes] = await Promise.all([
         fetch(`${API_BASE}/hud_data`),
         fetch(`${API_BASE}/health`),
         fetch(`${API_BASE}/metrics_summary`),
         fetch(`${API_BASE}/founders`),
-        fetch(`${API_BASE}/training/status`)
+        fetch(`${API_BASE}/training/status`),
+        fetch(`${API_BASE}/ops/health`)
       ]);
 
-      const [hud, healthData, metrics, foundersData, trainingData] = await Promise.all([
+      const [hud, healthData, metrics, foundersData, trainingData, opsHealthData] = await Promise.all([
         hudRes.json(),
         healthRes.json(),
         metricsRes.json(),
         foundersRes.json(),
-        trainingRes.ok ? trainingRes.json() : Promise.resolve({ status: 'idle', active: false, round: 0 })
+        trainingRes.ok ? trainingRes.json() : Promise.resolve({ status: 'idle', active: false, round: 0 }),
+        opsHealthRes.ok ? opsHealthRes.json() : Promise.resolve(null)
       ]);
 
       setHudData(hud);
@@ -85,6 +142,7 @@ function App() {
       setMetricsSummary(metrics);
       setFounders(foundersData);
       setTrainingStatus(trainingData || { status: 'idle', active: false, round: 0 });
+      setOpsHealth(opsHealthData);
 
       try {
         await fetchTrustSnapshot();
@@ -297,6 +355,9 @@ function App() {
             policyRole={policyRole}
             policyMessage={policyMessage}
             trainingStatus={trainingStatus}
+            opsHealth={opsHealth}
+            opsEvents={opsEvents}
+            opsStreamStatus={opsStreamStatus}
             loading={loading}
             error={error}
             onTriggerFLRound={triggerFLRound}

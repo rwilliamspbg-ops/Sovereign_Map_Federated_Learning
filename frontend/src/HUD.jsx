@@ -19,6 +19,9 @@ export default function HUD({
   policyRole,
   policyMessage,
   trainingStatus,
+  opsHealth,
+  opsEvents,
+  opsStreamStatus,
   loading,
   error,
   onTriggerFLRound,
@@ -56,15 +59,52 @@ export default function HUD({
     }
   };
 
+  const recentOpsEvents = (opsEvents || []).slice(-8).reverse();
+  const healthStatus = opsHealth?.status || 'unknown';
+  const streamLabel = opsStreamStatus || 'disconnected';
+
   return (
     <div className="hud-container global-dark">
       <header className="hud-main-header">
         <div className="header-branding">
-          <h2>🛰️ SOVEREIGN MAP COMMAND CENTER</h2>
-          <span className="system-status inline-pulse">🔴 LIVE // TESTNET</span>
+          <h2>SOVEREIGN MAP COMMAND CENTER</h2>
+          <span className="system-status inline-pulse">LIVE OPS // LINUX CONTROL PLANE</span>
         </div>
         {loading && <div className="loading-spinner">SYNCING TELEMETRY...</div>}
       </header>
+
+      <section className="ops-ribbon glass-panel">
+        <div className="ops-chip">
+          <span className="ops-chip-label">System</span>
+          <span className={`ops-chip-value ${healthStatus === 'critical' ? 'chip-critical' : healthStatus === 'degraded' ? 'chip-warning' : 'chip-ok'}`}>
+            {healthStatus.toUpperCase()}
+          </span>
+        </div>
+        <div className="ops-chip">
+          <span className="ops-chip-label">Event Stream</span>
+          <span className={`ops-chip-value ${streamLabel === 'connected' ? 'chip-ok' : streamLabel === 'connecting' ? 'chip-warning' : 'chip-critical'}`}>
+            {streamLabel.toUpperCase()}
+          </span>
+        </div>
+        <div className="ops-chip">
+          <span className="ops-chip-label">CPU Load (1m)</span>
+          <span className="ops-chip-value">{opsHealth?.system?.load_1m ?? 'N/A'}</span>
+        </div>
+        <div className="ops-chip">
+          <span className="ops-chip-label">Memory Used</span>
+          <span className="ops-chip-value">{opsHealth?.system?.memory?.used_percent ?? 'N/A'}%</span>
+        </div>
+        <div className="ops-chip">
+          <span className="ops-chip-label">Disk Used</span>
+          <span className="ops-chip-value">{opsHealth?.system?.disk?.used_percent ?? 'N/A'}%</span>
+        </div>
+        <div className="ops-chip">
+          <span className="ops-chip-label">Ports</span>
+          <span className="ops-chip-value">
+            API:{opsHealth?.ports?.api_8000 ? 'up' : 'down'} | FL:{opsHealth?.ports?.flower_8080 ? 'up' : 'down'} | PROM:{opsHealth?.ports?.prometheus_9090 ? 'up' : 'down'}
+          </span>
+        </div>
+      </section>
 
       <div className="hud-grid master-grid">
         
@@ -130,7 +170,7 @@ export default function HUD({
 
         {/* MIDDLE COLUMN: LIVE TERMINAL & AI */}
         <div className="hud-col middle-col">
-          <LiveTerminal />
+          <LiveTerminal events={opsEvents} />
 
           <div className="hud-section glass-panel voice-ai-panel">
             <h3>🤖 Sovereign Neural Assistant</h3>
@@ -152,6 +192,25 @@ export default function HUD({
                 <p>{voiceResponse}</p>
               </div>
             )}
+          </div>
+
+          <div className="hud-section glass-panel timeline-panel">
+            <h3>Operations Timeline</h3>
+            <div className="timeline-list">
+              {recentOpsEvents.length === 0 ? (
+                <div className="timeline-empty">No live operations events yet.</div>
+              ) : (
+                recentOpsEvents.map((evt) => (
+                  <div key={`${evt.id}-${evt.ts}`} className={`timeline-item severity-${evt.severity || 'info'}`}>
+                    <div className="timeline-meta">
+                      <span>{new Date((evt.ts || 0) * 1000).toLocaleTimeString()}</span>
+                      <span>{(evt.kind || 'event').toUpperCase()}</span>
+                    </div>
+                    <div className="timeline-message">{evt.message}</div>
+                  </div>
+                ))
+              )}
+            </div>
           </div>
         </div>
 

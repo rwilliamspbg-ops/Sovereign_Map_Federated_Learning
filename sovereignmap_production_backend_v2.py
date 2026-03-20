@@ -19,19 +19,24 @@ import json
 import logging
 import math
 import os
+import platform
 import random
 import secrets
+import shutil
+import socket
 import threading
 import time
 import urllib.error
 import urllib.request
+from collections import deque
 from collections import defaultdict
+from queue import Queue
 from typing import Any, Dict, List, Optional, Set, Tuple
 
 import ecdsa
 import numpy as np
 from ecdsa import SigningKey, VerifyingKey, SECP256k1
-from flask import Flask, jsonify, request
+from flask import Flask, Response, jsonify, request, stream_with_context
 from prometheus_flask_exporter import PrometheusMetrics
 from prometheus_client import Gauge, Counter, Histogram
 
@@ -364,6 +369,10 @@ simulation_effects = {
     "accuracy_penalty_pct": 0.0,
     "loss_multiplier": 1.0,
 }
+ops_event_log = deque(maxlen=400)
+ops_event_subscribers = set()
+ops_event_lock = threading.Lock()
+ops_event_seq = 0
 MODEL_REGISTRY_PATH = os.getenv("MODEL_REGISTRY_PATH", "./data/model_registry.jsonl")
 TPM_METRICS_ENDPOINT = os.getenv(
     "TPM_METRICS_ENDPOINT", "http://tpm-metrics:9091/event/attestation"
@@ -493,6 +502,117 @@ def _get_cert_manager():
     if tpm_cert_manager is None:
         tpm_cert_manager = TPMCertificateManager(CERT_DIR)
     return tpm_cert_manager
+
+
+def _read_meminfo() -> Dict[str, float]:
+    mem_total_kb = 0.0
+    mem_available_kb = 0.0
+    try:
+        with open("/proc/meminfo", "r", encoding="utf-8") as meminfo:
+            for line in meminfo:
+                if line.startswith("MemTotal:"):
+                    mem_total_kb = float(line.split()[1])
+                elif line.startswith("MemAvailable:"):
+                    mem_available_kb = float(line.split()[1])
+    except OSError:
+        return {
+            "total_mb": 0.0,
+            "available_mb": 0.0,
+            "used_mb": 0.0,
+            "used_percent": 0.0,
+        }
+
+    total_mb = mem_total_kb / 1024.0
+    available_mb = mem_available_kb / 1024.0
+    used_mb = max(0.0, total_mb - available_mb)
+    used_percent = (used_mb / total_mb * 100.0) if total_mb > 0 else 0.0
+    return {
+        "total_mb": round(total_mb, 2),
+        "available_mb": round(available_mb, 2),
+        "used_mb": round(used_mb, 2),
+        "used_percent": round(used_percent, 2),
+    }
+
+
+def _probe_local_port(port: int) -> bool:
+    with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as sock:
+        sock.settimeout(0.25)
+        return sock.connect_ex(("127.0.0.1", port)) == 0
+
+
+def build_ops_health_snapshot() -> Dict[str, Any]:
+    disk = shutil.disk_usage(".")
+    disk_used_percent = (disk.used / disk.total * 100.0) if disk.total > 0 else 0.0
+    memory = _read_meminfo()
+
+    try:
+        load_1m, load_5m, load_15m = os.getloadavg()
+    except OSError:
+        load_1m, load_5m, load_15m = (0.0, 0.0, 0.0)
+
+    training_active = bool(training_state.get("active", False))
+    critical = disk_used_percent >= 95 or memory["used_percent"] >= 95
+    degraded = disk_used_percent >= 85 or memory["used_percent"] >= 85
+
+    status = "healthy"
+    if critical:
+        status = "critical"
+    elif degraded:
+        status = "degraded"
+
+    return {
+        "timestamp": int(time.time()),
+        "status": status,
+        "host": {
+            "platform": platform.platform(),
+            "python": platform.python_version(),
+        },
+        "training": {
+            "active": training_active,
+            "status": training_state.get("status", "idle"),
+            "round": int(strategy.round_num) if strategy else 0,
+        },
+        "system": {
+            "load_1m": round(load_1m, 3),
+            "load_5m": round(load_5m, 3),
+            "load_15m": round(load_15m, 3),
+            "memory": memory,
+            "disk": {
+                "total_gb": round(disk.total / (1024**3), 2),
+                "used_gb": round(disk.used / (1024**3), 2),
+                "free_gb": round(disk.free / (1024**3), 2),
+                "used_percent": round(disk_used_percent, 2),
+            },
+        },
+        "ports": {
+            "api_8000": _probe_local_port(8000),
+            "flower_8080": _probe_local_port(8080),
+            "prometheus_9090": _probe_local_port(9090),
+        },
+    }
+
+
+def emit_ops_event(kind: str, message: str, severity: str = "info", data: Optional[Dict[str, Any]] = None):
+    global ops_event_seq
+    with ops_event_lock:
+        ops_event_seq += 1
+        event = {
+            "id": ops_event_seq,
+            "ts": int(time.time()),
+            "kind": kind,
+            "severity": severity,
+            "message": message,
+            "data": data or {},
+        }
+        ops_event_log.append(event)
+        dead_subscribers = []
+        for subscriber in ops_event_subscribers:
+            try:
+                subscriber.put_nowait(event)
+            except Exception:
+                dead_subscribers.append(subscriber)
+        for dead in dead_subscribers:
+            ops_event_subscribers.discard(dead)
 
 
 def _authorized_join_admin(req: request) -> bool:
@@ -729,6 +849,17 @@ def execute_manual_fl_round(reason: str = "manual") -> Dict[str, Any]:
     logger.info(
         f"HUD-triggered FL round {current_round} ({reason}) -> accuracy={next_acc:.2f}% loss={next_loss:.4f}"
     )
+    emit_ops_event(
+        kind="training_round",
+        message=f"Round {current_round} completed ({reason})",
+        severity="success",
+        data={
+            "round": current_round,
+            "accuracy": round(next_acc, 3),
+            "loss": round(next_loss, 4),
+            "active_nodes": active_nodes,
+        },
+    )
     return {
         "status": "accepted",
         "message": f"FL round executed via {reason}",
@@ -804,10 +935,64 @@ def trust_snapshot():
     )
 
 
+@app.route("/ops/health", methods=["GET"])
+def ops_health():
+    return jsonify(build_ops_health_snapshot()), 200
+
+
+@app.route("/ops/events/recent", methods=["GET"])
+def ops_events_recent():
+    limit = int(request.args.get("limit", 100))
+    if limit <= 0:
+        limit = 100
+    with ops_event_lock:
+        events = list(ops_event_log)[-limit:]
+    return jsonify({"count": len(events), "events": events}), 200
+
+
+@app.route("/ops/events", methods=["GET"])
+def ops_events_stream():
+    subscriber = Queue(maxsize=128)
+    with ops_event_lock:
+        ops_event_subscribers.add(subscriber)
+        backlog = list(ops_event_log)[-30:]
+
+    def _stream():
+        try:
+            for item in backlog:
+                yield f"data: {json.dumps(item)}\n\n"
+
+            while True:
+                try:
+                    event = subscriber.get(timeout=20)
+                    yield f"data: {json.dumps(event)}\n\n"
+                except Exception:
+                    heartbeat = {
+                        "id": 0,
+                        "ts": int(time.time()),
+                        "kind": "heartbeat",
+                        "severity": "info",
+                        "message": "stream_alive",
+                        "data": {},
+                    }
+                    yield f"data: {json.dumps(heartbeat)}\n\n"
+        finally:
+            with ops_event_lock:
+                ops_event_subscribers.discard(subscriber)
+
+    return Response(stream_with_context(_stream()), mimetype="text/event-stream")
+
+
 @app.route("/verification_policy", methods=["POST"])
 def update_verification_policy():
     data = request.json or {}
     logger.info(f"Verification policy update requested: {data}")
+    emit_ops_event(
+        kind="policy_update",
+        message="Verification policy update requested",
+        severity="info",
+        data={"policy_fields": sorted(list(data.keys()))},
+    )
     return jsonify({"status": "ok", "message": "Policy applied successfully"}), 200
 
 
@@ -837,6 +1022,13 @@ def start_training():
         training_thread = threading.Thread(target=_training_loop, daemon=True)
         training_thread.start()
 
+    emit_ops_event(
+        kind="training",
+        message="Real FL training loop started",
+        severity="success",
+        data={"tick_seconds": training_state["tick_seconds"]},
+    )
+
     return (
         jsonify(
             {
@@ -857,6 +1049,12 @@ def stop_training():
         training_state["status"] = "idle"
         training_state["last_stopped_at"] = int(time.time())
         training_state["last_message"] = "HUD training loop stopped"
+    emit_ops_event(
+        kind="training",
+        message="Training loop stopped",
+        severity="warning",
+        data={"round": int(strategy.round_num) if strategy else 0},
+    )
     return jsonify({"status": "idle", "message": "Training halted"}), 200
 
 
@@ -923,6 +1121,16 @@ def trigger_hud_simulation(simulation_type: str):
         extra={
             "simulation_type": simulation_type,
             "count": simulation_counters[simulation_type],
+        },
+    )
+    emit_ops_event(
+        kind="simulation",
+        message=f"Simulation triggered: {simulation_type}",
+        severity="warning",
+        data={
+            "simulation_type": simulation_type,
+            "count": simulation_counters[simulation_type],
+            "effects": simulation_effects,
         },
     )
     return (
@@ -1000,6 +1208,12 @@ def hud_data():
 def trigger_fl_round():
     logger.info("Manual FL round trigger requested via API")
     result = execute_manual_fl_round(reason="hud_single_round")
+    emit_ops_event(
+        kind="training_round",
+        message="Manual FL round triggered from HUD",
+        severity="success" if result.get("status") == "accepted" else "error",
+        data=result,
+    )
     status_code = 202 if result.get("status") == "accepted" else 503
     return jsonify(result), status_code
 
@@ -1013,6 +1227,12 @@ def create_enclave():
         enclave_status = "Attested & Locked"
 
     logger.info(f"Secure enclave transitioned to: {enclave_status}")
+    emit_ops_event(
+        kind="enclave",
+        message=f"Enclave state changed: {enclave_status}",
+        severity="info",
+        data={"enclave_status": enclave_status},
+    )
     return jsonify({"status": "ok", "enclave_status": enclave_status}), 200
 
 
@@ -1341,6 +1561,12 @@ if __name__ == "__main__":
     logger.info("Sovereign Maps Backend v1.0.0 - Starting dual-mode server")
     logger.info("- Flower aggregator: 0.0.0.0:8080")
     logger.info("- Flask metrics API: 0.0.0.0:8000")
+    emit_ops_event(
+        kind="system",
+        message="Backend boot sequence started",
+        severity="info",
+        data={"service": "sovereign-map-aggregator"},
+    )
 
     # Run Flask metrics API in a background thread so Flower stays on the main thread.
     flask_thread = threading.Thread(target=run_flask_metrics, daemon=True)

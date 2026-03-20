@@ -1,41 +1,23 @@
 import React, { useState, useEffect, useRef } from 'react';
 
-const MESSAGES = [
-  "[SYS] Connection securely established to Sovereign Orbit.",
-  "[TEE] Remote attestation verified for Node 0x489F.",
-  "[FL] Training weights securely aggregated across 12 nodes.",
-  "[NET] CXL memory expanded successfully. Latency: 12ms.",
-  "[TOKEN] Smart contract bridge escrow synchronized.",
-  "[SYS] Global accuracy achieved convergence target (85.2%).",
-  "[SEC] Anomalous gradient dropped from BFT sequence.",
-  "[FL] Starting Epoch 72 on partitioned subset.",
-  "[TEE] SGX Quote validation complete.",
-  "[SYS] Health check passed: All services nominal."
-];
-
-export default function LiveTerminal() {
-  const [logs, setLogs] = useState([]);
+export default function LiveTerminal({ events = [] }) {
+  const [logs, setLogs] = useState([
+    '[BOOT] Operations terminal initialized.',
+    '[BOOT] Awaiting live backend events...'
+  ]);
   const containerRef = useRef(null);
 
   useEffect(() => {
-    // Start with a few initial logs
-    setLogs([
-      "Initializing Sovereign Map Systems...",
-      "Connecting to mesh network...",
-      "Link established."
-    ]);
-
-    const interval = setInterval(() => {
-      setLogs((prev) => {
-        const nextMsg = MESSAGES[Math.floor(Math.random() * MESSAGES.length)];
-        const newLogs = [...prev, `[${new Date().toISOString().split('T')[1].slice(0, -1)}] ${nextMsg}`];
-        if (newLogs.length > 50) newLogs.shift();
-        return newLogs;
-      });
-    }, 1800);
-
-    return () => clearInterval(interval);
-  }, []);
+    if (!Array.isArray(events) || events.length === 0) {
+      return;
+    }
+    const mapped = events.slice(-60).map((evt) => {
+      const ts = evt?.ts ? new Date(evt.ts * 1000).toLocaleTimeString() : 'N/A';
+      const kind = (evt?.kind || 'event').toUpperCase();
+      return `[${ts}] [${kind}] ${evt?.message || 'event'}`;
+    });
+    setLogs(mapped);
+  }, [events]);
 
   useEffect(() => {
     if (containerRef.current) {
