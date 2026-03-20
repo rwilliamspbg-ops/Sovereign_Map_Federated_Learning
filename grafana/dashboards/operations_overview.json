@@ -1070,7 +1070,7 @@
     {
       "id": 136,
       "type": "timeseries",
-      "title": "Fault and Partition Signals",
+      "title": "Validator Fault Signals",
       "datasource": {
         "type": "prometheus",
         "uid": "prometheus"
@@ -1084,13 +1084,13 @@
       "targets": [
         {
           "refId": "A",
-          "expr": "sum(increase(fl_network_partition_events_total[15m])) or vector(0)",
-          "legendFormat": "Network partitions (15m)"
+          "expr": "sum(increase(sovereign_validators_missing_attestation_total[15m])) or vector(0)",
+          "legendFormat": "Missing attestation events (15m)"
         },
         {
           "refId": "B",
-          "expr": "sum(increase(fl_byzantine_nodes_total[15m])) or vector(0)",
-          "legendFormat": "Byzantine detections (15m)"
+          "expr": "sum(increase(sovereign_validators_attestation_failures_total[15m])) or vector(0)",
+          "legendFormat": "Attestation failures (15m)"
         }
       ],
       "fieldConfig": {
