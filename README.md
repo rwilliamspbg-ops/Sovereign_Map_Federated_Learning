@@ -169,6 +169,18 @@ Capture workflow and acceptance checklist:
 
 Current status: screenshot paths are defined and release capture workflow is documented; attach rendered PNG/GIF evidence in each tagged release.
 
+### Dashboard Screenshot Previews
+
+<!-- markdownlint-disable MD033 -->
+<p>
+    <img src="docs/screenshots/grafana-operations-overview.png" alt="Grafana Operations Overview" width="420" />
+    <img src="docs/screenshots/hud-operations-overview.png" alt="Network Operations HUD" width="420" />
+    <img src="docs/screenshots/grafana-llm-overview.png" alt="Grafana LLM Overview" width="420" />
+</p>
+<!-- markdownlint-enable MD033 -->
+
+If images do not render on GitHub, confirm these exact files are committed under `docs/screenshots/`.
+
 ## Dual-Plane Runtime Data Flow
 
 ```mermaid
