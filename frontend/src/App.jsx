@@ -4,7 +4,26 @@ import BrowserFLDemo from './BrowserFLDemo';
 import './App.css';
 import PrivacyUtilityDashboard from './PrivacyUtilityDashboard';
 
-const API_BASE = import.meta.env.VITE_HUD_API_BASE || (import.meta.env.DEV ? '/backend' : 'http://localhost:8000');
+const resolveApiBase = () => {
+  if (import.meta.env.VITE_HUD_API_BASE) {
+    return import.meta.env.VITE_HUD_API_BASE;
+  }
+
+  if (import.meta.env.DEV) {
+    return '/backend';
+  }
+
+  if (typeof window !== 'undefined') {
+    const protocol = window.location.protocol === 'https:' ? 'https:' : 'http:';
+    const host = window.location.hostname;
+    const apiPort = import.meta.env.VITE_HUD_API_PORT || '8000';
+    return `${protocol}//${host}:${apiPort}`;
+  }
+
+  return 'http://localhost:8000';
+};
+
+const API_BASE = resolveApiBase();
 const TRUST_API_BASE = API_BASE;
 
 function App() {
