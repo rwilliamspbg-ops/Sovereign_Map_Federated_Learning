@@ -1,10 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import LiveTerminal from './LiveTerminal';
 
-/**
- * Sovereign Map Federated Learning HUD - v3 REDESIGN
- * Deep interactive testing controls and comprehensive system stats.
- */
 export default function HUD({
   hudData,
   health,
@@ -36,7 +32,6 @@ export default function HUD({
   onSubmitVerificationPolicy,
   setVoiceQuery
 }) {
-
   const [simulationState, setSimulationState] = useState({
     byzantineAttacks: 0,
     networkPartitions: 0,
@@ -60,148 +55,141 @@ export default function HUD({
   };
 
   const recentOpsEvents = (opsEvents || []).slice(-8).reverse();
+  const recentPolicies = (policyHistory || []).slice(-4).reverse();
+  const founderList = Array.isArray(founders) ? founders.slice(0, 6) : [];
   const healthStatus = opsHealth?.status || 'unknown';
   const streamLabel = opsStreamStatus || 'disconnected';
+  const trustMode = trustStatus?.trust_mode || 'governed-verification';
+  const confidencePct = Number(trustStatus?.fl_verification?.average_confidence_bps || 0) / 100;
+
+  const numberOrFallback = (value, suffix = '') => {
+    const parsed = Number(value);
+    return Number.isFinite(parsed) ? `${parsed}${suffix}` : 'N/A';
+  };
+
+  const fixedOrFallback = (value, decimals = 2, suffix = '') => {
+    const parsed = Number(value);
+    return Number.isFinite(parsed) ? `${parsed.toFixed(decimals)}${suffix}` : 'N/A';
+  };
 
   return (
-    <div className="hud-container global-dark">
-      <header className="hud-main-header">
-        <div className="header-branding">
-          <h2>SOVEREIGN MAP COMMAND CENTER</h2>
-          <span className="system-status inline-pulse">LIVE OPS // LINUX CONTROL PLANE</span>
+    <div className="hud-ops-root">
+      <header className="hud-ops-header">
+        <div>
+          <p className="hud-kicker">SovereignMap Operator Console</p>
+          <h2>Federated Learning Operating Deck</h2>
+          <p className="hud-subline">Unified command surface for training, governance, simulation, and platform telemetry.</p>
         </div>
-        {loading && <div className="loading-spinner">SYNCING TELEMETRY...</div>}
+        <div className="header-right">
+          <div className="ops-clock">{new Date().toLocaleString()}</div>
+          {loading && <div className="loading-spinner">SYNCING</div>}
+        </div>
       </header>
 
-      <section className="ops-ribbon glass-panel">
+      <section className="ops-ribbon">
         <div className="ops-chip">
-          <span className="ops-chip-label">System</span>
+          <span className="ops-chip-label">Platform State</span>
           <span className={`ops-chip-value ${healthStatus === 'critical' ? 'chip-critical' : healthStatus === 'degraded' ? 'chip-warning' : 'chip-ok'}`}>
             {healthStatus.toUpperCase()}
           </span>
         </div>
         <div className="ops-chip">
-          <span className="ops-chip-label">Event Stream</span>
+          <span className="ops-chip-label">Event Bus</span>
           <span className={`ops-chip-value ${streamLabel === 'connected' ? 'chip-ok' : streamLabel === 'connecting' ? 'chip-warning' : 'chip-critical'}`}>
             {streamLabel.toUpperCase()}
           </span>
         </div>
         <div className="ops-chip">
-          <span className="ops-chip-label">CPU Load (1m)</span>
-          <span className="ops-chip-value">{opsHealth?.system?.load_1m ?? 'N/A'}</span>
+          <span className="ops-chip-label">Training</span>
+          <span className={`ops-chip-value ${trainingStatus?.active ? 'chip-ok' : 'chip-warning'}`}>
+            {trainingStatus?.status || 'idle'} / round {trainingStatus?.round ?? 0}
+          </span>
         </div>
         <div className="ops-chip">
-          <span className="ops-chip-label">Memory Used</span>
-          <span className="ops-chip-value">{opsHealth?.system?.memory?.used_percent ?? 'N/A'}%</span>
+          <span className="ops-chip-label">Trust Confidence</span>
+          <span className="ops-chip-value">{fixedOrFallback(confidencePct, 2, '%')}</span>
         </div>
         <div className="ops-chip">
-          <span className="ops-chip-label">Disk Used</span>
-          <span className="ops-chip-value">{opsHealth?.system?.disk?.used_percent ?? 'N/A'}%</span>
+          <span className="ops-chip-label">Active Nodes</span>
+          <span className="ops-chip-value">{hudData?.active_nodes ?? 0}</span>
         </div>
         <div className="ops-chip">
-          <span className="ops-chip-label">Ports</span>
+          <span className="ops-chip-label">Core Ports</span>
           <span className="ops-chip-value">
             API:{opsHealth?.ports?.api_8000 ? 'up' : 'down'} | FL:{opsHealth?.ports?.flower_8080 ? 'up' : 'down'} | PROM:{opsHealth?.ports?.prometheus_9090 ? 'up' : 'down'}
           </span>
         </div>
       </section>
 
-      <div className="hud-grid master-grid">
-        
-        {/* LEFT COLUMN: ACTIVE SENSORS & TELEMETRY */}
-        <div className="hud-col left-col">
-          <div className="hud-section sensor-panel glass-panel">
-            <h3>🌐 Network & API Telemetry</h3>
-            <div className="metric-row">
-              <span className="metric-label">API Latency</span>
-              <span className="metric-value highlight-cyan">{health?.telemetry?.api_latency_ms ?? 'N/A'}ms</span>
+      <div className="ops-grid">
+        <aside className="ops-panel control-panel">
+          <h3>Command Orchestration</h3>
+          <p className="panel-subtitle">Primary operator controls for federated runtime and enclave lifecycle.</p>
+          <div className="button-stack">
+            <button className="btn cmd-start" onClick={onStartTraining} disabled={loading || trainingStatus?.active}>Start Training Loop</button>
+            <button className="btn cmd-stop" onClick={onStopTraining} disabled={loading || !trainingStatus?.active}>Stop Training Loop</button>
+            <button className="btn cmd-epoch" onClick={onTriggerFLRound} disabled={loading}>Run Global FL Epoch</button>
+            <button className="btn cmd-enclave" onClick={onCreateEnclave} disabled={loading}>Provision TEE Enclave</button>
+          </div>
+
+          <div className="sim-grid">
+            <button className="btn sim-byzantine" onClick={() => triggerSimulation('byzantineAttacks')}>Inject Byzantine Fault ({simulationState.byzantineAttacks})</button>
+            <button className="btn sim-network" onClick={() => triggerSimulation('networkPartitions')}>Force Network Partition ({simulationState.networkPartitions})</button>
+            <button className="btn sim-hardware" onClick={() => triggerSimulation('hardwareFaults')}>Simulate Hardware Drop ({simulationState.hardwareFaults})</button>
+          </div>
+        </aside>
+
+        <main className="ops-panel telemetry-panel">
+          <h3>Operations Telemetry</h3>
+          <div className="kpi-grid">
+            <div className="kpi-card">
+              <span>API Latency</span>
+              <strong>{numberOrFallback(health?.telemetry?.api_latency_ms, ' ms')}</strong>
             </div>
-            <div className="metric-row">
-              <span className="metric-label">Global Nodes</span>
-              <span className="metric-value highlight-green">{hudData?.active_nodes ?? 0}</span>
+            <div className="kpi-card">
+              <span>Ingress</span>
+              <strong>{numberOrFallback(health?.telemetry?.ingress_mbps, ' Mbps')}</strong>
             </div>
-            <div className="metric-row">
-              <span className="metric-label">Ingress</span>
-              <span className="metric-value">{health?.telemetry?.ingress_mbps ?? 'N/A'} Mbps</span>
+            <div className="kpi-card">
+              <span>Error Rate</span>
+              <strong>{fixedOrFallback(health?.telemetry?.api_error_rate, 2, '%')}</strong>
             </div>
-            <div className="metric-row">
-              <span className="metric-label">P95 Error</span>
-              <span className="metric-value highlight-yellow">{Number(health?.telemetry?.api_error_rate ?? 0).toFixed(2)}%</span>
+            <div className="kpi-card">
+              <span>Saturation</span>
+              <strong>{numberOrFallback(health?.telemetry?.global_saturation_pct, '%')}</strong>
             </div>
-            <div className="metric-row">
-              <span className="metric-label">Core Saturation</span>
-              <span className="metric-value">{health?.telemetry?.global_saturation_pct ?? 'N/A'}%</span>
+            <div className="kpi-card">
+              <span>Model Accuracy</span>
+              <strong>{hudData?.last_audit_accuracy || 'N/A'}</strong>
             </div>
-            <div className="metric-row">
-              <span className="metric-label">Mesh Topology</span>
-              <span className="metric-value">Stable (BFT)</span>
+            <div className="kpi-card">
+              <span>FL Loss</span>
+              <strong>{fixedOrFallback(metricsSummary?.federated_learning?.current_loss, 4)}</strong>
             </div>
-            <div className="metric-row">
-              <span className="metric-label">Global Model Acc</span>
-              <span className="metric-value highlight-neon">{hudData?.last_audit_accuracy || '85.42%'}</span>
+            <div className="kpi-card">
+              <span>CPU Load (1m)</span>
+              <strong>{numberOrFallback(opsHealth?.system?.load_1m)}</strong>
+            </div>
+            <div className="kpi-card">
+              <span>Memory Used</span>
+              <strong>{numberOrFallback(opsHealth?.system?.memory?.used_percent, '%')}</strong>
+            </div>
+            <div className="kpi-card">
+              <span>Disk Used</span>
+              <strong>{numberOrFallback(opsHealth?.system?.disk?.used_percent, '%')}</strong>
             </div>
           </div>
 
-          <div className="hud-section glass-panel">
-            <h3>🛡️ Substrate Governance</h3>
-            <div className="metric-row">
-              <span className="metric-label">Trust Mode</span>
-              <span className="metric-value">{trustStatus?.trust_mode || 'Strict Verification'}</span>
-            </div>
-            <div className="metric-row">
-              <span className="metric-label">Avg Confidence</span>
-              <span className="metric-value highlight-green">{trustStatus?.fl_verification?.average_confidence_bps ?? 0} bps</span>
-            </div>
-            
-            <div className="policy-tuners">
-              <h4>DYNAMIC POLICY TUNING</h4>
-              <div className="form-group row-align">
-                <label>Proof Req:</label>
-                <input type="checkbox" checked={policyDraft.require_proof} onChange={(e) => onPolicyChange('require_proof', e.target.checked)} />
-              </div>
-              <div className="form-group row-align">
-                <label>Confidence Threshold:</label>
-                <input type="number" value={policyDraft.min_confidence_bps} step="100" onChange={(e) => onPolicyChange('min_confidence_bps', e.target.value)} />
-              </div>
-              <button className="btn-secondary full-width" onClick={onSubmitVerificationPolicy}>Apply Substrate Rules</button>
-            </div>
-          </div>
-        </div>
-
-        {/* MIDDLE COLUMN: LIVE TERMINAL & AI */}
-        <div className="hud-col middle-col">
           <LiveTerminal events={opsEvents} />
 
-          <div className="hud-section glass-panel voice-ai-panel">
-            <h3>🤖 Sovereign Neural Assistant</h3>
-            <p className="ai-subtext">Direct protocol interface for querying state, tokenomics, and intelligence.</p>
-            <div className="chat-interface">
-              <input 
-                type="text" 
-                className="voice-input"
-                placeholder="Ask: 'What is the current BFT threshold?'" 
-                value={voiceQuery} 
-                onChange={(e) => setVoiceQuery(e.target.value)} 
-                onKeyPress={(e) => e.key === 'Enter' && onSubmitVoiceQuery()}
-              />
-              <button className="btn-action pulse-btn" onClick={onSubmitVoiceQuery}>EXECUTE /_</button>
-            </div>
-            {voiceResponse && (
-              <div className="ai-response-box">
-                <span className="ai-label">SYSTEM RESPONSE //</span>
-                <p>{voiceResponse}</p>
-              </div>
-            )}
-          </div>
-
-          <div className="hud-section glass-panel timeline-panel">
-            <h3>Operations Timeline</h3>
+          <div className="timeline-panel">
+            <h4>Live Incident Timeline</h4>
             <div className="timeline-list">
               {recentOpsEvents.length === 0 ? (
-                <div className="timeline-empty">No live operations events yet.</div>
+                <div className="timeline-empty">No recent events from backend stream.</div>
               ) : (
                 recentOpsEvents.map((evt) => (
-                  <div key={`${evt.id}-${evt.ts}`} className={`timeline-item severity-${evt.severity || 'info'}`}>
+                  <div key={`${evt.id}-${evt.ts}-${evt.kind}`} className={`timeline-item severity-${evt.severity || 'info'}`}>
                     <div className="timeline-meta">
                       <span>{new Date((evt.ts || 0) * 1000).toLocaleTimeString()}</span>
                       <span>{(evt.kind || 'event').toUpperCase()}</span>
@@ -212,74 +200,92 @@ export default function HUD({
               )}
             </div>
           </div>
-        </div>
+        </main>
 
-        {/* RIGHT COLUMN: TESTING CONTROLS */}
-        <div className="hud-col right-col">
-          <div className="hud-section glass-panel test-bench">
-            <h3>⚡ Live Simulation Bench</h3>
-            <p className="panel-desc">Execute real-time stress testing against the FL mesh.</p>
-            
-            <div className="action-buttons-stack">
-              <button className="btn-action danger" onClick={() => triggerSimulation('byzantineAttacks')}>
-                ☣️ INJECT BYZANTINE FAULT [{simulationState.byzantineAttacks}]
-              </button>
-              <button className="btn-action warn" onClick={() => triggerSimulation('networkPartitions')}>
-                ✂️ FORCE NETWORK PARTITION [{simulationState.networkPartitions}]
-              </button>
-              <button className="btn-action alert" onClick={() => triggerSimulation('hardwareFaults')}>
-                💥 SIMULATE HARDWARE DROP [{simulationState.hardwareFaults}]
-              </button>
-            </div>
-            
-            <div className="divider" />
-            
-            <div className="action-buttons-stack">
-              <button className="btn-action" onClick={onStartTraining} disabled={loading || trainingStatus?.active}>
-                ▶ START REAL TRAINING LOOP
-              </button>
-              <button className="btn-action" onClick={onStopTraining} disabled={loading || !trainingStatus?.active}>
-                ■ STOP TRAINING LOOP
-              </button>
-              <button className="btn-primary heavy-glow" onClick={onTriggerFLRound} disabled={loading}>
-                🧠 [ INITIATE GLOBAL FL EPOCH ]
-              </button>
-              <button className="btn-secondary" onClick={onCreateEnclave} disabled={loading}>
-                🔒 [ PROVISION TEE ENCLAVE ]
-              </button>
-            </div>
-
-            <div className="metric-row">
-              <span className="metric-label">Training State</span>
-              <span className="metric-value highlight-cyan">{trainingStatus?.status || 'idle'} / round {trainingStatus?.round ?? 0}</span>
-            </div>
+        <aside className="ops-panel governance-panel">
+          <h3>Governance + Assistant</h3>
+          <div className="governance-meta">
+            <div><span>Trust Mode</span><strong>{trustMode}</strong></div>
+            <div><span>Avg Confidence</span><strong>{fixedOrFallback(confidencePct, 2, '%')}</strong></div>
           </div>
 
-          <div className="hud-section glass-panel metrics-box">
-            <h3>📈 Epoch Convergence</h3>
-            {error ? (
-              <div className="error-box">SYSTEM FAULT: {error}</div>
-            ) : metricsSummary ? (
-              <div className="mini-stats">
-                <div className="stat-pill">
-                  <label>ROUNDS</label>
-                  <span>{metricsSummary?.federated_learning?.current_round || 0}</span>
-                </div>
-                <div className="stat-pill">
-                  <label>LOSS</label>
-                  <span>{(metricsSummary?.federated_learning?.current_loss || 0).toFixed(4)}</span>
-                </div>
-                <div className="stat-pill">
-                  <label>DEGRADATION</label>
-                  <span>{simulationState.byzantineAttacks > 0 ? (simulationState.byzantineAttacks * 1.2).toFixed(1) + '%' : '0.0%'}</span>
-                </div>
-              </div>
+          <div className="policy-form">
+            <h4>Verification Policy Controls</h4>
+            <label className="toggle-row"><input type="checkbox" checked={!!policyDraft.require_proof} onChange={(e) => onPolicyChange('require_proof', e.target.checked)} /> Require Proof</label>
+            <label className="toggle-row"><input type="checkbox" checked={!!policyDraft.reject_on_verification_failure} onChange={(e) => onPolicyChange('reject_on_verification_failure', e.target.checked)} /> Reject on Verification Failure</label>
+            <label className="toggle-row"><input type="checkbox" checked={!!policyDraft.allow_consensus_proof} onChange={(e) => onPolicyChange('allow_consensus_proof', e.target.checked)} /> Allow Consensus Proof</label>
+            <label className="toggle-row"><input type="checkbox" checked={!!policyDraft.allow_zk_proof} onChange={(e) => onPolicyChange('allow_zk_proof', e.target.checked)} /> Allow ZK Proof</label>
+            <label className="toggle-row"><input type="checkbox" checked={!!policyDraft.allow_tee_proof} onChange={(e) => onPolicyChange('allow_tee_proof', e.target.checked)} /> Allow TEE Proof</label>
+
+            <label className="input-row">
+              Min Confidence (bps)
+              <input type="number" value={policyDraft.min_confidence_bps ?? 7000} step="100" onChange={(e) => onPolicyChange('min_confidence_bps', e.target.value)} />
+            </label>
+
+            <label className="input-row">
+              Role
+              <select value={policyRole} onChange={(e) => onPolicyRoleChange(e.target.value)}>
+                <option value="admin">admin</option>
+                <option value="operator">operator</option>
+                <option value="auditor">auditor</option>
+              </select>
+            </label>
+
+            <label className="input-row">
+              Token
+              <input type="password" value={policyToken} placeholder="Bearer token (optional)" onChange={(e) => onPolicyTokenChange(e.target.value)} />
+            </label>
+
+            <button className="btn cmd-enclave" onClick={onSubmitVerificationPolicy}>Apply Verification Policy</button>
+            {policyMessage && <div className="notice-box">{policyMessage}</div>}
+          </div>
+
+          <div className="assistant-panel">
+            <h4>Operator Assistant</h4>
+            <div className="chat-interface">
+              <input
+                type="text"
+                className="voice-input"
+                placeholder="Query runtime state, trust, tokenomics, diagnostics..."
+                value={voiceQuery}
+                onChange={(e) => setVoiceQuery(e.target.value)}
+                onKeyDown={(e) => e.key === 'Enter' && onSubmitVoiceQuery()}
+              />
+              <button className="btn cmd-epoch" onClick={onSubmitVoiceQuery}>Run Query</button>
+            </div>
+            {voiceResponse ? <div className="ai-response-box">{voiceResponse}</div> : <div className="timeline-empty">No assistant response yet.</div>}
+          </div>
+
+          <div className="aux-panel">
+            <h4>Policy Audit Trail</h4>
+            {recentPolicies.length === 0 ? (
+              <div className="timeline-empty">No policy mutations recorded.</div>
             ) : (
-              <div className="awaiting-data">AWAITING TRAINING METRICS...</div>
+              recentPolicies.map((entry, index) => (
+                <div className="audit-row" key={`${entry?.ts || index}-${index}`}>
+                  <span>{entry?.ts ? new Date(entry.ts * 1000).toLocaleTimeString() : 'time-unknown'}</span>
+                  <span>{entry?.role || 'role-unknown'}</span>
+                </div>
+              ))
             )}
           </div>
-        </div>
 
+          <div className="aux-panel">
+            <h4>Founder Nodes</h4>
+            {founderList.length === 0 ? (
+              <div className="timeline-empty">Founder registry unavailable.</div>
+            ) : (
+              founderList.map((founder, index) => (
+                <div className="audit-row" key={`${founder?.name || 'founder'}-${index}`}>
+                  <span>{founder?.name || `Founder ${index + 1}`}</span>
+                  <span>{founder?.stake != null ? Number(founder.stake).toFixed(2) : 'stake N/A'}</span>
+                </div>
+              ))
+            )}
+          </div>
+
+          {error && <div className="error-box">System fault: {error}</div>}
+        </aside>
       </div>
     </div>
   );
