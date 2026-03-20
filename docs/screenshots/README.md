@@ -9,9 +9,6 @@ Use this checklist for every release or major observability/UI PR.
 - `hud-operations-overview.png`
 - `grafana-operations-overview.png`
 - `grafana-llm-overview.png`
-
-Optional:
-
 - `grafana-tokenomics-overview.png`
 
 ## Capture Guidance

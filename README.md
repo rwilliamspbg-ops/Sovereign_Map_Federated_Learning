@@ -161,6 +161,7 @@ Tracked asset locations:
 
 - `docs/screenshots/hud-operations-overview.png`
 - `docs/screenshots/grafana-operations-overview.png`
+- `docs/screenshots/grafana-llm-overview.png`
 - `docs/screenshots/grafana-tokenomics-overview.png`
 
 Capture workflow and acceptance checklist:
@@ -169,7 +170,16 @@ Capture workflow and acceptance checklist:
 
 Current status: screenshot paths are defined and release capture workflow is documented; attach rendered PNG/GIF evidence in each tagged release.
 
-Dashboard screenshot previews are intentionally hidden until image assets are committed under `docs/screenshots/`.
+### Dashboard Screenshot Previews
+
+<!-- markdownlint-disable MD033 -->
+<p>
+    <img src="docs/screenshots/grafana-operations-overview.png" alt="Grafana Operations Overview" width="420" />
+    <img src="docs/screenshots/hud-operations-overview.png" alt="Network Operations HUD" width="420" />
+    <img src="docs/screenshots/grafana-llm-overview.png" alt="Grafana LLM Overview" width="420" />
+    <img src="docs/screenshots/grafana-tokenomics-overview.png" alt="Grafana Tokenomics Overview" width="420" />
+</p>
+<!-- markdownlint-enable MD033 -->
 
 ## Dual-Plane Runtime Data Flow
 
