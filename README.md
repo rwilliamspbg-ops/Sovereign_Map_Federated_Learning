@@ -16,6 +16,31 @@ Production-grade federated learning platform that combines Byzantine-resilient a
 [![Forks](https://img.shields.io/github/forks/rwilliamspbg-ops/Sovereign_Map_Federated_Learning?style=flat-square&logo=github)](https://github.com/rwilliamspbg-ops/Sovereign_Map_Federated_Learning/network/members)
 [![License](https://img.shields.io/github/license/rwilliamspbg-ops/Sovereign_Map_Federated_Learning?style=flat-square)](LICENSE)
 
+## Quick Architecture Overview
+
+Sovereign Map uses a streaming aggregation model instead of loading full model updates into memory at once.
+
+- Memory efficiency: Mohawk-style chunked processing reduces memory pressure by up to 224x for large update sets.
+- Byzantine resilience: selective verification and trust scoring reduce adversarial impact with sublinear validation behavior for high node counts.
+- Hardware root of trust: every node contributes attestation and certificate telemetry into the same operational control plane.
+
+```mermaid
+flowchart LR
+	A[Client Updates] --> B{Traditional FL Aggregator}
+	B --> C[Load full model deltas in memory]
+	C --> D[High RAM footprint per round]
+
+	A --> E{SovereignMap Mohawk Stream Aggregator}
+	E --> F[Chunk updates into streaming windows]
+	F --> G[Validate trust and policy per chunk]
+	G --> H[Aggregate incrementally]
+	H --> I[Low steady-state memory use]
+```
+
+## Why Mohawk
+
+Mohawk-style streaming aggregation treats model updates as a continuous stream of chunks rather than a monolithic tensor payload. This allows the coordinator to perform verification, filtering, and merge steps incrementally while retaining bounded working memory. In practice, this is what makes high fan-out node participation feasible on commodity infrastructure: memory usage scales with chunk window size instead of full global update size, while trust and policy checks run inline with aggregation.
+
 ## Platform Capability Badges
 
 [![Capability: Federated Learning](https://img.shields.io/badge/Capability-Federated%20Learning-2f9e44?style=flat-square)](sovereignmap_production_backend_v2.py)
@@ -72,6 +97,17 @@ Production-grade federated learning platform that combines Byzantine-resilient a
 - Monitoring real-time FL, tokenomics, and system health through Prometheus and Grafana surfaces.
 - Prototyping and scaling from local Docker deployments to large Compose/Kubernetes profiles.
 
+## Hardware Requirements
+
+| Node Class | Minimum (Functional) | Recommended (Sustained) |
+| --- | --- | --- |
+| Edge CPU Node | Raspberry Pi 4 (4 GB RAM), 4-core ARM CPU, 32 GB storage, Linux, TPM 2.0 device access | Raspberry Pi 5 / x86 mini PC (8-16 GB RAM), NVMe storage, TPM 2.0, stable wired network |
+| Edge GPU/NPU Node | Jetson Nano / Intel NPU-capable edge device, 8 GB RAM, CUDA/NPU drivers | NVIDIA Jetson Orin / equivalent, 16+ GB RAM, tuned CUDA/NPU stack |
+| Operator / Aggregator | 8 vCPU, 16 GB RAM, SSD, Docker Compose | 16+ vCPU, 32-64 GB RAM, NVMe, GPU optional, isolated monitoring host |
+| Monitoring Stack | 2 vCPU, 4 GB RAM for Prometheus + Grafana | 4-8 vCPU, 8-16 GB RAM with longer retention and dashboard concurrency |
+
+Use [hardware_auto_tuner.py](hardware_auto_tuner.py) to auto-profile host capability and choose an acceleration profile before large-scale runs.
+
 ## Technical Brief
 
 Sovereign Map Federated Learning is a dual-plane runtime:
@@ -96,6 +132,20 @@ Core characteristics:
 - Frontend HUD: [frontend/src/HUD.jsx](frontend/src/HUD.jsx)
 - Compose profiles: [docker-compose.dev.yml](docker-compose.dev.yml), [docker-compose.production.yml](docker-compose.production.yml), [docker-compose.full.yml](docker-compose.full.yml)
 - Kubernetes scale profile: [kubernetes-5000-node-manifests.yaml](kubernetes-5000-node-manifests.yaml)
+
+## Visual Walkthrough
+
+For best first impression and faster onboarding, include live screenshots in this section after each release cycle:
+
+- Operations HUD: trust score, node participation, latency wall, and resilience indicators.
+- Grafana Operations Overview: gauge deck + trend wall under live load.
+- Grafana Tokenomics Overview: mint/bridge/validator/wallet health sections.
+
+Suggested asset locations:
+
+- `docs/screenshots/hud-operations-overview.png`
+- `docs/screenshots/grafana-operations-overview.png`
+- `docs/screenshots/grafana-tokenomics-overview.png`
 
 ## Capability Map
 
@@ -228,6 +278,31 @@ npm --prefix frontend run build
 - Security policy: [SECURITY.md](SECURITY.md)
 - Changelog: [CHANGELOG.md](CHANGELOG.md)
 - License: [LICENSE](LICENSE)
+
+## Help Wanted: Quick Wins
+
+If you want to contribute quickly, these areas have high impact and low setup friction:
+
+- Test matrix expansion for TPM 2.0 hardware variants and Docker runtimes.
+- Apple Silicon (MPS) acceleration optimization and benchmark baselines.
+- Additional Grafana panel tuning for high-cardinality node fleets.
+- Better synthetic fault workloads for Byzantine and partition simulation paths.
+
+Contribution process and coding standards are in [CONTRIBUTING.md](CONTRIBUTING.md).
+
+## Common Issues
+
+### TPM device access in Docker (`/dev/tpm0`)
+
+- Symptom: trust/attestation metrics stay flat or backend cannot initialize TPM flows.
+- Check: container runtime must expose TPM devices and required permissions.
+- Typical fix: run with explicit device mapping and appropriate group permissions for TPM access.
+
+### Port conflicts (frontend/backend/observability)
+
+- Symptom: HUD shows backend unreachable or Grafana/Prometheus endpoints fail to bind.
+- Check: local services already using frontend/backend ports.
+- Typical fix: align Compose port mappings and frontend API base configuration so HUD and backend targets match.
 
 ## Sanity Report
 
