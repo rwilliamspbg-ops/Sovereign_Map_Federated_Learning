@@ -147,8 +147,6 @@ jobs:
     if: github.event_name == 'push' && github.ref == 'refs/heads/main'
     permissions:
       contents: read
-    environment:
-      name: staging
     
     steps:
       - name: Checkout code
