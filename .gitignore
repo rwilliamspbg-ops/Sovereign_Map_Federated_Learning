@@ -193,6 +193,7 @@ access.log
 
 # Output files
 output/
+release-artifacts/
 # results/        (keep test results - see exception below)
 *.out
 *.tmp
