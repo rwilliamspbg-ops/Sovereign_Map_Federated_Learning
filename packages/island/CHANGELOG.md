@@ -1,5 +1,11 @@
 # @sovereignmap/island Changelog
 
+## 0.1.1
+
+### Patch Changes
+
+- Finalize 0.1.1 SDK patch release with release-note asset workflow and package artifact alignment.
+
 ## 0.1.0
 
 ### Patch Changes

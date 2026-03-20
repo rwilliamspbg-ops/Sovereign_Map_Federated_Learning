@@ -1,5 +1,15 @@
 # @sovereignmap/core Changelog
 
+## 0.1.1
+
+### Patch Changes
+
+- Finalize 0.1.1 SDK patch release with release-note asset workflow and package artifact alignment.
+- Updated dependencies
+  - @sovereignmap/privacy@0.1.1
+  - @sovereignmap/consensus@0.1.1
+  - @sovereignmap/island@0.1.1
+
 ## 0.1.0
 
 ### Minor Changes
