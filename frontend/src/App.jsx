@@ -31,6 +31,7 @@ function App() {
   const [policyToken, setPolicyToken] = useState('');
   const [policyRole, setPolicyRole] = useState('admin');
   const [policyMessage, setPolicyMessage] = useState('');
+  const [trainingStatus, setTrainingStatus] = useState({ status: 'idle', active: false, round: 0 });
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
 
@@ -63,24 +64,27 @@ function App() {
   const fetchData = async () => {
     setLoading(true);
     try {
-      const [hudRes, healthRes, metricsRes, foundersRes] = await Promise.all([
+      const [hudRes, healthRes, metricsRes, foundersRes, trainingRes] = await Promise.all([
         fetch(`${API_BASE}/hud_data`),
         fetch(`${API_BASE}/health`),
         fetch(`${API_BASE}/metrics_summary`),
-        fetch(`${API_BASE}/founders`)
+        fetch(`${API_BASE}/founders`),
+        fetch(`${API_BASE}/training/status`)
       ]);
 
-      const [hud, healthData, metrics, foundersData] = await Promise.all([
+      const [hud, healthData, metrics, foundersData, trainingData] = await Promise.all([
         hudRes.json(),
         healthRes.json(),
         metricsRes.json(),
-        foundersRes.json()
+        foundersRes.json(),
+        trainingRes.ok ? trainingRes.json() : Promise.resolve({ status: 'idle', active: false, round: 0 })
       ]);
 
       setHudData(hud);
       setHealth(healthData);
       setMetricsSummary(metrics);
       setFounders(foundersData);
+      setTrainingStatus(trainingData || { status: 'idle', active: false, round: 0 });
 
       try {
         await fetchTrustSnapshot();
@@ -106,6 +110,32 @@ function App() {
     } catch (err) {
       console.error('Trigger FL round error:', err);
       setError('Failed to trigger FL round');
+    }
+  };
+
+  const startTraining = async () => {
+    try {
+      const response = await fetch(`${API_BASE}/training/start`, { method: 'POST' });
+      if (!response.ok) {
+        throw new Error(`Training start failed with ${response.status}`);
+      }
+      await fetchData();
+    } catch (err) {
+      console.error('Start training error:', err);
+      setError('Failed to start real training loop');
+    }
+  };
+
+  const stopTraining = async () => {
+    try {
+      const response = await fetch(`${API_BASE}/training/stop`, { method: 'POST' });
+      if (!response.ok) {
+        throw new Error(`Training stop failed with ${response.status}`);
+      }
+      await fetchData();
+    } catch (err) {
+      console.error('Stop training error:', err);
+      setError('Failed to stop training loop');
     }
   };
 
@@ -266,9 +296,12 @@ function App() {
             policyToken={policyToken}
             policyRole={policyRole}
             policyMessage={policyMessage}
+            trainingStatus={trainingStatus}
             loading={loading}
             error={error}
             onTriggerFLRound={triggerFLRound}
+            onStartTraining={startTraining}
+            onStopTraining={stopTraining}
             onCreateEnclave={createEnclave}
             onTriggerSimulation={triggerSimulation}
             onSubmitVoiceQuery={submitVoiceQuery}

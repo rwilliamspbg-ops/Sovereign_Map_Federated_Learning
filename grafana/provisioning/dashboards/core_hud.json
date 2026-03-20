@@ -90,7 +90,7 @@
       },
       "targets": [
         {
-          "expr": "(count(up{job=~\"sovereign-nodes|node-agent\"} == 1) / clamp_min(count(up{job=~\"sovereign-nodes|node-agent\"}), 1)) * 100",
+          "expr": "((max(sovereignmap_active_nodes) or count(up{job=~\"sovereign-nodes|node-agent\"} == 1) or vector(0)) / clamp_min((max(sovereignmap_active_nodes) or count(up{job=~\"sovereign-nodes|node-agent\"}) or vector(1)), 1)) * 100",
           "refId": "A"
         }
       ],

@@ -18,9 +18,12 @@ export default function HUD({
   policyToken,
   policyRole,
   policyMessage,
+  trainingStatus,
   loading,
   error,
   onTriggerFLRound,
+  onStartTraining,
+  onStopTraining,
   onCreateEnclave,
   onTriggerSimulation,
   onSubmitVoiceQuery,
@@ -71,23 +74,23 @@ export default function HUD({
             <h3>🌐 Network & API Telemetry</h3>
             <div className="metric-row">
               <span className="metric-label">API Latency</span>
-              <span className="metric-value highlight-cyan">{health?.telemetry?.api_latency_ms || Math.floor(Math.random() * 45) + 5}ms</span>
+              <span className="metric-value highlight-cyan">{health?.telemetry?.api_latency_ms ?? 'N/A'}ms</span>
             </div>
             <div className="metric-row">
               <span className="metric-label">Global Nodes</span>
-              <span className="metric-value highlight-green">{hudData?.active_nodes || (Math.floor(Math.random() * 10) + 90)}</span>
+              <span className="metric-value highlight-green">{hudData?.active_nodes ?? 0}</span>
             </div>
             <div className="metric-row">
               <span className="metric-label">Ingress</span>
-              <span className="metric-value">{health?.telemetry?.ingress_mbps || Math.floor(Math.random() * 300) + 120} Mbps</span>
+              <span className="metric-value">{health?.telemetry?.ingress_mbps ?? 'N/A'} Mbps</span>
             </div>
             <div className="metric-row">
               <span className="metric-label">P95 Error</span>
-              <span className="metric-value highlight-yellow">{(health?.telemetry?.api_error_rate || Math.random() * 0.1).toFixed(2)}%</span>
+              <span className="metric-value highlight-yellow">{Number(health?.telemetry?.api_error_rate ?? 0).toFixed(2)}%</span>
             </div>
             <div className="metric-row">
               <span className="metric-label">Core Saturation</span>
-              <span className="metric-value">{health?.telemetry?.global_saturation_pct || Math.floor(Math.random() * 20) + 40}%</span>
+              <span className="metric-value">{health?.telemetry?.global_saturation_pct ?? 'N/A'}%</span>
             </div>
             <div className="metric-row">
               <span className="metric-label">Mesh Topology</span>
@@ -107,7 +110,7 @@ export default function HUD({
             </div>
             <div className="metric-row">
               <span className="metric-label">Avg Confidence</span>
-              <span className="metric-value highlight-green">{trustStatus?.fl_verification?.average_confidence_bps || 9850} bps</span>
+              <span className="metric-value highlight-green">{trustStatus?.fl_verification?.average_confidence_bps ?? 0} bps</span>
             </div>
             
             <div className="policy-tuners">
@@ -173,12 +176,23 @@ export default function HUD({
             <div className="divider" />
             
             <div className="action-buttons-stack">
+              <button className="btn-action" onClick={onStartTraining} disabled={loading || trainingStatus?.active}>
+                ▶ START REAL TRAINING LOOP
+              </button>
+              <button className="btn-action" onClick={onStopTraining} disabled={loading || !trainingStatus?.active}>
+                ■ STOP TRAINING LOOP
+              </button>
               <button className="btn-primary heavy-glow" onClick={onTriggerFLRound} disabled={loading}>
                 🧠 [ INITIATE GLOBAL FL EPOCH ]
               </button>
               <button className="btn-secondary" onClick={onCreateEnclave} disabled={loading}>
                 🔒 [ PROVISION TEE ENCLAVE ]
               </button>
+            </div>
+
+            <div className="metric-row">
+              <span className="metric-label">Training State</span>
+              <span className="metric-value highlight-cyan">{trainingStatus?.status || 'idle'} / round {trainingStatus?.round ?? 0}</span>
             </div>
           </div>
 
