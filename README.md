@@ -229,6 +229,9 @@ OpenAPI/Postman status:
 | /metrics_summary | GET | metrics_summary | Aggregated metrics summary across runtime domains |
 | /model_registry | GET | model_registry_recent | Recent persisted model metadata and round snapshots |
 | /simulate/<simulation_type> | POST | trigger_hud_simulation | Records HUD simulation events by scenario type |
+| /ops/health | GET | ops_health | Operational dependency/system snapshot (ports, memory/disk pressure, Prometheus reachability) |
+| /ops/events/recent | GET | ops_events_recent | Returns recent operations events for timeline replay |
+| /ops/events | GET (SSE) | ops_events_stream | Server-sent event stream for live operations telemetry |
 
 ### Trust, Policy, and Join Lifecycle Functions
 
@@ -258,6 +261,25 @@ OpenAPI/Postman status:
 | /metrics | GET | metrics | Prometheus exposition endpoint for tokenomics gauges |
 | /health | GET | health | Tokenomics exporter liveness and source-file metadata |
 | /event/tokenomics | POST | event_tokenomics | Ingest tokenomics events and persist canonical payload |
+
+### TPM Exporter Functions
+
+| Endpoint | Method | Function | Responsibility |
+| --- | --- | --- | --- |
+| /metrics | GET | metrics | Prometheus exposition endpoint for TPM/trust metrics |
+| /metrics/summary | GET | metrics_summary | Aggregated TPM/trust summary snapshot |
+| /health | GET | health | TPM exporter liveness and metadata |
+| /event/attestation | POST | event_attestation | Ingest attestation event payloads |
+| /event/message | POST | event_message | Ingest trust-related operational messages |
+
+### Endpoint Contract Notes
+
+- Auth boundaries: `/join/registrations` and `/join/revoke/<int:node_id>` are admin-gated and require valid admin authorization headers.
+- Auth boundaries: `/verification_policy` supports role-aware updates via `X-API-Role` and optional bearer token wiring.
+- Status code behavior: `/create_enclave` may return `202` while provisioning is in progress, then `200` once a stable state transition is reached.
+- Status code behavior: `/trigger_fl` may return `202` for accepted async execution and non-2xx when round execution cannot proceed.
+- Streaming semantics: `/ops/events` is an SSE endpoint and includes heartbeat events to keep long-lived clients connected.
+- Streaming semantics: `/ops/events/recent` should be used to backfill timeline state before attaching to SSE.
 
 ### Key Internal Runtime Functions
 
