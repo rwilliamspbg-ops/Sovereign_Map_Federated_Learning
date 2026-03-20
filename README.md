@@ -82,6 +82,8 @@ Advisory (informational): Mohawk Proto and related aggregation design elements a
 
 ### Complete Badge Portfolio
 
+Legend: scan left-to-right by trust order: quality gates -> security/governance -> SDK/release -> deploy surfaces -> device/runtime footprint -> community signals.
+
 Core Quality Gates:
 
 [![Build and Test](https://github.com/rwilliamspbg-ops/Sovereign_Map_Federated_Learning/actions/workflows/build.yml/badge.svg?branch=main)](https://github.com/rwilliamspbg-ops/Sovereign_Map_Federated_Learning/actions/workflows/build.yml)
