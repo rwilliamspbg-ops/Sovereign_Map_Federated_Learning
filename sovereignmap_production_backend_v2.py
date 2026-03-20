@@ -364,7 +364,7 @@ simulation_effects = {
     "accuracy_penalty_pct": 0.0,
     "loss_multiplier": 1.0,
 }
-MODEL_REGISTRY_PATH = os.getenv("MODEL_REGISTRY_PATH", "/app/data/model_registry.jsonl")
+MODEL_REGISTRY_PATH = os.getenv("MODEL_REGISTRY_PATH", "./data/model_registry.jsonl")
 TPM_METRICS_ENDPOINT = os.getenv(
     "TPM_METRICS_ENDPOINT", "http://tpm-metrics:9091/event/attestation"
 )
