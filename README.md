@@ -51,6 +51,20 @@ Mohawk-style streaming aggregation treats model updates as a continuous stream o
 [![Capability: Observability](https://img.shields.io/badge/Capability-Observability-e67700?style=flat-square)](prometheus.yml)
 [![Capability: Large Scale Profiles](https://img.shields.io/badge/Capability-Large--Scale%20Deployments-1c7ed6?style=flat-square)](kubernetes-5000-node-manifests.yaml)
 
+## Device Support Badges
+
+[![Web](https://img.shields.io/badge/Device-Web%20Dashboard-0ea5e9?style=flat-square&logo=google-chrome&logoColor=white)](frontend/src/HUD.jsx)
+[![Linux](https://img.shields.io/badge/OS-Linux%20Supported-f59e0b?style=flat-square&logo=linux&logoColor=white)](docker-compose.dev.yml)
+[![macOS](https://img.shields.io/badge/OS-macOS%20Supported-111827?style=flat-square&logo=apple&logoColor=white)](README.md#quick-start)
+[![Windows](https://img.shields.io/badge/OS-Windows%20Supported-2563eb?style=flat-square&logo=windows&logoColor=white)](run-demo-windows.ps1)
+[![Android](https://img.shields.io/badge/Mobile-Android%20Supported-16a34a?style=flat-square&logo=android&logoColor=white)](mobile-apps/android-node-app)
+[![iOS](https://img.shields.io/badge/Mobile-iOS%20Supported-0f172a?style=flat-square&logo=apple&logoColor=white)](mobile-apps/ios-node-app)
+[![Raspberry Pi](https://img.shields.io/badge/Edge-Raspberry%20Pi%20Supported-c026d3?style=flat-square&logo=raspberry-pi&logoColor=white)](README.md#hardware-requirements)
+[![NVIDIA Jetson](https://img.shields.io/badge/Edge-NVIDIA%20Jetson%20Supported-15803d?style=flat-square&logo=nvidia&logoColor=white)](README.md#hardware-requirements)
+[![x86_64](https://img.shields.io/badge/Arch-x86__64%20Supported-1d4ed8?style=flat-square)](README.md#hardware-requirements)
+[![ARM64](https://img.shields.io/badge/Arch-ARM64%20Supported-9333ea?style=flat-square)](README.md#hardware-requirements)
+[![Docker](https://img.shields.io/badge/Runtime-Docker%20Compose%20Supported-0284c7?style=flat-square&logo=docker&logoColor=white)](docker-compose.full.yml)
+
 ## CI, Security, and Release Badges
 
 ### Core Quality Gates
