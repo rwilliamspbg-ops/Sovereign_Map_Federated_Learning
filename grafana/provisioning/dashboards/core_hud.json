@@ -24,7 +24,7 @@
       }
     },
     {
-      "title": "FL Global Accuracy",
+      "title": "FL Global Accuracy (Prometheus Source of Truth)",
       "type": "gauge",
       "gridPos": {
         "h": 6,
@@ -38,7 +38,7 @@
       },
       "targets": [
         {
-          "expr": "sovereignmap_fl_accuracy or vector(84.2)",
+          "expr": "max(sovereignmap_fl_accuracy)",
           "refId": "A"
         }
       ],
@@ -76,7 +76,7 @@
       }
     },
     {
-      "title": "Active Network Nodes",
+      "title": "Node Availability (Active / Target %)",
       "type": "stat",
       "gridPos": {
         "h": 6,
@@ -90,15 +90,32 @@
       },
       "targets": [
         {
-          "expr": "sovereignmap_active_nodes or vector(50)",
+          "expr": "(count(up{job=~\"sovereign-nodes|node-agent\"} == 1) / clamp_min(count(up{job=~\"sovereign-nodes|node-agent\"}), 1)) * 100",
           "refId": "A"
         }
       ],
       "fieldConfig": {
         "defaults": {
+          "unit": "percent",
           "color": {
-            "mode": "fixed",
-            "fixedColor": "blue"
+            "mode": "thresholds"
+          },
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "red",
+                "value": null
+              },
+              {
+                "color": "yellow",
+                "value": 80
+              },
+              {
+                "color": "green",
+                "value": 95
+              }
+            ]
           }
         }
       },
@@ -158,8 +175,14 @@
       },
       "targets": [
         {
-          "expr": "sovereignmap_fl_loss or vector(0.11)",
+          "expr": "sovereignmap_fl_loss",
+          "legendFormat": "loss",
           "refId": "A"
+        },
+        {
+          "expr": "vector(0.10)",
+          "legendFormat": "baseline",
+          "refId": "B"
         }
       ],
       "fieldConfig": {
@@ -297,8 +320,19 @@
       },
       "targets": [
         {
-          "expr": "tpm_node_attestation_latency_ms or vector(28)",
+          "expr": "quantile(0.50, tpm_node_attestation_latency_ms)",
+          "legendFormat": "P50",
           "refId": "A"
+        },
+        {
+          "expr": "quantile(0.95, tpm_node_attestation_latency_ms)",
+          "legendFormat": "P95",
+          "refId": "B"
+        },
+        {
+          "expr": "quantile(0.99, tpm_node_attestation_latency_ms)",
+          "legendFormat": "P99",
+          "refId": "C"
         }
       ],
       "fieldConfig": {
@@ -326,7 +360,7 @@
       }
     },
     {
-      "title": "Average TEE Confidence (bps)",
+      "title": "TEE Attestation Confidence (%)",
       "type": "gauge",
       "gridPos": {
         "h": 6,
@@ -340,16 +374,16 @@
       },
       "targets": [
         {
-          "expr": "sum(flask_http_request_total) * 0 + 8250",
+          "expr": "max(sovereign_fl_avg_confidence_bps) / 100",
           "refId": "A"
         }
       ],
       "fieldConfig": {
         "defaults": {
           "min": 0,
-          "max": 10000.0,
+          "max": 100.0,
           "decimals": 2,
-          "unit": "bps",
+          "unit": "percent",
           "color": {
             "mode": "thresholds"
           },
@@ -362,7 +396,7 @@
               },
               {
                 "color": "green",
-                "value": 7500
+                "value": 75
               }
             ]
           }
@@ -394,9 +428,32 @@
       ],
       "fieldConfig": {
         "defaults": {
+          "mappings": [
+            {
+              "options": {
+                "0": {
+                  "index": 0,
+                  "text": "Healthy"
+                }
+              },
+              "type": "value"
+            }
+          ],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              },
+              {
+                "color": "red",
+                "value": 1
+              }
+            ]
+          },
           "color": {
-            "mode": "fixed",
-            "fixedColor": "red"
+            "mode": "thresholds"
           }
         }
       },
@@ -408,7 +465,7 @@
       }
     },
     {
-      "title": "Average Wallet Balance",
+      "title": "Average Wallet Balance (SOV)",
       "type": "stat",
       "gridPos": {
         "h": 6,
@@ -428,6 +485,7 @@
       ],
       "fieldConfig": {
         "defaults": {
+          "unit": "none",
           "color": {
             "mode": "fixed",
             "fixedColor": "orange"
@@ -477,6 +535,7 @@
     {
       "type": "row",
       "title": "API & Network Golden Signals",
+      "collapsed": true,
       "gridPos": {
         "x": 0,
         "y": 20,
@@ -606,6 +665,7 @@
     {
       "type": "row",
       "title": "LLM Policy Signals",
+      "collapsed": true,
       "gridPos": {
         "x": 0,
         "y": 29,
