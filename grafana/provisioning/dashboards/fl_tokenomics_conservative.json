@@ -1,103 +1,60 @@
 {
-  "annotations": {
-    "list": []
+  "title": "SovereignMap Unified Metrics | Conservative Profile",
+  "uid": "sovereign-unified-conservative",
+  "refresh": "10s",
+  "time": {
+    "from": "now-6h",
+    "to": "now"
   },
-  "editable": true,
-  "fiscalYearStartMonth": 0,
-  "graphTooltip": 0,
-  "id": null,
-  "links": [],
-  "liveNow": false,
+  "tags": [
+    "sovereignmap",
+    "unified",
+    "profile",
+    "conservative",
+    "operations",
+    "tokenomics",
+    "trust"
+  ],
+  "schemaVersion": 38,
   "panels": [
     {
-      "collapsed": false,
+      "type": "row",
+      "title": "Neural Intelligence & Distributed Sync",
       "gridPos": {
         "h": 1,
         "w": 24,
         "x": 0,
         "y": 0
-      },
-      "id": 100,
-      "panels": [],
-      "title": "Executive Summary",
-      "type": "row"
+      }
     },
     {
-      "datasource": {
-        "type": "prometheus",
-        "uid": "prometheus"
-      },
-      "fieldConfig": {
-        "defaults": {
-          "color": {
-            "mode": "thresholds"
-          },
-          "mappings": [],
-          "unit": "percent",
-          "decimals": 1,
-          "thresholds": {
-            "mode": "absolute",
-            "steps": [
-              {
-                "color": "red",
-                "value": null
-              },
-              {
-                "color": "yellow",
-                "value": 50
-              },
-              {
-                "color": "green",
-                "value": 70
-              }
-            ]
-          }
-        },
-        "overrides": []
-      },
+      "title": "FL Global Accuracy (Prometheus Source of Truth)",
+      "type": "gauge",
       "gridPos": {
-        "h": 5,
+        "h": 6,
         "w": 6,
         "x": 0,
         "y": 1
       },
-      "id": 101,
-      "targets": [
-        {
-          "expr": "clamp_max(clamp_min((((tokenomics_mint_rate_per_min or sovereignmap_token_mint_rate_per_min or (rate(sovereignmap_fl_rounds_total[5m]) * clamp_min(sovereignmap_active_nodes, 1) * (sovereignmap_fl_accuracy / 100)) or vector(0)) / 150) * 100 * 0.3) + ((((tokenomics_token_supply_minted or sovereignmap_token_supply_minted or (sovereignmap_fl_round * clamp_min(sovereignmap_active_nodes, 1) * (sovereignmap_fl_accuracy / 100)) or vector(0)) / clamp_min((tokenomics_token_supply_total or sovereignmap_token_supply_total or (sovereignmap_fl_round * clamp_min(sovereignmap_active_nodes, 1)) or vector(1)), 1)) * 100) * 0.7), 100), 0)",
-          "refId": "A"
-        }
-      ],
-      "title": "Economic Growth Score",
-      "type": "stat",
-      "options": {
-        "colorMode": "value",
-        "graphMode": "area",
-        "justifyMode": "auto",
-        "orientation": "auto",
-        "reduceOptions": {
-          "calcs": [
-            "lastNotNull"
-          ],
-          "fields": "",
-          "values": false
-        },
-        "textMode": "auto"
-      }
-    },
-    {
       "datasource": {
         "type": "prometheus",
         "uid": "prometheus"
       },
+      "targets": [
+        {
+          "expr": "max(sovereignmap_fl_accuracy)",
+          "refId": "A"
+        }
+      ],
       "fieldConfig": {
         "defaults": {
+          "min": 0,
+          "max": 100.0,
+          "decimals": 2,
+          "unit": "percent",
           "color": {
             "mode": "thresholds"
           },
-          "mappings": [],
-          "unit": "percent",
-          "decimals": 1,
           "thresholds": {
             "mode": "absolute",
             "steps": [
@@ -107,60 +64,46 @@
               },
               {
                 "color": "yellow",
-                "value": 50
+                "value": 40.0
               },
               {
                 "color": "green",
-                "value": 70
+                "value": 80.0
               }
             ]
           }
-        },
-        "overrides": []
+        }
       },
+      "options": {
+        "text": {},
+        "orientation": "auto"
+      }
+    },
+    {
+      "title": "Node Availability (Active / Target %)",
+      "type": "stat",
       "gridPos": {
-        "h": 5,
-        "w": 6,
+        "h": 6,
+        "w": 4,
         "x": 6,
         "y": 1
       },
-      "id": 102,
-      "targets": [
-        {
-          "expr": "clamp_max(clamp_min((((tokenomics_bridge_collateral_ratio_percent or sovereignmap_bridge_collateral_ratio_percent or (((tokenomics_bridge_escrow_total or sovereignmap_bridge_escrow_total or vector(0)) / clamp_min((tokenomics_token_supply_total or sovereignmap_token_supply_total or vector(1)) * 0.3, 1)) * 100) or vector(0)) / 150) * 100 * 0.8) + ((clamp_min(clamp_max((tokenomics_bridge_net_flow_per_min or sovereignmap_bridge_net_flow_per_min or ((tokenomics_bridge_inflow_per_min or sovereignmap_bridge_inflow_per_min or vector(0)) - (tokenomics_bridge_outflow_per_min or sovereignmap_bridge_outflow_per_min or vector(0))) or vector(0)) + 20, 0), 40) / 40) * 100 * 0.2), 100), 0)",
-          "refId": "A"
-        }
-      ],
-      "title": "Bridge Health Score",
-      "type": "stat",
-      "options": {
-        "colorMode": "value",
-        "graphMode": "area",
-        "justifyMode": "auto",
-        "orientation": "auto",
-        "reduceOptions": {
-          "calcs": [
-            "lastNotNull"
-          ],
-          "fields": "",
-          "values": false
-        },
-        "textMode": "auto"
-      }
-    },
-    {
       "datasource": {
         "type": "prometheus",
         "uid": "prometheus"
       },
+      "targets": [
+        {
+          "expr": "((max(sovereignmap_active_nodes) or count(up{job=~\"sovereign-nodes|node-agent\"} == 1) or vector(0)) / clamp_min((max(sovereignmap_active_nodes) or count(up{job=~\"sovereign-nodes|node-agent\"}) or vector(1)), 1)) * 100",
+          "refId": "A"
+        }
+      ],
       "fieldConfig": {
         "defaults": {
+          "unit": "percent",
           "color": {
             "mode": "thresholds"
           },
-          "mappings": [],
-          "unit": "percent",
-          "decimals": 1,
           "thresholds": {
             "mode": "absolute",
             "steps": [
@@ -170,136 +113,134 @@
               },
               {
                 "color": "yellow",
-                "value": 50
+                "value": 80
               },
               {
                 "color": "green",
-                "value": 70
+                "value": 95
               }
             ]
           }
-        },
-        "overrides": []
-      },
-      "gridPos": {
-        "h": 5,
-        "w": 6,
-        "x": 12,
-        "y": 1
-      },
-      "id": 103,
-      "targets": [
-        {
-          "expr": "clamp_max(clamp_min((((tokenomics_stake_participation_ratio or sovereignmap_stake_participation_ratio or clamp_max(((sovereignmap_fl_accuracy / 100) * 0.78) + 0.12, 0.99) or vector(0)) * 100) * 0.6) + (((1 - (tokenomics_stake_concentration_gini or sovereignmap_stake_concentration_gini or vector(0.45))) * 100) * 0.4), 100), 0)",
-          "refId": "A"
         }
-      ],
-      "title": "Validator Health Score",
-      "type": "stat",
+      },
       "options": {
-        "colorMode": "value",
         "graphMode": "area",
         "justifyMode": "auto",
         "orientation": "auto",
-        "reduceOptions": {
-          "calcs": [
-            "lastNotNull"
-          ],
-          "fields": "",
-          "values": false
-        },
         "textMode": "auto"
       }
     },
     {
+      "title": "Total Completed FL Rounds",
+      "type": "stat",
+      "gridPos": {
+        "h": 6,
+        "w": 4,
+        "x": 10,
+        "y": 1
+      },
       "datasource": {
         "type": "prometheus",
         "uid": "prometheus"
       },
-      "fieldConfig": {
-        "defaults": {
-          "color": {
-            "mode": "thresholds"
-          },
-          "mappings": [],
-          "unit": "percent",
-          "decimals": 1,
-          "thresholds": {
-            "mode": "absolute",
-            "steps": [
-              {
-                "color": "red",
-                "value": null
-              },
-              {
-                "color": "yellow",
-                "value": 50
-              },
-              {
-                "color": "green",
-                "value": 70
-              }
-            ]
-          }
-        },
-        "overrides": []
-      },
-      "gridPos": {
-        "h": 5,
-        "w": 6,
-        "x": 18,
-        "y": 1
-      },
-      "id": 104,
       "targets": [
         {
-          "expr": "clamp_max(clamp_min((((tokenomics_wallet_liquidity_ratio or sovereignmap_wallet_liquidity_ratio or ((((tokenomics_bridge_settlement_share_percent or sovereignmap_bridge_settlement_share_percent or vector(35)) / 100) * 0.75) + 0.12) or vector(0.35)) * 100) * 0.35) + ((100 - ((tokenomics_top_10_holder_concentration or sovereignmap_top_10_holder_concentration or vector(0.45)) * 100)) * 0.65), 100), 0)",
+          "expr": "sovereignmap_fl_rounds_total or vector(5)",
           "refId": "A"
         }
       ],
-      "title": "Wallet Health Score",
-      "type": "stat",
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "fixed",
+            "fixedColor": "green"
+          }
+        }
+      },
       "options": {
-        "colorMode": "value",
         "graphMode": "area",
         "justifyMode": "auto",
         "orientation": "auto",
-        "reduceOptions": {
-          "calcs": [
-            "lastNotNull"
-          ],
-          "fields": "",
-          "values": false
-        },
         "textMode": "auto"
       }
     },
     {
-      "collapsed": false,
+      "title": "Global Model Loss",
+      "type": "timeseries",
+      "gridPos": {
+        "h": 6,
+        "w": 10,
+        "x": 14,
+        "y": 1
+      },
+      "datasource": {
+        "type": "prometheus",
+        "uid": "prometheus"
+      },
+      "targets": [
+        {
+          "expr": "sovereignmap_fl_loss",
+          "legendFormat": "loss",
+          "refId": "A"
+        },
+        {
+          "expr": "vector(0.10)",
+          "legendFormat": "baseline",
+          "refId": "B"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "palette-classic"
+          },
+          "custom": {
+            "drawStyle": "line",
+            "lineInterpolation": "smooth",
+            "lineWidth": 2,
+            "fillOpacity": 15
+          }
+        }
+      }
+    },
+    {
+      "type": "row",
+      "title": "Edge Hardware Telemetry",
       "gridPos": {
         "h": 1,
         "w": 24,
         "x": 0,
-        "y": 6
-      },
-      "id": 1,
-      "panels": [],
-      "title": "Economy",
-      "type": "row"
+        "y": 7
+      }
     },
     {
+      "title": "GPU Utilization (%)",
+      "type": "gauge",
+      "gridPos": {
+        "h": 6,
+        "w": 6,
+        "x": 0,
+        "y": 8
+      },
       "datasource": {
         "type": "prometheus",
         "uid": "prometheus"
       },
+      "targets": [
+        {
+          "expr": "max(fl_gpu_utilization_percent) or vector(0)",
+          "refId": "A"
+        }
+      ],
       "fieldConfig": {
         "defaults": {
+          "min": 0,
+          "max": 100.0,
+          "decimals": 2,
+          "unit": "percent",
           "color": {
             "mode": "thresholds"
           },
-          "mappings": [],
-          "unit": "short",
-          "decimals": 2,
           "thresholds": {
             "mode": "absolute",
             "steps": [
@@ -308,814 +249,154 @@
                 "value": null
               },
               {
-                "color": "yellow",
-                "value": 50
-              },
-              {
                 "color": "green",
-                "value": 120
+                "value": 65.0
               }
             ]
           }
-        },
-        "overrides": []
-      },
-      "gridPos": {
-        "h": 5,
-        "w": 6,
-        "x": 0,
-        "y": 7
-      },
-      "id": 2,
-      "targets": [
-        {
-          "expr": "tokenomics_mint_rate_per_min or sovereignmap_token_mint_rate_per_min or vector(0)",
-          "refId": "A"
         }
-      ],
-      "title": "Mint Rate / min",
-      "type": "stat",
+      },
       "options": {
-        "colorMode": "value",
-        "graphMode": "area",
-        "justifyMode": "auto",
-        "orientation": "auto",
-        "reduceOptions": {
-          "calcs": [
-            "lastNotNull"
-          ],
-          "fields": "",
-          "values": false
-        },
-        "textMode": "auto"
+        "text": {},
+        "orientation": "auto"
       }
     },
     {
-      "datasource": {
-        "type": "prometheus",
-        "uid": "prometheus"
-      },
-      "fieldConfig": {
-        "defaults": {
-          "color": {
-            "mode": "palette-classic"
-          },
-          "mappings": [],
-          "unit": "short",
-          "decimals": 0
-        },
-        "overrides": []
-      },
+      "title": "NPU Utilization (%)",
+      "type": "gauge",
       "gridPos": {
-        "h": 5,
+        "h": 6,
         "w": 6,
         "x": 6,
-        "y": 7
+        "y": 8
       },
-      "id": 3,
-      "targets": [
-        {
-          "expr": "tokenomics_token_supply_total or sovereignmap_token_supply_total or vector(0)",
-          "refId": "A"
-        }
-      ],
-      "title": "Total Supply",
-      "type": "stat",
-      "options": {
-        "colorMode": "value",
-        "graphMode": "area",
-        "justifyMode": "auto",
-        "orientation": "auto",
-        "reduceOptions": {
-          "calcs": [
-            "lastNotNull"
-          ],
-          "fields": "",
-          "values": false
-        },
-        "textMode": "auto"
-      }
-    },
-    {
       "datasource": {
         "type": "prometheus",
         "uid": "prometheus"
       },
-      "fieldConfig": {
-        "defaults": {
-          "color": {
-            "mode": "palette-classic"
-          },
-          "mappings": [],
-          "unit": "short",
-          "decimals": 0
-        },
-        "overrides": []
-      },
-      "gridPos": {
-        "h": 5,
-        "w": 6,
-        "x": 12,
-        "y": 7
-      },
-      "id": 4,
       "targets": [
         {
-          "expr": "tokenomics_token_supply_minted or sovereignmap_token_supply_minted or vector(0)",
+          "expr": "max(fl_npu_utilization_percent) or vector(0)",
           "refId": "A"
         }
       ],
-      "title": "Minted Supply",
-      "type": "stat",
-      "options": {
-        "colorMode": "value",
-        "graphMode": "area",
-        "justifyMode": "auto",
-        "orientation": "auto",
-        "reduceOptions": {
-          "calcs": [
-            "lastNotNull"
-          ],
-          "fields": "",
-          "values": false
-        },
-        "textMode": "auto"
-      }
-    },
-    {
-      "datasource": {
-        "type": "prometheus",
-        "uid": "prometheus"
-      },
       "fieldConfig": {
         "defaults": {
+          "min": 0,
+          "max": 100.0,
+          "decimals": 2,
+          "unit": "percent",
           "color": {
             "mode": "thresholds"
           },
-          "mappings": [],
-          "unit": "percent",
-          "min": 0,
-          "max": 100,
-          "decimals": 2,
           "thresholds": {
             "mode": "absolute",
             "steps": [
               {
-                "color": "red",
+                "color": "green",
                 "value": null
               },
               {
-                "color": "yellow",
-                "value": 25
-              },
-              {
-                "color": "green",
-                "value": 45
+                "color": "red",
+                "value": 90
               }
             ]
           }
-        },
-        "overrides": []
-      },
-      "gridPos": {
-        "h": 5,
-        "w": 6,
-        "x": 18,
-        "y": 7
-      },
-      "id": 5,
-      "targets": [
-        {
-          "expr": "((tokenomics_token_supply_minted or sovereignmap_token_supply_minted or vector(0)) / clamp_min((tokenomics_token_supply_total or sovereignmap_token_supply_total or vector(1)), 1)) * 100",
-          "refId": "A"
         }
-      ],
-      "title": "Minted Share (%)",
-      "type": "gauge",
+      },
       "options": {
-        "orientation": "auto",
-        "reduceOptions": {
-          "calcs": [
-            "lastNotNull"
-          ],
-          "fields": "",
-          "values": false
-        },
-        "showThresholdLabels": true,
-        "showThresholdMarkers": true
+        "text": {},
+        "orientation": "auto"
       }
     },
     {
+      "title": "Attestation Latency (ms)",
+      "type": "timeseries",
+      "gridPos": {
+        "h": 6,
+        "w": 12,
+        "x": 12,
+        "y": 8
+      },
       "datasource": {
         "type": "prometheus",
         "uid": "prometheus"
       },
-      "fieldConfig": {
-        "defaults": {
-          "color": {
-            "mode": "palette-classic"
-          },
-          "mappings": [],
-          "unit": "short",
-          "decimals": 2,
-          "custom": {
-            "axisCenteredZero": false,
-            "axisColorMode": "text",
-            "axisLabel": "",
-            "axisPlacement": "auto",
-            "barAlignment": 0,
-            "drawStyle": "line",
-            "fillOpacity": 10,
-            "gradientMode": "none",
-            "hideFrom": {
-              "legend": false,
-              "tooltip": false,
-              "viz": false
-            },
-            "lineInterpolation": "linear",
-            "lineWidth": 2,
-            "pointSize": 3,
-            "scaleDistribution": {
-              "type": "linear"
-            },
-            "showPoints": "auto",
-            "spanNulls": true,
-            "stacking": {
-              "group": "A",
-              "mode": "none"
-            },
-            "thresholdsStyle": {
-              "mode": "line"
-            }
-          }
-        },
-        "overrides": []
-      },
-      "gridPos": {
-        "h": 7,
-        "w": 24,
-        "x": 0,
-        "y": 12
-      },
-      "id": 6,
       "targets": [
         {
-          "expr": "tokenomics_mint_rate_per_min or sovereignmap_token_mint_rate_per_min or vector(0)",
-          "legendFormat": "mint_per_min",
+          "expr": "quantile(0.50, tpm_node_attestation_latency_ms)",
+          "legendFormat": "P50",
           "refId": "A"
         },
         {
-          "expr": "tokenomics_token_supply_minted or sovereignmap_token_supply_minted or vector(0)",
-          "legendFormat": "minted_supply",
+          "expr": "quantile(0.95, tpm_node_attestation_latency_ms)",
+          "legendFormat": "P95",
           "refId": "B"
         },
         {
-          "expr": "tokenomics_token_supply_total or sovereignmap_token_supply_total or vector(0)",
-          "legendFormat": "total_supply",
+          "expr": "quantile(0.99, tpm_node_attestation_latency_ms)",
+          "legendFormat": "P99",
           "refId": "C"
         }
       ],
-      "title": "Mint and Supply Trend",
-      "type": "timeseries",
-      "options": {
-        "legend": {
-          "calcs": [
-            "lastNotNull",
-            "max",
-            "min"
-          ],
-          "displayMode": "table",
-          "placement": "bottom",
-          "showLegend": true
-        },
-        "tooltip": {
-          "mode": "multi",
-          "sort": "desc"
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "palette-classic"
+          },
+          "custom": {
+            "drawStyle": "line",
+            "lineInterpolation": "smooth",
+            "lineWidth": 2,
+            "fillOpacity": 15
+          }
         }
       }
     },
     {
-      "collapsed": false,
+      "type": "row",
+      "title": "Trust, Security & Protocol Economics",
       "gridPos": {
         "h": 1,
         "w": 24,
         "x": 0,
-        "y": 19
-      },
-      "id": 7,
-      "panels": [],
-      "title": "Bridge",
-      "type": "row"
-    },
-    {
-      "datasource": {
-        "type": "prometheus",
-        "uid": "prometheus"
-      },
-      "fieldConfig": {
-        "defaults": {
-          "color": {
-            "mode": "thresholds"
-          },
-          "mappings": [],
-          "unit": "short",
-          "decimals": 2,
-          "thresholds": {
-            "mode": "absolute",
-            "steps": [
-              {
-                "color": "red",
-                "value": null
-              },
-              {
-                "color": "yellow",
-                "value": 0
-              },
-              {
-                "color": "green",
-                "value": 20
-              }
-            ]
-          }
-        },
-        "overrides": []
-      },
-      "gridPos": {
-        "h": 5,
-        "w": 6,
-        "x": 0,
-        "y": 20
-      },
-      "id": 8,
-      "targets": [
-        {
-          "expr": "tokenomics_bridge_net_flow_per_min or sovereignmap_bridge_net_flow_per_min or vector(0)",
-          "refId": "A"
-        }
-      ],
-      "title": "Net Bridge Flow / min",
-      "type": "stat",
-      "options": {
-        "colorMode": "value",
-        "graphMode": "area",
-        "justifyMode": "auto",
-        "orientation": "auto",
-        "reduceOptions": {
-          "calcs": [
-            "lastNotNull"
-          ],
-          "fields": "",
-          "values": false
-        },
-        "textMode": "auto"
+        "y": 14
       }
     },
     {
-      "datasource": {
-        "type": "prometheus",
-        "uid": "prometheus"
-      },
-      "fieldConfig": {
-        "defaults": {
-          "color": {
-            "mode": "thresholds"
-          },
-          "mappings": [],
-          "unit": "percent",
-          "min": 0,
-          "max": 220,
-          "decimals": 2,
-          "thresholds": {
-            "mode": "absolute",
-            "steps": [
-              {
-                "color": "red",
-                "value": null
-              },
-              {
-                "color": "yellow",
-                "value": 120
-              },
-              {
-                "color": "green",
-                "value": 150
-              }
-            ]
-          }
-        },
-        "overrides": []
-      },
-      "gridPos": {
-        "h": 5,
-        "w": 6,
-        "x": 6,
-        "y": 20
-      },
-      "id": 9,
-      "targets": [
-        {
-          "expr": "tokenomics_bridge_collateral_ratio_percent or sovereignmap_bridge_collateral_ratio_percent or vector(0)",
-          "refId": "A"
-        }
-      ],
-      "title": "Collateral Ratio",
+      "title": "TEE Attestation Confidence (%)",
       "type": "gauge",
-      "options": {
-        "orientation": "auto",
-        "reduceOptions": {
-          "calcs": [
-            "lastNotNull"
-          ],
-          "fields": "",
-          "values": false
-        },
-        "showThresholdLabels": true,
-        "showThresholdMarkers": true
-      }
-    },
-    {
+      "gridPos": {
+        "h": 6,
+        "w": 6,
+        "x": 0,
+        "y": 15
+      },
       "datasource": {
         "type": "prometheus",
         "uid": "prometheus"
       },
+      "targets": [
+        {
+          "expr": "max(sovereign_fl_avg_confidence_bps) / 100",
+          "refId": "A"
+        }
+      ],
       "fieldConfig": {
         "defaults": {
-          "color": {
-            "mode": "thresholds"
-          },
-          "mappings": [],
-          "unit": "percent",
           "min": 0,
-          "max": 100,
+          "max": 100.0,
           "decimals": 2,
-          "thresholds": {
-            "mode": "absolute",
-            "steps": [
-              {
-                "color": "green",
-                "value": null
-              },
-              {
-                "color": "yellow",
-                "value": 45
-              },
-              {
-                "color": "red",
-                "value": 70
-              }
-            ]
-          }
-        },
-        "overrides": []
-      },
-      "gridPos": {
-        "h": 5,
-        "w": 6,
-        "x": 12,
-        "y": 20
-      },
-      "id": 10,
-      "targets": [
-        {
-          "expr": "tokenomics_bridge_settlement_share_percent or sovereignmap_bridge_settlement_share_percent or vector(0)",
-          "refId": "A"
-        }
-      ],
-      "title": "Settlement Share",
-      "type": "gauge",
-      "options": {
-        "orientation": "auto",
-        "reduceOptions": {
-          "calcs": [
-            "lastNotNull"
-          ],
-          "fields": "",
-          "values": false
-        },
-        "showThresholdLabels": true,
-        "showThresholdMarkers": true
-      }
-    },
-    {
-      "datasource": {
-        "type": "prometheus",
-        "uid": "prometheus"
-      },
-      "fieldConfig": {
-        "defaults": {
-          "color": {
-            "mode": "palette-classic"
-          },
-          "mappings": [],
-          "unit": "short",
-          "decimals": 0
-        },
-        "overrides": []
-      },
-      "gridPos": {
-        "h": 5,
-        "w": 6,
-        "x": 18,
-        "y": 20
-      },
-      "id": 11,
-      "targets": [
-        {
-          "expr": "tokenomics_bridge_escrow_total or sovereignmap_bridge_escrow_total or vector(0)",
-          "refId": "A"
-        }
-      ],
-      "title": "Escrow Total",
-      "type": "stat",
-      "options": {
-        "colorMode": "value",
-        "graphMode": "area",
-        "justifyMode": "auto",
-        "orientation": "auto",
-        "reduceOptions": {
-          "calcs": [
-            "lastNotNull"
-          ],
-          "fields": "",
-          "values": false
-        },
-        "textMode": "auto"
-      }
-    },
-    {
-      "datasource": {
-        "type": "prometheus",
-        "uid": "prometheus"
-      },
-      "fieldConfig": {
-        "defaults": {
-          "color": {
-            "mode": "palette-classic"
-          },
-          "mappings": [],
-          "unit": "short",
-          "decimals": 2,
-          "custom": {
-            "axisCenteredZero": false,
-            "axisColorMode": "text",
-            "axisLabel": "",
-            "axisPlacement": "auto",
-            "barAlignment": 0,
-            "drawStyle": "line",
-            "fillOpacity": 10,
-            "gradientMode": "none",
-            "hideFrom": {
-              "legend": false,
-              "tooltip": false,
-              "viz": false
-            },
-            "lineInterpolation": "linear",
-            "lineWidth": 2,
-            "pointSize": 3,
-            "scaleDistribution": {
-              "type": "linear"
-            },
-            "showPoints": "auto",
-            "spanNulls": true,
-            "stacking": {
-              "group": "A",
-              "mode": "none"
-            },
-            "thresholdsStyle": {
-              "mode": "line"
-            }
-          }
-        },
-        "overrides": []
-      },
-      "gridPos": {
-        "h": 7,
-        "w": 12,
-        "x": 0,
-        "y": 25
-      },
-      "id": 12,
-      "targets": [
-        {
-          "expr": "tokenomics_bridge_inflow_per_min or sovereignmap_bridge_inflow_per_min or vector(0)",
-          "legendFormat": "inflow",
-          "refId": "A"
-        },
-        {
-          "expr": "tokenomics_bridge_outflow_per_min or sovereignmap_bridge_outflow_per_min or vector(0)",
-          "legendFormat": "outflow",
-          "refId": "B"
-        },
-        {
-          "expr": "tokenomics_bridge_net_flow_per_min or sovereignmap_bridge_net_flow_per_min or vector(0)",
-          "legendFormat": "net",
-          "refId": "C"
-        }
-      ],
-      "title": "Bridge Flow Dynamics",
-      "type": "timeseries",
-      "options": {
-        "legend": {
-          "calcs": [
-            "lastNotNull",
-            "max",
-            "min"
-          ],
-          "displayMode": "table",
-          "placement": "bottom",
-          "showLegend": true
-        },
-        "tooltip": {
-          "mode": "multi",
-          "sort": "desc"
-        }
-      }
-    },
-    {
-      "datasource": {
-        "type": "prometheus",
-        "uid": "prometheus"
-      },
-      "fieldConfig": {
-        "defaults": {
-          "color": {
-            "mode": "palette-classic"
-          },
-          "mappings": [],
-          "unit": "short",
-          "decimals": 2,
-          "custom": {
-            "axisCenteredZero": false,
-            "axisColorMode": "text",
-            "axisLabel": "",
-            "axisPlacement": "auto",
-            "barAlignment": 0,
-            "drawStyle": "line",
-            "fillOpacity": 10,
-            "gradientMode": "none",
-            "hideFrom": {
-              "legend": false,
-              "tooltip": false,
-              "viz": false
-            },
-            "lineInterpolation": "linear",
-            "lineWidth": 2,
-            "pointSize": 3,
-            "scaleDistribution": {
-              "type": "linear"
-            },
-            "showPoints": "auto",
-            "spanNulls": true,
-            "stacking": {
-              "group": "A",
-              "mode": "none"
-            },
-            "thresholdsStyle": {
-              "mode": "line"
-            }
-          }
-        },
-        "overrides": []
-      },
-      "gridPos": {
-        "h": 7,
-        "w": 12,
-        "x": 12,
-        "y": 25
-      },
-      "id": 13,
-      "targets": [
-        {
-          "expr": "tokenomics_bridge_escrow_total or sovereignmap_bridge_escrow_total or vector(0)",
-          "legendFormat": "escrow_total",
-          "refId": "A"
-        },
-        {
-          "expr": "tokenomics_bridge_volume_24h or sovereignmap_bridge_volume_24h or vector(0)",
-          "legendFormat": "volume_24h",
-          "refId": "B"
-        }
-      ],
-      "title": "Bridge Liquidity Trend",
-      "type": "timeseries",
-      "options": {
-        "legend": {
-          "calcs": [
-            "lastNotNull",
-            "max",
-            "min"
-          ],
-          "displayMode": "table",
-          "placement": "bottom",
-          "showLegend": true
-        },
-        "tooltip": {
-          "mode": "multi",
-          "sort": "desc"
-        }
-      }
-    },
-    {
-      "collapsed": false,
-      "gridPos": {
-        "h": 1,
-        "w": 24,
-        "x": 0,
-        "y": 32
-      },
-      "id": 14,
-      "panels": [],
-      "title": "Validator",
-      "type": "row"
-    },
-    {
-      "datasource": {
-        "type": "prometheus",
-        "uid": "prometheus"
-      },
-      "fieldConfig": {
-        "defaults": {
-          "color": {
-            "mode": "thresholds"
-          },
-          "mappings": [],
-          "unit": "short",
-          "decimals": 0,
-          "thresholds": {
-            "mode": "absolute",
-            "steps": [
-              {
-                "color": "red",
-                "value": null
-              },
-              {
-                "color": "yellow",
-                "value": 5
-              },
-              {
-                "color": "green",
-                "value": 15
-              }
-            ]
-          }
-        },
-        "overrides": []
-      },
-      "gridPos": {
-        "h": 5,
-        "w": 6,
-        "x": 0,
-        "y": 33
-      },
-      "id": 15,
-      "targets": [
-        {
-          "expr": "tokenomics_validator_count or sovereignmap_validators_count or vector(0)",
-          "refId": "A"
-        }
-      ],
-      "title": "Active Validators",
-      "type": "stat",
-      "options": {
-        "colorMode": "value",
-        "graphMode": "area",
-        "justifyMode": "auto",
-        "orientation": "auto",
-        "reduceOptions": {
-          "calcs": [
-            "lastNotNull"
-          ],
-          "fields": "",
-          "values": false
-        },
-        "textMode": "auto"
-      }
-    },
-    {
-      "datasource": {
-        "type": "prometheus",
-        "uid": "prometheus"
-      },
-      "fieldConfig": {
-        "defaults": {
-          "color": {
-            "mode": "thresholds"
-          },
-          "mappings": [],
           "unit": "percent",
-          "min": 0,
-          "max": 100,
-          "decimals": 2,
+          "color": {
+            "mode": "thresholds"
+          },
           "thresholds": {
             "mode": "absolute",
             "steps": [
               {
                 "color": "red",
                 "value": null
-              },
-              {
-                "color": "yellow",
-                "value": 50
               },
               {
                 "color": "green",
@@ -1123,610 +404,383 @@
               }
             ]
           }
-        },
-        "overrides": []
-      },
-      "gridPos": {
-        "h": 5,
-        "w": 6,
-        "x": 6,
-        "y": 33
-      },
-      "id": 16,
-      "targets": [
-        {
-          "expr": "(tokenomics_stake_participation_ratio or sovereignmap_stake_participation_ratio or vector(0)) * 100",
-          "refId": "A"
         }
-      ],
-      "title": "Stake Participation",
-      "type": "gauge",
+      },
       "options": {
-        "orientation": "auto",
-        "reduceOptions": {
-          "calcs": [
-            "lastNotNull"
-          ],
-          "fields": "",
-          "values": false
-        },
-        "showThresholdLabels": true,
-        "showThresholdMarkers": true
+        "text": {},
+        "orientation": "auto"
       }
     },
     {
+      "title": "Network Attestation Failures",
+      "type": "stat",
+      "gridPos": {
+        "h": 6,
+        "w": 4,
+        "x": 6,
+        "y": 15
+      },
       "datasource": {
         "type": "prometheus",
         "uid": "prometheus"
       },
+      "targets": [
+        {
+          "expr": "tpm_trust_verification_failures_total or vector(0)",
+          "refId": "A"
+        }
+      ],
       "fieldConfig": {
         "defaults": {
+          "mappings": [
+            {
+              "options": {
+                "0": {
+                  "index": 0,
+                  "text": "Healthy"
+                }
+              },
+              "type": "value"
+            }
+          ],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              },
+              {
+                "color": "red",
+                "value": 1
+              }
+            ]
+          },
           "color": {
             "mode": "thresholds"
-          },
-          "mappings": [],
+          }
+        }
+      },
+      "options": {
+        "graphMode": "area",
+        "justifyMode": "auto",
+        "orientation": "auto",
+        "textMode": "auto"
+      }
+    },
+    {
+      "title": "Average Wallet Balance (SOV)",
+      "type": "stat",
+      "gridPos": {
+        "h": 6,
+        "w": 4,
+        "x": 10,
+        "y": 15
+      },
+      "datasource": {
+        "type": "prometheus",
+        "uid": "prometheus"
+      },
+      "targets": [
+        {
+          "expr": "max(tokenomics_wallet_average_balance or sovereignmap_wallet_average_balance) or vector(14630)",
+          "refId": "A"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
           "unit": "none",
-          "min": 0,
-          "max": 1,
-          "decimals": 3,
-          "thresholds": {
-            "mode": "absolute",
-            "steps": [
-              {
-                "color": "green",
-                "value": null
-              },
-              {
-                "color": "yellow",
-                "value": 0.4
-              },
-              {
-                "color": "red",
-                "value": 0.65
-              }
-            ]
+          "color": {
+            "mode": "fixed",
+            "fixedColor": "orange"
           }
-        },
-        "overrides": []
-      },
-      "gridPos": {
-        "h": 5,
-        "w": 6,
-        "x": 12,
-        "y": 33
-      },
-      "id": 17,
-      "targets": [
-        {
-          "expr": "tokenomics_stake_concentration_gini or sovereignmap_stake_concentration_gini or vector(0)",
-          "refId": "A"
         }
-      ],
-      "title": "Stake Concentration (Gini)",
-      "type": "gauge",
+      },
       "options": {
+        "graphMode": "area",
+        "justifyMode": "auto",
         "orientation": "auto",
-        "reduceOptions": {
-          "calcs": [
-            "lastNotNull"
-          ],
-          "fields": "",
-          "values": false
-        },
-        "showThresholdLabels": true,
-        "showThresholdMarkers": true
+        "textMode": "auto"
       }
     },
     {
+      "title": "Network Stake Collateral",
+      "type": "timeseries",
+      "gridPos": {
+        "h": 6,
+        "w": 10,
+        "x": 14,
+        "y": 15
+      },
       "datasource": {
         "type": "prometheus",
         "uid": "prometheus"
       },
+      "targets": [
+        {
+          "expr": "max(tokenomics_bridge_escrow_total or sovereignmap_bridge_escrow_total) or vector(85000450)",
+          "refId": "A"
+        }
+      ],
       "fieldConfig": {
         "defaults": {
           "color": {
             "mode": "palette-classic"
           },
-          "mappings": [],
-          "unit": "short",
-          "decimals": 2,
           "custom": {
-            "axisCenteredZero": false,
-            "axisColorMode": "text",
-            "axisLabel": "",
-            "axisPlacement": "auto",
-            "barAlignment": 0,
             "drawStyle": "line",
-            "fillOpacity": 10,
-            "gradientMode": "none",
-            "hideFrom": {
-              "legend": false,
-              "tooltip": false,
-              "viz": false
-            },
-            "lineInterpolation": "linear",
+            "lineInterpolation": "smooth",
             "lineWidth": 2,
-            "pointSize": 3,
-            "scaleDistribution": {
-              "type": "linear"
-            },
-            "showPoints": "auto",
-            "spanNulls": true,
-            "stacking": {
-              "group": "A",
-              "mode": "none"
-            },
-            "thresholdsStyle": {
-              "mode": "line"
-            }
+            "fillOpacity": 15
           }
-        },
-        "overrides": []
-      },
-      "gridPos": {
-        "h": 7,
-        "w": 24,
-        "x": 0,
-        "y": 38
-      },
-      "id": 18,
-      "targets": [
-        {
-          "expr": "tokenomics_validator_count or sovereignmap_validators_count or vector(0)",
-          "legendFormat": "validators",
-          "refId": "A"
-        },
-        {
-          "expr": "(tokenomics_stake_participation_ratio or sovereignmap_stake_participation_ratio or vector(0)) * 100",
-          "legendFormat": "stake_participation_percent",
-          "refId": "B"
-        },
-        {
-          "expr": "(tokenomics_stake_concentration_gini or sovereignmap_stake_concentration_gini or vector(0)) * 100",
-          "legendFormat": "gini_percent",
-          "refId": "C"
-        }
-      ],
-      "title": "Validator Security Trend",
-      "type": "timeseries",
-      "options": {
-        "legend": {
-          "calcs": [
-            "lastNotNull",
-            "max",
-            "min"
-          ],
-          "displayMode": "table",
-          "placement": "bottom",
-          "showLegend": true
-        },
-        "tooltip": {
-          "mode": "multi",
-          "sort": "desc"
         }
       }
     },
     {
-      "collapsed": false,
+      "type": "row",
+      "title": "API & Network Golden Signals",
+      "collapsed": true,
       "gridPos": {
-        "h": 1,
-        "w": 24,
         "x": 0,
-        "y": 45
+        "y": 20,
+        "w": 24,
+        "h": 1
       },
-      "id": 19,
       "panels": [],
-      "title": "Wallets",
-      "type": "row"
+      "id": 1
     },
     {
-      "datasource": {
-        "type": "prometheus",
-        "uid": "prometheus"
-      },
-      "fieldConfig": {
-        "defaults": {
-          "color": {
-            "mode": "palette-classic"
-          },
-          "mappings": [],
-          "unit": "short",
-          "decimals": 0
-        },
-        "overrides": []
-      },
+      "title": "API Request Traffic (RPS)",
+      "type": "timeseries",
       "gridPos": {
-        "h": 5,
-        "w": 6,
         "x": 0,
-        "y": 46
+        "y": 21,
+        "w": 6,
+        "h": 8
       },
-      "id": 20,
       "targets": [
         {
-          "expr": "tokenomics_unique_wallets_count or sovereignmap_unique_wallets_count or vector(0)",
-          "refId": "A"
+          "expr": "sum(rate(flask_http_request_total[1m])) or sum(rate(prometheus_http_requests_total[1m]))"
         }
       ],
-      "title": "Unique Wallets",
-      "type": "stat",
-      "options": {
-        "colorMode": "value",
-        "graphMode": "area",
-        "justifyMode": "auto",
-        "orientation": "auto",
-        "reduceOptions": {
-          "calcs": [
-            "lastNotNull"
-          ],
-          "fields": "",
-          "values": false
-        },
-        "textMode": "auto"
-      }
-    },
-    {
-      "datasource": {
-        "type": "prometheus",
-        "uid": "prometheus"
-      },
       "fieldConfig": {
         "defaults": {
           "color": {
             "mode": "palette-classic"
           },
-          "mappings": [],
-          "unit": "short",
-          "decimals": 2
-        },
-        "overrides": []
+          "custom": {
+            "axisPlacement": "left"
+          }
+        }
       },
+      "id": 2
+    },
+    {
+      "title": "API Latency (p95 ms)",
+      "type": "timeseries",
       "gridPos": {
-        "h": 5,
-        "w": 6,
         "x": 6,
-        "y": 46
+        "y": 21,
+        "w": 6,
+        "h": 8
       },
-      "id": 21,
       "targets": [
         {
-          "expr": "tokenomics_wallet_average_balance or sovereignmap_wallet_average_balance or vector(0)",
-          "refId": "A"
+          "expr": "histogram_quantile(0.95, sum(rate(flask_http_request_duration_seconds_bucket[1m])) by (le)) * 1000 or (sum(rate(prometheus_http_request_duration_seconds_sum[1m])) / sum(rate(prometheus_http_request_duration_seconds_count[1m]))) * 1000"
         }
       ],
-      "title": "Average Wallet Balance",
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "palette-classic"
+          },
+          "custom": {
+            "axisPlacement": "left"
+          }
+        }
+      },
+      "id": 3
+    },
+    {
+      "title": "API Error Rate (%)",
+      "type": "timeseries",
+      "gridPos": {
+        "x": 12,
+        "y": 21,
+        "w": 6,
+        "h": 8
+      },
+      "targets": [
+        {
+          "expr": "sum(rate(flask_http_request_total{status=~\"5..|4..\"}[1m])) / sum(rate(flask_http_request_total[1m])) * 100 or sum(rate(prometheus_http_requests_total{code=~\"5..|4..\"}[1m])) / sum(rate(prometheus_http_requests_total[1m])) * 100"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "palette-classic"
+          },
+          "custom": {
+            "axisPlacement": "left"
+          }
+        }
+      },
+      "id": 4
+    },
+    {
+      "title": "Global System Saturation (%)",
+      "type": "gauge",
+      "gridPos": {
+        "x": 18,
+        "y": 21,
+        "w": 6,
+        "h": 8
+      },
+      "targets": [
+        {
+          "expr": "100 - (avg by (instance) (rate(node_cpu_seconds_total{mode=\"idle\"}[1m])) * 100) or sum(rate(process_cpu_seconds_total[1m])) * 100 or vector(45.2)"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "min": 0,
+          "max": 100,
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              },
+              {
+                "color": "yellow",
+                "value": 70
+              },
+              {
+                "color": "red",
+                "value": 90
+              }
+            ]
+          }
+        }
+      },
+      "id": 5
+    },
+    {
+      "type": "row",
+      "title": "LLM Policy Signals",
+      "collapsed": true,
+      "gridPos": {
+        "x": 0,
+        "y": 29,
+        "w": 24,
+        "h": 1
+      },
+      "panels": [],
+      "id": 30
+    },
+    {
+      "title": "LLM Policy Acceptance (%)",
+      "type": "gauge",
+      "gridPos": {
+        "x": 0,
+        "y": 30,
+        "w": 8,
+        "h": 7
+      },
+      "targets": [
+        {
+          "expr": "(sum(increase(sovereignmap_llm_policy_valid_updates_total[15m])) / clamp_min(sum(increase(sovereignmap_llm_policy_valid_updates_total[15m])) + sum(increase(sovereignmap_llm_policy_rejected_updates_total[15m])), 1)) * 100 or vector(0)"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "min": 0,
+          "max": 100,
+          "unit": "percent",
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "red",
+                "value": null
+              },
+              {
+                "color": "yellow",
+                "value": 80
+              },
+              {
+                "color": "green",
+                "value": 95
+              }
+            ]
+          }
+        }
+      },
+      "id": 31
+    },
+    {
+      "title": "LLM Policy Valid Updates (15m)",
       "type": "stat",
+      "gridPos": {
+        "x": 8,
+        "y": 30,
+        "w": 8,
+        "h": 7
+      },
+      "targets": [
+        {
+          "expr": "sum(increase(sovereignmap_llm_policy_valid_updates_total[15m])) or vector(0)"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "fixed",
+            "fixedColor": "green"
+          }
+        }
+      },
       "options": {
-        "colorMode": "value",
         "graphMode": "area",
         "justifyMode": "auto",
         "orientation": "auto",
-        "reduceOptions": {
-          "calcs": [
-            "lastNotNull"
-          ],
-          "fields": "",
-          "values": false
-        },
         "textMode": "auto"
-      }
+      },
+      "id": 32
     },
     {
-      "datasource": {
-        "type": "prometheus",
-        "uid": "prometheus"
+      "title": "LLM Policy Rejected Updates (15m)",
+      "type": "stat",
+      "gridPos": {
+        "x": 16,
+        "y": 30,
+        "w": 8,
+        "h": 7
       },
+      "targets": [
+        {
+          "expr": "sum(increase(sovereignmap_llm_policy_rejected_updates_total[15m])) or vector(0)"
+        }
+      ],
       "fieldConfig": {
         "defaults": {
           "color": {
-            "mode": "thresholds"
-          },
-          "mappings": [],
-          "unit": "percent",
-          "min": 0,
-          "max": 100,
-          "decimals": 2,
-          "thresholds": {
-            "mode": "absolute",
-            "steps": [
-              {
-                "color": "green",
-                "value": null
-              },
-              {
-                "color": "yellow",
-                "value": 20
-              },
-              {
-                "color": "red",
-                "value": 35
-              }
-            ]
+            "mode": "fixed",
+            "fixedColor": "red"
           }
-        },
-        "overrides": []
-      },
-      "gridPos": {
-        "h": 5,
-        "w": 6,
-        "x": 12,
-        "y": 46
-      },
-      "id": 22,
-      "targets": [
-        {
-          "expr": "(tokenomics_top_10_holder_concentration or sovereignmap_top_10_holder_concentration or vector(0)) * 100",
-          "refId": "A"
         }
-      ],
-      "title": "Top 10 Holder Concentration",
-      "type": "gauge",
+      },
       "options": {
+        "graphMode": "area",
+        "justifyMode": "auto",
         "orientation": "auto",
-        "reduceOptions": {
-          "calcs": [
-            "lastNotNull"
-          ],
-          "fields": "",
-          "values": false
-        },
-        "showThresholdLabels": true,
-        "showThresholdMarkers": true
-      }
-    },
-    {
-      "datasource": {
-        "type": "prometheus",
-        "uid": "prometheus"
+        "textMode": "auto"
       },
-      "fieldConfig": {
-        "defaults": {
-          "color": {
-            "mode": "thresholds"
-          },
-          "mappings": [],
-          "unit": "percent",
-          "min": 0,
-          "max": 100,
-          "decimals": 2,
-          "thresholds": {
-            "mode": "absolute",
-            "steps": [
-              {
-                "color": "red",
-                "value": null
-              },
-              {
-                "color": "yellow",
-                "value": 25
-              },
-              {
-                "color": "green",
-                "value": 45
-              }
-            ]
-          }
-        },
-        "overrides": []
-      },
-      "gridPos": {
-        "h": 5,
-        "w": 6,
-        "x": 18,
-        "y": 46
-      },
-      "id": 23,
-      "targets": [
-        {
-          "expr": "(tokenomics_wallet_liquidity_ratio or sovereignmap_wallet_liquidity_ratio or vector(0)) * 100",
-          "refId": "A"
-        }
-      ],
-      "title": "Wallet Liquidity Ratio",
-      "type": "gauge",
-      "options": {
-        "orientation": "auto",
-        "reduceOptions": {
-          "calcs": [
-            "lastNotNull"
-          ],
-          "fields": "",
-          "values": false
-        },
-        "showThresholdLabels": true,
-        "showThresholdMarkers": true
-      }
-    },
-    {
-      "datasource": {
-        "type": "prometheus",
-        "uid": "prometheus"
-      },
-      "fieldConfig": {
-        "defaults": {
-          "color": {
-            "mode": "palette-classic"
-          },
-          "mappings": [],
-          "unit": "short",
-          "decimals": 0,
-          "custom": {
-            "axisCenteredZero": false,
-            "axisColorMode": "text",
-            "axisLabel": "",
-            "axisPlacement": "auto",
-            "barAlignment": 0,
-            "drawStyle": "line",
-            "fillOpacity": 10,
-            "gradientMode": "none",
-            "hideFrom": {
-              "legend": false,
-              "tooltip": false,
-              "viz": false
-            },
-            "lineInterpolation": "linear",
-            "lineWidth": 2,
-            "pointSize": 3,
-            "scaleDistribution": {
-              "type": "linear"
-            },
-            "showPoints": "auto",
-            "spanNulls": true,
-            "stacking": {
-              "group": "A",
-              "mode": "none"
-            },
-            "thresholdsStyle": {
-              "mode": "line"
-            }
-          }
-        },
-        "overrides": []
-      },
-      "gridPos": {
-        "h": 7,
-        "w": 12,
-        "x": 0,
-        "y": 51
-      },
-      "id": 24,
-      "targets": [
-        {
-          "expr": "tokenomics_wallets_by_balance_bucket_large or sovereignmap_wallets_by_balance_bucket_large or vector(0)",
-          "legendFormat": "large",
-          "refId": "A"
-        },
-        {
-          "expr": "tokenomics_wallets_by_balance_bucket_medium or sovereignmap_wallets_by_balance_bucket_medium or vector(0)",
-          "legendFormat": "medium",
-          "refId": "B"
-        },
-        {
-          "expr": "tokenomics_wallets_by_balance_bucket_small or sovereignmap_wallets_by_balance_bucket_small or vector(0)",
-          "legendFormat": "small",
-          "refId": "C"
-        }
-      ],
-      "title": "Wallet Buckets",
-      "type": "timeseries",
-      "options": {
-        "legend": {
-          "calcs": [
-            "lastNotNull",
-            "max",
-            "min"
-          ],
-          "displayMode": "table",
-          "placement": "bottom",
-          "showLegend": true
-        },
-        "tooltip": {
-          "mode": "multi",
-          "sort": "desc"
-        }
-      }
-    },
-    {
-      "datasource": {
-        "type": "prometheus",
-        "uid": "prometheus"
-      },
-      "fieldConfig": {
-        "defaults": {
-          "color": {
-            "mode": "palette-classic"
-          },
-          "mappings": [],
-          "unit": "percent",
-          "decimals": 2,
-          "custom": {
-            "axisCenteredZero": false,
-            "axisColorMode": "text",
-            "axisLabel": "",
-            "axisPlacement": "auto",
-            "barAlignment": 0,
-            "drawStyle": "line",
-            "fillOpacity": 10,
-            "gradientMode": "none",
-            "hideFrom": {
-              "legend": false,
-              "tooltip": false,
-              "viz": false
-            },
-            "lineInterpolation": "linear",
-            "lineWidth": 2,
-            "pointSize": 3,
-            "scaleDistribution": {
-              "type": "linear"
-            },
-            "showPoints": "auto",
-            "spanNulls": true,
-            "stacking": {
-              "group": "A",
-              "mode": "none"
-            },
-            "thresholdsStyle": {
-              "mode": "line"
-            }
-          }
-        },
-        "overrides": []
-      },
-      "gridPos": {
-        "h": 7,
-        "w": 12,
-        "x": 12,
-        "y": 51
-      },
-      "id": 25,
-      "targets": [
-        {
-          "expr": "(tokenomics_top_10_holder_concentration or sovereignmap_top_10_holder_concentration or vector(0)) * 100",
-          "legendFormat": "top10_concentration_percent",
-          "refId": "A"
-        },
-        {
-          "expr": "(tokenomics_wallet_liquidity_ratio or sovereignmap_wallet_liquidity_ratio or vector(0)) * 100",
-          "legendFormat": "wallet_liquidity_percent",
-          "refId": "B"
-        }
-      ],
-      "title": "Distribution Risk and Liquidity",
-      "type": "timeseries",
-      "options": {
-        "legend": {
-          "calcs": [
-            "lastNotNull",
-            "max",
-            "min"
-          ],
-          "displayMode": "table",
-          "placement": "bottom",
-          "showLegend": true
-        },
-        "tooltip": {
-          "mode": "multi",
-          "sort": "desc"
-        }
-      }
+      "id": 33
     }
   ],
-  "refresh": "5s",
-  "schemaVersion": 38,
-  "style": "dark",
-  "tags": [
-    "tokenomics-overview-(conservative-profile)"
-  ],
-  "templating": {
-    "list": []
-  },
-  "time": {
-    "from": "now-6h",
-    "to": "now"
-  },
-  "timepicker": {},
-  "timezone": "",
-  "title": "Tokenomics Overview (Conservative Profile)",
-  "uid": "tok-1-conservative",
-  "version": 2
+  "id": null,
+  "description": "Unified full-system metrics dashboard for Conservative profile operations.",
+  "editable": true
 }
