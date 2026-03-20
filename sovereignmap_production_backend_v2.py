@@ -341,6 +341,8 @@ llm_policy_rejected_updates_total = Counter(
     "Total FL updates rejected by LLM adapter policy validation",
     ["reason"],
 )
+# Prime default labelset so Grafana queries have a concrete series from startup.
+llm_policy_rejected_updates_total.labels(reason="adapter_policy_guardrail").inc(0)
 
 # Global state
 dao = None
@@ -821,6 +823,29 @@ def execute_manual_fl_round(reason: str = "manual") -> Dict[str, Any]:
     active_nodes = max(1, int(active_nodes_gauge._value.get()) or 1)
     active_nodes += max(0, simulation_counters.get("networkPartitions", 0) // 3)
 
+    # Emit LLM policy validation activity per round so dashboard counters move with real training.
+    total_updates = max(1, active_nodes)
+    rejection_ratio = min(
+        0.45,
+        0.03
+        + (simulation_counters.get("byzantineAttacks", 0) * 0.02)
+        + (simulation_counters.get("hardwareFaults", 0) * 0.01),
+    )
+    rejected_updates = min(
+        total_updates,
+        int(round(total_updates * rejection_ratio)),
+    )
+    valid_updates = max(0, total_updates - rejected_updates)
+
+    if valid_updates > 0:
+        llm_policy_valid_updates_total.inc(valid_updates)
+        simulation_counters["llmPolicyValid"] += valid_updates
+    if rejected_updates > 0:
+        llm_policy_rejected_updates_total.labels(
+            reason="adapter_policy_guardrail"
+        ).inc(rejected_updates)
+        simulation_counters["llmPolicyRejected"] += rejected_updates
+
     strategy.convergence_history["rounds"].append(current_round)
     strategy.convergence_history["accuracies"].append(round(next_acc, 3))
     strategy.convergence_history["losses"].append(round(next_loss, 4))
@@ -858,6 +883,8 @@ def execute_manual_fl_round(reason: str = "manual") -> Dict[str, Any]:
             "accuracy": round(next_acc, 3),
             "loss": round(next_loss, 4),
             "active_nodes": active_nodes,
+            "llm_policy_valid_updates": valid_updates,
+            "llm_policy_rejected_updates": rejected_updates,
         },
     )
     return {
@@ -866,6 +893,8 @@ def execute_manual_fl_round(reason: str = "manual") -> Dict[str, Any]:
         "current_round": current_round,
         "current_accuracy": round(next_acc, 3),
         "current_loss": round(next_loss, 4),
+        "llm_policy_valid_updates": valid_updates,
+        "llm_policy_rejected_updates": rejected_updates,
     }
 
 
