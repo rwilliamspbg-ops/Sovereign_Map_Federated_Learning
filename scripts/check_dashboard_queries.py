@@ -28,6 +28,7 @@ PROMQL_KEYWORDS = {
     "increase",
     "delta",
     "deriv",
+    "avg_over_time",
     "predict_linear",
     "histogram_quantile",
     "clamp_min",
