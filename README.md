@@ -307,6 +307,22 @@ OpenAPI/Postman status:
 
 ## Quick Start
 
+### One-Pass Wow Mode
+
+If you want the fastest production-feel walkthrough, run the two commands below and open HUD + Grafana immediately:
+
+```bash
+make wow-start
+make wow-verify
+```
+
+Expected outcome in under 2 minutes:
+
+- API health endpoints respond on `:8000`.
+- HUD is reachable at `http://localhost:3000`.
+- Grafana is reachable at `http://localhost:3001`.
+- Prometheus is reachable at `http://localhost:9090`.
+
 ### Prerequisites
 
 - Go 1.25+
@@ -403,6 +419,9 @@ make test
 
 # Recommended reproducibility smoke checks
 make smoke
+
+# Required visual evidence assets
+make screenshots-check
 ```
 
 For runtime-focused changes (HUD, observability, policy endpoints), include at least one local verification artifact in your PR description:

@@ -1,3 +1,5 @@
+# Pull Request
+
 ## Summary
 
 Describe what changed and why.
@@ -11,11 +13,20 @@ List exact commands you ran locally.
 make smoke
 ```
 
+## Evidence
+
+Attach concrete proof for runtime-facing changes.
+
+- HUD and/or Grafana screenshot links (or uploaded images)
+- `/health` and `/ops/health` command output snippets
+- If FL behavior changed: one `trigger_fl` round log snippet or metric delta
+
 ## Checklist
 
 - [ ] CI workflows pass on this branch
 - [ ] Security checks pass (including CodeQL)
 - [ ] `make smoke` passes locally
+- [ ] `make screenshots-check` passes locally (or N/A for non-runtime changes)
 - [ ] Documentation updated for behavior/config changes
 - [ ] No secrets or credentials committed
 - [ ] Any `.github/workflows/*.yml` `uses:` refs are pinned to 40-char commit SHAs
@@ -27,3 +38,4 @@ make smoke
 
 - Risk level: low / medium / high
 - Rollback plan (if needed):
+- Operational blast radius:

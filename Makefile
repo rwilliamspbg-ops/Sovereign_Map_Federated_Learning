@@ -3,7 +3,8 @@
 
 .PHONY: all build test clean deploy logs help \
         test-200-bft setup-200-test clean-200-test benchmark-200 \
-	chaos-test partition-test generate-data smoke testnet-wallet-readiness
+	chaos-test partition-test generate-data smoke testnet-wallet-readiness \
+	wow-start wow-verify screenshots-check
 
 COMPOSE ?= docker compose
 
@@ -118,6 +119,34 @@ generate-data:
 deploy:
 	@echo "🚀 Deploying standard stack..."
 	$(COMPOSE) up -d
+
+wow-start:
+	@echo "✨ Starting one-pass wow profile (dev stack + monitoring)..."
+	@docker compose -f docker-compose.dev.yml up -d
+	@docker compose -f docker-compose.monitoring.yml up -d
+	@sleep 8
+	@echo "✅ Stack started"
+	@echo "   API:       http://localhost:8000/status"
+	@echo "   HUD:       http://localhost:3000"
+	@echo "   Grafana:   http://localhost:3001"
+	@echo "   Prometheus:http://localhost:9090"
+
+wow-verify:
+	@echo "🔎 Verifying wow profile health..."
+	@curl -fsS http://localhost:8000/status >/dev/null
+	@curl -fsS http://localhost:8000/health >/dev/null
+	@curl -fsS http://localhost:8000/ops/health >/dev/null
+	@curl -fsS http://localhost:8000/training/status >/dev/null
+	@echo "✅ API health endpoints are reachable"
+	@echo "✅ UI surfaces expected: HUD http://localhost:3000, Grafana http://localhost:3001"
+
+screenshots-check:
+	@echo "🖼️ Verifying required release screenshots..."
+	@test -f docs/screenshots/hud-operations-overview.png
+	@test -f docs/screenshots/grafana-operations-overview.png
+	@test -f docs/screenshots/grafana-llm-overview.png
+	@test -f docs/screenshots/grafana-tokenomics-overview.png
+	@echo "✅ All required screenshots are present"
 
 deploy-200:
 	@echo "🚀 Deploying 200-node test stack..."
@@ -276,6 +305,11 @@ help:
 	@echo "  make smoke          - Quick clone/reproducibility checks"
 	@echo "  make test-consensus - Run consensus tests only"
 	@echo "  make test-bft       - Run BFT tests only"
+	@echo ""
+	@echo "Wow Mode:"
+	@echo "  make wow-start       - Start dev + monitoring stack for demo"
+	@echo "  make wow-verify      - Verify key API health endpoints"
+	@echo "  make screenshots-check - Ensure required README screenshots exist"
 	@echo ""
 	@echo "200-Node BFT Tests (NEW):"
 	@echo "  make setup-200-test     - Setup environment"
