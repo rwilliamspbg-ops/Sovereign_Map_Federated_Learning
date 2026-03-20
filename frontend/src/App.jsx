@@ -54,6 +54,7 @@ function App() {
   const [opsHealth, setOpsHealth] = useState(null);
   const [opsEvents, setOpsEvents] = useState([]);
   const [opsStreamStatus, setOpsStreamStatus] = useState('disconnected');
+  const [enclaveActionMessage, setEnclaveActionMessage] = useState('');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
 
@@ -138,7 +139,7 @@ function App() {
   const fetchData = async () => {
     setLoading(true);
     try {
-      const [hudRes, healthRes, metricsRes, foundersRes, trainingRes, opsHealthRes] = await Promise.all([
+      const [hudFetch, healthFetch, metricsFetch, foundersFetch, trainingFetch, opsHealthFetch] = await Promise.allSettled([
         fetch(`${API_BASE}/hud_data`),
         fetch(`${API_BASE}/health`),
         fetch(`${API_BASE}/metrics_summary`),
@@ -147,13 +148,25 @@ function App() {
         fetch(`${API_BASE}/ops/health`)
       ]);
 
+      const toResponse = (settled) => (settled?.status === 'fulfilled' ? settled.value : null);
+      const safeJson = async (response, fallback) => {
+        if (!response || !response.ok) {
+          return fallback;
+        }
+        try {
+          return await response.json();
+        } catch {
+          return fallback;
+        }
+      };
+
       const [hud, healthData, metrics, foundersData, trainingData, opsHealthData] = await Promise.all([
-        hudRes.json(),
-        healthRes.json(),
-        metricsRes.json(),
-        foundersRes.json(),
-        trainingRes.ok ? trainingRes.json() : Promise.resolve({ status: 'idle', active: false, round: 0 }),
-        opsHealthRes.ok ? opsHealthRes.json() : Promise.resolve(null)
+        safeJson(toResponse(hudFetch), hudData || {}),
+        safeJson(toResponse(healthFetch), health || {}),
+        safeJson(toResponse(metricsFetch), metricsSummary || {}),
+        safeJson(toResponse(foundersFetch), founders || []),
+        safeJson(toResponse(trainingFetch), { status: 'idle', active: false, round: 0 }),
+        safeJson(toResponse(opsHealthFetch), opsHealth || null)
       ]);
 
       setHudData(hud);
@@ -219,12 +232,17 @@ function App() {
   const createEnclave = async () => {
     try {
       const response = await fetch(`${API_BASE}/create_enclave`, { method: 'POST' });
-      if (response.ok) {
-        fetchData();
+      const payload = await response.json().catch(() => ({}));
+      setEnclaveActionMessage(payload?.message || `Enclave status: ${payload?.enclave_status || 'unknown'}`);
+      fetchData();
+
+      if (response.status === 202) {
+        setTimeout(fetchData, 2500);
       }
     } catch (err) {
       console.error('Enclave creation error:', err);
       setError('Enclave creation failed');
+      setEnclaveActionMessage('TEE provisioning request failed');
     }
   };
 
@@ -282,18 +300,41 @@ function App() {
         headers.Authorization = `Bearer ${policyToken.trim()}`;
       }
 
-      const response = await fetch(`${TRUST_API_BASE}/verification_policy`, {
-        method: 'POST',
-        headers,
-        body: JSON.stringify({
-          ...policyDraft,
-          min_confidence_bps: Number(policyDraft.min_confidence_bps) || 0
-        })
+      const requestBody = JSON.stringify({
+        ...policyDraft,
+        min_confidence_bps: Number(policyDraft.min_confidence_bps) || 0
       });
+
+      const candidateEndpoints = [
+        `${TRUST_API_BASE}/verification_policy`,
+        '/backend/verification_policy',
+        'http://localhost:8000/verification_policy'
+      ];
+
+      let response = null;
+      for (const endpoint of candidateEndpoints) {
+        try {
+          const candidate = await fetch(endpoint, {
+            method: 'POST',
+            headers,
+            body: requestBody
+          });
+          response = candidate;
+          if (candidate.ok) {
+            break;
+          }
+        } catch {
+          // Try the next candidate endpoint.
+        }
+      }
+
+      if (!response) {
+        throw new Error('no policy endpoint reachable');
+      }
 
       if (!response.ok) {
         const failure = await response.text();
-        setPolicyMessage(`Policy update failed: ${failure}`);
+        setPolicyMessage(`Policy update failed (${response.status}): ${failure || 'unknown error'}`);
         return;
       }
 
@@ -309,6 +350,15 @@ function App() {
       setPolicyMessage('Verification policy updated');
     } catch (err) {
       console.error('Verification policy update error:', err);
+      try {
+        const backendProbe = await fetch(`${API_BASE}/health`);
+        if (backendProbe.ok) {
+          setPolicyMessage('Verification policy update failed: endpoint mismatch or auth policy rejected request');
+          return;
+        }
+      } catch {
+        // Keep unreachable message below.
+      }
       setPolicyMessage('Verification policy update failed: backend unreachable');
     }
   };
@@ -373,6 +423,7 @@ function App() {
             policyToken={policyToken}
             policyRole={policyRole}
             policyMessage={policyMessage}
+            enclaveActionMessage={enclaveActionMessage}
             trainingStatus={trainingStatus}
             opsHealth={opsHealth}
             opsEvents={opsEvents}

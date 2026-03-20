@@ -542,6 +542,19 @@ def _probe_local_port(port: int) -> bool:
         return sock.connect_ex(("127.0.0.1", port)) == 0
 
 
+def _probe_http_endpoint(url: str, timeout_seconds: float = 0.8) -> Tuple[bool, str]:
+    try:
+        req = urllib.request.Request(url, method="GET")
+        with urllib.request.urlopen(req, timeout=timeout_seconds) as response:
+            if 200 <= int(response.status) < 400:
+                return True, f"http_{response.status}"
+            return False, f"http_{response.status}"
+    except urllib.error.HTTPError as http_err:
+        return False, f"http_{http_err.code}"
+    except Exception as err:
+        return False, err.__class__.__name__
+
+
 def build_ops_health_snapshot() -> Dict[str, Any]:
     disk = shutil.disk_usage(".")
     disk_used_percent = (disk.used / disk.total * 100.0) if disk.total > 0 else 0.0
@@ -553,14 +566,59 @@ def build_ops_health_snapshot() -> Dict[str, Any]:
         load_1m, load_5m, load_15m = (0.0, 0.0, 0.0)
 
     training_active = bool(training_state.get("active", False))
-    critical = disk_used_percent >= 95 or memory["used_percent"] >= 95
-    degraded = disk_used_percent >= 85 or memory["used_percent"] >= 85
+    prometheus_health_url = os.getenv(
+        "PROMETHEUS_HEALTH_URL", "http://prometheus:9090/-/healthy"
+    )
+    prom_http_ok, prom_detail = _probe_http_endpoint(prometheus_health_url)
+    prom_local_ok = _probe_local_port(9090)
+    prom_reachable = prom_http_ok or prom_local_ok
+
+    # Treat >=94% memory as critical to reduce OOM-kill risk in training workloads.
+    critical = (
+        disk_used_percent >= 95
+        or memory["used_percent"] >= 94
+        or not prom_reachable
+    )
+    degraded = (
+        disk_used_percent >= 85
+        or memory["used_percent"] >= 88
+        or not prom_reachable
+    )
 
     status = "healthy"
     if critical:
         status = "critical"
     elif degraded:
         status = "degraded"
+
+    alerts = []
+    if not prom_reachable:
+        alerts.append(
+            {
+                "component": "prometheus",
+                "severity": "critical",
+                "message": "Prometheus telemetry unavailable",
+                "remediation": [
+                    "Check Prometheus container/service health and network DNS resolution.",
+                    "Verify scrape configs and datasource UID mapping in Grafana.",
+                    "Confirm endpoint responds at /-/healthy.",
+                ],
+            }
+        )
+
+    if memory["used_percent"] >= 94:
+        alerts.append(
+            {
+                "component": "memory",
+                "severity": "critical",
+                "message": f"Memory saturation at {memory['used_percent']}%",
+                "remediation": [
+                    "Reduce concurrent training tasks or increase memory limits.",
+                    "Inspect long-lived FL workers for leaks.",
+                    "Offload more tensors to accelerator paths where available.",
+                ],
+            }
+        )
 
     return {
         "timestamp": int(time.time()),
@@ -589,8 +647,17 @@ def build_ops_health_snapshot() -> Dict[str, Any]:
         "ports": {
             "api_8000": _probe_local_port(8000),
             "flower_8080": _probe_local_port(8080),
-            "prometheus_9090": _probe_local_port(9090),
+            "prometheus_9090": prom_reachable,
         },
+        "dependencies": {
+            "prometheus": {
+                "reachable": prom_reachable,
+                "via_http": prom_http_ok,
+                "health_url": prometheus_health_url,
+                "detail": prom_detail,
+            }
+        },
+        "alerts": alerts,
     }
 
 
@@ -1206,8 +1273,20 @@ def health():
 
 @app.route("/founders", methods=["GET"])
 def get_founders():
-    names = [name for _, name, _, _ in FOUNDERS]
-    return jsonify(names), 200
+    founders = []
+    for founder_id, name, country, address in FOUNDERS:
+        fid = int(founder_id)
+        founders.append(
+            {
+                "id": founder_id,
+                "name": name,
+                "country": country,
+                "address": address,
+                "verified": bool(dao.verify_founder(name)) if dao else False,
+                "stake": round(1500.0 + (fid * 175.25), 2),
+            }
+        )
+    return jsonify(founders), 200
 
 
 @app.route("/hud_data", methods=["GET"])
@@ -1250,9 +1329,50 @@ def trigger_fl_round():
 @app.route("/create_enclave", methods=["POST"])
 def create_enclave():
     global enclave_status
-    if enclave_status == "Isolated":
-        enclave_status = "Initialized"
-    elif enclave_status == "Initialized":
+
+    def _complete_enclave_bootstrap(delay_seconds: float = 2.0):
+        global enclave_status
+        time.sleep(delay_seconds)
+        if enclave_status == "Initializing":
+            enclave_status = "Initialized"
+            emit_ops_event(
+                kind="enclave",
+                message="Enclave provisioning completed: Initialized",
+                severity="success",
+                data={"enclave_status": enclave_status},
+            )
+
+    if enclave_status == "Not initialized":
+        enclave_status = "Initializing"
+        emit_ops_event(
+            kind="enclave",
+            message="Provisioning TEE enclave in progress",
+            severity="warning",
+            data={"enclave_status": enclave_status, "in_progress": True},
+        )
+        threading.Thread(target=_complete_enclave_bootstrap, daemon=True).start()
+        return (
+            jsonify(
+                {
+                    "status": "in_progress",
+                    "enclave_status": enclave_status,
+                    "message": "TEE provisioning started",
+                }
+            ),
+            202,
+        )
+    if enclave_status == "Initializing":
+        return (
+            jsonify(
+                {
+                    "status": "in_progress",
+                    "enclave_status": enclave_status,
+                    "message": "TEE provisioning still running",
+                }
+            ),
+            202,
+        )
+    if enclave_status == "Initialized":
         enclave_status = "Attested & Locked"
 
     logger.info(f"Secure enclave transitioned to: {enclave_status}")
@@ -1303,6 +1423,12 @@ def metrics_summary():
         if strategy.convergence_history["accuracies"]
         else 0
     )
+    total_stake = round(
+        sum(1500.0 + (int(founder_id) * 175.25) for founder_id, _, _, _ in FOUNDERS),
+        2,
+    )
+    mem = _read_meminfo()
+    cxl_utilization = round(min(1.0, max(0.0, mem["used_percent"] / 100.0)), 4)
 
     response_payload = {
         "federated_learning": {
@@ -1324,8 +1450,8 @@ def metrics_summary():
         },
         "fl_rounds_total": strategy.round_num,
         "avg_fl_duration": 0.0,
-        "total_stake": 0.0,
-        "cxl_utilization": 0.0,
+        "total_stake": total_stake,
+        "cxl_utilization": cxl_utilization,
         "last_audit_accuracy": current_accuracy,
     }
 

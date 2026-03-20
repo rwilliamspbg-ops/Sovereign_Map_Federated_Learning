@@ -225,6 +225,51 @@ body {
   gap: 12px;
 }
 
+.ops-alert-banner {
+  border-radius: 12px;
+  border: 1px solid rgba(240, 109, 109, 0.55);
+  background: linear-gradient(110deg, rgba(98, 31, 31, 0.55), rgba(56, 20, 20, 0.62));
+  box-shadow: var(--shadow-md);
+  padding: 10px 12px;
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  align-items: center;
+}
+
+.ops-alert-banner strong {
+  display: block;
+  font-size: 0.86rem;
+  letter-spacing: 0.04em;
+}
+
+.ops-alert-banner span {
+  display: block;
+  margin-top: 4px;
+  font-size: 0.78rem;
+  color: #ffd9d9;
+}
+
+.ops-alert-actions {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.ops-alert-actions a {
+  color: #ffe6af;
+  text-decoration: none;
+  border: 1px solid rgba(247, 185, 85, 0.5);
+  border-radius: 8px;
+  padding: 6px 9px;
+  font-family: var(--font-mono);
+  font-size: 0.72rem;
+}
+
+.ops-alert-actions a:hover {
+  border-color: rgba(255, 223, 151, 0.8);
+}
+
 .ops-panel {
   border-radius: 14px;
   border: 1px solid rgba(168, 192, 214, 0.2);
@@ -344,6 +389,14 @@ body {
   font-size: 0.95rem;
 }
 
+.kpi-warning {
+  color: var(--amber-400);
+}
+
+.kpi-critical {
+  color: var(--rose-400);
+}
+
 .terminal-container {
   margin-top: 14px;
 }
@@ -354,6 +407,32 @@ body {
   color: var(--mist-300);
   letter-spacing: 0.06em;
   text-transform: uppercase;
+}
+
+.terminal-toolbar {
+  display: flex;
+  gap: 10px;
+  align-items: center;
+  flex-wrap: wrap;
+  margin-bottom: 8px;
+  font-size: 0.72rem;
+  color: var(--mist-300);
+}
+
+.terminal-toolbar label {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.terminal-toolbar select {
+  border-radius: 6px;
+  border: 1px solid rgba(168, 192, 214, 0.34);
+  background: rgba(13, 26, 38, 0.85);
+  color: var(--mist-100);
+  font-family: var(--font-mono);
+  font-size: 0.72rem;
+  padding: 4px 6px;
 }
 
 .terminal-output {
@@ -372,6 +451,23 @@ body {
 
 .terminal-line {
   margin-bottom: 3px;
+}
+
+.terminal-success,
+.terminal-info {
+  color: #9ee7ff;
+}
+
+.terminal-warning {
+  color: #ffdc9d;
+}
+
+.terminal-error {
+  color: #ffb4b4;
+}
+
+.terminal-kind-enclave {
+  font-weight: 600;
 }
 
 .timeline-panel {
@@ -575,6 +671,11 @@ body {
 
   .chat-interface {
     grid-template-columns: 1fr;
+  }
+
+  .ops-alert-banner {
+    flex-direction: column;
+    align-items: flex-start;
   }
 }
 

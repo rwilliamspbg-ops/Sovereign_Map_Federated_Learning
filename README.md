@@ -26,15 +26,15 @@ Sovereign Map uses a streaming aggregation model instead of loading full model u
 
 ```mermaid
 flowchart LR
-	A[Client Updates] --> B{Traditional FL Aggregator}
-	B --> C[Load full model deltas in memory]
-	C --> D[High RAM footprint per round]
+    A[Client Updates] --> B{Traditional FL Aggregator}
+    B --> C[Load full model deltas in memory]
+    C --> D[High RAM footprint per round]
 
-	A --> E{SovereignMap Mohawk Stream Aggregator}
-	E --> F[Chunk updates into streaming windows]
-	F --> G[Validate trust and policy per chunk]
-	G --> H[Aggregate incrementally]
-	H --> I[Low steady-state memory use]
+    A --> E{SovereignMap Mohawk Stream Aggregator}
+    E --> F[Chunk updates into streaming windows]
+    F --> G[Validate trust and policy per chunk]
+    G --> H[Aggregate incrementally]
+    H --> I[Low steady-state memory use]
 ```
 
 ## Why Mohawk
@@ -149,17 +149,48 @@ Core characteristics:
 
 ## Visual Walkthrough
 
-For best first impression and faster onboarding, include live screenshots in this section after each release cycle:
+Visual proof for this project should be treated as release evidence, not optional decoration.
+
+Expected screenshot artifacts per release:
 
 - Operations HUD: trust score, node participation, latency wall, and resilience indicators.
 - Grafana Operations Overview: gauge deck + trend wall under live load.
 - Grafana Tokenomics Overview: mint/bridge/validator/wallet health sections.
 
-Suggested asset locations:
+Tracked asset locations:
 
 - `docs/screenshots/hud-operations-overview.png`
 - `docs/screenshots/grafana-operations-overview.png`
 - `docs/screenshots/grafana-tokenomics-overview.png`
+
+Capture workflow and acceptance checklist:
+
+- [docs/screenshots/README.md](docs/screenshots/README.md)
+
+Current status: screenshot paths are defined and release capture workflow is documented; attach rendered PNG/GIF evidence in each tagged release.
+
+## Dual-Plane Runtime Data Flow
+
+```mermaid
+sequenceDiagram
+    participant Node as Edge Node Client
+    participant Flower as Flower Aggregation Plane (:8080)
+    participant Mohawk as Mohawk Stream Aggregator
+    participant Policy as Trust/Policy Gate
+    participant API as Control Plane API (:8000)
+    participant Prom as Prometheus
+    participant Grafana as Grafana/HUD
+
+    Node->>Flower: Submit model update (FitRes)
+    Flower->>Mohawk: Forward update chunks
+    Mohawk->>Policy: Validate adapter policy + attestation metadata
+    Policy-->>Mohawk: Accept/Reject + reason labels
+    Mohawk->>Flower: Incremental aggregate result
+    Flower->>API: Publish round metrics + convergence snapshot
+    API->>Prom: Expose /metrics and event-derived gauges/counters
+    Prom->>Grafana: Scrape telemetry
+    API->>Grafana: Serve /health, /ops/health, /hud_data, /metrics_summary
+```
 
 ## Capability Map
 
@@ -175,6 +206,15 @@ Suggested asset locations:
 ## Detailed Functions Reference
 
 ### Backend API Functions
+
+Live API examples and integration snippets:
+
+- [docs/api/http-examples.md](docs/api/http-examples.md)
+
+OpenAPI/Postman status:
+
+- A full OpenAPI specification is not yet published in-repo.
+- Until that lands, use the HTTP example catalog above as the canonical integration quick start.
 
 | Endpoint | Method | Function | Responsibility |
 | --- | --- | --- | --- |
@@ -256,6 +296,42 @@ docker compose -f docker-compose.dev.yml up -d
 docker compose ps
 ```
 
+### Verify stack health (required)
+
+```bash
+curl -s http://localhost:8000/status | jq
+curl -s http://localhost:8000/health | jq
+curl -s http://localhost:8000/ops/health | jq
+curl -s http://localhost:8000/training/status | jq
+```
+
+Expected checkpoints:
+
+- `/status` returns service identity and ports.
+- `/ops/health` reports API, Flower, and Prometheus reachability.
+- frontend HUD is reachable at `http://localhost:3000`.
+- Grafana is reachable at `http://localhost:3001`.
+
+### First training round (Hello World)
+
+CLI flow:
+
+```bash
+# Trigger one global round
+curl -s -X POST http://localhost:8000/trigger_fl | jq
+
+# Verify round advanced and metrics updated
+curl -s http://localhost:8000/metrics_summary | jq '.federated_learning.current_round, .federated_learning.current_accuracy, .federated_learning.current_loss'
+curl -s http://localhost:8000/convergence | jq '.current_round, .current_accuracy, .current_loss'
+```
+
+UI flow:
+
+1. Open `http://localhost:3000`.
+2. Switch to **Network Operations HUD**.
+3. Click **Run Global FL Epoch**.
+4. Confirm the live timeline shows a `TRAINING_ROUND` event and round metrics increment.
+
 ### Option C: Full profile with participant scaling
 
 ```bash
@@ -277,6 +353,29 @@ npm run test:ci
 npm --prefix frontend ci
 npm --prefix frontend run build
 ```
+
+## Contributor First Steps
+
+Before opening a PR, run the same fast checks maintainers use:
+
+```bash
+# Discover all available developer targets
+make help
+
+# Required baseline
+make fmt
+make lint
+make test
+
+# Recommended reproducibility smoke checks
+make smoke
+```
+
+For runtime-focused changes (HUD, observability, policy endpoints), include at least one local verification artifact in your PR description:
+
+- `/health` and `/ops/health` output snippet.
+- one screenshot from HUD or Grafana.
+- command log showing a successful `trigger_fl` round.
 
 ## Deployment Profiles
 

@@ -14,6 +14,7 @@ export default function HUD({
   policyToken,
   policyRole,
   policyMessage,
+  enclaveActionMessage,
   trainingStatus,
   opsHealth,
   opsEvents,
@@ -61,6 +62,9 @@ export default function HUD({
   const streamLabel = opsStreamStatus || 'disconnected';
   const trustMode = trustStatus?.trust_mode || 'governed-verification';
   const confidencePct = Number(trustStatus?.fl_verification?.average_confidence_bps || 0) / 100;
+  const memUsed = Number(opsHealth?.system?.memory?.used_percent || 0);
+  const promReachable = Boolean(opsHealth?.dependencies?.prometheus?.reachable ?? opsHealth?.ports?.prometheus_9090);
+  const opsAlerts = Array.isArray(opsHealth?.alerts) ? opsHealth.alerts : [];
 
   const numberOrFallback = (value, suffix = '') => {
     const parsed = Number(value);
@@ -115,11 +119,28 @@ export default function HUD({
         </div>
         <div className="ops-chip">
           <span className="ops-chip-label">Core Ports</span>
-          <span className="ops-chip-value">
+          <span className={`ops-chip-value ${promReachable ? '' : 'chip-critical'}`}>
             API:{opsHealth?.ports?.api_8000 ? 'up' : 'down'} | FL:{opsHealth?.ports?.flower_8080 ? 'up' : 'down'} | PROM:{opsHealth?.ports?.prometheus_9090 ? 'up' : 'down'}
           </span>
         </div>
       </section>
+
+      {(healthStatus === 'degraded' || healthStatus === 'critical') && (
+        <section className="ops-alert-banner">
+          <div>
+            <strong>Platform State {healthStatus.toUpperCase()}</strong>
+            <span>
+              {promReachable ? ' Prometheus reachable.' : ' Prometheus telemetry unavailable.'}
+              {' '}
+              Memory usage: {fixedOrFallback(memUsed, 2, '%')}.
+            </span>
+          </div>
+          <div className="ops-alert-actions">
+            {!promReachable && <a href="#prometheus-remediation">Inspect Prometheus</a>}
+            {memUsed >= 88 && <a href="#memory-remediation">Inspect Memory</a>}
+          </div>
+        </section>
+      )}
 
       <div className="ops-grid">
         <aside className="ops-panel control-panel">
@@ -131,6 +152,8 @@ export default function HUD({
             <button className="btn cmd-epoch" onClick={onTriggerFLRound} disabled={loading}>Run Global FL Epoch</button>
             <button className="btn cmd-enclave" onClick={onCreateEnclave} disabled={loading}>Provision TEE Enclave</button>
           </div>
+
+          {enclaveActionMessage && <div className="notice-box">{enclaveActionMessage}</div>}
 
           <div className="sim-grid">
             <button className="btn sim-byzantine" onClick={() => triggerSimulation('byzantineAttacks')}>Inject Byzantine Fault ({simulationState.byzantineAttacks})</button>
@@ -172,7 +195,7 @@ export default function HUD({
             </div>
             <div className="kpi-card">
               <span>Memory Used</span>
-              <strong>{numberOrFallback(opsHealth?.system?.memory?.used_percent, '%')}</strong>
+              <strong className={memUsed >= 94 ? 'kpi-critical' : memUsed >= 88 ? 'kpi-warning' : ''}>{numberOrFallback(opsHealth?.system?.memory?.used_percent, '%')}</strong>
             </div>
             <div className="kpi-card">
               <span>Disk Used</span>
@@ -181,6 +204,49 @@ export default function HUD({
           </div>
 
           <LiveTerminal events={opsEvents} />
+
+          <div className="aux-panel" id="prometheus-remediation">
+            <h4>Prometheus Connectivity</h4>
+            <div className="audit-row">
+              <span>Reachable</span>
+              <span>{promReachable ? 'yes' : 'no'}</span>
+            </div>
+            <div className="audit-row">
+              <span>Health Endpoint</span>
+              <span>{opsHealth?.dependencies?.prometheus?.health_url || 'n/a'}</span>
+            </div>
+            <div className="audit-row">
+              <span>Detail</span>
+              <span>{opsHealth?.dependencies?.prometheus?.detail || 'n/a'}</span>
+            </div>
+          </div>
+
+          <div className="aux-panel" id="memory-remediation">
+            <h4>Memory Pressure</h4>
+            <div className="audit-row">
+              <span>Used %</span>
+              <span>{fixedOrFallback(memUsed, 2, '%')}</span>
+            </div>
+            <div className="audit-row">
+              <span>Used MB</span>
+              <span>{numberOrFallback(opsHealth?.system?.memory?.used_mb, ' MB')}</span>
+            </div>
+            <div className="audit-row">
+              <span>Available MB</span>
+              <span>{numberOrFallback(opsHealth?.system?.memory?.available_mb, ' MB')}</span>
+            </div>
+          </div>
+
+          {opsAlerts.length > 0 && (
+            <div className="aux-panel">
+              <h4>Remediation Hints</h4>
+              {opsAlerts.map((alert, idx) => (
+                <div className="notice-box" key={`${alert?.component || 'alert'}-${idx}`}>
+                  <strong>{(alert?.component || 'component').toUpperCase()}:</strong> {alert?.message}
+                </div>
+              ))}
+            </div>
+          )}
 
           <div className="timeline-panel">
             <h4>Live Incident Timeline</h4>
@@ -278,7 +344,7 @@ export default function HUD({
               founderList.map((founder, index) => (
                 <div className="audit-row" key={`${founder?.name || 'founder'}-${index}`}>
                   <span>{founder?.name || `Founder ${index + 1}`}</span>
-                  <span>{founder?.stake != null ? Number(founder.stake).toFixed(2) : 'stake N/A'}</span>
+                  <span>{founder?.stake != null ? `${Number(founder.stake).toFixed(2)} (${founder?.verified ? 'verified' : 'unverified'})` : 'stake N/A'}</span>
                 </div>
               ))
             )}
