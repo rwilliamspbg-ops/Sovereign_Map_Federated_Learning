@@ -1196,6 +1196,134 @@
           "sort": "none"
         }
       }
+    },
+    {
+      "id": 40,
+      "type": "row",
+      "title": "Blockchain and Bridge Runtime",
+      "gridPos": {
+        "x": 0,
+        "y": 38,
+        "w": 24,
+        "h": 1
+      },
+      "collapsed": false,
+      "panels": []
+    },
+    {
+      "id": 41,
+      "type": "timeseries",
+      "title": "FL Verification Integrity",
+      "datasource": {
+        "type": "prometheus",
+        "uid": "prometheus"
+      },
+      "gridPos": {
+        "x": 0,
+        "y": 39,
+        "w": 12,
+        "h": 8
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "expr": "(tokenomics_fl_verification_ratio or sovereign_fl_verification_ratio or vector(0)) * 100",
+          "legendFormat": "Verification ratio %"
+        },
+        {
+          "refId": "B",
+          "expr": "tokenomics_fl_average_confidence_bps or sovereign_fl_avg_confidence_bps or vector(0)",
+          "legendFormat": "Avg confidence bps"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "short",
+          "color": {
+            "mode": "palette-classic"
+          },
+          "custom": {
+            "drawStyle": "line",
+            "lineWidth": 2,
+            "fillOpacity": 14,
+            "showPoints": "never",
+            "lineInterpolation": "smooth",
+            "gradientMode": "opacity"
+          }
+        },
+        "overrides": []
+      },
+      "options": {
+        "legend": {
+          "displayMode": "table",
+          "placement": "bottom",
+          "showLegend": true
+        },
+        "tooltip": {
+          "mode": "multi",
+          "sort": "none"
+        }
+      }
+    },
+    {
+      "id": 42,
+      "type": "timeseries",
+      "title": "Bridge Execution and Chain Height",
+      "datasource": {
+        "type": "prometheus",
+        "uid": "prometheus"
+      },
+      "gridPos": {
+        "x": 12,
+        "y": 39,
+        "w": 12,
+        "h": 8
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "expr": "tokenomics_chain_height or vector(0)",
+          "legendFormat": "Chain height"
+        },
+        {
+          "refId": "B",
+          "expr": "tokenomics_bridge_transfers_total or vector(0)",
+          "legendFormat": "Bridge transfers total"
+        },
+        {
+          "refId": "C",
+          "expr": "tokenomics_bridge_routes_active or vector(0)",
+          "legendFormat": "Bridge routes active"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "short",
+          "color": {
+            "mode": "palette-classic"
+          },
+          "custom": {
+            "drawStyle": "line",
+            "lineWidth": 2,
+            "fillOpacity": 14,
+            "showPoints": "never",
+            "lineInterpolation": "smooth",
+            "gradientMode": "opacity"
+          }
+        },
+        "overrides": []
+      },
+      "options": {
+        "legend": {
+          "displayMode": "table",
+          "placement": "bottom",
+          "showLegend": true
+        },
+        "tooltip": {
+          "mode": "multi",
+          "sort": "none"
+        }
+      }
     }
   ],
   "refresh": "15s",

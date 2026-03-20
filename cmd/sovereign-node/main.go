@@ -11,6 +11,8 @@ import (
 	"strings"
 	"time"
 
+	"github.com/rwilliamspbg-ops/Sovereign_Map_Federated_Learning/internal/blockchain"
+	"github.com/rwilliamspbg-ops/Sovereign_Map_Federated_Learning/internal/chainruntime"
 	meshruntime "github.com/rwilliamspbg-ops/Sovereign_Map_Federated_Learning/node/network"
 	"github.com/rwilliamspbg-ops/Sovereign_Map_Federated_Learning/node/networking"
 )
@@ -64,6 +66,8 @@ func run(mode string, args []string) error {
 	seedsPath := fs.String("seeds", "network/bootstrap/seed_peers.json", "path to seed peers json")
 	configPath := fs.String("config", "network/bootstrap/network_config.json", "path to network config json")
 	listenAddr := fs.String("listen", "/ip4/0.0.0.0/tcp/0", "libp2p listen multiaddr")
+	enableChainRuntime := fs.Bool("enable-chain-runtime", true, "enable blockchain runtime over gossip mesh")
+	bridgePoliciesPath := fs.String("bridge-policies", "bridge-policies.json", "path to bridge route policy JSON")
 
 	if err := fs.Parse(args); err != nil {
 		return err
@@ -110,6 +114,30 @@ func run(mode string, args []string) error {
 		return fmt.Errorf("initialize NAT traversal service: %w", err)
 	}
 
+	chainHeight := uint64(0)
+	policyVersion := ""
+	if *enableChainRuntime {
+		policies, err := chainruntime.LoadBridgePolicySet(*bridgePoliciesPath)
+		if err != nil {
+			return fmt.Errorf("load bridge policies: %w", err)
+		}
+
+		bc := blockchain.NewBlockChain()
+		runtimeEngine, err := chainruntime.New(mesh, bc, policies)
+		if err != nil {
+			return fmt.Errorf("initialize chain runtime: %w", err)
+		}
+
+		runtimeCtx, runtimeCancel := context.WithCancel(context.Background())
+		defer runtimeCancel()
+		if err := runtimeEngine.Start(runtimeCtx); err != nil {
+			return fmt.Errorf("start chain runtime: %w", err)
+		}
+
+		chainHeight = bc.Height()
+		policyVersion = policies.Version()
+	}
+
 	hello := fmt.Sprintf("node=%s mode=%s ts=%s", *nodeID, mode, time.Now().UTC().Format(time.RFC3339))
 	if err := mesh.Publish(ctx, []byte(hello)); err != nil {
 		return fmt.Errorf("publish startup gossip: %w", err)
@@ -119,8 +147,8 @@ func run(mode string, args []string) error {
 	activePeers := mesh.ActivePeers()
 	natStatus := natSvc.Status()
 
-	fmt.Printf("node=%s mode=%s network=%s transport=%s pubsub=%s topic=%s peers=%d dialed=%d gossip_fanout=%d nat_reachability=%v relays=%d\n",
-		*nodeID, mode, cfg.Network, cfg.Transport, cfg.PubSub, topic, activePeers, dialed, activePeers, natStatus.Reachability, natStatus.RelayCount)
+	fmt.Printf("node=%s mode=%s network=%s transport=%s pubsub=%s topic=%s peers=%d dialed=%d gossip_fanout=%d nat_reachability=%v relays=%d chain_runtime=%t chain_height=%d bridge_policies=%s\n",
+		*nodeID, mode, cfg.Network, cfg.Transport, cfg.PubSub, topic, activePeers, dialed, activePeers, natStatus.Reachability, natStatus.RelayCount, *enableChainRuntime, chainHeight, policyVersion)
 
 	if mode == "join" && dialed == 0 && activePeers == 0 {
 		return errors.New("join requires at least one bootstrap or seed peer")

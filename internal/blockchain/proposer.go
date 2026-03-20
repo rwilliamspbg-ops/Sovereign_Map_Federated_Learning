@@ -84,6 +84,7 @@ func (bp *BlockProposer) ProposeBlock(validatorID string, roundData map[string]i
 
 func (bp *BlockProposer) computeProjectedStateRoot(txns []Transaction) string {
 	tempState := bp.blockchain.StateDB.Clone()
+	ledger := NewWalletLedger(tempState)
 
 	for _, txn := range txns {
 		switch txn.Type {
@@ -112,12 +113,21 @@ func (bp *BlockProposer) computeProjectedStateRoot(txns []Transaction) string {
 			}
 
 		case TxTypeReward:
+			_ = ledger.Credit(txn.To, txn.Amount)
 			rewardKey := fmt.Sprintf("reward:%s", txn.To)
 			currentReward := uint64(0)
 			if val, err := tempState.Get(rewardKey); err == nil {
-				currentReward = val.(uint64)
+				if parsed, ok := asUint64Value(val); ok {
+					currentReward = parsed
+				}
 			}
 			tempState.Set(rewardKey, currentReward+txn.Amount)
+
+		case TxTypeTransfer:
+			if err := applyTransferToState(tempState, ledger, &txn); err != nil {
+				// Invalid transfer does not mutate projected state; block validator will reject on replay.
+				continue
+			}
 
 		case TxTypeSmartContract:
 			contractKey := fmt.Sprintf("contract:%s", txn.ID)
@@ -142,9 +152,18 @@ func (bp *BlockProposer) CommitBlock(block *Block) error {
 
 	for i := range block.Transactions {
 		txn := &block.Transactions[i]
-		if txn.Type == TxTypeFlRound {
+		switch txn.Type {
+		case TxTypeFlRound:
 			if err := bp.ProcessFlRoundTransaction(txn); err != nil {
 				return fmt.Errorf("failed to persist FL round transaction %s: %w", txn.ID, err)
+			}
+		case TxTypeTransfer:
+			if err := bp.ProcessTransferTransaction(txn); err != nil {
+				return fmt.Errorf("failed to persist transfer transaction %s: %w", txn.ID, err)
+			}
+		case TxTypeReward:
+			if err := bp.ProcessRewardTransaction(txn); err != nil {
+				return fmt.Errorf("failed to persist reward transaction %s: %w", txn.ID, err)
 			}
 		}
 	}
@@ -166,6 +185,133 @@ func (bp *BlockProposer) CommitBlock(block *Block) error {
 	)
 
 	return nil
+}
+
+// ProcessTransferTransaction executes transfer and bridge-transfer state updates.
+func (bp *BlockProposer) ProcessTransferTransaction(txn *Transaction) error {
+	if txn.Type != TxTypeTransfer {
+		return fmt.Errorf("not a transfer transaction")
+	}
+
+	ledger := NewWalletLedger(bp.blockchain.StateDB)
+	return applyTransferToState(bp.blockchain.StateDB, ledger, txn)
+}
+
+// ProcessRewardTransaction credits recipient balance and keeps reward accounting key in sync.
+func (bp *BlockProposer) ProcessRewardTransaction(txn *Transaction) error {
+	if txn.Type != TxTypeReward {
+		return fmt.Errorf("not a reward transaction")
+	}
+
+	ledger := NewWalletLedger(bp.blockchain.StateDB)
+	if err := ledger.Credit(txn.To, txn.Amount); err != nil {
+		return err
+	}
+
+	rewardKey := fmt.Sprintf("reward:%s", txn.To)
+	currentReward := uint64(0)
+	if val, err := bp.blockchain.StateDB.Get(rewardKey); err == nil {
+		if parsed, ok := asUint64Value(val); ok {
+			currentReward = parsed
+		}
+	}
+	return bp.blockchain.StateDB.Set(rewardKey, currentReward+txn.Amount)
+}
+
+func applyTransferToState(state *StateDatabase, ledger *WalletLedger, txn *Transaction) error {
+	if isBridgeTransfer(txn) {
+		sourceChain := asStringValue(txn.Data["source_chain"], "")
+		targetChain := asStringValue(txn.Data["target_chain"], "")
+		asset := asStringValue(txn.Data["asset"], "")
+		if sourceChain == "" || targetChain == "" || asset == "" {
+			return fmt.Errorf("bridge transfer metadata is incomplete")
+		}
+
+		escrowAddress := bridgeEscrowAddress(sourceChain, targetChain, asset)
+		if err := ledger.Transfer(txn.From, escrowAddress, txn.Amount); err != nil {
+			return err
+		}
+
+		bridgeRecord := map[string]interface{}{
+			"tx_id":           txn.ID,
+			"from":            txn.From,
+			"to":              txn.To,
+			"amount":          txn.Amount,
+			"asset":           asset,
+			"source_chain":    sourceChain,
+			"target_chain":    targetChain,
+			"finality_blocks": asUint64Default(txn.Data["finality_blocks"], 0),
+			"status":          "escrowed",
+			"timestamp":       txn.Timestamp,
+		}
+		if err := state.Set(fmt.Sprintf("bridge_transfer:%s", txn.ID), bridgeRecord); err != nil {
+			return err
+		}
+
+		volumeKey := fmt.Sprintf("bridge_volume:%s:%s:%s", sourceChain, targetChain, asset)
+		currentVolume := uint64(0)
+		if val, err := state.Get(volumeKey); err == nil {
+			if parsed, ok := asUint64Value(val); ok {
+				currentVolume = parsed
+			}
+		}
+		return state.Set(volumeKey, currentVolume+txn.Amount)
+	}
+
+	return ledger.ApplyTransaction(txn)
+}
+
+func isBridgeTransfer(txn *Transaction) bool {
+	if txn == nil || txn.Data == nil {
+		return false
+	}
+	return asBoolDefault(txn.Data["bridge"], false)
+}
+
+func bridgeEscrowAddress(sourceChain, targetChain, asset string) string {
+	return fmt.Sprintf("bridge_escrow:%s:%s:%s", sourceChain, targetChain, asset)
+}
+
+func asStringValue(v interface{}, fallback string) string {
+	if s, ok := v.(string); ok {
+		if s != "" {
+			return s
+		}
+	}
+	return fallback
+}
+
+func asUint64Default(v interface{}, fallback uint64) uint64 {
+	if parsed, ok := asUint64Value(v); ok {
+		return parsed
+	}
+	return fallback
+}
+
+func asUint64Value(v interface{}) (uint64, bool) {
+	switch n := v.(type) {
+	case uint64:
+		return n, true
+	case uint32:
+		return uint64(n), true
+	case int:
+		if n < 0 {
+			return 0, false
+		}
+		return uint64(n), true
+	case int64:
+		if n < 0 {
+			return 0, false
+		}
+		return uint64(n), true
+	case float64:
+		if n < 0 {
+			return 0, false
+		}
+		return uint64(n), true
+	default:
+		return 0, false
+	}
 }
 
 // HandleFLRound processes a federated learning round and creates block

@@ -1,8 +1,14 @@
 {
   "name": "@sovereignmap/core",
-  "version": "0.1.0-alpha.1",
+  "version": "0.1.0",
   "description": "Core Sovereign Map node client with privacy-preserving protocol, BFT consensus, and Island Mode",
-  "keywords": ["sovereignmap", "depin", "federated-learning", "privacy", "bft"],
+  "keywords": [
+    "sovereignmap",
+    "depin",
+    "federated-learning",
+    "privacy",
+    "bft"
+  ],
   "type": "module",
   "main": "./dist/index.js",
   "types": "./dist/index.d.ts",
@@ -41,7 +47,7 @@
     "clean": "rm -rf dist .tsbuildinfo",
     "wasm:copy": "cp -r wasm dist/ 2>/dev/null || true"
   },
-"dependencies": {
+  "dependencies": {
     "@grpc/grpc-js": "^1.9.14",
     "libp2p": "^3.1.6",
     "@libp2p/tcp": "^11.0.13",
@@ -64,9 +70,9 @@
     "@vitest/coverage-v8": "^4.1.0"
   },
   "peerDependencies": {
-    "@sovereignmap/privacy": "*",
-    "@sovereignmap/consensus": "*",
-    "@sovereignmap/island": "*"
+    "@sovereignmap/privacy": "^0.1.0",
+    "@sovereignmap/consensus": "^0.1.0",
+    "@sovereignmap/island": "^0.1.0"
   },
   "peerDependenciesMeta": {
     "@sovereignmap/privacy": {

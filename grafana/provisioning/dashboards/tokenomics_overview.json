@@ -1160,6 +1160,134 @@
           "sort": "none"
         }
       }
+    },
+    {
+      "id": 150,
+      "type": "row",
+      "title": "Blockchain and Bridge Execution",
+      "gridPos": {
+        "x": 0,
+        "y": 38,
+        "w": 24,
+        "h": 1
+      },
+      "collapsed": false,
+      "panels": []
+    },
+    {
+      "id": 151,
+      "type": "timeseries",
+      "title": "Bridge Runtime Throughput",
+      "datasource": {
+        "type": "prometheus",
+        "uid": "prometheus"
+      },
+      "gridPos": {
+        "x": 0,
+        "y": 39,
+        "w": 12,
+        "h": 8
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "expr": "tokenomics_bridge_transfers_total or vector(0)",
+          "legendFormat": "Bridge transfers total"
+        },
+        {
+          "refId": "B",
+          "expr": "tokenomics_bridge_routes_active or vector(0)",
+          "legendFormat": "Routes active"
+        },
+        {
+          "refId": "C",
+          "expr": "tokenomics_chain_height or vector(0)",
+          "legendFormat": "Chain height"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "short",
+          "color": {
+            "mode": "palette-classic"
+          },
+          "custom": {
+            "drawStyle": "line",
+            "lineWidth": 2,
+            "fillOpacity": 14,
+            "showPoints": "never",
+            "lineInterpolation": "smooth",
+            "gradientMode": "opacity"
+          }
+        },
+        "overrides": []
+      },
+      "options": {
+        "legend": {
+          "displayMode": "table",
+          "placement": "bottom",
+          "showLegend": true
+        },
+        "tooltip": {
+          "mode": "multi",
+          "sort": "none"
+        }
+      }
+    },
+    {
+      "id": 152,
+      "type": "timeseries",
+      "title": "FL Verification Confidence Track",
+      "datasource": {
+        "type": "prometheus",
+        "uid": "prometheus"
+      },
+      "gridPos": {
+        "x": 12,
+        "y": 39,
+        "w": 12,
+        "h": 8
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "expr": "(tokenomics_fl_verification_ratio or sovereign_fl_verification_ratio or vector(0)) * 100",
+          "legendFormat": "Verification ratio %"
+        },
+        {
+          "refId": "B",
+          "expr": "tokenomics_fl_average_confidence_bps or sovereign_fl_avg_confidence_bps or vector(0)",
+          "legendFormat": "Average confidence bps"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "short",
+          "color": {
+            "mode": "palette-classic"
+          },
+          "custom": {
+            "drawStyle": "line",
+            "lineWidth": 2,
+            "fillOpacity": 14,
+            "showPoints": "never",
+            "lineInterpolation": "smooth",
+            "gradientMode": "opacity"
+          }
+        },
+        "overrides": []
+      },
+      "options": {
+        "legend": {
+          "displayMode": "table",
+          "placement": "bottom",
+          "showLegend": true
+        },
+        "tooltip": {
+          "mode": "multi",
+          "sort": "none"
+        }
+      }
     }
   ],
   "refresh": "5s",

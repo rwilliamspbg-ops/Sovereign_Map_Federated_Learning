@@ -1,6 +1,6 @@
 {
   "name": "@sovereignmap/consensus",
-  "version": "0.1.0-alpha.1",
+  "version": "0.1.0",
   "description": "Byzantine fault tolerant consensus primitives for Sovereign Map",
   "type": "module",
   "main": "./dist/index.js",

@@ -765,6 +765,11 @@ def build_tokenomics_payload(
     escrow_total = total_supply * max(
         0.18, min(0.34, 0.3 - (accuracy_ratio * 0.05) + (loss * 0.015))
     )
+    bridge_routes_active = 2
+    bridge_transfers_total = max(
+        100.0,
+        (bridge_inflow * 0.65 * max(server_round, 1)) / max(1.0 + loss, 1.0),
+    )
     circulating_supply = max(total_supply - escrow_total, total_supply * 0.48)
     validator_count = max(4, int(round((active_nodes * 0.16) + (round_factor * 1.8))))
     unique_wallets = max(
@@ -794,6 +799,14 @@ def build_tokenomics_payload(
     collateral_ratio = max(
         105.0, (escrow_total / max(total_supply * 0.22, 1.0)) * 100.0
     )
+    fl_verification_ratio = max(0.78, min(0.999, 0.84 + (accuracy_ratio * 0.16)))
+    fl_average_confidence_bps = max(
+        7500.0,
+        min(
+            9995.0,
+            8400.0 + (accuracy_ratio * 1300.0) - (loss * 55.0) + (round_factor * 8.0),
+        ),
+    )
 
     return {
         "mint_rate_per_min": round(mint_rate, 4),
@@ -802,11 +815,16 @@ def build_tokenomics_payload(
         "bridge_inflow_per_min": round(bridge_inflow, 4),
         "bridge_outflow_per_min": round(bridge_outflow, 4),
         "bridge_escrow_total": round(escrow_total, 4),
+        "bridge_transfers_total": round(bridge_transfers_total, 2),
+        "bridge_routes_active": bridge_routes_active,
         "bridge_collateral_ratio_percent": round(collateral_ratio, 2),
         "bridge_settlement_share_percent": round(
             (bridge_inflow / max(mint_rate, 0.001)) * 100.0, 2
         ),
         "bridge_volume_24h": round(bridge_inflow * 1440.0, 2),
+        "chain_height": max(server_round, 0),
+        "fl_verification_ratio": round(fl_verification_ratio, 4),
+        "fl_average_confidence_bps": round(fl_average_confidence_bps, 2),
         "validator_count": validator_count,
         "stake_participation_ratio": round(stake_participation, 4),
         "stake_concentration_gini": round(stake_gini, 4),

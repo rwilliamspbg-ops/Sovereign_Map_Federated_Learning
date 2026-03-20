@@ -83,9 +83,34 @@ class TokenomicsMetricsExporter:
             "Bridge volume over trailing 24h",
             registry=self.registry,
         )
+        self.bridge_transfers_total = Gauge(
+            "tokenomics_bridge_transfers_total",
+            "Total bridge transfer executions observed by tokenomics telemetry",
+            registry=self.registry,
+        )
+        self.bridge_routes_active = Gauge(
+            "tokenomics_bridge_routes_active",
+            "Active bridge policy routes",
+            registry=self.registry,
+        )
         self.validator_count = Gauge(
             "tokenomics_validator_count",
             "Active validator count for the token economy",
+            registry=self.registry,
+        )
+        self.chain_height = Gauge(
+            "tokenomics_chain_height",
+            "Observed blockchain height exposed to tokenomics telemetry",
+            registry=self.registry,
+        )
+        self.fl_verification_ratio = Gauge(
+            "tokenomics_fl_verification_ratio",
+            "Federated learning proof verification ratio as a 0-1 value",
+            registry=self.registry,
+        )
+        self.fl_average_confidence_bps = Gauge(
+            "tokenomics_fl_average_confidence_bps",
+            "Average FL proof verification confidence in basis points",
             registry=self.registry,
         )
         self.stake_participation_ratio = Gauge(
@@ -188,6 +213,34 @@ class TokenomicsMetricsExporter:
             (inflow / mint_rate * 100.0) if mint_rate > 0 else 0.0,
         )
         volume_24h = self._safe_float(payload, "bridge_volume_24h", inflow * 1440.0)
+        bridge_transfers_total = self._safe_optional_float(
+            payload,
+            "bridge_transfers_total",
+            "bridge_transfer_count",
+            "bridge_total_transfers",
+        )
+        bridge_routes_active = self._safe_optional_float(
+            payload,
+            "bridge_routes_active",
+            "bridge_policy_routes_active",
+        )
+        chain_height = self._safe_optional_float(
+            payload,
+            "chain_height",
+            "blockchain_height",
+            "ledger_height",
+        )
+        fl_verification_ratio = self._safe_optional_float(
+            payload,
+            "fl_verification_ratio",
+            "verification_ratio",
+        )
+        fl_average_confidence_bps = self._safe_optional_float(
+            payload,
+            "fl_average_confidence_bps",
+            "fl_verification_confidence_bps",
+            "verification_confidence_bps",
+        )
         minted_supply = self._safe_optional_float(
             payload,
             "token_supply_minted",
@@ -259,6 +312,13 @@ class TokenomicsMetricsExporter:
         self.bridge_collateral_ratio.set(max(0.0, collateral))
         self.bridge_settlement_share.set(max(0.0, settlement_share))
         self.bridge_volume_24h.set(max(0.0, volume_24h))
+        self._set_if_present(self.bridge_transfers_total, bridge_transfers_total)
+        self._set_if_present(self.bridge_routes_active, bridge_routes_active)
+        self._set_if_present(self.chain_height, chain_height)
+        self._set_if_present(self.fl_verification_ratio, fl_verification_ratio)
+        self._set_if_present(
+            self.fl_average_confidence_bps, fl_average_confidence_bps
+        )
         self._set_if_present(self.token_supply_minted, minted_supply)
         self._set_if_present(self.validator_count, validator_count)
         self._set_if_present(self.stake_participation_ratio, stake_participation_ratio)
@@ -334,7 +394,12 @@ def run_simulation(exporter):
             "bridge_inflow_per_min": random.uniform(400.0, 500.0),
             "bridge_outflow_per_min": random.uniform(250.0, 350.0),
             "bridge_escrow_total": last_escrow,
+            "bridge_transfers_total": random.uniform(10000, 14000),
+            "bridge_routes_active": 2,
             "bridge_collateral_ratio_percent": random.uniform(150.0, 160.0),
+            "chain_height": random.uniform(800, 1200),
+            "fl_verification_ratio": random.uniform(0.96, 0.995),
+            "fl_average_confidence_bps": random.uniform(9400, 9900),
             "unique_wallets_count": last_wallets,
             "wallet_average_balance": last_balance,
             # Ratios are represented as 0..1 values for downstream dashboard formulas.

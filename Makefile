@@ -4,9 +4,16 @@
 .PHONY: all build test clean deploy logs help \
         test-200-bft setup-200-test clean-200-test benchmark-200 \
 	chaos-test partition-test generate-data smoke testnet-wallet-readiness \
-	wow-start wow-verify screenshots-check
+	wow-start wow-verify screenshots-check go-env observability-smoke
 
 COMPOSE ?= docker compose
+TOOLROOT ?= /go/pkg/mod/golang.org/toolchain@v0.0.1-go1.25.7.linux-amd64
+
+ifneq ("$(wildcard $(TOOLROOT)/bin/go)","")
+GO := GOROOT=$(TOOLROOT) GOTOOLCHAIN=local $(TOOLROOT)/bin/go
+else
+GO := go
+endif
 
 # Default target
 all: build
@@ -17,9 +24,9 @@ all: build
 
 build:
 	@echo "🔨 Building Sovereign Map components..."
-	go build -o bin/node-agent ./cmd/node-agent
-	go build -o bin/aggregator ./cmd/aggregator
-	go build -o bin/cli ./cmd/cli
+	$(GO) build -o bin/node-agent ./cmd/node-agent
+	$(GO) build -o bin/aggregator ./cmd/aggregator
+	$(GO) build -o bin/cli ./cmd/cli
 	@echo "✅ Build complete. Binaries in bin/"
 
 build-docker:
@@ -35,24 +42,24 @@ build-docker:
 
 test:
 	@echo "🧪 Running standard test suite..."
-	go test -v -race -coverprofile=coverage.out ./...
+	$(GO) test -v -race -coverprofile=coverage.out ./...
 	@echo "📊 Coverage report generated"
 
 test-short:
 	@echo "🧪 Running short tests..."
-	go test -v -short ./...
+	$(GO) test -v -short ./...
 
 test-consensus:
 	@echo "🧪 Running consensus tests..."
-	go test -v ./internal/consensus/... -timeout 30m
+	$(GO) test -v ./internal/consensus/... -timeout 30m
 
 test-bft:
 	@echo "🛡️ Running BFT tests..."
-	go test -v ./internal/consensus/... -run "TestBFT|TestByzantine" -timeout 30m
+	$(GO) test -v ./internal/consensus/... -run "TestBFT|TestByzantine" -timeout 30m
 
 benchmark:
 	@echo "📊 Running benchmarks..."
-	go test -bench=. -benchmem ./...
+	$(GO) test -bench=. -benchmem ./...
 
 # =============================================================================
 # 200-Node BFT Test Targets (NEW)
@@ -62,7 +69,7 @@ setup-200-test:
 	@echo "🔧 Setting up 200-node BFT test environment..."
 	@mkdir -p test-results/200-node-bft/$(shell date +%Y-%m-%d)
 	@mkdir -p test-data
-	@go run scripts/generate-test-data.go
+	@$(GO) run scripts/generate-test-data.go
 	@docker network create sovereign-net-200 2>/dev/null || true
 	@echo "✅ Environment ready"
 
@@ -85,32 +92,32 @@ test-200-bft-quick:
 	@sleep 30
 	@$(COMPOSE) -f docker-compose.200nodes.yml up -d node-agent
 	@sleep 60
-	@go test -v ./internal/consensus/... -run "Test200NodeBFT" -timeout 20m -quick-test
+	@$(GO) test -v ./internal/consensus/... -run "Test200NodeBFT" -timeout 20m -quick-test
 	@$(COMPOSE) -f docker-compose.200nodes.yml down
 
 benchmark-200:
 	@echo "📊 Running 200-node performance benchmark..."
 	@$(COMPOSE) -f docker-compose.200nodes.yml up -d mongo redis backend
 	@sleep 30
-	@go test -bench=Benchmark200Nodes -benchtime=10m -memprofile=mem.out -cpuprofile=cpu.out ./internal/consensus/...
+	@$(GO) test -bench=Benchmark200Nodes -benchtime=10m -memprofile=mem.out -cpuprofile=cpu.out ./internal/consensus/...
 
 chaos-test:
 	@echo "🔥 Running chaos engineering tests..."
 	@$(COMPOSE) -f docker-compose.200nodes.yml --profile chaos up -d
 	@sleep 60
 	@docker exec chaos-200 python3 /app/chaos_injector.py --nodes 200 --faults 111 --duration 300
-	@go test -v ./internal/consensus/... -run "TestChaosRecovery" -timeout 30m
+	@$(GO) test -v ./internal/consensus/... -run "TestChaosRecovery" -timeout 30m
 
 partition-test:
 	@echo "🔀 Running network partition tests..."
 	@$(COMPOSE) -f docker-compose.200nodes.yml up -d
 	@sleep 60
 	@./scripts/network_partition.sh 3 60  # 3 partitions, 60 seconds
-	@go test -v ./internal/consensus/... -run "TestNetworkPartition" -timeout 30m
+	@$(GO) test -v ./internal/consensus/... -run "TestNetworkPartition" -timeout 30m
 
 generate-data:
 	@echo "🎲 Generating synthetic test data..."
-	@go run scripts/generate-test-data.go
+	@$(GO) run scripts/generate-test-data.go
 
 # =============================================================================
 # Docker Compose Operations
@@ -183,7 +190,7 @@ clean:
 	@echo "🧹 Cleaning up..."
 	$(COMPOSE) down -v --remove-orphans
 	rm -rf bin/
-	go clean
+	$(GO) clean
 
 clean-200-test:
 	@echo "🧹 Cleaning up 200-node test environment..."
@@ -202,11 +209,11 @@ clean-all: clean clean-200-test
 # =============================================================================
 
 tidy:
-	go mod tidy
-	go mod verify
+	$(GO) mod tidy
+	$(GO) mod verify
 
 fmt:
-	go fmt ./...
+	$(GO) fmt ./...
 
 contributors-rankings:
 	@echo "🏆 Generating contributor rankings and reward points..."
@@ -222,7 +229,7 @@ lint-soft:
 	golangci-lint run ./... || true
 
 vet:
-	go vet ./...
+	$(GO) vet ./...
 
 security-scan:
 	@echo "🔒 Running security scans..."
@@ -233,8 +240,8 @@ check: fmt vet lint test
 
 smoke:
 	@echo "🧪 Running reproducibility smoke checks..."
-	@PKGS=$$(go list ./... | grep -Ev '(/node_modules/|/sensors/camera$$|/sensors/slam$$|/storage/map_tiles$$)'); \
-		go test -short $$PKGS
+	@PKGS=$$($(GO) list ./... | grep -Ev '(/node_modules/|/sensors/camera$$|/sensors/slam$$|/storage/map_tiles$$)'); \
+		$(GO) test -short $$PKGS
 	@npm ci
 	@npm --prefix frontend ci
 	@npm --prefix frontend run build
@@ -243,6 +250,12 @@ smoke:
 	@docker compose -f docker-compose.production.yml config >/dev/null
 	@docker compose -f docker-compose.1000nodes.yml config >/dev/null
 	@echo "✅ Smoke checks passed"
+
+observability-smoke:
+	@echo "📈 Running observability smoke checks..."
+	@python3 scripts/check_dashboard_queries.py
+	@node -e 'const fs=require("fs"); const files=["grafana/provisioning/dashboards/operations_overview.json","grafana/provisioning/dashboards/tokenomics_overview.json","grafana/dashboards/operations_overview.json","grafana/dashboards/tokenomics_overview.json"]; files.forEach(f=>JSON.parse(fs.readFileSync(f,"utf8"))); console.log("dashboard json ok")'
+	@echo "✅ Observability smoke checks passed"
 
 testnet-wallet-readiness:
 	@echo "🧪 Running testnet wallet readiness checks..."
@@ -275,10 +288,15 @@ dashboard:
 
 dev-setup:
 	@echo "🔧 Setting up development environment..."
-	@go mod download
+	@$(GO) mod download
 	@mkdir -p bin test-results test-data
 	@cp config/200node-test.yaml.example config/200node-test.yaml 2>/dev/null || true
 	@echo "✅ Development environment ready"
+
+go-env:
+	@echo "Go command: $(GO)"
+	@$(GO) version
+	@$(GO) env GOROOT GOTOOLCHAIN GOMODCACHE GOCACHE
 
 proto:
 	@echo "📝 Generating protobuf files..."
@@ -341,5 +359,7 @@ help:
 	@echo "  make fmt     - Format Go code"
 	@echo "  make lint    - Run linters"
 	@echo "  make lint-soft - Run linters without failing target"
+	@echo "  make go-env  - Print effective Go toolchain settings"
+	@echo "  make observability-smoke - Validate dashboard queries and JSON syntax"
 	@echo "  make check   - Run all checks"
 	@echo ""

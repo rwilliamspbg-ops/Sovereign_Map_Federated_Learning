@@ -118,6 +118,8 @@ func (bv *BlockValidator) validateTransaction(txn *Transaction) error {
 		return bv.validateSmartContractTxn(txn)
 	case TxTypeCheckpoint:
 		return bv.validateCheckpointTxn(txn)
+	case TxTypeTransfer:
+		return bv.validateTransferTxn(txn)
 	default:
 		return fmt.Errorf("unknown transaction type: %s", txn.Type)
 	}
@@ -206,6 +208,32 @@ func (bv *BlockValidator) validateCheckpointTxn(txn *Transaction) error {
 	return nil
 }
 
+// validateTransferTxn validates wallet and bridge transfer transactions.
+func (bv *BlockValidator) validateTransferTxn(txn *Transaction) error {
+	if txn.Amount == 0 {
+		return fmt.Errorf("transfer amount must be greater than zero")
+	}
+	if txn.From == "" {
+		return fmt.Errorf("transfer missing From address")
+	}
+	if txn.To == "" {
+		return fmt.Errorf("transfer missing To address")
+	}
+
+	if !isBridgeTransactionData(txn.Data) {
+		return nil
+	}
+
+	sourceChain := asStringOrDefault(txn.Data["source_chain"], "")
+	targetChain := asStringOrDefault(txn.Data["target_chain"], "")
+	asset := asStringOrDefault(txn.Data["asset"], "")
+	if sourceChain == "" || targetChain == "" || asset == "" {
+		return fmt.Errorf("bridge transfer requires source_chain, target_chain, and asset")
+	}
+
+	return nil
+}
+
 // validateStateRoot verifies the state root by replaying transactions
 func (bv *BlockValidator) validateStateRoot(block *Block) error {
 	// Clone state to check transitions
@@ -231,6 +259,8 @@ func (bv *BlockValidator) validateStateRoot(block *Block) error {
 
 // executeTransaction applies a transaction to state
 func (bv *BlockValidator) executeTransaction(txn *Transaction, state *StateDatabase, blockHeight uint64) error {
+	ledger := NewWalletLedger(state)
+
 	switch txn.Type {
 	case TxTypeFlRound:
 		// Record FL round in state
@@ -261,13 +291,56 @@ func (bv *BlockValidator) executeTransaction(txn *Transaction, state *StateDatab
 		}
 
 	case TxTypeReward:
+		if err := ledger.Credit(txn.To, txn.Amount); err != nil {
+			return err
+		}
 		// Add reward to recipient
 		rewardKey := fmt.Sprintf("reward:%s", txn.To)
 		currentReward := uint64(0)
 		if val, err := state.Get(rewardKey); err == nil {
-			currentReward = val.(uint64)
+			if parsed, ok := asUint64Replay(val); ok {
+				currentReward = parsed
+			}
 		}
 		state.Set(rewardKey, currentReward+txn.Amount)
+
+	case TxTypeTransfer:
+		if isBridgeTransactionData(txn.Data) {
+			sourceChain := asStringOrDefault(txn.Data["source_chain"], "")
+			targetChain := asStringOrDefault(txn.Data["target_chain"], "")
+			asset := asStringOrDefault(txn.Data["asset"], "")
+			escrowAddress := fmt.Sprintf("bridge_escrow:%s:%s:%s", sourceChain, targetChain, asset)
+			if err := ledger.Transfer(txn.From, escrowAddress, txn.Amount); err != nil {
+				return err
+			}
+
+			bridgeRecord := map[string]interface{}{
+				"tx_id":           txn.ID,
+				"from":            txn.From,
+				"to":              txn.To,
+				"amount":          txn.Amount,
+				"asset":           asset,
+				"source_chain":    sourceChain,
+				"target_chain":    targetChain,
+				"finality_blocks": asUint64OrDefault(txn.Data["finality_blocks"], 0),
+				"status":          "escrowed",
+				"timestamp":       txn.Timestamp,
+			}
+			state.Set(fmt.Sprintf("bridge_transfer:%s", txn.ID), bridgeRecord)
+
+			volumeKey := fmt.Sprintf("bridge_volume:%s:%s:%s", sourceChain, targetChain, asset)
+			currentVolume := uint64(0)
+			if val, err := state.Get(volumeKey); err == nil {
+				if parsed, ok := asUint64Replay(val); ok {
+					currentVolume = parsed
+				}
+			}
+			state.Set(volumeKey, currentVolume+txn.Amount)
+		} else {
+			if err := ledger.ApplyTransaction(txn); err != nil {
+				return err
+			}
+		}
 
 	case TxTypeSmartContract:
 		// Smart contract execution (simplified)
@@ -281,6 +354,58 @@ func (bv *BlockValidator) executeTransaction(txn *Transaction, state *StateDatab
 	}
 
 	return nil
+}
+
+func isBridgeTransactionData(data map[string]interface{}) bool {
+	if data == nil {
+		return false
+	}
+	v, ok := data["bridge"]
+	if !ok {
+		return false
+	}
+	b, ok := v.(bool)
+	return ok && b
+}
+
+func asStringOrDefault(v interface{}, fallback string) string {
+	if s, ok := v.(string); ok && s != "" {
+		return s
+	}
+	return fallback
+}
+
+func asUint64OrDefault(v interface{}, fallback uint64) uint64 {
+	if parsed, ok := asUint64Replay(v); ok {
+		return parsed
+	}
+	return fallback
+}
+
+func asUint64Replay(v interface{}) (uint64, bool) {
+	switch n := v.(type) {
+	case uint64:
+		return n, true
+	case uint32:
+		return uint64(n), true
+	case int:
+		if n < 0 {
+			return 0, false
+		}
+		return uint64(n), true
+	case int64:
+		if n < 0 {
+			return 0, false
+		}
+		return uint64(n), true
+	case float64:
+		if n < 0 {
+			return 0, false
+		}
+		return uint64(n), true
+	default:
+		return 0, false
+	}
 }
 
 // validateProofs validates cryptographic proofs attached to block.

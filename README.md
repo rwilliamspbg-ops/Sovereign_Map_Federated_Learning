@@ -12,6 +12,41 @@ Production-grade federated learning platform that combines Byzantine-resilient a
 [![CodeQL Security Analysis](https://github.com/rwilliamspbg-ops/Sovereign_Map_Federated_Learning/actions/workflows/codeql-analysis.yml/badge.svg?branch=main)](https://github.com/rwilliamspbg-ops/Sovereign_Map_Federated_Learning/actions/workflows/codeql-analysis.yml)
 [![Security Supply Chain](https://github.com/rwilliamspbg-ops/Sovereign_Map_Federated_Learning/actions/workflows/security-supply-chain.yml/badge.svg?branch=main)](https://github.com/rwilliamspbg-ops/Sovereign_Map_Federated_Learning/actions/workflows/security-supply-chain.yml)
 [![License](https://img.shields.io/github/license/rwilliamspbg-ops/Sovereign_Map_Federated_Learning?style=flat-square)](LICENSE)
+[![Metrics Upgrade](https://img.shields.io/badge/Metrics-Blockchain%20Bridge%20Integrated-0ea5e9?style=flat-square)](tokenomics_metrics_exporter.py)
+[![Dashboards Upgrade](https://img.shields.io/badge/Grafana-Operations%20%2B%20Tokenomics%20Upgraded-f59e0b?style=flat-square&logo=grafana&logoColor=white)](grafana/provisioning/dashboards)
+[![Prometheus Ready](https://img.shields.io/badge/Prometheus-Scrape%20Ready-ef4444?style=flat-square&logo=prometheus&logoColor=white)](prometheus.yml)
+
+## Observability Upgrade March 2026
+
+This upgrade ties blockchain and bridge execution telemetry directly into the production Grafana surfaces.
+
+What was added:
+
+- New exporter metrics for blockchain and bridge runtime state:
+    - `tokenomics_chain_height`
+    - `tokenomics_bridge_transfers_total`
+    - `tokenomics_bridge_routes_active`
+    - `tokenomics_fl_verification_ratio`
+    - `tokenomics_fl_average_confidence_bps`
+- Tokenomics telemetry payload now emits these fields from backend runtime calculations.
+- Grafana Operations and Tokenomics dashboards now include a dedicated Blockchain and Bridge Runtime section with verification, confidence, transfer throughput, route count, and chain height.
+
+Primary files updated for this upgrade:
+
+- Metrics exporter: [tokenomics_metrics_exporter.py](tokenomics_metrics_exporter.py)
+- Backend telemetry payload: [sovereignmap_production_backend_v2.py](sovereignmap_production_backend_v2.py)
+- Operations dashboard: [grafana/provisioning/dashboards/operations_overview.json](grafana/provisioning/dashboards/operations_overview.json)
+- Tokenomics dashboard: [grafana/provisioning/dashboards/tokenomics_overview.json](grafana/provisioning/dashboards/tokenomics_overview.json)
+- Prometheus scrape config: [prometheus.yml](prometheus.yml)
+
+Dashboard sync note:
+
+- Provisioned dashboards are mirrored into [grafana/dashboards](grafana/dashboards) for environments using the alternate dashboard path.
+
+Operator validation commands:
+
+- `make observability-smoke`
+- `python3 scripts/check_dashboard_queries.py`
 
 ## Two-Minute Experience
 

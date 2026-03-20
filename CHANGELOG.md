@@ -28,6 +28,18 @@ This is the first stable release of the Sovereign Map SDK with complete API cont
 ### Breaking Changes
 None - 0.2.0 is the first stable release with public APIs.
 
+### Observability Upgrade - 2026-03-20
+
+- Added end-to-end blockchain and bridge telemetry metrics:
+   - `tokenomics_chain_height`
+   - `tokenomics_bridge_transfers_total`
+   - `tokenomics_bridge_routes_active`
+   - `tokenomics_fl_verification_ratio`
+   - `tokenomics_fl_average_confidence_bps`
+- Extended tokenomics backend payload generation to emit bridge throughput, active routes, chain height, and FL verification confidence fields.
+- Updated Grafana Operations and Tokenomics dashboards (provisioned + mirrored) with dedicated blockchain and bridge runtime panels.
+- Added `make observability-smoke` to validate dashboard PromQL references and dashboard JSON parse integrity in one command.
+
 ---
 
 ## [0.1.0-alpha.1] - 2026-03-17

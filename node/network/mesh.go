@@ -117,6 +117,16 @@ func (m *Mesh) Publish(ctx context.Context, payload []byte) error {
 	return m.topic.Publish(ctx, payload)
 }
 
+// Subscribe creates a topic subscription for receiving gossip messages.
+func (m *Mesh) Subscribe() (*pubsub.Subscription, error) {
+	m.mu.RLock()
+	defer m.mu.RUnlock()
+	if m.topic == nil {
+		return nil, fmt.Errorf("mesh topic is not initialized")
+	}
+	return m.topic.Subscribe()
+}
+
 // ActivePeers reports currently connected peers count.
 func (m *Mesh) ActivePeers() int {
 	return len(m.host.Network().Peers())
