@@ -41,7 +41,7 @@ services:
       - GF_SECURITY_ADMIN_USER=admin
       - GF_SECURITY_ADMIN_PASSWORD=${GRAFANA_PASSWORD:-CHANGE_ME_GRAFANA}
       - GF_AUTH_ANONYMOUS_ENABLED=true
-      - GF_DASHBOARDS_DEFAULT_HOME_DASHBOARD_PATH=/etc/grafana/provisioning/dashboards/fl_tokenomics.json
+      - GF_DASHBOARDS_DEFAULT_HOME_DASHBOARD_PATH=/etc/grafana/provisioning/dashboards/operations_overview.json
     networks:
       - sovereign-network
     ports:
@@ -52,7 +52,6 @@ services:
       # Auto-provision dashboard providers and JSON dashboards
       - ./grafana/provisioning/dashboards:/etc/grafana/provisioning/dashboards
       # Point to your custom dashboard JSON
-      - ./monitoring/dashboards:/var/lib/grafana/dashboards
     restart: unless-stopped
 
 networks:

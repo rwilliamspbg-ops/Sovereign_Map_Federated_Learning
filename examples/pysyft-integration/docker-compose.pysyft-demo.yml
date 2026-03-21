@@ -1,0 +1,9 @@
+services:
+  pysyft-mohawk-poc:
+    image: python:3.11-slim
+    working_dir: /workspace
+    volumes:
+      - ../../:/workspace
+    command: >-
+      bash -lc "pip install --no-cache-dir -r examples/pysyft-integration/requirements-pysyft-demo.txt
+      && python examples/pysyft-integration/pysyft_mohawk_poc.py --mode mock --rounds 5 --participants 5"

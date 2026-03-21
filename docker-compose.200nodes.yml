@@ -90,12 +90,11 @@ services:
       - GF_SECURITY_ADMIN_USER=${GRAFANA_USER:-admin}
       - GF_SECURITY_ADMIN_PASSWORD=${GRAFANA_PASSWORD:-CHANGE_ME_GRAFANA}
       - GF_USERS_ALLOW_SIGN_UP=false
-      - GF_DASHBOARDS_DEFAULT_HOME_DASHBOARD_PATH=/etc/grafana/provisioning/dashboards/fl_tokenomics.json
+      - GF_DASHBOARDS_DEFAULT_HOME_DASHBOARD_PATH=/etc/grafana/provisioning/dashboards/operations_overview.json
     volumes:
       - grafana_data_200:/var/lib/grafana
       - ./grafana/provisioning/datasources:/etc/grafana/provisioning/datasources:ro
       - ./grafana/provisioning/dashboards:/etc/grafana/provisioning/dashboards:ro
-      - ./monitoring/dashboards:/var/lib/grafana/dashboards:ro
     depends_on:
       - prometheus
     networks:

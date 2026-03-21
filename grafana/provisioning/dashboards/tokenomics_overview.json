@@ -1290,16 +1290,18 @@
       }
     }
   ],
-  "refresh": "5s",
+  "refresh": "10s",
   "schemaVersion": 38,
   "style": "dark",
   "tags": [
     "bridge",
+    "easy-read",
     "economy",
     "live",
     "professional",
     "slo",
     "sovereignmap",
+    "starred",
     "tokenomics",
     "vivid",
     "wallets"
@@ -1369,9 +1371,9 @@
   },
   "timepicker": {},
   "timezone": "",
-  "title": "SovereignMap | Tokenomics Overview",
+  "title": "SovereignMap | STARRED | Tokenomics Live Overview",
   "uid": "sovereign-tokenomics-overview",
   "version": 1,
   "weekStart": "",
-  "description": "Professional tokenomics dashboard with executive score strip, liquidity dynamics, and distribution visibility."
+  "description": "Starred, easy-read tokenomics dashboard with live refresh, executive score strip, and bridge health visibility."
 }
