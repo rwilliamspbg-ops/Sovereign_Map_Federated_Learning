@@ -10,7 +10,7 @@
 - **OpenAPI Publication:** Published in-repo OpenAPI specs for control plane, training service, TPM exporter, and tokenomics exporter.
 - **Postman Publication:** Published a multi-service Postman collection aligned with all Flask routes.
 - **Route Coverage Guardrail:** Added a route-to-spec validator and CI workflow to block undocumented API route changes.
-- **Docs Hosting:** Added static multi-spec Swagger UI and GitHub Pages deployment workflow for hosted API documentation.
+- **Docs Hosting:** Added static multi-spec Swagger UI and a GitHub Pages deployment workflow for hosted API documentation (active when Pages is enabled for the repository).
 - **Operator Visibility:** Added workflow badges and API documentation links in README for fast verification.
 
 ### 🔥 Phase 3 Achieved Milestones (PR #62)

@@ -17,7 +17,7 @@ This is the first stable release of the Sovereign Map SDK with complete API cont
 - **Release Management**: Changesets-based changelog automation and semantic versioning enforcement
 - **Testing Infrastructure**: Coverage gates enforced in CI with per-package thresholds (all packages meeting or exceeding 91% line coverage)
 - **API Stability Guardrails**: Route-to-spec coverage validator script and API validation GitHub Actions workflow
-- **Hosted API Docs**: GitHub Pages workflow for static Swagger UI with multi-spec selector
+- **Hosted API Docs**: GitHub Pages deployment workflow for static Swagger UI with multi-spec selector (`/api/swagger-ui.html` when Pages is enabled)
 - **Security Hardening**: GitHub Actions SHA pinning across all workflows; SLSA L2 provenance attestation; CodeQL and supply chain scanning
 - **PySyft Integration Demo**: Added a runnable PySyft x Mohawk proof-of-concept package under `examples/pysyft-integration` with script, notebook, compose profile, and operator runbook
 

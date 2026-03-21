@@ -48,4 +48,4 @@ Make the network best-in-class for sovereign intelligence coordination: secure, 
 - Publish before/after validator behavior summary in docs.
 - Publish OpenAPI specs and Postman collection for all active control/telemetry services.
 - Add API route coverage validation in CI to prevent route/spec drift.
-- Publish multi-spec Swagger UI to GitHub Pages for operator and integrator access.
+- Publish multi-spec Swagger UI docs with GitHub Pages deployment workflow (hosted path available when repository Pages is enabled).
