@@ -43,7 +43,8 @@
     "provision:dashboards:k8s": "node scripts/provision-grafana-dashboards.js k8s",
     "compression:build": "npm --prefix packages/compression run build",
     "compression:test": "npm --prefix packages/compression run test:ci",
-    "compression:benchmark": "npm --prefix packages/compression run test:benchmark"
+    "compression:benchmark": "npm --prefix packages/compression run test:benchmark",
+    "api:validate": "node scripts/validate-api-coverage.js"
   },
   "compilerOptions": {
     "target": "ESNext",

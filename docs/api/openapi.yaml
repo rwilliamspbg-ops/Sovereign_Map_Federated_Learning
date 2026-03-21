@@ -1,0 +1,1001 @@
+openapi: 3.0.3
+info:
+  title: Sovereign Map Federated Learning Control Plane API
+  version: 1.0.0
+  description: |
+    OpenAPI specification for the Flask control plane exposed by
+    sovereignmap_production_backend_v2.py.
+
+    This API serves operator controls, HUD telemetry, training orchestration,
+    trust/policy views, and participant join lifecycle operations.
+servers:
+  - url: http://localhost:8000
+    description: Local development
+
+tags:
+  - name: Runtime
+  - name: HUD
+  - name: Training
+  - name: Operations
+  - name: Trust
+  - name: Join
+
+paths:
+  /status:
+    get:
+      tags: [Runtime]
+      summary: Get service runtime status
+      operationId: getStatus
+      responses:
+        '200':
+          description: Aggregator runtime identity
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/StatusResponse'
+
+  /health:
+    get:
+      tags: [Runtime]
+      summary: Get service health and telemetry snapshot
+      operationId: getHealth
+      responses:
+        '200':
+          description: Healthy service snapshot
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HealthResponse'
+
+  /chat:
+    post:
+      tags: [HUD]
+      summary: Ask HUD assistant query
+      operationId: postChat
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                query:
+                  type: string
+                  example: Show current health status
+      responses:
+        '200':
+          description: Assistant response
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  response:
+                    type: string
+                  status:
+                    type: string
+                    example: ok
+
+  /hud_data:
+    get:
+      tags: [HUD]
+      summary: Get HUD summary metrics
+      operationId: getHudData
+      responses:
+        '200':
+          description: HUD data payload
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HudDataResponse'
+
+  /founders:
+    get:
+      tags: [HUD]
+      summary: List founders and governance stakes
+      operationId: getFounders
+      responses:
+        '200':
+          description: Founder list
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Founder'
+
+  /convergence:
+    get:
+      tags: [Training]
+      summary: Get full convergence history
+      operationId: getConvergence
+      responses:
+        '200':
+          description: Convergence time series
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ConvergenceResponse'
+        '500':
+          description: Strategy not initialized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /metrics_summary:
+    get:
+      tags: [Training]
+      summary: Get aggregate training and system metrics
+      operationId: getMetricsSummary
+      responses:
+        '200':
+          description: Metrics summary payload
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/MetricsSummaryResponse'
+        '500':
+          description: Strategy not initialized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /trigger_fl:
+    post:
+      tags: [Training]
+      summary: Trigger a single manual FL round
+      operationId: postTriggerFl
+      responses:
+        '202':
+          description: FL round accepted and executed
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TriggerFlResponse'
+        '503':
+          description: Strategy unavailable
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TriggerFlResponse'
+
+  /training/start:
+    post:
+      tags: [Training]
+      summary: Start background training loop
+      operationId: postTrainingStart
+      responses:
+        '200':
+          description: Training loop started or already active
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TrainingCommandResponse'
+
+  /training/stop:
+    post:
+      tags: [Training]
+      summary: Stop background training loop
+      operationId: postTrainingStop
+      responses:
+        '200':
+          description: Training loop halted
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TrainingStopResponse'
+
+  /training/status:
+    get:
+      tags: [Training]
+      summary: Get training loop status and live metrics
+      operationId: getTrainingStatus
+      responses:
+        '200':
+          description: Training status payload
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TrainingStatusResponse'
+
+  /simulate/{simulation_type}:
+    post:
+      tags: [Training]
+      summary: Trigger a simulation event
+      operationId: postSimulation
+      parameters:
+        - name: simulation_type
+          in: path
+          required: true
+          schema:
+            type: string
+            enum:
+              - byzantineAttacks
+              - networkPartitions
+              - hardwareFaults
+              - llmPolicyValid
+              - llmPolicyRejected
+      responses:
+        '200':
+          description: Simulation recorded
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SimulationResponse'
+        '400':
+          description: Unsupported simulation type
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorStatusResponse'
+
+  /create_enclave:
+    post:
+      tags: [Runtime]
+      summary: Advance enclave provisioning state machine
+      operationId: postCreateEnclave
+      responses:
+        '200':
+          description: Enclave state changed
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/EnclaveResponse'
+        '202':
+          description: Provisioning in progress
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/EnclaveInProgressResponse'
+
+  /ops/health:
+    get:
+      tags: [Operations]
+      summary: Get operational health snapshot
+      operationId: getOpsHealth
+      responses:
+        '200':
+          description: Ops health payload
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/OpsHealthResponse'
+
+  /ops/events/recent:
+    get:
+      tags: [Operations]
+      summary: Get recent operational events
+      operationId: getOpsEventsRecent
+      parameters:
+        - name: limit
+          in: query
+          required: false
+          schema:
+            type: integer
+            minimum: 1
+            default: 100
+      responses:
+        '200':
+          description: Event list response
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  count:
+                    type: integer
+                  events:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/OpsEvent'
+
+  /ops/events:
+    get:
+      tags: [Operations]
+      summary: Stream operational events using SSE
+      operationId: streamOpsEvents
+      responses:
+        '200':
+          description: Server-sent events stream
+          content:
+            text/event-stream:
+              schema:
+                type: string
+                example: "data: {\"id\":1,\"kind\":\"heartbeat\"}\n\n"
+
+  /model_registry:
+    get:
+      tags: [Operations]
+      summary: Get recent model registry entries
+      operationId: getModelRegistry
+      parameters:
+        - name: limit
+          in: query
+          required: false
+          schema:
+            type: integer
+            minimum: 1
+            default: 100
+      responses:
+        '200':
+          description: Model registry response
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  entries:
+                    type: array
+                    items:
+                      type: object
+                      additionalProperties: true
+                  count:
+                    type: integer
+
+  /trust_snapshot:
+    get:
+      tags: [Trust]
+      summary: Get trust and verification snapshot
+      operationId: getTrustSnapshot
+      responses:
+        '200':
+          description: Trust state payload
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TrustSnapshotResponse'
+
+  /verification_policy:
+    post:
+      tags: [Trust]
+      summary: Submit verification policy update request
+      operationId: postVerificationPolicy
+      parameters:
+        - name: X-API-Role
+          in: header
+          required: false
+          schema:
+            type: string
+            example: admin
+      requestBody:
+        required: false
+        content:
+          application/json:
+            schema:
+              type: object
+              additionalProperties: true
+      responses:
+        '200':
+          description: Policy update accepted
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+                    example: ok
+                  message:
+                    type: string
+                    example: Policy applied successfully
+
+  /llm_policy:
+    get:
+      tags: [Trust]
+      summary: Get active LLM adapter policy
+      operationId: getLlmPolicy
+      responses:
+        '200':
+          description: LLM adapter policy
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  enforce:
+                    type: boolean
+                  model_family:
+                    type: string
+                  model_version:
+                    type: string
+                  tokenizer_hash:
+                    type: string
+                  allowed_adapter_ranks:
+                    type: array
+                    items:
+                      type: integer
+                  required_target_modules:
+                    type: array
+                    items:
+                      type: string
+                  max_reported_update_l2_norm:
+                    type: number
+
+  /join/policy:
+    get:
+      tags: [Join]
+      summary: Get participant join policy and aggregator address
+      operationId: getJoinPolicy
+      responses:
+        '200':
+          description: Join policy payload
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/LlmPolicy'
+                  - type: object
+                    properties:
+                      aggregator_host:
+                        type: string
+                      aggregator_port:
+                        type: integer
+
+  /join/invite:
+    post:
+      tags: [Join]
+      summary: Create join invite (admin)
+      operationId: postJoinInvite
+      security:
+        - JoinAdminHeader: []
+        - BearerAuth: []
+      requestBody:
+        required: false
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                participant_name:
+                  type: string
+                  default: participant
+                max_uses:
+                  type: integer
+                  default: 1
+                expires_in_hours:
+                  type: integer
+                  default: 24
+      responses:
+        '200':
+          description: Invite created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/JoinInviteResponse'
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /join/register:
+    post:
+      tags: [Join]
+      summary: Register participant with invite code
+      operationId: postJoinRegister
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [invite_code]
+              properties:
+                invite_code:
+                  type: string
+                participant_name:
+                  type: string
+                  default: participant
+                node_name:
+                  type: string
+      responses:
+        '200':
+          description: Registration completed with certificate bundle
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/JoinRegistrationResponse'
+        '400':
+          description: Registration rejected
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /join/registrations:
+    get:
+      tags: [Join]
+      summary: List join registrations (admin)
+      operationId: getJoinRegistrations
+      security:
+        - JoinAdminHeader: []
+        - BearerAuth: []
+      responses:
+        '200':
+          description: Registration list
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  count:
+                    type: integer
+                  registrations:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/JoinRegistration'
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /join/revoke/{node_id}:
+    post:
+      tags: [Join]
+      summary: Revoke participant node certificate (admin)
+      operationId: postJoinRevoke
+      security:
+        - JoinAdminHeader: []
+        - BearerAuth: []
+      parameters:
+        - name: node_id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: Revocation successful
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+                    example: ok
+                  node_id:
+                    type: integer
+                  revoked:
+                    type: boolean
+                    example: true
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '404':
+          description: Node certificate not found
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+                    example: error
+                  message:
+                    type: string
+                    example: node certificate not found
+
+components:
+  securitySchemes:
+    JoinAdminHeader:
+      type: apiKey
+      in: header
+      name: X-Join-Admin-Token
+    BearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: token
+
+  schemas:
+    ErrorResponse:
+      type: object
+      properties:
+        error:
+          type: string
+
+    ErrorStatusResponse:
+      type: object
+      properties:
+        status:
+          type: string
+          example: error
+        error:
+          type: string
+
+    StatusResponse:
+      type: object
+      properties:
+        status:
+          type: string
+          example: running
+        service:
+          type: string
+          example: sovereign-map-aggregator
+        flower_server_port:
+          type: integer
+          example: 8080
+        metrics_api_port:
+          type: integer
+          example: 8000
+        version:
+          type: string
+          example: 1.0.0
+
+    HealthResponse:
+      type: object
+      properties:
+        status:
+          type: string
+          example: healthy
+        service:
+          type: string
+          example: metrics-api
+        enclave_status:
+          type: string
+        tpm_verified:
+          type: boolean
+        telemetry:
+          type: object
+          properties:
+            api_latency_ms:
+              type: integer
+            ingress_mbps:
+              type: integer
+            api_error_rate:
+              type: number
+            global_saturation_pct:
+              type: integer
+
+    Founder:
+      type: object
+      properties:
+        id:
+          oneOf:
+            - type: integer
+            - type: string
+        name:
+          type: string
+        country:
+          type: string
+        address:
+          type: string
+        verified:
+          type: boolean
+        stake:
+          type: number
+
+    HudDataResponse:
+      type: object
+      properties:
+        last_audit_accuracy:
+          type: string
+          example: 81.52%
+        bft_resilience:
+          type: string
+        dao_signatures:
+          type: integer
+        active_nodes:
+          type: integer
+        training_status:
+          type: string
+        simulation_counters:
+          type: object
+          additionalProperties:
+            type: integer
+
+    ConvergenceResponse:
+      type: object
+      properties:
+        rounds:
+          type: array
+          items:
+            type: integer
+        accuracies:
+          type: array
+          items:
+            type: number
+        losses:
+          type: array
+          items:
+            type: number
+        timestamps:
+          type: array
+          items:
+            type: number
+        current_round:
+          type: integer
+        current_accuracy:
+          type: number
+        current_loss:
+          type: number
+
+    MetricsSummaryResponse:
+      type: object
+      properties:
+        federated_learning:
+          type: object
+          additionalProperties: true
+        convergence:
+          type: object
+          additionalProperties: true
+        fl_rounds_total:
+          type: integer
+        avg_fl_duration:
+          type: number
+        total_stake:
+          type: number
+        cxl_utilization:
+          type: number
+        last_audit_accuracy:
+          type: number
+
+    TriggerFlResponse:
+      type: object
+      properties:
+        status:
+          type: string
+          example: accepted
+        message:
+          type: string
+        current_round:
+          type: integer
+        current_accuracy:
+          type: number
+        current_loss:
+          type: number
+        llm_policy_valid_updates:
+          type: integer
+        llm_policy_rejected_updates:
+          type: integer
+
+    TrainingCommandResponse:
+      type: object
+      properties:
+        status:
+          type: string
+          example: training
+        message:
+          type: string
+        round:
+          type: integer
+        tick_seconds:
+          type: number
+
+    TrainingStopResponse:
+      type: object
+      properties:
+        status:
+          type: string
+          example: idle
+        message:
+          type: string
+
+    TrainingStatusResponse:
+      type: object
+      properties:
+        status:
+          type: string
+        active:
+          type: boolean
+        round:
+          type: integer
+        total_rounds:
+          type: integer
+        last_started_at:
+          type: integer
+          nullable: true
+        last_stopped_at:
+          type: integer
+          nullable: true
+        current_metrics:
+          type: object
+          properties:
+            accuracy:
+              type: number
+            loss:
+              type: number
+            latency_ms:
+              type: integer
+            bandwidth_kb:
+              type: number
+            compression_ratio:
+              type: number
+
+    SimulationResponse:
+      type: object
+      properties:
+        status:
+          type: string
+          example: ok
+        simulation_type:
+          type: string
+        count:
+          type: integer
+        all_counters:
+          type: object
+          additionalProperties:
+            type: integer
+        effects:
+          type: object
+          properties:
+            accuracy_penalty_pct:
+              type: number
+            loss_multiplier:
+              type: number
+
+    EnclaveResponse:
+      type: object
+      properties:
+        status:
+          type: string
+          example: ok
+        enclave_status:
+          type: string
+
+    EnclaveInProgressResponse:
+      type: object
+      properties:
+        status:
+          type: string
+          example: in_progress
+        enclave_status:
+          type: string
+        message:
+          type: string
+
+    OpsEvent:
+      type: object
+      properties:
+        id:
+          type: integer
+        ts:
+          type: integer
+        kind:
+          type: string
+        severity:
+          type: string
+        message:
+          type: string
+        data:
+          type: object
+          additionalProperties: true
+
+    OpsHealthResponse:
+      type: object
+      properties:
+        timestamp:
+          type: integer
+        status:
+          type: string
+          enum: [healthy, degraded, critical]
+        host:
+          type: object
+          properties:
+            platform:
+              type: string
+            python:
+              type: string
+        training:
+          type: object
+          properties:
+            active:
+              type: boolean
+            status:
+              type: string
+            round:
+              type: integer
+        system:
+          type: object
+          additionalProperties: true
+        ports:
+          type: object
+          additionalProperties:
+            type: boolean
+        dependencies:
+          type: object
+          additionalProperties: true
+        alerts:
+          type: array
+          items:
+            type: object
+            additionalProperties: true
+
+    TrustSnapshotResponse:
+      type: object
+      properties:
+        trust_status:
+          type: object
+          additionalProperties: true
+        policy_history:
+          type: array
+          items:
+            type: object
+            additionalProperties: true
+
+    LlmPolicy:
+      type: object
+      properties:
+        enforce:
+          type: boolean
+        model_family:
+          type: string
+        model_version:
+          type: string
+        tokenizer_hash:
+          type: string
+        allowed_adapter_ranks:
+          type: array
+          items:
+            type: integer
+        required_target_modules:
+          type: array
+          items:
+            type: string
+        max_reported_update_l2_norm:
+          type: number
+
+    JoinInviteResponse:
+      type: object
+      properties:
+        invite_code:
+          type: string
+        invite_id:
+          type: string
+        participant_name:
+          type: string
+        expires_at:
+          type: integer
+        max_uses:
+          type: integer
+
+    JoinRegistration:
+      type: object
+      properties:
+        participant_name:
+          type: string
+        node_name:
+          type: string
+        node_id:
+          type: integer
+        invite_id:
+          type: string
+        registered_at:
+          type: integer
+        status:
+          type: string
+          example: active
+
+    JoinRegistrationResponse:
+      type: object
+      properties:
+        registration:
+          $ref: '#/components/schemas/JoinRegistration'
+        aggregator:
+          type: object
+          properties:
+            host:
+              type: string
+            port:
+              type: integer
+            address:
+              type: string
+        certificates:
+          type: object
+          properties:
+            node_cert_pem:
+              type: string
+            node_key_pem:
+              type: string
+            ca_cert_pem:
+              type: string
+        llm_policy:
+          $ref: '#/components/schemas/LlmPolicy'

@@ -1,0 +1,46 @@
+name: API Spec Validation
+
+on:
+  pull_request:
+    paths:
+      - "docs/api/**"
+      - "scripts/validate-api-coverage.js"
+      - "sovereignmap_production_backend_v2.py"
+      - "tokenomics_metrics_exporter.py"
+      - "tpm_metrics_exporter.py"
+      - "packages/training/api.py"
+      - "package.json"
+      - ".github/workflows/api-spec-validation.yml"
+  push:
+    branches: [main]
+    paths:
+      - "docs/api/**"
+      - "scripts/validate-api-coverage.js"
+      - "sovereignmap_production_backend_v2.py"
+      - "tokenomics_metrics_exporter.py"
+      - "tpm_metrics_exporter.py"
+      - "packages/training/api.py"
+      - "package.json"
+      - ".github/workflows/api-spec-validation.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  api-coverage:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+
+      - name: Setup Node.js
+        uses: actions/setup-node@53b83947a5a98c8d113130e565377fae1a50d02f # v6.3.0
+        with:
+          node-version: "20"
+
+      - name: Validate API route coverage
+        run: npm run api:validate
+
+      - name: Validate Postman collection JSON
+        run: node -e "const fs=require('fs'); JSON.parse(fs.readFileSync('docs/api/postman_collection.json','utf8')); console.log('postman_collection.json is valid')"
