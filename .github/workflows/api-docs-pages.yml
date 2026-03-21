@@ -5,6 +5,7 @@ on:
     branches: [main]
     paths:
       - "docs/api/**"
+      - "frontend/**"
       - ".github/workflows/api-docs-pages.yml"
   workflow_dispatch:
 
@@ -51,23 +52,46 @@ jobs:
         with:
           enablement: true
 
-      - name: Prepare API docs artifact
+      - name: Setup Node
+        if: steps.pages_check.outputs.enabled == 'true'
+        uses: actions/setup-node@53b83947a5a98c8d113130e565377fae1a50d02f # v6.3.0
+        with:
+          node-version: "20"
+          cache: npm
+          cache-dependency-path: frontend/package-lock.json
+
+      - name: Build frontend site
+        if: steps.pages_check.outputs.enabled == 'true'
+        working-directory: frontend
+        run: |
+          npm ci
+          npm run build
+
+      - name: Prepare Pages artifact
         if: steps.pages_check.outputs.enabled == 'true'
         run: |
-          rm -rf .pages-api-docs
-          mkdir -p .pages-api-docs
-          cp -R docs/api/. .pages-api-docs/
-          cat > .pages-api-docs/index.html <<'EOF'
+          rm -rf .pages-site
+          mkdir -p .pages-site
+
+          # Publish the existing website at the Pages root.
+          cp -R frontend/dist/. .pages-site/
+
+          # Publish API docs under /api without replacing the site root.
+          mkdir -p .pages-site/api
+          cp -R docs/api/. .pages-site/api/
+
+          # Keep backward compatibility for existing /swagger-ui.html links.
+          cat > .pages-site/swagger-ui.html <<'EOF'
           <!doctype html>
           <html lang="en">
             <head>
               <meta charset="utf-8" />
-              <meta http-equiv="refresh" content="0; url=./swagger-ui.html" />
+              <meta http-equiv="refresh" content="0; url=./api/swagger-ui.html" />
               <title>Sovereign Map API Docs</title>
             </head>
             <body>
               <p>Redirecting to API docs...</p>
-              <p><a href="./swagger-ui.html">Open Swagger UI</a></p>
+              <p><a href="./api/swagger-ui.html">Open Swagger UI</a></p>
             </body>
           </html>
           EOF
@@ -76,7 +100,7 @@ jobs:
         if: steps.pages_check.outputs.enabled == 'true'
         uses: actions/upload-pages-artifact@56afc609e74202658d3ffba0e8f6dda462b719fa # v3
         with:
-          path: .pages-api-docs
+          path: .pages-site
 
       - name: Deploy to GitHub Pages
         if: steps.pages_check.outputs.enabled == 'true'

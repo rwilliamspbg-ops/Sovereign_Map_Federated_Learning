@@ -332,7 +332,7 @@ OpenAPI/Postman status:
 - TPM exporter OpenAPI spec: [docs/api/openapi.tpm.yaml](docs/api/openapi.tpm.yaml)
 - Tokenomics exporter OpenAPI spec: [docs/api/openapi.tokenomics.yaml](docs/api/openapi.tokenomics.yaml)
 - Swagger UI (multi-spec): [docs/api/swagger-ui.html](docs/api/swagger-ui.html)
-- Swagger UI (hosted via GitHub Pages, only when Pages is enabled for this repo): https://rwilliamspbg-ops.github.io/Sovereign_Map_Federated_Learning/swagger-ui.html
+- Swagger UI (hosted via GitHub Pages, only when Pages is enabled for this repo): https://rwilliamspbg-ops.github.io/Sovereign_Map_Federated_Learning/api/swagger-ui.html
 - Alternative hosted viewer links (recommended; no GitHub Pages required):
     - Control Plane: https://petstore.swagger.io/?url=https://raw.githubusercontent.com/rwilliamspbg-ops/Sovereign_Map_Federated_Learning/main/docs/api/openapi.yaml
     - Training Service: https://petstore.swagger.io/?url=https://raw.githubusercontent.com/rwilliamspbg-ops/Sovereign_Map_Federated_Learning/main/docs/api/openapi.training.yaml
