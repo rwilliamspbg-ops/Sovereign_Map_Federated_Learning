@@ -15,6 +15,7 @@ This is the first stable release of the Sovereign Map SDK with complete API cont
 - **Release Management**: Changesets-based changelog automation and semantic versioning enforcement
 - **Testing Infrastructure**: Coverage gates enforced in CI with per-package thresholds (all packages meeting or exceeding 91% line coverage)
 - **Security Hardening**: GitHub Actions SHA pinning across all workflows; SLSA L2 provenance attestation; CodeQL and supply chain scanning
+- **PySyft Integration Demo**: Added a runnable PySyft x Mohawk proof-of-concept package under `examples/pysyft-integration` with script, notebook, compose profile, and operator runbook
 
 ### Fixed
 - **@sovereignmap/island**: Chain integrity verification uses canonical entry fields with proper sequence ordering; LevelDB lock handling in tests
@@ -24,6 +25,12 @@ This is the first stable release of the Sovereign Map SDK with complete API cont
 ### Improved
 - **Test Quality**: Added branch-coverage tests for error paths, fallback handlers, metrics collection, and Byzantine fault scenarios
 - **Workflow Reliability**: All required CI checks green; no blockers on publish workflows; deterministic builds reproducible locally
+- **Grafana Dashboard UX**: Consolidated to canonical provisioned dashboards, normalized live refresh defaults, and labeled STARRED easy-read dashboards for operators
+
+### Changed
+
+- **Grafana Provisioning**: Removed duplicate/unused dashboard providers and unused mirrored dashboard JSON files; standardized compose home dashboard path to `operations_overview.json`
+- **Monitoring Compose Wiring**: Removed stale dashboard mount paths and aligned monitoring stacks to canonical dashboard provisioning
 
 ### Breaking Changes
 None - 0.2.0 is the first stable release with public APIs.

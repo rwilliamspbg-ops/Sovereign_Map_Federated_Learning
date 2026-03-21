@@ -817,10 +817,11 @@
       }
     }
   ],
-  "refresh": "15s",
+  "refresh": "10s",
   "schemaVersion": 38,
   "style": "dark",
   "tags": [
+    "easy-read",
     "federated-learning",
     "live",
     "llm",
@@ -829,6 +830,7 @@
     "quality",
     "slo",
     "sovereignmap",
+    "starred",
     "vivid"
   ],
   "templating": {
@@ -896,9 +898,9 @@
   },
   "timepicker": {},
   "timezone": "",
-  "title": "SovereignMap | LLM Overview",
+  "title": "SovereignMap | STARRED | LLM Live Overview",
   "uid": "sovereign-llm-overview",
   "version": 1,
   "weekStart": "",
-  "description": "Professional LLM policy dashboard with acceptance SLO, reject diagnostics, and FL correlation views."
+  "description": "Starred, easy-read LLM policy dashboard with live refresh, acceptance SLO, and reject diagnostics."
 }
