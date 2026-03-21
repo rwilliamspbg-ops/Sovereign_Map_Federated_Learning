@@ -63,6 +63,17 @@ Then open:
 - Grafana: `http://localhost:3001`
 - Prometheus: `http://localhost:9090`
 
+## PySyft Integration Demo
+
+A ready-to-run PySyft x Mohawk integration proof-of-concept lives in [examples/pysyft-integration](examples/pysyft-integration).
+
+Quick start:
+
+```bash
+pip install -r examples/pysyft-integration/requirements-pysyft-demo.txt
+python examples/pysyft-integration/pysyft_mohawk_poc.py --mode mock --rounds 5 --participants 5
+```
+
 ## Quick Architecture Overview
 
 Sovereign Map uses a streaming aggregation model instead of loading full model updates into memory at once.
