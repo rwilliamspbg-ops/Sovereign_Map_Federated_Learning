@@ -9,6 +9,8 @@ Production-grade federated learning platform that combines Byzantine-resilient a
 [![Release](https://img.shields.io/github/v/release/rwilliamspbg-ops/Sovereign_Map_Federated_Learning?display_name=tag&style=flat-square&logo=github)](https://github.com/rwilliamspbg-ops/Sovereign_Map_Federated_Learning/releases)
 [![Build and Test](https://github.com/rwilliamspbg-ops/Sovereign_Map_Federated_Learning/actions/workflows/build.yml/badge.svg?branch=main)](https://github.com/rwilliamspbg-ops/Sovereign_Map_Federated_Learning/actions/workflows/build.yml)
 [![Observability CI](https://github.com/rwilliamspbg-ops/Sovereign_Map_Federated_Learning/actions/workflows/observability-ci.yml/badge.svg?branch=main)](https://github.com/rwilliamspbg-ops/Sovereign_Map_Federated_Learning/actions/workflows/observability-ci.yml)
+[![API Spec Validation](https://github.com/rwilliamspbg-ops/Sovereign_Map_Federated_Learning/actions/workflows/api-spec-validation.yml/badge.svg?branch=main)](https://github.com/rwilliamspbg-ops/Sovereign_Map_Federated_Learning/actions/workflows/api-spec-validation.yml)
+[![API Docs Pages](https://github.com/rwilliamspbg-ops/Sovereign_Map_Federated_Learning/actions/workflows/api-docs-pages.yml/badge.svg?branch=main)](https://github.com/rwilliamspbg-ops/Sovereign_Map_Federated_Learning/actions/workflows/api-docs-pages.yml)
 [![CodeQL Security Analysis](https://github.com/rwilliamspbg-ops/Sovereign_Map_Federated_Learning/actions/workflows/codeql-analysis.yml/badge.svg?branch=main)](https://github.com/rwilliamspbg-ops/Sovereign_Map_Federated_Learning/actions/workflows/codeql-analysis.yml)
 [![Security Supply Chain](https://github.com/rwilliamspbg-ops/Sovereign_Map_Federated_Learning/actions/workflows/security-supply-chain.yml/badge.svg?branch=main)](https://github.com/rwilliamspbg-ops/Sovereign_Map_Federated_Learning/actions/workflows/security-supply-chain.yml)
 [![License](https://img.shields.io/github/license/rwilliamspbg-ops/Sovereign_Map_Federated_Learning?style=flat-square)](LICENSE)
@@ -325,8 +327,17 @@ Live API examples and integration snippets:
 
 OpenAPI/Postman status:
 
-- A full OpenAPI specification is not yet published in-repo.
-- Until that lands, use the HTTP example catalog above as the canonical integration quick start.
+- OpenAPI spec: [docs/api/openapi.yaml](docs/api/openapi.yaml)
+- Training service OpenAPI spec: [docs/api/openapi.training.yaml](docs/api/openapi.training.yaml)
+- TPM exporter OpenAPI spec: [docs/api/openapi.tpm.yaml](docs/api/openapi.tpm.yaml)
+- Tokenomics exporter OpenAPI spec: [docs/api/openapi.tokenomics.yaml](docs/api/openapi.tokenomics.yaml)
+- Swagger UI (multi-spec): [docs/api/swagger-ui.html](docs/api/swagger-ui.html)
+- Swagger UI (hosted via GitHub Pages): https://rwilliamspbg-ops.github.io/Sovereign_Map_Federated_Learning/swagger-ui.html
+- Postman collection: [docs/api/postman_collection.json](docs/api/postman_collection.json)
+- HTTP examples quick start: [docs/api/http-examples.md](docs/api/http-examples.md)
+- API coverage validator: `npm run api:validate`
+- CI workflow: [.github/workflows/api-spec-validation.yml](.github/workflows/api-spec-validation.yml)
+- Pages workflow: [.github/workflows/api-docs-pages.yml](.github/workflows/api-docs-pages.yml)
 
 | Endpoint | Method | Function | Responsibility |
 | --- | --- | --- | --- |

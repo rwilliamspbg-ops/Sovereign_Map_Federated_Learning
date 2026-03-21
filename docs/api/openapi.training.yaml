@@ -1,0 +1,185 @@
+openapi: 3.0.3
+info:
+  title: Sovereign Map Phase 3D Training Service API
+  version: 3.0.0
+  description: API exposed by packages/training/api.py
+servers:
+  - url: http://localhost:5001
+    description: Local phase 3D training backend
+
+tags:
+  - name: TrainingService
+
+paths:
+  /health:
+    get:
+      tags: [TrainingService]
+      summary: Health check
+      operationId: getTrainingServiceHealth
+      responses:
+        '200':
+          description: Service health
+          content:
+            application/json:
+              schema:
+                type: object
+                additionalProperties: true
+
+  /training/config:
+    get:
+      tags: [TrainingService]
+      summary: Get training config
+      operationId: getTrainingConfig
+      responses:
+        '200':
+          description: Current training configuration
+          content:
+            application/json:
+              schema:
+                type: object
+                additionalProperties: true
+    post:
+      tags: [TrainingService]
+      summary: Set training config
+      operationId: postTrainingConfig
+      requestBody:
+        required: false
+        content:
+          application/json:
+            schema:
+              type: object
+              additionalProperties: true
+      responses:
+        '200':
+          description: Configuration accepted
+          content:
+            application/json:
+              schema:
+                type: object
+                additionalProperties: true
+        '400':
+          description: Invalid configuration
+          content:
+            application/json:
+              schema:
+                type: object
+                additionalProperties: true
+
+  /training/start:
+    post:
+      tags: [TrainingService]
+      summary: Start training job
+      operationId: postTrainingStart
+      requestBody:
+        required: false
+        content:
+          application/json:
+            schema:
+              type: object
+              additionalProperties: true
+      responses:
+        '200':
+          description: Training started
+          content:
+            application/json:
+              schema:
+                type: object
+                additionalProperties: true
+        '400':
+          description: Training cannot be started
+          content:
+            application/json:
+              schema:
+                type: object
+                additionalProperties: true
+
+  /training/status:
+    get:
+      tags: [TrainingService]
+      summary: Get training status
+      operationId: getTrainingStatus
+      responses:
+        '200':
+          description: Training status payload
+          content:
+            application/json:
+              schema:
+                type: object
+                additionalProperties: true
+
+  /training/metrics:
+    get:
+      tags: [TrainingService]
+      summary: Get collected metrics history
+      operationId: getTrainingMetrics
+      responses:
+        '200':
+          description: Metrics history
+          content:
+            application/json:
+              schema:
+                type: object
+                additionalProperties: true
+
+  /training/metrics_summary:
+    get:
+      tags: [TrainingService]
+      summary: Get latest compact metrics summary
+      operationId: getTrainingMetricsSummary
+      responses:
+        '200':
+          description: Summary metrics
+          content:
+            application/json:
+              schema:
+                type: object
+                additionalProperties: true
+
+  /training/cancel:
+    post:
+      tags: [TrainingService]
+      summary: Cancel ongoing training
+      operationId: postTrainingCancel
+      responses:
+        '200':
+          description: Training cancelled
+          content:
+            application/json:
+              schema:
+                type: object
+                additionalProperties: true
+        '400':
+          description: No active training to cancel
+          content:
+            application/json:
+              schema:
+                type: object
+                additionalProperties: true
+
+  /training/history:
+    get:
+      tags: [TrainingService]
+      summary: Get full training history
+      operationId: getTrainingHistory
+      responses:
+        '200':
+          description: Training history payload
+          content:
+            application/json:
+              schema:
+                type: object
+                additionalProperties: true
+
+  /training/export:
+    get:
+      tags: [TrainingService]
+      summary: Export training history to file
+      operationId: getTrainingExport
+      responses:
+        '200':
+          description: Export result
+          content:
+            application/json:
+              schema:
+                type: object
+                additionalProperties: true

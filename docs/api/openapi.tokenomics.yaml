@@ -1,0 +1,80 @@
+openapi: 3.0.3
+info:
+  title: Sovereign Map Tokenomics Metrics Exporter API
+  version: 1.0.0
+  description: API exposed by tokenomics_metrics_exporter.py
+servers:
+  - url: http://localhost:9105
+    description: Local tokenomics exporter
+
+tags:
+  - name: Tokenomics
+
+paths:
+  /health:
+    get:
+      tags: [Tokenomics]
+      summary: Health check
+      operationId: getTokenomicsHealth
+      responses:
+        '200':
+          description: Exporter health
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+                    example: healthy
+                  source_file:
+                    type: string
+
+  /metrics:
+    get:
+      tags: [Tokenomics]
+      summary: Prometheus metrics endpoint
+      operationId: getTokenomicsMetrics
+      responses:
+        '200':
+          description: Prometheus exposition text
+          content:
+            text/plain:
+              schema:
+                type: string
+
+  /event/tokenomics:
+    post:
+      tags: [Tokenomics]
+      summary: Ingest tokenomics payload event
+      operationId: postTokenomicsEvent
+      requestBody:
+        required: false
+        content:
+          application/json:
+            schema:
+              type: object
+              additionalProperties: true
+      responses:
+        '200':
+          description: Event ingested
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+                    example: ok
+        '400':
+          description: Invalid payload
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+                    example: error
+                  error:
+                    type: string

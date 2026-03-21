@@ -1,0 +1,60 @@
+name: API Docs Pages
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - "docs/api/**"
+      - ".github/workflows/api-docs-pages.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: "pages"
+  cancel-in-progress: false
+
+jobs:
+  deploy:
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+
+      - name: Configure Pages
+        uses: actions/configure-pages@v5
+
+      - name: Prepare API docs artifact
+        run: |
+          rm -rf .pages-api-docs
+          mkdir -p .pages-api-docs
+          cp -R docs/api/. .pages-api-docs/
+          cat > .pages-api-docs/index.html <<'EOF'
+          <!doctype html>
+          <html lang="en">
+            <head>
+              <meta charset="utf-8" />
+              <meta http-equiv="refresh" content="0; url=./swagger-ui.html" />
+              <title>Sovereign Map API Docs</title>
+            </head>
+            <body>
+              <p>Redirecting to API docs...</p>
+              <p><a href="./swagger-ui.html">Open Swagger UI</a></p>
+            </body>
+          </html>
+          EOF
+
+      - name: Upload Pages artifact
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: .pages-api-docs
+
+      - name: Deploy to GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v4

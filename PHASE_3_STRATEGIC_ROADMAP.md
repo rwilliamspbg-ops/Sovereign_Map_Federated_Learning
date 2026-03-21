@@ -5,6 +5,14 @@
 **Date**: March 18, 2026  
 **Planning Window**: Moving to Phase 4 (P2P Gossip & Smart Contracts)
 
+## March 21, 2026 Update - API and SDK Stability Track Completed
+
+- **OpenAPI Publication:** Published in-repo OpenAPI specs for control plane, training service, TPM exporter, and tokenomics exporter.
+- **Postman Publication:** Published a multi-service Postman collection aligned with all Flask routes.
+- **Route Coverage Guardrail:** Added a route-to-spec validator and CI workflow to block undocumented API route changes.
+- **Docs Hosting:** Added static multi-spec Swagger UI and GitHub Pages deployment workflow for hosted API documentation.
+- **Operator Visibility:** Added workflow badges and API documentation links in README for fast verification.
+
 ### 🔥 Phase 3 Achieved Milestones (PR #62)
 - **Differential Privacy Compression:** 90% bandwidth reduction via Int8 Quantization & Gaussian Noise.
 - **Hardware Integration:** Android Camera2/ARCore LiDAR headers, WebGPU browser sensor pipeline (GPS+Camera).

@@ -1,0 +1,160 @@
+openapi: 3.0.3
+info:
+  title: Sovereign Map TPM Metrics Exporter API
+  version: 1.0.0
+  description: API exposed by tpm_metrics_exporter.py
+servers:
+  - url: http://localhost:9091
+    description: Local TPM metrics exporter
+
+tags:
+  - name: TPM
+
+paths:
+  /health:
+    get:
+      tags: [TPM]
+      summary: Health check
+      operationId: getTpmHealth
+      responses:
+        '200':
+          description: Exporter health
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+                    example: healthy
+                  node_id:
+                    type: integer
+                  certificates_loaded:
+                    type: integer
+
+  /metrics:
+    get:
+      tags: [TPM]
+      summary: Prometheus metrics endpoint
+      operationId: getTpmMetrics
+      responses:
+        '200':
+          description: Prometheus exposition text
+          content:
+            text/plain:
+              schema:
+                type: string
+
+  /metrics/summary:
+    get:
+      tags: [TPM]
+      summary: Get trust metrics summary
+      operationId: getTpmMetricsSummary
+      responses:
+        '200':
+          description: Summary payload
+          content:
+            application/json:
+              schema:
+                type: object
+                additionalProperties: true
+
+  /event/attestation:
+    post:
+      tags: [TPM]
+      summary: Ingest attestation event
+      operationId: postTpmAttestationEvent
+      requestBody:
+        required: false
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                node_id:
+                  type: integer
+                success:
+                  type: boolean
+                latency_ms:
+                  type: number
+      responses:
+        '200':
+          description: Event ingested
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+                    example: ok
+                  event:
+                    type: string
+                    example: attestation
+                  node_id:
+                    type: integer
+        '400':
+          description: Invalid payload
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+                    example: error
+                  error:
+                    type: string
+
+  /event/message:
+    post:
+      tags: [TPM]
+      summary: Ingest message trust event
+      operationId: postTpmMessageEvent
+      requestBody:
+        required: false
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                from_node_id:
+                  type: integer
+                to_node_id:
+                  type: integer
+                success:
+                  type: boolean
+                signed:
+                  type: boolean
+                latency_ms:
+                  type: number
+      responses:
+        '200':
+          description: Event ingested
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+                    example: ok
+                  event:
+                    type: string
+                    example: message
+                  from_node_id:
+                    type: integer
+                  to_node_id:
+                    type: integer
+        '400':
+          description: Invalid payload
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+                    example: error
+                  error:
+                    type: string

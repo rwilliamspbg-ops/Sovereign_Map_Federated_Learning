@@ -11,9 +11,13 @@ This is the first stable release of the Sovereign Map SDK with complete API cont
 - **@sovereignmap/privacy**: 100% test coverage for SGP-001 differential privacy engine
 - **@sovereignmap/consensus**: 91.13% test coverage for Byzantine fault-tolerant consensus
 - **@sovereignmap/island**: 100% line coverage for offline operation with tamper-evident state and chain integrity verification
+- **API Contracts Published**: OpenAPI specs for control plane, training service, TPM exporter, and tokenomics exporter under docs/api
+- **Integration Collection Published**: Multi-service Postman collection aligned to active Flask routes
 - **Documentation**: API Stability Policy defining versioning, deprecation, and breaking change procedures
 - **Release Management**: Changesets-based changelog automation and semantic versioning enforcement
 - **Testing Infrastructure**: Coverage gates enforced in CI with per-package thresholds (all packages meeting or exceeding 91% line coverage)
+- **API Stability Guardrails**: Route-to-spec coverage validator script and API validation GitHub Actions workflow
+- **Hosted API Docs**: GitHub Pages workflow for static Swagger UI with multi-spec selector
 - **Security Hardening**: GitHub Actions SHA pinning across all workflows; SLSA L2 provenance attestation; CodeQL and supply chain scanning
 - **PySyft Integration Demo**: Added a runnable PySyft x Mohawk proof-of-concept package under `examples/pysyft-integration` with script, notebook, compose profile, and operator runbook
 
