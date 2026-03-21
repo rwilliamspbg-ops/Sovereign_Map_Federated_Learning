@@ -56,14 +56,19 @@ def _rebuild_params(
     return restored
 
 
-def _mock_local_train(model_params: Optional[ParamsDict], seed: int) -> Tuple[Dict[str, float], ParamsDict]:
+def _mock_local_train(
+    model_params: Optional[ParamsDict], seed: int
+) -> Tuple[Dict[str, float], ParamsDict]:
     rng = np.random.default_rng(seed)
     if model_params is None:
         model_params = {
             "layer1.weight": rng.normal(0.0, 0.1, size=(4, 4)).astype(np.float32),
             "layer1.bias": rng.normal(0.0, 0.1, size=(4,)).astype(np.float32),
         }
-    update = {k: v + rng.normal(0.0, 0.01, size=v.shape).astype(np.float32) for k, v in model_params.items()}
+    update = {
+        k: v + rng.normal(0.0, 0.01, size=v.shape).astype(np.float32)
+        for k, v in model_params.items()
+    }
     metrics = {
         "accuracy": float(np.clip(0.80 + rng.normal(0.0, 0.02), 0.0, 1.0)),
         "loss": float(np.clip(0.35 + rng.normal(0.0, 0.03), 0.0, 10.0)),
@@ -102,7 +107,10 @@ def mohawk_aggregate(
     ordered_keys = list(updates[0].keys())
 
     if mohawk_node is None:
-        return _average_aggregate(updates), {"engine": "numpy-average", "proof_verified": False}
+        return _average_aggregate(updates), {
+            "engine": "numpy-average",
+            "proof_verified": False,
+        }
 
     flattened = [_flatten_params(p, ordered_keys) for p in updates]
     payload = [
@@ -117,7 +125,9 @@ def mohawk_aggregate(
     if proof is not None and hasattr(mohawk_node, "verify_proof"):
         verified = bool(mohawk_node.verify_proof(proof))
 
-    vector = _extract_vector_from_mohawk_result(result if isinstance(result, dict) else {})
+    vector = _extract_vector_from_mohawk_result(
+        result if isinstance(result, dict) else {}
+    )
     if vector is None:
         vector = np.mean(np.stack(flattened, axis=0), axis=0)
 
@@ -143,7 +153,9 @@ def init_mohawk(config_path: str) -> Optional[Any]:
     return node
 
 
-def run_mock(rounds: int, participants: int, config_path: str) -> Dict[int, List[Dict[str, float]]]:
+def run_mock(
+    rounds: int, participants: int, config_path: str
+) -> Dict[int, List[Dict[str, float]]]:
     fl_metrics: Dict[int, List[Dict[str, float]]] = defaultdict(list)
     model_params: Optional[ParamsDict] = None
     mohawk_node = init_mohawk(config_path)
@@ -169,7 +181,9 @@ def run_mock(rounds: int, participants: int, config_path: str) -> Dict[int, List
 
 def _build_syft_train_function(data_asset: Any):
     if sy is None:
-        raise RuntimeError("PySyft is not installed. Install with: pip install syft>=0.9.5")
+        raise RuntimeError(
+            "PySyft is not installed. Install with: pip install syft>=0.9.5"
+        )
 
     @sy.syft_function_single_use(data=data_asset, model_params=dict)
     def train_one_round(data, model_params=None):
@@ -182,8 +196,14 @@ def _build_syft_train_function(data_asset: Any):
                 "layer1.bias": _np.zeros((4,), dtype=_np.float32),
             }
 
-        updated = {k: v + _np.random.normal(0.0, 0.01, size=v.shape).astype(_np.float32) for k, v in model_params.items()}
-        metrics = {"accuracy": float(_np.random.uniform(0.80, 0.95)), "loss": float(_np.random.uniform(0.10, 0.35))}
+        updated = {
+            k: v + _np.random.normal(0.0, 0.01, size=v.shape).astype(_np.float32)
+            for k, v in model_params.items()
+        }
+        metrics = {
+            "accuracy": float(_np.random.uniform(0.80, 0.95)),
+            "loss": float(_np.random.uniform(0.10, 0.35)),
+        }
         return metrics, updated
 
     return train_one_round
@@ -199,7 +219,9 @@ def run_datasite(
     asset_name: str,
 ) -> Dict[int, List[Dict[str, float]]]:
     if sy is None:
-        raise RuntimeError("PySyft is not installed. Install with: pip install syft>=0.9.5")
+        raise RuntimeError(
+            "PySyft is not installed. Install with: pip install syft>=0.9.5"
+        )
 
     client = sy.login(url=server_url, email=email, password=password)
     datasites = [client.datasite]
