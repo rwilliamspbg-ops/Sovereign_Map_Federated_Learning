@@ -333,11 +333,48 @@ OpenAPI/Postman status:
 - Tokenomics exporter OpenAPI spec: [docs/api/openapi.tokenomics.yaml](docs/api/openapi.tokenomics.yaml)
 - Swagger UI (multi-spec): [docs/api/swagger-ui.html](docs/api/swagger-ui.html)
 - Swagger UI (hosted via GitHub Pages): https://rwilliamspbg-ops.github.io/Sovereign_Map_Federated_Learning/swagger-ui.html
+- Alternative hosted viewer links (no GitHub Pages required):
+    - Control Plane: https://petstore.swagger.io/?url=https://raw.githubusercontent.com/rwilliamspbg-ops/Sovereign_Map_Federated_Learning/main/docs/api/openapi.yaml
+    - Training Service: https://petstore.swagger.io/?url=https://raw.githubusercontent.com/rwilliamspbg-ops/Sovereign_Map_Federated_Learning/main/docs/api/openapi.training.yaml
+    - TPM Exporter: https://petstore.swagger.io/?url=https://raw.githubusercontent.com/rwilliamspbg-ops/Sovereign_Map_Federated_Learning/main/docs/api/openapi.tpm.yaml
+    - Tokenomics Exporter: https://petstore.swagger.io/?url=https://raw.githubusercontent.com/rwilliamspbg-ops/Sovereign_Map_Federated_Learning/main/docs/api/openapi.tokenomics.yaml
 - Postman collection: [docs/api/postman_collection.json](docs/api/postman_collection.json)
 - HTTP examples quick start: [docs/api/http-examples.md](docs/api/http-examples.md)
 - API coverage validator: `npm run api:validate`
 - CI workflow: [.github/workflows/api-spec-validation.yml](.github/workflows/api-spec-validation.yml)
 - Pages workflow: [.github/workflows/api-docs-pages.yml](.github/workflows/api-docs-pages.yml)
+
+Brief tutorial (use Swagger docs without enabling Pages in this repo):
+
+1. Choose one of the Alternative hosted viewer links above and open it in your browser.
+2. Use the top-right server selector (if shown) and point calls to your running target (for example localhost or your deployed API URL).
+3. Expand an endpoint, click Try it out, and execute requests directly from the Swagger UI.
+4. For local/manual calls, copy request examples from [docs/api/http-examples.md](docs/api/http-examples.md).
+5. For collection-based testing, import [docs/api/postman_collection.json](docs/api/postman_collection.json) into Postman.
+
+Troubleshooting:
+
+1. If Try it out fails with CORS errors, test with curl/Postman first and ensure your API allows browser-origin requests from the viewer origin.
+2. If requests target the wrong host, change the server URL in the Swagger UI selector before executing.
+3. If you see mixed-content or blocked-request errors, use HTTPS API endpoints when opening Swagger from an HTTPS page.
+4. If a viewer link does not load, verify the raw spec URL path is reachable and points to an existing file in [docs/api](docs/api).
+5. If your endpoint requires auth, add the required headers/tokens in Swagger Authorize (or use Postman for complex auth flows).
+
+Quick curl smoke commands (one per API surface):
+
+```bash
+# Control Plane API (:8000)
+curl -s http://localhost:8000/status | jq
+
+# Training Service API (:5001)
+curl -s http://localhost:5001/health | jq
+
+# TPM Exporter API (:9091)
+curl -s http://localhost:9091/health | jq
+
+# Tokenomics Exporter API (:9105)
+curl -s http://localhost:9105/health | jq
+```
 
 | Endpoint | Method | Function | Responsibility |
 | --- | --- | --- | --- |
