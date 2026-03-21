@@ -461,6 +461,7 @@ data/
 !packages/*/tsconfig.json
 !fixtures/
 !config/*.json
+!docs/api/postman_collection.json
 !grafana/dashboards/*.json
 !grafana/provisioning/dashboards/*.json
 

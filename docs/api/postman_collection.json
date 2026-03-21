@@ -1,0 +1,495 @@
+{
+  "info": {
+    "name": "Sovereign Map APIs (Control Plane + Exporters + Training)",
+    "description": "Postman collection for sovereignmap_production_backend_v2.py, tpm_metrics_exporter.py, tokenomics_metrics_exporter.py, and packages/training/api.py.",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "variable": [
+    {
+      "key": "baseUrl",
+      "value": "http://localhost:8000"
+    },
+    {
+      "key": "tpmBaseUrl",
+      "value": "http://localhost:9091"
+    },
+    {
+      "key": "tokenomicsBaseUrl",
+      "value": "http://localhost:9105"
+    },
+    {
+      "key": "trainingBaseUrl",
+      "value": "http://localhost:5001"
+    },
+    {
+      "key": "joinAdminToken",
+      "value": "local-dev-admin-token"
+    },
+    {
+      "key": "simulationType",
+      "value": "byzantineAttacks"
+    },
+    {
+      "key": "nodeId",
+      "value": "1"
+    },
+    {
+      "key": "inviteCode",
+      "value": ""
+    }
+  ],
+  "item": [
+    {
+      "name": "Runtime",
+      "item": [
+        {
+          "name": "GET /status",
+          "request": {
+            "method": "GET",
+            "url": "{{baseUrl}}/status"
+          }
+        },
+        {
+          "name": "GET /health",
+          "request": {
+            "method": "GET",
+            "url": "{{baseUrl}}/health"
+          }
+        },
+        {
+          "name": "POST /create_enclave",
+          "request": {
+            "method": "POST",
+            "url": "{{baseUrl}}/create_enclave"
+          }
+        }
+      ]
+    },
+    {
+      "name": "HUD",
+      "item": [
+        {
+          "name": "POST /chat",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"query\": \"show health status\"\n}"
+            },
+            "url": "{{baseUrl}}/chat"
+          }
+        },
+        {
+          "name": "GET /hud_data",
+          "request": {
+            "method": "GET",
+            "url": "{{baseUrl}}/hud_data"
+          }
+        },
+        {
+          "name": "GET /founders",
+          "request": {
+            "method": "GET",
+            "url": "{{baseUrl}}/founders"
+          }
+        }
+      ]
+    },
+    {
+      "name": "Training",
+      "item": [
+        {
+          "name": "POST /training/start",
+          "request": {
+            "method": "POST",
+            "url": "{{baseUrl}}/training/start"
+          }
+        },
+        {
+          "name": "POST /training/stop",
+          "request": {
+            "method": "POST",
+            "url": "{{baseUrl}}/training/stop"
+          }
+        },
+        {
+          "name": "GET /training/status",
+          "request": {
+            "method": "GET",
+            "url": "{{baseUrl}}/training/status"
+          }
+        },
+        {
+          "name": "POST /trigger_fl",
+          "request": {
+            "method": "POST",
+            "url": "{{baseUrl}}/trigger_fl"
+          }
+        },
+        {
+          "name": "POST /simulate/{simulation_type}",
+          "request": {
+            "method": "POST",
+            "url": "{{baseUrl}}/simulate/{{simulationType}}"
+          }
+        },
+        {
+          "name": "GET /convergence",
+          "request": {
+            "method": "GET",
+            "url": "{{baseUrl}}/convergence"
+          }
+        },
+        {
+          "name": "GET /metrics_summary",
+          "request": {
+            "method": "GET",
+            "url": "{{baseUrl}}/metrics_summary"
+          }
+        }
+      ]
+    },
+    {
+      "name": "Operations",
+      "item": [
+        {
+          "name": "GET /ops/health",
+          "request": {
+            "method": "GET",
+            "url": "{{baseUrl}}/ops/health"
+          }
+        },
+        {
+          "name": "GET /ops/events/recent?limit=20",
+          "request": {
+            "method": "GET",
+            "url": "{{baseUrl}}/ops/events/recent?limit=20"
+          }
+        },
+        {
+          "name": "GET /ops/events (SSE)",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "text/event-stream"
+              }
+            ],
+            "url": "{{baseUrl}}/ops/events"
+          }
+        },
+        {
+          "name": "GET /model_registry?limit=20",
+          "request": {
+            "method": "GET",
+            "url": "{{baseUrl}}/model_registry?limit=20"
+          }
+        }
+      ]
+    },
+    {
+      "name": "Trust",
+      "item": [
+        {
+          "name": "GET /trust_snapshot",
+          "request": {
+            "method": "GET",
+            "url": "{{baseUrl}}/trust_snapshot"
+          }
+        },
+        {
+          "name": "POST /verification_policy",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "X-API-Role",
+                "value": "admin"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"require_proof\": true,\n  \"min_confidence_bps\": 7500,\n  \"reject_on_verification_failure\": true,\n  \"allow_consensus_proof\": true,\n  \"allow_zk_proof\": true,\n  \"allow_tee_proof\": true\n}"
+            },
+            "url": "{{baseUrl}}/verification_policy"
+          }
+        },
+        {
+          "name": "GET /llm_policy",
+          "request": {
+            "method": "GET",
+            "url": "{{baseUrl}}/llm_policy"
+          }
+        }
+      ]
+    },
+    {
+      "name": "Join",
+      "item": [
+        {
+          "name": "GET /join/policy",
+          "request": {
+            "method": "GET",
+            "url": "{{baseUrl}}/join/policy"
+          }
+        },
+        {
+          "name": "POST /join/invite",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "X-Join-Admin-Token",
+                "value": "{{joinAdminToken}}"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"participant_name\": \"participant-a\",\n  \"max_uses\": 1,\n  \"expires_in_hours\": 24\n}"
+            },
+            "url": "{{baseUrl}}/join/invite"
+          }
+        },
+        {
+          "name": "POST /join/register",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"invite_code\": \"{{inviteCode}}\",\n  \"participant_name\": \"participant-a\",\n  \"node_name\": \"participant-a-node\"\n}"
+            },
+            "url": "{{baseUrl}}/join/register"
+          }
+        },
+        {
+          "name": "GET /join/registrations",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "X-Join-Admin-Token",
+                "value": "{{joinAdminToken}}"
+              }
+            ],
+            "url": "{{baseUrl}}/join/registrations"
+          }
+        },
+        {
+          "name": "POST /join/revoke/{node_id}",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "X-Join-Admin-Token",
+                "value": "{{joinAdminToken}}"
+              }
+            ],
+            "url": "{{baseUrl}}/join/revoke/{{nodeId}}"
+          }
+        }
+      ]
+    },
+    {
+      "name": "TPM Metrics Exporter",
+      "item": [
+        {
+          "name": "GET /health",
+          "request": {
+            "method": "GET",
+            "url": "{{tpmBaseUrl}}/health"
+          }
+        },
+        {
+          "name": "GET /metrics",
+          "request": {
+            "method": "GET",
+            "url": "{{tpmBaseUrl}}/metrics"
+          }
+        },
+        {
+          "name": "GET /metrics/summary",
+          "request": {
+            "method": "GET",
+            "url": "{{tpmBaseUrl}}/metrics/summary"
+          }
+        },
+        {
+          "name": "POST /event/attestation",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"node_id\": 1,\n  \"success\": true,\n  \"latency_ms\": 23.4\n}"
+            },
+            "url": "{{tpmBaseUrl}}/event/attestation"
+          }
+        },
+        {
+          "name": "POST /event/message",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"from_node_id\": 1,\n  \"to_node_id\": 2,\n  \"success\": true,\n  \"signed\": true,\n  \"latency_ms\": 11.2\n}"
+            },
+            "url": "{{tpmBaseUrl}}/event/message"
+          }
+        }
+      ]
+    },
+    {
+      "name": "Tokenomics Metrics Exporter",
+      "item": [
+        {
+          "name": "GET /health",
+          "request": {
+            "method": "GET",
+            "url": "{{tokenomicsBaseUrl}}/health"
+          }
+        },
+        {
+          "name": "GET /metrics",
+          "request": {
+            "method": "GET",
+            "url": "{{tokenomicsBaseUrl}}/metrics"
+          }
+        },
+        {
+          "name": "POST /event/tokenomics",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"mint_rate_per_min\": 150.0,\n  \"token_supply_total\": 1000000.0,\n  \"token_supply_minted\": 250000.0,\n  \"bridge_inflow_per_min\": 420.0,\n  \"bridge_outflow_per_min\": 310.0,\n  \"bridge_escrow_total\": 85000.0,\n  \"bridge_transfers_total\": 12500.0,\n  \"bridge_routes_active\": 2,\n  \"bridge_collateral_ratio_percent\": 155.0,\n  \"chain_height\": 1001,\n  \"fl_verification_ratio\": 0.98,\n  \"fl_average_confidence_bps\": 9700\n}"
+            },
+            "url": "{{tokenomicsBaseUrl}}/event/tokenomics"
+          }
+        }
+      ]
+    },
+    {
+      "name": "Phase 3D Training Service",
+      "item": [
+        {
+          "name": "GET /health",
+          "request": {
+            "method": "GET",
+            "url": "{{trainingBaseUrl}}/health"
+          }
+        },
+        {
+          "name": "GET /training/config",
+          "request": {
+            "method": "GET",
+            "url": "{{trainingBaseUrl}}/training/config"
+          }
+        },
+        {
+          "name": "POST /training/config",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"num_rounds\": 10,\n  \"num_clients\": 8,\n  \"local_epochs\": 1,\n  \"batch_size\": 32,\n  \"learning_rate\": 0.001\n}"
+            },
+            "url": "{{trainingBaseUrl}}/training/config"
+          }
+        },
+        {
+          "name": "POST /training/start",
+          "request": {
+            "method": "POST",
+            "url": "{{trainingBaseUrl}}/training/start"
+          }
+        },
+        {
+          "name": "GET /training/status",
+          "request": {
+            "method": "GET",
+            "url": "{{trainingBaseUrl}}/training/status"
+          }
+        },
+        {
+          "name": "GET /training/metrics",
+          "request": {
+            "method": "GET",
+            "url": "{{trainingBaseUrl}}/training/metrics"
+          }
+        },
+        {
+          "name": "GET /training/metrics_summary",
+          "request": {
+            "method": "GET",
+            "url": "{{trainingBaseUrl}}/training/metrics_summary"
+          }
+        },
+        {
+          "name": "POST /training/cancel",
+          "request": {
+            "method": "POST",
+            "url": "{{trainingBaseUrl}}/training/cancel"
+          }
+        },
+        {
+          "name": "GET /training/history",
+          "request": {
+            "method": "GET",
+            "url": "{{trainingBaseUrl}}/training/history"
+          }
+        },
+        {
+          "name": "GET /training/export",
+          "request": {
+            "method": "GET",
+            "url": "{{trainingBaseUrl}}/training/export"
+          }
+        }
+      ]
+    }
+  ]
+}
