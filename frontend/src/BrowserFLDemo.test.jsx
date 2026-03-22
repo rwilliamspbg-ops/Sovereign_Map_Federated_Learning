@@ -153,7 +153,7 @@ describe('BrowserFLDemo Component', () => {
     });
 
     it('accumulates chart data over time', async () => {
-      const { rerender } = render(<BrowserFLDemo />);
+      render(<BrowserFLDemo />);
       
       // Initial render has empty/zero points
       // After timers, should accumulate
