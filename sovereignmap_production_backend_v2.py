@@ -111,6 +111,7 @@ def log_auto_tuner_profile() -> None:
     except Exception as exc:
         logger.warning("Unable to load auto tuner profile at %s: %s", profile_path, exc)
 
+
 # ============================================================================
 # DAO GOVERNANCE
 # ============================================================================
@@ -602,14 +603,10 @@ def build_ops_health_snapshot() -> Dict[str, Any]:
 
     # Treat >=94% memory as critical to reduce OOM-kill risk in training workloads.
     critical = (
-        disk_used_percent >= 95
-        or memory["used_percent"] >= 94
-        or not prom_reachable
+        disk_used_percent >= 95 or memory["used_percent"] >= 94 or not prom_reachable
     )
     degraded = (
-        disk_used_percent >= 85
-        or memory["used_percent"] >= 88
-        or not prom_reachable
+        disk_used_percent >= 85 or memory["used_percent"] >= 88 or not prom_reachable
     )
 
     status = "healthy"
@@ -688,7 +685,12 @@ def build_ops_health_snapshot() -> Dict[str, Any]:
     }
 
 
-def emit_ops_event(kind: str, message: str, severity: str = "info", data: Optional[Dict[str, Any]] = None):
+def emit_ops_event(
+    kind: str,
+    message: str,
+    severity: str = "info",
+    data: Optional[Dict[str, Any]] = None,
+):
     global ops_event_seq
     with ops_event_lock:
         ops_event_seq += 1
@@ -953,9 +955,9 @@ def execute_manual_fl_round(reason: str = "manual") -> Dict[str, Any]:
         llm_policy_valid_updates_total.inc(valid_updates)
         simulation_counters["llmPolicyValid"] += valid_updates
     if rejected_updates > 0:
-        llm_policy_rejected_updates_total.labels(
-            reason="adapter_policy_guardrail"
-        ).inc(rejected_updates)
+        llm_policy_rejected_updates_total.labels(reason="adapter_policy_guardrail").inc(
+            rejected_updates
+        )
         simulation_counters["llmPolicyRejected"] += rejected_updates
 
     strategy.convergence_history["rounds"].append(current_round)
