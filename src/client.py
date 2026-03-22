@@ -10,6 +10,7 @@ Flower-based client with:
 """
 
 import argparse
+import json
 import logging
 import os
 import sys
@@ -26,6 +27,39 @@ from torchvision import datasets, transforms
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
+
+
+def log_auto_tuner_profile(node_id: int, selected_device: object) -> None:
+    """Log auto-tuner profile if available so startup reports selected hardware mode."""
+    profile_path = os.getenv("AUTO_TUNER_OUTPUT", "/tmp/hardware_tuning.json")
+    try:
+        with open(profile_path, "r", encoding="utf-8") as f:
+            payload = json.load(f)
+
+        accelerator = payload.get("hardware", {}).get("accelerator", "unknown")
+        device_count = payload.get("hardware", {}).get("device_count", "?")
+        logger.info(
+            "Node %s: Auto tuner profile loaded path=%s accelerator=%s devices=%s selected_device=%s",
+            node_id,
+            profile_path,
+            accelerator,
+            device_count,
+            selected_device,
+        )
+    except FileNotFoundError:
+        logger.info(
+            "Node %s: Auto tuner profile not found at %s; selected_device=%s",
+            node_id,
+            profile_path,
+            selected_device,
+        )
+    except Exception as exc:
+        logger.warning(
+            "Node %s: Failed reading auto tuner profile at %s (%s)",
+            node_id,
+            profile_path,
+            exc,
+        )
 
 # ============================================================================
 # NEURAL NETWORK MODEL
@@ -115,6 +149,7 @@ class SovereignClient(fl.client.NumPyClient):
         logger.info(
             f"Node {self.node_id}: Initialized (Byzantine={byzantine}, Device={self.device})"
         )
+        log_auto_tuner_profile(self.node_id, self.device)
 
     def _initialize_model_on_device(self) -> nn.Module:
         """Initialize model on selected device with safe CPU fallback."""

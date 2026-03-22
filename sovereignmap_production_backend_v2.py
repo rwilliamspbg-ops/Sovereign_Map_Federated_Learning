@@ -84,6 +84,33 @@ handler.setFormatter(JsonFormatter())
 logging.basicConfig(level=logging.INFO, handlers=[handler])
 logger = logging.getLogger(__name__)
 
+
+def log_auto_tuner_profile() -> None:
+    """Log the active auto-tuner hardware profile if present."""
+    profile_path = os.getenv("AUTO_TUNER_OUTPUT", "/tmp/hardware_tuning.json")
+    try:
+        with open(profile_path, "r", encoding="utf-8") as f:
+            payload = json.load(f)
+
+        accelerator = payload.get("hardware", {}).get("accelerator", "unknown")
+        device_count = payload.get("hardware", {}).get("device_count", "?")
+        tuning = payload.get("tuning", {})
+        logger.info(
+            "Auto tuner profile loaded: path=%s accelerator=%s devices=%s batch_size=%s threads=%s",
+            profile_path,
+            accelerator,
+            device_count,
+            tuning.get("batch_size", "?"),
+            tuning.get("cuda_threads", "?"),
+        )
+    except FileNotFoundError:
+        logger.info(
+            "Auto tuner profile not found at %s; backend will use internal defaults",
+            profile_path,
+        )
+    except Exception as exc:
+        logger.warning("Unable to load auto tuner profile at %s: %s", profile_path, exc)
+
 # ============================================================================
 # DAO GOVERNANCE
 # ============================================================================
@@ -1734,6 +1761,7 @@ if __name__ == "__main__":
     logger.info("Sovereign Maps Backend v1.0.0 - Starting dual-mode server")
     logger.info("- Flower aggregator: 0.0.0.0:8080")
     logger.info("- Flask metrics API: 0.0.0.0:8000")
+    log_auto_tuner_profile()
     emit_ops_event(
         kind="system",
         message="Backend boot sequence started",
