@@ -30,3 +30,22 @@ services:
       - AGGREGATOR_URL=http://aggregator:5000
     depends_on:
       - aggregator
+
+  auto-tuner:
+    image: python:3.11-slim
+    volumes:
+      - ./hardware_auto_tuner.py:/app/hardware_auto_tuner.py:ro
+    working_dir: /app
+    command: ["python", "hardware_auto_tuner.py"]
+    restart: unless-stopped
+    security_opt:
+      - no-new-privileges:true
+    cap_drop:
+      - ALL
+    tmpfs:
+      - /tmp
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"

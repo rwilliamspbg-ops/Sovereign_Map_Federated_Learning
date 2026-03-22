@@ -1,5 +1,6 @@
 services:
   backend:
+    image: sovereignmap/backend:latest
     environment:
       - MOHAWK_CAPABILITIES_PATH=/app/capabilities.json
       - MOHAWK_BRIDGE_POLICIES_PATH=/app/bridge-policies.json
@@ -26,6 +27,7 @@ services:
       - ./data/utility-ledger:/var/lib/mohawk/utility-ledger
 
   node-agent:
+    image: sovereignmap/node-agent:latest
     environment:
       - MOHAWK_API_LISTEN=${MOHAWK_API_LISTEN:-:8082}
       - MOHAWK_CAPABILITIES_PATH=/app/capabilities.json
@@ -43,9 +45,29 @@ services:
       - ./bridge-policies.json:/app/bridge-policies.json:ro
 
   tpm-metrics:
+    image: sovereignmap/tpm-metrics:latest
     environment:
       - MOHAWK_CAPABILITIES_PATH=/app/capabilities.json
       - MOHAWK_BRIDGE_POLICIES_PATH=/app/bridge-policies.json
     volumes:
       - ./capabilities.json:/app/capabilities.json:ro
       - ./bridge-policies.json:/app/bridge-policies.json:ro
+
+  auto-tuner:
+    image: python:3.11-slim
+    volumes:
+      - ./hardware_auto_tuner.py:/app/hardware_auto_tuner.py:ro
+    working_dir: /app
+    command: ["python", "hardware_auto_tuner.py"]
+    restart: unless-stopped
+    security_opt:
+      - no-new-privileges:true
+    cap_drop:
+      - ALL
+    tmpfs:
+      - /tmp
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"

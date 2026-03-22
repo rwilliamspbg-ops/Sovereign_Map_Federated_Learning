@@ -328,7 +328,6 @@ services:
 
   auto-tuner:
     image: python:3.11-slim
-    container_name: sovereign-auto-tuner
     volumes:
       - ./hardware_auto_tuner.py:/app/hardware_auto_tuner.py:ro
     working_dir: /app

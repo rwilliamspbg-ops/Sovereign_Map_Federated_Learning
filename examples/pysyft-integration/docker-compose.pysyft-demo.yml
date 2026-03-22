@@ -7,3 +7,22 @@ services:
     command: >-
       bash -lc "pip install --no-cache-dir -r examples/pysyft-integration/requirements-pysyft-demo.txt
       && python examples/pysyft-integration/pysyft_mohawk_poc.py --mode mock --rounds 5 --participants 5"
+
+  auto-tuner:
+    image: python:3.11-slim
+    volumes:
+      - ../../hardware_auto_tuner.py:/app/hardware_auto_tuner.py:ro
+    working_dir: /app
+    command: ["python", "hardware_auto_tuner.py"]
+    restart: unless-stopped
+    security_opt:
+      - no-new-privileges:true
+    cap_drop:
+      - ALL
+    tmpfs:
+      - /tmp
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"

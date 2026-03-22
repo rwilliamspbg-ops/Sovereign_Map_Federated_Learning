@@ -254,7 +254,7 @@ smoke:
 observability-smoke:
 	@echo "📈 Running observability smoke checks..."
 	@python3 scripts/check_dashboard_queries.py
-	@node -e 'const fs=require("fs"); const files=["grafana/provisioning/dashboards/operations_overview.json","grafana/provisioning/dashboards/tokenomics_overview.json","grafana/dashboards/operations_overview.json","grafana/dashboards/tokenomics_overview.json"]; files.forEach(f=>JSON.parse(fs.readFileSync(f,"utf8"))); console.log("dashboard json ok")'
+	@node -e 'const fs=require("fs"); const files=["grafana/provisioning/dashboards/operations_overview.json","grafana/provisioning/dashboards/tokenomics_overview.json","grafana/provisioning/dashboards/llm_overview.json"]; files.forEach(f=>JSON.parse(fs.readFileSync(f,"utf8"))); console.log("dashboard json ok")'
 	@echo "✅ Observability smoke checks passed"
 
 testnet-wallet-readiness:
