@@ -1,14 +1,14 @@
 package io.sovereignmap.node
 
-import android.app.Application
 import android.os.Handler
 import android.os.Looper
+import android.util.Log
 import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.ViewModel
+import java.nio.charset.StandardCharsets
 import kotlin.math.min
 import kotlin.random.Random
-import android.util.Log
 
 /**
  * ViewModel for Sovereign Node App
@@ -17,6 +17,8 @@ import android.util.Log
 class NodeViewModel : ViewModel() {
     private val TAG = "SovereignNode"
     private val handler = Handler(Looper.getMainLooper())
+    private val signer: MobileHardwareSigner = StrongBoxSigner()
+    private val signerAlias = "mohawk.mobile.identity"
     private var updateRunnable: Runnable? = null
     
     // UI State
@@ -45,6 +47,15 @@ class NodeViewModel : ViewModel() {
         _isConnected.value = true
         _isTraining.value = true
         _statusMessage.value = "Training in progress..."
+
+        try {
+            val warmup = "join-node-${_nodeID.value}".toByteArray(StandardCharsets.UTF_8)
+            val signature = signer.sign(signerAlias, warmup)
+            _statusMessage.value = "Hardware signer active (${signature.size}B signature)"
+        } catch (err: Exception) {
+            _statusMessage.value = "Signer unavailable: ${err.message ?: "unknown"}"
+        }
+
         Log.i(TAG, "Node ${_nodeID.value} joined network")
         
         startTrainingLoop()
@@ -76,6 +87,15 @@ class NodeViewModel : ViewModel() {
                 
                 _accuracy.value = newAccuracy
                 _loss.value = newLoss
+
+                try {
+                    val payload = "node=${_nodeID.value};round=$currentRound;ts=${System.currentTimeMillis()}"
+                        .toByteArray(StandardCharsets.UTF_8)
+                    val signature = signer.sign(signerAlias, payload)
+                    _statusMessage.value = "Round $currentRound signed (${signature.size}B)"
+                } catch (err: Exception) {
+                    _statusMessage.value = "Round $currentRound unsigned: ${err.message ?: "unknown"}"
+                }
                 
                 Log.i(TAG, "Round $currentRound: Accuracy=${String.format("%.2f", newAccuracy*100)}%, Loss=${String.format("%.4f", newLoss)}")
                 

@@ -2,7 +2,6 @@
 package main
 
 import (
-	"context"
 	"encoding/json"
 	"flag"
 	"fmt"
@@ -41,7 +40,7 @@ func main() {
 }
 
 func printUsage() {
-	fmt.Println(`
+	fmt.Print(`
 Sovereign Map CLI - Federated Learning Management Tool
 
 USAGE:
@@ -208,7 +207,7 @@ func cmdNode() {
 
 	switch subcommand {
 	case "add":
-		fmt.Printf("Adding node (Byzantine=%v)...\n", *byzantine)
+		fmt.Printf("Adding node on %s (Byzantine=%v)...\n", *server, *byzantine)
 		if *byzantine {
 			fmt.Println("✅ Byzantine node added (will send inverted updates)")
 		} else {
@@ -220,7 +219,7 @@ func cmdNode() {
 			fmt.Println("Error: --id required for remove operation")
 			os.Exit(1)
 		}
-		fmt.Printf("✅ Node %s removed\n", *nodeID)
+		fmt.Printf("✅ Node %s removed from %s\n", *nodeID, *server)
 
 	case "list":
 		fmt.Println("\nConnected Nodes:")
@@ -235,7 +234,7 @@ func cmdNode() {
 			fmt.Println("Error: --id required for status operation")
 			os.Exit(1)
 		}
-		fmt.Printf("Node %s Status:\n", *nodeID)
+		fmt.Printf("Node %s Status on %s:\n", *nodeID, *server)
 		fmt.Println("  Connected: yes")
 		fmt.Println("  Accuracy: 82.2%")
 		fmt.Println("  Training: yes")

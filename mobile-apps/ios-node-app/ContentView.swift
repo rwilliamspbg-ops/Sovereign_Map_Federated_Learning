@@ -21,12 +21,23 @@ class NodeViewModel: ObservableObject {
     @Published var nodeID: Int = Int.random(in: 1000...9999)
     
     private let logger = Logger()
+    private let signer: MobileHardwareSigner = SecureEnclaveSigner()
+    private let signerAlias = "mohawk.mobile.identity"
     private var updateTimer: Timer?
     
     func joinNetwork() {
         isConnected = true
         isTraining = true
         statusMessage = "Training in progress..."
+
+        do {
+            let warmupPayload = Data("join-node-\(nodeID)".utf8)
+            let signature = try signer.sign(alias: signerAlias, payload: warmupPayload)
+            statusMessage = "Hardware signer active (\(signature.count)B signature)"
+        } catch {
+            statusMessage = "Signer unavailable: \(error.localizedDescription)"
+        }
+
         logger.info("Node \(self.nodeID) joined network")
         
         // Start training simulation
@@ -48,6 +59,14 @@ class NodeViewModel: ObservableObject {
             self.round += 1
             self.accuracy = min(0.99, 0.65 + Float(self.round) * 0.02 + Float.random(in: -0.01...0.01))
             self.loss = max(0.1, 3.5 - Float(self.round) * 0.1 + Float.random(in: -0.05...0.05))
+
+            do {
+                let payload = Data("node=\(self.nodeID);round=\(self.round);ts=\(Int(Date().timeIntervalSince1970 * 1000))".utf8)
+                let signature = try self.signer.sign(alias: self.signerAlias, payload: payload)
+                self.statusMessage = "Round \(self.round) signed (\(signature.count)B)"
+            } catch {
+                self.statusMessage = "Round \(self.round) unsigned: \(error.localizedDescription)"
+            }
             
             self.logger.info("Round \(self.round): Accuracy=\(String(format: "%.2f", self.accuracy*100))%, Loss=\(String(format: "%.4f", self.loss))")
         }
