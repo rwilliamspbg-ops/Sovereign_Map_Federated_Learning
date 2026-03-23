@@ -51,3 +51,63 @@ groups:
         annotations:
           summary: "Bridge collateral ratio below policy"
           description: "Bridge collateral ratio dropped below 110%."
+
+      - alert: ConsensusStatusEndpointDown
+        expr: sovereign_consensus_status_up == 0
+        for: 2m
+        labels:
+          severity: critical
+          service: consensus
+        annotations:
+          summary: "Consensus status endpoint is unavailable"
+          description: "Metrics exporter cannot reach /api/v1/consensus/status for more than 2 minutes."
+
+      - alert: ConsensusCapacityDrift
+        expr: (sovereign_consensus_status_up == 1) and (sovereign_consensus_active_nodes < (sovereign_consensus_quorum_size + 1))
+        for: 5m
+        labels:
+          severity: warning
+          service: consensus
+        annotations:
+          summary: "Consensus active-node capacity is close to quorum floor"
+          description: "Active node count has drifted below quorum+1 and resilience margin is low."
+
+      - alert: ConsensusOpenRoundsBacklog
+        expr: (sovereign_consensus_status_up == 1) and (sovereign_consensus_open_rounds > 3)
+        for: 10m
+        labels:
+          severity: warning
+          service: consensus
+        annotations:
+          summary: "Consensus open-round backlog is elevated"
+          description: "Open consensus rounds exceed 3 for 10 minutes, indicating commit pressure or stalls."
+
+      - alert: AsyncStalenessHigh
+        expr: sovereign_aggregation_staleness_avg_seconds > 1.5
+        for: 10m
+        labels:
+          severity: warning
+          service: consensus
+        annotations:
+          summary: "Async staleness average is above SLO"
+          description: "Average async staleness exceeded 1.5 seconds for 10 minutes."
+
+      - alert: ChurnBurstDetected
+        expr: (clamp_min(delta(sovereign_aggregation_churn_joins_total[5m]), 0) + clamp_min(delta(sovereign_aggregation_churn_leaves_total[5m]), 0)) > 20
+        for: 5m
+        labels:
+          severity: warning
+          service: consensus
+        annotations:
+          summary: "Node churn burst detected"
+          description: "Join+leave churn exceeded 20 events over 5 minutes."
+
+      - alert: StaleDropBurstDetected
+        expr: clamp_min(delta(sovereign_aggregation_stale_drops_total[10m]), 0) > 25
+        for: 10m
+        labels:
+          severity: warning
+          service: consensus
+        annotations:
+          summary: "Stale model drops are increasing rapidly"
+          description: "Stale model drops increased by more than 25 over 10 minutes."
