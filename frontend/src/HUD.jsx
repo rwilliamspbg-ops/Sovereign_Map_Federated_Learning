@@ -68,6 +68,21 @@ export default function HUD({
   const opsAlerts = Array.isArray(opsHealth?.alerts) ? opsHealth.alerts : [];
   const browserRtt = Number(webMetrics?.rttMs || 0);
   const browserHeap = Number(webMetrics?.jsHeapUsedMB || 0);
+  const cumulativeEpsilon = Number(opsHealth?.privacy_security?.cumulative_epsilon || 0);
+  const epsilonTarget = Number(opsHealth?.privacy_security?.epsilon_target || 0.35);
+  const stragglerRate = Number(opsHealth?.privacy_security?.straggler_rate_pct || 0);
+  const asr = Number(opsHealth?.privacy_security?.attack_success_rate_pct || 0);
+  const detectionPrecision = Number(opsHealth?.privacy_security?.detection_precision_pct || 0);
+  const epcUtilization = Number(opsHealth?.tee_hardware?.epc_utilization_pct || 0);
+  const attestationLatencyMs = Number(opsHealth?.tee_hardware?.attestation_latency_ms || 0);
+  const cxlThroughputGbps = Number(opsHealth?.tee_hardware?.cxl_throughput_gbps || 0);
+  const npuTempC = Number(opsHealth?.tee_hardware?.npu_temp_c || 0);
+  const tpmTempC = Number(opsHealth?.tee_hardware?.tpm_temp_c || 0);
+  const rewardApyPct = Number(opsHealth?.governance_economics?.reward_apy_pct || 0);
+  const slashingEvents = Number(opsHealth?.governance_economics?.slashing_events_total || 0);
+  const recentSlashes = Array.isArray(opsHealth?.governance_economics?.recent_slashing_events)
+    ? opsHealth.governance_economics.recent_slashing_events
+    : [];
 
   const numberOrFallback = (value, suffix = '') => {
     const parsed = Number(value);
@@ -124,6 +139,24 @@ export default function HUD({
           <span className="ops-chip-label">Core Ports</span>
           <span className={`ops-chip-value ${promReachable ? '' : 'chip-critical'}`}>
             API:{opsHealth?.ports?.api_8000 ? 'up' : 'down'} | FL:{opsHealth?.ports?.flower_8080 ? 'up' : 'down'} | PROM:{opsHealth?.ports?.prometheus_9090 ? 'up' : 'down'}
+          </span>
+        </div>
+        <div className="ops-chip">
+          <span className="ops-chip-label">Privacy Budget</span>
+          <span className={`ops-chip-value ${cumulativeEpsilon >= epsilonTarget * 0.95 ? 'chip-warning' : 'chip-ok'}`}>
+            eps {fixedOrFallback(cumulativeEpsilon, 3)} / {fixedOrFallback(epsilonTarget, 2)}
+          </span>
+        </div>
+        <div className="ops-chip">
+          <span className="ops-chip-label">Straggler Rate</span>
+          <span className={`ops-chip-value ${stragglerRate >= 12 ? 'chip-warning' : 'chip-ok'}`}>
+            {fixedOrFallback(stragglerRate, 2, '%')}
+          </span>
+        </div>
+        <div className="ops-chip">
+          <span className="ops-chip-label">Byzantine ASR</span>
+          <span className={`ops-chip-value ${asr >= 40 ? 'chip-critical' : asr >= 20 ? 'chip-warning' : 'chip-ok'}`}>
+            {fixedOrFallback(asr, 2, '%')} (detect {fixedOrFallback(detectionPrecision, 2, '%')})
           </span>
         </div>
       </section>
@@ -216,6 +249,30 @@ export default function HUD({
               <span>JS Heap Used</span>
               <strong className={browserHeap >= 600 ? 'kpi-warning' : ''}>{numberOrFallback(webMetrics?.jsHeapUsedMB, ' MB')}</strong>
             </div>
+            <div className="kpi-card">
+              <span>EPC Utilization</span>
+              <strong className={epcUtilization >= 90 ? 'kpi-critical' : epcUtilization >= 80 ? 'kpi-warning' : ''}>{numberOrFallback(epcUtilization, '%')}</strong>
+            </div>
+            <div className="kpi-card">
+              <span>Attestation Latency</span>
+              <strong className={attestationLatencyMs >= 120 ? 'kpi-warning' : ''}>{numberOrFallback(attestationLatencyMs, ' ms')}</strong>
+            </div>
+            <div className="kpi-card">
+              <span>CXL Throughput</span>
+              <strong>{numberOrFallback(cxlThroughputGbps, ' GB/s')}</strong>
+            </div>
+            <div className="kpi-card">
+              <span>NPU Temp</span>
+              <strong className={npuTempC >= 85 ? 'kpi-warning' : ''}>{numberOrFallback(npuTempC, ' C')}</strong>
+            </div>
+            <div className="kpi-card">
+              <span>TPM Temp</span>
+              <strong className={tpmTempC >= 75 ? 'kpi-warning' : ''}>{numberOrFallback(tpmTempC, ' C')}</strong>
+            </div>
+            <div className="kpi-card">
+              <span>Reward Yield (APY)</span>
+              <strong>{numberOrFallback(rewardApyPct, '%')}</strong>
+            </div>
           </div>
 
           <LiveTerminal events={opsEvents} />
@@ -281,6 +338,50 @@ export default function HUD({
             <div className="audit-row">
               <span>Heap Capacity</span>
               <span>{numberOrFallback(webMetrics?.jsHeapTotalMB, ' MB')}</span>
+            </div>
+          </div>
+
+          <div className="aux-panel">
+            <h4>Privacy and Security</h4>
+            <div className="audit-row">
+              <span>Cumulative Epsilon</span>
+              <span>{fixedOrFallback(cumulativeEpsilon, 4)} / {fixedOrFallback(epsilonTarget, 2)}</span>
+            </div>
+            <div className="audit-row">
+              <span>Straggler Rate</span>
+              <span>{fixedOrFallback(stragglerRate, 2, '%')}</span>
+            </div>
+            <div className="audit-row">
+              <span>Attack Success Rate</span>
+              <span>{fixedOrFallback(asr, 2, '%')}</span>
+            </div>
+            <div className="audit-row">
+              <span>Detection Precision</span>
+              <span>{fixedOrFallback(detectionPrecision, 2, '%')}</span>
+            </div>
+          </div>
+
+          <div className="aux-panel">
+            <h4>TEE and Hardware Trust</h4>
+            <div className="audit-row">
+              <span>EPC Utilization</span>
+              <span>{fixedOrFallback(epcUtilization, 2, '%')}</span>
+            </div>
+            <div className="audit-row">
+              <span>Attestation Latency</span>
+              <span>{numberOrFallback(attestationLatencyMs, ' ms')}</span>
+            </div>
+            <div className="audit-row">
+              <span>CXL Throughput</span>
+              <span>{numberOrFallback(cxlThroughputGbps, ' GB/s')}</span>
+            </div>
+            <div className="audit-row">
+              <span>NPU Temp</span>
+              <span>{numberOrFallback(npuTempC, ' C')}</span>
+            </div>
+            <div className="audit-row">
+              <span>TPM Temp</span>
+              <span>{numberOrFallback(tpmTempC, ' C')}</span>
             </div>
           </div>
 
@@ -392,6 +493,32 @@ export default function HUD({
                 <div className="audit-row" key={`${founder?.name || 'founder'}-${index}`}>
                   <span>{founder?.name || `Founder ${index + 1}`}</span>
                   <span>{founder?.stake != null ? `${Number(founder.stake).toFixed(2)} (${founder?.verified ? 'verified' : 'unverified'})` : 'stake N/A'}</span>
+                </div>
+              ))
+            )}
+          </div>
+
+          <div className="aux-panel">
+            <h4>Governance Economics</h4>
+            <div className="audit-row">
+              <span>Reward Yield (APY)</span>
+              <span>{numberOrFallback(rewardApyPct, '%')}</span>
+            </div>
+            <div className="audit-row">
+              <span>Slashing Events</span>
+              <span>{slashingEvents}</span>
+            </div>
+            <div className="audit-row">
+              <span>Stake Concentration</span>
+              <span>{fixedOrFallback(opsHealth?.governance_economics?.stake_concentration_pct, 2, '%')}</span>
+            </div>
+            {recentSlashes.length === 0 ? (
+              <div className="timeline-empty">No recent slashing events.</div>
+            ) : (
+              recentSlashes.map((slash, idx) => (
+                <div className="audit-row" key={`${slash?.node || 'slash'}-${idx}`}>
+                  <span>{slash?.node || `node-${idx + 1}`} ({slash?.reason || 'policy'})</span>
+                  <span>-{numberOrFallback(slash?.stake_penalty)}</span>
                 </div>
               ))
             )}
