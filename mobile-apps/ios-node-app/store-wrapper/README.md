@@ -6,6 +6,7 @@ This wrapper package provides production release scaffolding for publishing the 
 
 - `build-release-ios.sh`: archive + export script for App Store IPA builds.
 - `validate-store-assets.sh`: validates metadata/config files before packaging.
+- `APP_STORE_CONNECT_SUBMISSION_CHECKLIST.md`: end-to-end App Store Connect submission checklist.
 - `config/ExportOptions-AppStore.plist`: xcodebuild export options template.
 - `config/SovereignNodeApp.entitlements`: hardened runtime and keychain baseline.
 - `config/PrivacyInfo.xcprivacy`: privacy manifest starter.
@@ -37,3 +38,4 @@ This wrapper package provides production release scaffolding for publishing the 
 
 - Keep real API keys and signing assets out of git.
 - Submit first to TestFlight for device and crash validation.
+- Follow `APP_STORE_CONNECT_SUBMISSION_CHECKLIST.md` before production submission.

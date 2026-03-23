@@ -3,6 +3,15 @@ plugins {
     id 'kotlin-android'
 }
 
+import java.util.Properties
+import java.io.FileInputStream
+
+def keystoreProperties = new Properties()
+def keystorePropertiesFile = rootProject.file('keystore.properties')
+if (keystorePropertiesFile.exists()) {
+    keystoreProperties.load(new FileInputStream(keystorePropertiesFile))
+}
+
 android {
     compileSdk 35
     
@@ -16,10 +25,27 @@ android {
         testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
     }
     
+    signingConfigs {
+        release {
+            if (keystorePropertiesFile.exists()) {
+                def configuredStoreFile = keystoreProperties.getProperty('storeFile', '')
+                if (configuredStoreFile) {
+                    storeFile file(configuredStoreFile)
+                    storePassword keystoreProperties.getProperty('storePassword', '')
+                    keyAlias keystoreProperties.getProperty('keyAlias', '')
+                    keyPassword keystoreProperties.getProperty('keyPassword', '')
+                }
+            }
+        }
+    }
+
     buildTypes {
         release {
             minifyEnabled false
             proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro'
+            if (keystorePropertiesFile.exists()) {
+                signingConfig signingConfigs.release
+            }
         }
     }
     
