@@ -1,6 +1,5 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import HUD from './HUD';
-import BrowserFLDemo from './BrowserFLDemo';
 import './App.css';
 import PrivacyUtilityDashboard from './PrivacyUtilityDashboard';
 
@@ -27,7 +26,7 @@ const API_BASE = resolveApiBase();
 const TRUST_API_BASE = API_BASE;
 
 function App() {
-  const [mode, setMode] = useState('browser-demo');
+  const [mode, setMode] = useState('network-hud');
 
   const [hudData, setHudData] = useState(null);
   const [health, setHealth] = useState(null);
@@ -37,7 +36,19 @@ function App() {
   const [founders, setFounders] = useState([]);
   const [voiceQuery, setVoiceQuery] = useState('');
   const [voiceResponse, setVoiceResponse] = useState('');
-  const [trainingMetrics, setTrainingMetrics] = useState([]);
+  const [webMetrics, setWebMetrics] = useState({
+    pageLoadMs: null,
+    domInteractiveMs: null,
+    jsHeapUsedMB: null,
+    jsHeapTotalMB: null,
+    viewport: null,
+    cores: null,
+    deviceMemoryGB: null,
+    downlinkMbps: null,
+    rttMs: null,
+    connectionType: null,
+    effectiveType: null
+  });
   const [policyDraft, setPolicyDraft] = useState({
     require_proof: false,
     min_confidence_bps: 7000,
@@ -61,6 +72,25 @@ function App() {
   const avgFlDuration = Number(metricsSummary?.avg_fl_duration);
   const totalStake = Number(metricsSummary?.total_stake);
   const cxlUtilization = Number(metricsSummary?.cxl_utilization);
+
+  const privacyTrainingMetrics = useMemo(() => {
+    const rounds = Array.isArray(metricsSummary?.convergence?.rounds) ? metricsSummary.convergence.rounds : [];
+    const accuracies = Array.isArray(metricsSummary?.convergence?.accuracies) ? metricsSummary.convergence.accuracies : [];
+    const losses = Array.isArray(metricsSummary?.convergence?.losses) ? metricsSummary.convergence.losses : [];
+
+    if (rounds.length === 0 && accuracies.length === 0 && losses.length === 0) {
+      return [];
+    }
+
+    const count = Math.max(rounds.length, accuracies.length, losses.length);
+    return Array.from({ length: count }, (_, idx) => ({
+      round: Number.isFinite(Number(rounds[idx])) ? Number(rounds[idx]) : idx,
+      accuracy: Number.isFinite(Number(accuracies[idx])) ? Number(accuracies[idx]) : 0,
+      loss: Number.isFinite(Number(losses[idx])) ? Number(losses[idx]) : 0,
+      privacy_overhead: 0,
+      compression_ratio: Number.isFinite(cxlUtilization) && cxlUtilization > 0 ? Number((1 / cxlUtilization).toFixed(2)) : 1
+    }));
+  }, [metricsSummary, cxlUtilization]);
 
   useEffect(() => {
     fetchData();
@@ -118,6 +148,48 @@ function App() {
       if (stream) {
         stream.close();
       }
+    };
+  }, []);
+
+  useEffect(() => {
+    const updateWebMetrics = () => {
+      if (typeof window === 'undefined') {
+        return;
+      }
+
+      const navigationEntry = performance.getEntriesByType('navigation')?.[0];
+      const domInteractiveMs = navigationEntry
+        ? Math.round(navigationEntry.domInteractive)
+        : Math.max(0, (performance.timing?.domInteractive || 0) - (performance.timing?.navigationStart || 0));
+      const pageLoadMs = navigationEntry
+        ? Math.round(navigationEntry.loadEventEnd || navigationEntry.domComplete || 0)
+        : Math.max(0, (performance.timing?.loadEventEnd || 0) - (performance.timing?.navigationStart || 0));
+
+      const heap = performance.memory || null;
+      const connection = navigator.connection || navigator.mozConnection || navigator.webkitConnection || null;
+
+      setWebMetrics({
+        pageLoadMs: pageLoadMs > 0 ? pageLoadMs : null,
+        domInteractiveMs: domInteractiveMs > 0 ? domInteractiveMs : null,
+        jsHeapUsedMB: heap ? Number((heap.usedJSHeapSize / (1024 * 1024)).toFixed(2)) : null,
+        jsHeapTotalMB: heap ? Number((heap.totalJSHeapSize / (1024 * 1024)).toFixed(2)) : null,
+        viewport: `${window.innerWidth}x${window.innerHeight}`,
+        cores: navigator.hardwareConcurrency || null,
+        deviceMemoryGB: navigator.deviceMemory || null,
+        downlinkMbps: connection?.downlink || null,
+        rttMs: connection?.rtt || null,
+        connectionType: connection?.type || null,
+        effectiveType: connection?.effectiveType || null
+      });
+    };
+
+    updateWebMetrics();
+    const interval = setInterval(updateWebMetrics, 5000);
+    window.addEventListener('resize', updateWebMetrics);
+
+    return () => {
+      clearInterval(interval);
+      window.removeEventListener('resize', updateWebMetrics);
     };
   }, []);
 
@@ -370,8 +442,8 @@ function App() {
         <div>
           <h1>Sovereign Map Federated Interface</h1>
           <p>
-            Switch between the live network operations HUD and the in-browser WebGPU-focused
-            federated learning simulator.
+            Use the live network operations HUD as the primary command deck, with a dedicated
+            privacy-utility analytics view sourced from backend convergence data.
           </p>
         </div>
 
@@ -382,13 +454,6 @@ function App() {
       </header>
 
       <nav className="mode-nav" aria-label="View selector">
-        <button
-          className={mode === 'browser-demo' ? 'active' : ''}
-          onClick={() => setMode('browser-demo')}
-          type="button"
-        >
-          Browser FL Demo
-        </button>
         <button
           className={mode === 'network-hud' ? 'active' : ''}
           onClick={() => setMode('network-hud')}
@@ -405,10 +470,8 @@ function App() {
         </button>
       </nav>
 
-      {mode === 'browser-demo' ? (
-        <BrowserFLDemo onMetricsUpdate={setTrainingMetrics} />
-      ) : mode === 'privacy-dashboard' ? (
-        <PrivacyUtilityDashboard trainingMetrics={trainingMetrics} trainingMode="real" />
+      {mode === 'privacy-dashboard' ? (
+        <PrivacyUtilityDashboard trainingMetrics={privacyTrainingMetrics} trainingMode="real" />
       ) : (
         <>
           <HUD
@@ -429,6 +492,7 @@ function App() {
             opsHealth={opsHealth}
             opsEvents={opsEvents}
             opsStreamStatus={opsStreamStatus}
+            webMetrics={webMetrics}
             loading={loading}
             error={error}
             onTriggerFLRound={triggerFLRound}

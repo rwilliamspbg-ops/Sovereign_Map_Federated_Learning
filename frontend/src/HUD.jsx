@@ -19,6 +19,7 @@ export default function HUD({
   opsHealth,
   opsEvents,
   opsStreamStatus,
+  webMetrics,
   loading,
   error,
   onTriggerFLRound,
@@ -65,6 +66,8 @@ export default function HUD({
   const memUsed = Number(opsHealth?.system?.memory?.used_percent || 0);
   const promReachable = Boolean(opsHealth?.dependencies?.prometheus?.reachable ?? opsHealth?.ports?.prometheus_9090);
   const opsAlerts = Array.isArray(opsHealth?.alerts) ? opsHealth.alerts : [];
+  const browserRtt = Number(webMetrics?.rttMs || 0);
+  const browserHeap = Number(webMetrics?.jsHeapUsedMB || 0);
 
   const numberOrFallback = (value, suffix = '') => {
     const parsed = Number(value);
@@ -201,6 +204,18 @@ export default function HUD({
               <span>Disk Used</span>
               <strong>{numberOrFallback(opsHealth?.system?.disk?.used_percent, '%')}</strong>
             </div>
+            <div className="kpi-card">
+              <span>Browser RTT</span>
+              <strong className={browserRtt >= 250 ? 'kpi-warning' : ''}>{numberOrFallback(webMetrics?.rttMs, ' ms')}</strong>
+            </div>
+            <div className="kpi-card">
+              <span>Browser Downlink</span>
+              <strong>{numberOrFallback(webMetrics?.downlinkMbps, ' Mbps')}</strong>
+            </div>
+            <div className="kpi-card">
+              <span>JS Heap Used</span>
+              <strong className={browserHeap >= 600 ? 'kpi-warning' : ''}>{numberOrFallback(webMetrics?.jsHeapUsedMB, ' MB')}</strong>
+            </div>
           </div>
 
           <LiveTerminal events={opsEvents} />
@@ -234,6 +249,38 @@ export default function HUD({
             <div className="audit-row">
               <span>Available MB</span>
               <span>{numberOrFallback(opsHealth?.system?.memory?.available_mb, ' MB')}</span>
+            </div>
+          </div>
+
+          <div className="aux-panel">
+            <h4>Web Runtime Metrics</h4>
+            <div className="audit-row">
+              <span>Page Load</span>
+              <span>{numberOrFallback(webMetrics?.pageLoadMs, ' ms')}</span>
+            </div>
+            <div className="audit-row">
+              <span>DOM Interactive</span>
+              <span>{numberOrFallback(webMetrics?.domInteractiveMs, ' ms')}</span>
+            </div>
+            <div className="audit-row">
+              <span>Viewport</span>
+              <span>{webMetrics?.viewport || 'N/A'}</span>
+            </div>
+            <div className="audit-row">
+              <span>CPU Cores</span>
+              <span>{webMetrics?.cores ?? 'N/A'}</span>
+            </div>
+            <div className="audit-row">
+              <span>Device Memory</span>
+              <span>{numberOrFallback(webMetrics?.deviceMemoryGB, ' GB')}</span>
+            </div>
+            <div className="audit-row">
+              <span>Connection</span>
+              <span>{[webMetrics?.connectionType, webMetrics?.effectiveType].filter(Boolean).join(' / ') || 'N/A'}</span>
+            </div>
+            <div className="audit-row">
+              <span>Heap Capacity</span>
+              <span>{numberOrFallback(webMetrics?.jsHeapTotalMB, ' MB')}</span>
             </div>
           </div>
 
