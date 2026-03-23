@@ -5,6 +5,7 @@
 Production-grade federated learning platform that combines Byzantine-resilient aggregation, trust verification, governance policy controls, tokenomics telemetry, and full-stack observability.
 
 [![Discord](https://img.shields.io/badge/Discord-Join%20Community-5865F2?style=flat-square&logo=discord&logoColor=white)](https://discord.gg/raBz79CJ)
+![Live 10-Node Test](https://img.shields.io/badge/Live_10--node_test-99.50%25_%40_Round_702-brightgreen)
 
 ## Live Project Pulse
 
