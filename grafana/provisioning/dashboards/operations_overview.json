@@ -1512,6 +1512,319 @@
           "sort": "none"
         }
       }
+    },
+    {
+      "id": 60,
+      "type": "row",
+      "title": "Privacy, Hardware Trust, and Governance",
+      "gridPos": {
+        "x": 0,
+        "y": 64,
+        "w": 24,
+        "h": 1
+      },
+      "collapsed": false,
+      "panels": []
+    },
+    {
+      "id": 61,
+      "type": "timeseries",
+      "title": "Differential Privacy Budget (Epsilon)",
+      "datasource": {
+        "type": "prometheus",
+        "uid": "prometheus"
+      },
+      "gridPos": {
+        "x": 0,
+        "y": 65,
+        "w": 12,
+        "h": 8
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "expr": "sovereign_ops_privacy_cumulative_epsilon or vector(0)",
+          "legendFormat": "Cumulative epsilon"
+        },
+        {
+          "refId": "B",
+          "expr": "sovereign_ops_privacy_epsilon_target or vector(0)",
+          "legendFormat": "Target epsilon"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "short",
+          "color": {
+            "mode": "palette-classic"
+          },
+          "custom": {
+            "drawStyle": "line",
+            "lineWidth": 2,
+            "fillOpacity": 14,
+            "showPoints": "never",
+            "lineInterpolation": "smooth",
+            "gradientMode": "opacity"
+          }
+        },
+        "overrides": []
+      },
+      "options": {
+        "legend": {
+          "displayMode": "table",
+          "placement": "bottom",
+          "showLegend": true
+        },
+        "tooltip": {
+          "mode": "multi",
+          "sort": "none"
+        }
+      }
+    },
+    {
+      "id": 62,
+      "type": "timeseries",
+      "title": "Federated Risk Signals (%)",
+      "datasource": {
+        "type": "prometheus",
+        "uid": "prometheus"
+      },
+      "gridPos": {
+        "x": 12,
+        "y": 65,
+        "w": 12,
+        "h": 8
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "expr": "sovereign_ops_fl_straggler_rate_pct or vector(0)",
+          "legendFormat": "Straggler rate"
+        },
+        {
+          "refId": "B",
+          "expr": "sovereign_ops_attack_success_rate_pct or vector(0)",
+          "legendFormat": "Attack success rate"
+        },
+        {
+          "refId": "C",
+          "expr": "sovereign_ops_detection_precision_pct or vector(0)",
+          "legendFormat": "Detection precision"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "percent",
+          "color": {
+            "mode": "palette-classic"
+          },
+          "custom": {
+            "drawStyle": "line",
+            "lineWidth": 2,
+            "fillOpacity": 14,
+            "showPoints": "never",
+            "lineInterpolation": "smooth",
+            "gradientMode": "opacity"
+          }
+        },
+        "overrides": []
+      },
+      "options": {
+        "legend": {
+          "displayMode": "table",
+          "placement": "bottom",
+          "showLegend": true
+        },
+        "tooltip": {
+          "mode": "multi",
+          "sort": "none"
+        }
+      }
+    },
+    {
+      "id": 63,
+      "type": "timeseries",
+      "title": "TEE Capacity and CXL Throughput",
+      "datasource": {
+        "type": "prometheus",
+        "uid": "prometheus"
+      },
+      "gridPos": {
+        "x": 0,
+        "y": 73,
+        "w": 12,
+        "h": 8
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "expr": "sovereign_ops_tee_epc_utilization_pct or vector(0)",
+          "legendFormat": "EPC utilization %"
+        },
+        {
+          "refId": "B",
+          "expr": "sovereign_ops_cxl_utilization_pct or vector(0)",
+          "legendFormat": "CXL utilization %"
+        },
+        {
+          "refId": "C",
+          "expr": "sovereign_ops_cxl_throughput_gbps or vector(0)",
+          "legendFormat": "CXL throughput (GB/s)"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "short",
+          "color": {
+            "mode": "palette-classic"
+          },
+          "custom": {
+            "drawStyle": "line",
+            "lineWidth": 2,
+            "fillOpacity": 14,
+            "showPoints": "never",
+            "lineInterpolation": "smooth",
+            "gradientMode": "opacity"
+          }
+        },
+        "overrides": []
+      },
+      "options": {
+        "legend": {
+          "displayMode": "table",
+          "placement": "bottom",
+          "showLegend": true
+        },
+        "tooltip": {
+          "mode": "multi",
+          "sort": "none"
+        }
+      }
+    },
+    {
+      "id": 64,
+      "type": "timeseries",
+      "title": "Attestation and Thermal Telemetry",
+      "datasource": {
+        "type": "prometheus",
+        "uid": "prometheus"
+      },
+      "gridPos": {
+        "x": 12,
+        "y": 73,
+        "w": 12,
+        "h": 8
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "expr": "sovereign_ops_attestation_latency_ms or vector(0)",
+          "legendFormat": "Attestation latency (ms)"
+        },
+        {
+          "refId": "B",
+          "expr": "sovereign_ops_npu_temp_c or vector(0)",
+          "legendFormat": "NPU temp (C)"
+        },
+        {
+          "refId": "C",
+          "expr": "sovereign_ops_tpm_temp_c or vector(0)",
+          "legendFormat": "TPM temp (C)"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "short",
+          "color": {
+            "mode": "palette-classic"
+          },
+          "custom": {
+            "drawStyle": "line",
+            "lineWidth": 2,
+            "fillOpacity": 14,
+            "showPoints": "never",
+            "lineInterpolation": "smooth",
+            "gradientMode": "opacity"
+          }
+        },
+        "overrides": []
+      },
+      "options": {
+        "legend": {
+          "displayMode": "table",
+          "placement": "bottom",
+          "showLegend": true
+        },
+        "tooltip": {
+          "mode": "multi",
+          "sort": "none"
+        }
+      }
+    },
+    {
+      "id": 65,
+      "type": "timeseries",
+      "title": "Governance Economics Signals",
+      "datasource": {
+        "type": "prometheus",
+        "uid": "prometheus"
+      },
+      "gridPos": {
+        "x": 0,
+        "y": 81,
+        "w": 24,
+        "h": 8
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "expr": "sovereign_ops_governance_total_stake or vector(0)",
+          "legendFormat": "Total stake"
+        },
+        {
+          "refId": "B",
+          "expr": "sovereign_ops_governance_stake_concentration_pct or vector(0)",
+          "legendFormat": "Stake concentration %"
+        },
+        {
+          "refId": "C",
+          "expr": "sovereign_ops_governance_slashing_events_total or vector(0)",
+          "legendFormat": "Slashing events"
+        },
+        {
+          "refId": "D",
+          "expr": "sovereign_ops_governance_reward_apy_pct or vector(0)",
+          "legendFormat": "Reward APY %"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "short",
+          "color": {
+            "mode": "palette-classic"
+          },
+          "custom": {
+            "drawStyle": "line",
+            "lineWidth": 2,
+            "fillOpacity": 14,
+            "showPoints": "never",
+            "lineInterpolation": "smooth",
+            "gradientMode": "opacity"
+          }
+        },
+        "overrides": []
+      },
+      "options": {
+        "legend": {
+          "displayMode": "table",
+          "placement": "bottom",
+          "showLegend": true
+        },
+        "tooltip": {
+          "mode": "multi",
+          "sort": "none"
+        }
+      }
     }
   ],
   "refresh": "10s",

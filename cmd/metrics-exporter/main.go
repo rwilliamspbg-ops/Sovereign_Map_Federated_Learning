@@ -267,19 +267,34 @@ func blockchainMetricsPrometheus(bc *blockchain.BlockChain) string {
 }
 
 type apiConsensusMetrics struct {
-	consensusUp             float64
-	asyncMode               float64
-	activeNodes             float64
-	quorumSize              float64
-	openRounds              float64
-	aggregationRound        float64
-	bufferedModels          float64
-	aggregationAsyncRounds  float64
-	aggregationStaleDrops   float64
-	aggregationAvgLatencyMS float64
-	churnJoinsTotal         float64
-	churnLeavesTotal        float64
-	stalenessAvgSeconds     float64
+	consensusUp              float64
+	asyncMode                float64
+	activeNodes              float64
+	quorumSize               float64
+	openRounds               float64
+	aggregationRound         float64
+	bufferedModels           float64
+	aggregationAsyncRounds   float64
+	aggregationStaleDrops    float64
+	aggregationAvgLatencyMS  float64
+	churnJoinsTotal          float64
+	churnLeavesTotal         float64
+	stalenessAvgSeconds      float64
+	privacyCumulativeEpsilon float64
+	privacyEpsilonTarget     float64
+	stragglerRatePct         float64
+	attackSuccessRatePct     float64
+	detectionPrecisionPct    float64
+	epcUtilizationPct        float64
+	attestationLatencyMS     float64
+	cxlUtilizationPct        float64
+	cxlThroughputGBps        float64
+	npuTempC                 float64
+	tpmTempC                 float64
+	governanceTotalStake     float64
+	stakeConcentrationPct    float64
+	slashingEventsTotal      float64
+	rewardAPYPct             float64
 }
 
 func consensusMetricsPrometheus(client *http.Client, apiBaseURL string) string {
@@ -338,6 +353,66 @@ func consensusMetricsPrometheus(client *http.Client, apiBaseURL string) string {
 	b.WriteString("# TYPE sovereign_aggregation_staleness_avg_seconds gauge\n")
 	b.WriteString(fmt.Sprintf("sovereign_aggregation_staleness_avg_seconds %.6f\n", metrics.stalenessAvgSeconds))
 
+	b.WriteString("# HELP sovereign_ops_privacy_cumulative_epsilon Cumulative differential privacy epsilon consumed\n")
+	b.WriteString("# TYPE sovereign_ops_privacy_cumulative_epsilon gauge\n")
+	b.WriteString(fmt.Sprintf("sovereign_ops_privacy_cumulative_epsilon %.6f\n", metrics.privacyCumulativeEpsilon))
+
+	b.WriteString("# HELP sovereign_ops_privacy_epsilon_target Configured differential privacy epsilon target\n")
+	b.WriteString("# TYPE sovereign_ops_privacy_epsilon_target gauge\n")
+	b.WriteString(fmt.Sprintf("sovereign_ops_privacy_epsilon_target %.6f\n", metrics.privacyEpsilonTarget))
+
+	b.WriteString("# HELP sovereign_ops_fl_straggler_rate_pct Percentage of nodes missing gradient timeout windows\n")
+	b.WriteString("# TYPE sovereign_ops_fl_straggler_rate_pct gauge\n")
+	b.WriteString(fmt.Sprintf("sovereign_ops_fl_straggler_rate_pct %.4f\n", metrics.stragglerRatePct))
+
+	b.WriteString("# HELP sovereign_ops_attack_success_rate_pct Byzantine attack success rate percentage\n")
+	b.WriteString("# TYPE sovereign_ops_attack_success_rate_pct gauge\n")
+	b.WriteString(fmt.Sprintf("sovereign_ops_attack_success_rate_pct %.4f\n", metrics.attackSuccessRatePct))
+
+	b.WriteString("# HELP sovereign_ops_detection_precision_pct Detection precision for Byzantine anomaly policy checks\n")
+	b.WriteString("# TYPE sovereign_ops_detection_precision_pct gauge\n")
+	b.WriteString(fmt.Sprintf("sovereign_ops_detection_precision_pct %.4f\n", metrics.detectionPrecisionPct))
+
+	b.WriteString("# HELP sovereign_ops_tee_epc_utilization_pct TEE enclave page cache utilization percentage\n")
+	b.WriteString("# TYPE sovereign_ops_tee_epc_utilization_pct gauge\n")
+	b.WriteString(fmt.Sprintf("sovereign_ops_tee_epc_utilization_pct %.4f\n", metrics.epcUtilizationPct))
+
+	b.WriteString("# HELP sovereign_ops_attestation_latency_ms Mean attestation verification latency in milliseconds\n")
+	b.WriteString("# TYPE sovereign_ops_attestation_latency_ms gauge\n")
+	b.WriteString(fmt.Sprintf("sovereign_ops_attestation_latency_ms %.4f\n", metrics.attestationLatencyMS))
+
+	b.WriteString("# HELP sovereign_ops_cxl_utilization_pct CXL utilization percentage from ops health snapshot\n")
+	b.WriteString("# TYPE sovereign_ops_cxl_utilization_pct gauge\n")
+	b.WriteString(fmt.Sprintf("sovereign_ops_cxl_utilization_pct %.4f\n", metrics.cxlUtilizationPct))
+
+	b.WriteString("# HELP sovereign_ops_cxl_throughput_gbps CXL throughput estimate in GB/s\n")
+	b.WriteString("# TYPE sovereign_ops_cxl_throughput_gbps gauge\n")
+	b.WriteString(fmt.Sprintf("sovereign_ops_cxl_throughput_gbps %.4f\n", metrics.cxlThroughputGBps))
+
+	b.WriteString("# HELP sovereign_ops_npu_temp_c NPU die temperature in Celsius\n")
+	b.WriteString("# TYPE sovereign_ops_npu_temp_c gauge\n")
+	b.WriteString(fmt.Sprintf("sovereign_ops_npu_temp_c %.4f\n", metrics.npuTempC))
+
+	b.WriteString("# HELP sovereign_ops_tpm_temp_c TPM temperature in Celsius\n")
+	b.WriteString("# TYPE sovereign_ops_tpm_temp_c gauge\n")
+	b.WriteString(fmt.Sprintf("sovereign_ops_tpm_temp_c %.4f\n", metrics.tpmTempC))
+
+	b.WriteString("# HELP sovereign_ops_governance_total_stake Total governance stake observed in the network\n")
+	b.WriteString("# TYPE sovereign_ops_governance_total_stake gauge\n")
+	b.WriteString(fmt.Sprintf("sovereign_ops_governance_total_stake %.4f\n", metrics.governanceTotalStake))
+
+	b.WriteString("# HELP sovereign_ops_governance_stake_concentration_pct Stake concentration percentage of largest founder stake\n")
+	b.WriteString("# TYPE sovereign_ops_governance_stake_concentration_pct gauge\n")
+	b.WriteString(fmt.Sprintf("sovereign_ops_governance_stake_concentration_pct %.4f\n", metrics.stakeConcentrationPct))
+
+	b.WriteString("# HELP sovereign_ops_governance_slashing_events_total Total slashing events recorded in governance view\n")
+	b.WriteString("# TYPE sovereign_ops_governance_slashing_events_total gauge\n")
+	b.WriteString(fmt.Sprintf("sovereign_ops_governance_slashing_events_total %.0f\n", metrics.slashingEventsTotal))
+
+	b.WriteString("# HELP sovereign_ops_governance_reward_apy_pct Governance reward annual percentage yield\n")
+	b.WriteString("# TYPE sovereign_ops_governance_reward_apy_pct gauge\n")
+	b.WriteString(fmt.Sprintf("sovereign_ops_governance_reward_apy_pct %.4f\n", metrics.rewardAPYPct))
+
 	return b.String()
 }
 
@@ -373,6 +448,33 @@ func collectConsensusMetrics(client *http.Client, apiBaseURL string) apiConsensu
 		metrics.churnJoinsTotal = asFloat(generalBody["churn_joins_total"])
 		metrics.churnLeavesTotal = asFloat(generalBody["churn_leaves_total"])
 		metrics.stalenessAvgSeconds = asFloat(generalBody["async_staleness_avg_seconds"])
+	}
+
+	opsBody, err := fetchJSON(client, base+"/ops/health")
+	if err == nil {
+		if privacyNode, ok := asMap(opsBody["privacy_security"]); ok {
+			metrics.privacyCumulativeEpsilon = asFloat(privacyNode["cumulative_epsilon"])
+			metrics.privacyEpsilonTarget = asFloat(privacyNode["epsilon_target"])
+			metrics.stragglerRatePct = asFloat(privacyNode["straggler_rate_pct"])
+			metrics.attackSuccessRatePct = asFloat(privacyNode["attack_success_rate_pct"])
+			metrics.detectionPrecisionPct = asFloat(privacyNode["detection_precision_pct"])
+		}
+
+		if teeNode, ok := asMap(opsBody["tee_hardware"]); ok {
+			metrics.epcUtilizationPct = asFloat(teeNode["epc_utilization_pct"])
+			metrics.attestationLatencyMS = asFloat(teeNode["attestation_latency_ms"])
+			metrics.cxlUtilizationPct = asFloat(teeNode["cxl_utilization_pct"])
+			metrics.cxlThroughputGBps = asFloat(teeNode["cxl_throughput_gbps"])
+			metrics.npuTempC = asFloat(teeNode["npu_temp_c"])
+			metrics.tpmTempC = asFloat(teeNode["tpm_temp_c"])
+		}
+
+		if govNode, ok := asMap(opsBody["governance_economics"]); ok {
+			metrics.governanceTotalStake = asFloat(govNode["total_stake"])
+			metrics.stakeConcentrationPct = asFloat(govNode["stake_concentration_pct"])
+			metrics.slashingEventsTotal = asFloat(govNode["slashing_events_total"])
+			metrics.rewardAPYPct = asFloat(govNode["reward_apy_pct"])
+		}
 	}
 
 	return metrics
