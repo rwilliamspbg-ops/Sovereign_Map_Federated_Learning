@@ -135,8 +135,8 @@ func TestHandshakeVerification(t *testing.T) {
 	serverRaw, clientRaw := net.Pipe()
 	serverConn := tls.Server(serverRaw, serverTLS)
 	clientConn := tls.Client(clientRaw, clientTLS)
-	defer serverConn.Close()
-	defer clientConn.Close()
+	defer func() { _ = serverConn.Close() }()
+	defer func() { _ = clientConn.Close() }()
 
 	errCh := make(chan error, 2)
 	go func() { errCh <- serverConn.Handshake() }()

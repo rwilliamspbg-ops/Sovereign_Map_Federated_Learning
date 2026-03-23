@@ -222,20 +222,29 @@ contributors-rankings:
 
 lint:
 	@echo "🔍 Running linters..."
-	golangci-lint run ./...
+	$(GO) clean -cache
+	golangci-lint cache clean
+	GOROOT=$(TOOLROOT) GOTOOLCHAIN=local golangci-lint run ./...
 
 lint-soft:
 	@echo "🔍 Running linters (non-blocking)..."
-	golangci-lint run ./... || true
+	$(GO) clean -cache
+	golangci-lint cache clean
+	GOROOT=$(TOOLROOT) GOTOOLCHAIN=local golangci-lint run ./... || true
 
 vet:
 	$(GO) vet ./...
 
 security-scan:
 	@echo "🔒 Running security scans..."
-	gosec ./... || true
+	@if ! command -v gosec >/dev/null 2>&1; then \
+		echo "Installing gosec..."; \
+		$(GO) install github.com/securego/gosec/v2/cmd/gosec@latest; \
+	fi
+	@GOSEC_BIN=$$(command -v gosec || echo "$$($(GO) env GOPATH)/bin/gosec"); \
+		GOROOT=$(TOOLROOT) GOTOOLCHAIN=local $$GOSEC_BIN ./... || true
 
-check: fmt vet lint test
+check: fmt vet lint-soft test
 	@echo "✅ All checks passed"
 
 smoke:

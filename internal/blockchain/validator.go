@@ -265,10 +265,14 @@ func (bv *BlockValidator) executeTransaction(txn *Transaction, state *StateDatab
 	case TxTypeFlRound:
 		// Record FL round in state
 		flKey := fmt.Sprintf("fl_round:%s", txn.Data["round_id"])
-		state.Set(flKey, txn.Data)
+		if err := state.Set(flKey, txn.Data); err != nil {
+			return err
+		}
 		verification := BuildFLVerificationMetadata(txn.Data, blockHeight, txn.Timestamp)
 		verificationKey := fmt.Sprintf("fl_verification:%s", txn.Data["round_id"])
-		state.Set(verificationKey, verification)
+		if err := state.Set(verificationKey, verification); err != nil {
+			return err
+		}
 
 	case TxTypeStake:
 		// Update validator stake
@@ -277,7 +281,9 @@ func (bv *BlockValidator) executeTransaction(txn *Transaction, state *StateDatab
 		if val, err := state.Get(stakeKey); err == nil {
 			currentStake = val.(uint64)
 		}
-		state.Set(stakeKey, currentStake+txn.Amount)
+		if err := state.Set(stakeKey, currentStake+txn.Amount); err != nil {
+			return err
+		}
 
 	case TxTypeUnstake:
 		// Decrease validator stake
@@ -287,7 +293,9 @@ func (bv *BlockValidator) executeTransaction(txn *Transaction, state *StateDatab
 			if currentStake < txn.Amount {
 				return fmt.Errorf("insufficient stake to unstake")
 			}
-			state.Set(stakeKey, currentStake-txn.Amount)
+			if err := state.Set(stakeKey, currentStake-txn.Amount); err != nil {
+				return err
+			}
 		}
 
 	case TxTypeReward:
@@ -302,7 +310,9 @@ func (bv *BlockValidator) executeTransaction(txn *Transaction, state *StateDatab
 				currentReward = parsed
 			}
 		}
-		state.Set(rewardKey, currentReward+txn.Amount)
+		if err := state.Set(rewardKey, currentReward+txn.Amount); err != nil {
+			return err
+		}
 
 	case TxTypeTransfer:
 		if isBridgeTransactionData(txn.Data) {
@@ -326,7 +336,9 @@ func (bv *BlockValidator) executeTransaction(txn *Transaction, state *StateDatab
 				"status":          "escrowed",
 				"timestamp":       txn.Timestamp,
 			}
-			state.Set(fmt.Sprintf("bridge_transfer:%s", txn.ID), bridgeRecord)
+			if err := state.Set(fmt.Sprintf("bridge_transfer:%s", txn.ID), bridgeRecord); err != nil {
+				return err
+			}
 
 			volumeKey := fmt.Sprintf("bridge_volume:%s:%s:%s", sourceChain, targetChain, asset)
 			currentVolume := uint64(0)
@@ -335,7 +347,9 @@ func (bv *BlockValidator) executeTransaction(txn *Transaction, state *StateDatab
 					currentVolume = parsed
 				}
 			}
-			state.Set(volumeKey, currentVolume+txn.Amount)
+			if err := state.Set(volumeKey, currentVolume+txn.Amount); err != nil {
+				return err
+			}
 		} else {
 			if err := ledger.ApplyTransaction(txn); err != nil {
 				return err
@@ -345,12 +359,16 @@ func (bv *BlockValidator) executeTransaction(txn *Transaction, state *StateDatab
 	case TxTypeSmartContract:
 		// Smart contract execution (simplified)
 		contractKey := fmt.Sprintf("contract:%s", txn.ID)
-		state.Set(contractKey, txn.Data)
+		if err := state.Set(contractKey, txn.Data); err != nil {
+			return err
+		}
 
 	case TxTypeCheckpoint:
 		// Record checkpoint
 		checkpointKey := fmt.Sprintf("checkpoint:%s", txn.Data["checkpoint_hash"])
-		state.Set(checkpointKey, txn.Data)
+		if err := state.Set(checkpointKey, txn.Data); err != nil {
+			return err
+		}
 	}
 
 	return nil

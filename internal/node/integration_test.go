@@ -216,10 +216,14 @@ func TestNodeAndConsensusIntegration(t *testing.T) {
 
 	// Setup nodes
 	node1 := NewFLNode("node-1", "us-west")
-	node1.SetupBlockchain(bc, mempool, 10000)
+	if err := node1.SetupBlockchain(bc, mempool, 10000); err != nil {
+		t.Fatalf("node1 SetupBlockchain failed: %v", err)
+	}
 
 	node2 := NewFLNode("node-2", "us-east")
-	node2.SetupBlockchain(bc, mempool, 15000)
+	if err := node2.SetupBlockchain(bc, mempool, 15000); err != nil {
+		t.Fatalf("node2 SetupBlockchain failed: %v", err)
+	}
 
 	ctx := context.Background()
 
@@ -266,11 +270,19 @@ func TestNodeAndConsensusIntegration(t *testing.T) {
 
 	// Simulate block inclusion
 	blockHeight := uint64(1)
-	node1.ConfirmTransaction(txID1, blockHeight)
-	node2.ConfirmTransaction(txID2, blockHeight)
+	if err := node1.ConfirmTransaction(txID1, blockHeight); err != nil {
+		t.Fatalf("node1 ConfirmTransaction failed: %v", err)
+	}
+	if err := node2.ConfirmTransaction(txID2, blockHeight); err != nil {
+		t.Fatalf("node2 ConfirmTransaction failed: %v", err)
+	}
 
-	node1.CompleteRound(ctx, blockHeight)
-	node2.CompleteRound(ctx, blockHeight)
+	if err := node1.CompleteRound(ctx, blockHeight); err != nil {
+		t.Fatalf("node1 CompleteRound failed: %v", err)
+	}
+	if err := node2.CompleteRound(ctx, blockHeight); err != nil {
+		t.Fatalf("node2 CompleteRound failed: %v", err)
+	}
 
 	// Verify both nodes completed the round
 	state1 := node1.GetState()

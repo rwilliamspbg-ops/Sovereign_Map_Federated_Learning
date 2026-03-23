@@ -124,7 +124,9 @@ func TestTokenRewardsUnstaking(t *testing.T) {
 			"amount": uint64(1000000),
 		},
 	}
-	vm.CallContract(stakeCtx, addr, "stake")
+	if _, err := vm.CallContract(stakeCtx, addr, "stake"); err != nil {
+		t.Fatalf("stake setup failed: %v", err)
+	}
 
 	// Then unstake
 	unstakeCtx := &ExecutionContext{
@@ -429,7 +431,9 @@ func TestGasTracking(t *testing.T) {
 		"amount": uint64(1000000),
 	}
 
-	vm.CallContract(stakeCtx, addr, "stake")
+	if _, err := vm.CallContract(stakeCtx, addr, "stake"); err != nil {
+		t.Fatalf("stake call failed: %v", err)
+	}
 
 	// Verify gas was used
 	if stakeCtx.GasUsed <= 0 {
@@ -574,7 +578,9 @@ func TestContractState(t *testing.T) {
 			"amount": uint64(1000000),
 		},
 	}
-	vm.CallContract(stakeCtx, addr, "stake")
+	if _, err := vm.CallContract(stakeCtx, addr, "stake"); err != nil {
+		t.Fatalf("stake setup failed: %v", err)
+	}
 
 	// Export state
 	state, err := vm.ExportState(addr)

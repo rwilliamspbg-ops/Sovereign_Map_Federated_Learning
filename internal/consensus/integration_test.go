@@ -122,7 +122,9 @@ func TestConsensusRoundCreation(t *testing.T) {
 			Signature:  []byte("sig"),
 			Timestamp:  time.Now(),
 		}
-		coordinator.CastVote(ctx, vote)
+		if err := coordinator.CastVote(ctx, vote); err != nil {
+			t.Fatalf("Failed to cast vote: %v", err)
+		}
 	}
 
 	// Get consensus round
@@ -163,7 +165,9 @@ func TestMultipleConsensusRounds(t *testing.T) {
 	bc := blockchain.NewBlockChain()
 
 	proposer := blockchain.NewBlockProposer("node_1", bc)
-	coordinator.SetupBlockchainIntegration(proposer)
+	if err := coordinator.SetupBlockchainIntegration(proposer); err != nil {
+		t.Fatalf("Failed to setup blockchain integration: %v", err)
+	}
 
 	ctx := context.Background()
 
@@ -188,7 +192,9 @@ func TestMultipleConsensusRounds(t *testing.T) {
 				Signature:  []byte("sig"),
 				Timestamp:  time.Now(),
 			}
-			coordinator.CastVote(ctx, vote)
+			if err := coordinator.CastVote(ctx, vote); err != nil {
+				t.Fatalf("Failed to cast vote: %v", err)
+			}
 		}
 
 		// Commit
@@ -236,7 +242,9 @@ func TestConsensusWithoutBlockchain(t *testing.T) {
 			Signature:  []byte("sig"),
 			Timestamp:  time.Now(),
 		}
-		coordinator.CastVote(ctx, vote)
+		if err := coordinator.CastVote(ctx, vote); err != nil {
+			t.Fatalf("Failed to cast vote: %v", err)
+		}
 	}
 
 	// Commit without blockchain - should work

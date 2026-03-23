@@ -191,8 +191,12 @@ func TestStateDatabase(t *testing.T) {
 	stateDB := NewStateDatabase()
 
 	// Set state
-	stateDB.Set("account:node_1:balance", uint64(1000000))
-	stateDB.Set("account:node_2:balance", uint64(500000))
+	if err := stateDB.Set("account:node_1:balance", uint64(1000000)); err != nil {
+		t.Fatalf("failed to set node_1 balance: %v", err)
+	}
+	if err := stateDB.Set("account:node_2:balance", uint64(500000)); err != nil {
+		t.Fatalf("failed to set node_2 balance: %v", err)
+	}
 
 	// Get state
 	balance1, err := stateDB.Get("account:node_1:balance")
@@ -217,7 +221,9 @@ func TestStateDatabase(t *testing.T) {
 	}
 
 	// Delete state
-	stateDB.Delete("account:node_2:balance")
+	if err := stateDB.Delete("account:node_2:balance"); err != nil {
+		t.Fatalf("failed to delete node_2 balance: %v", err)
+	}
 	exists = stateDB.Exists("account:node_2:balance")
 	if exists {
 		t.Error("Deleted state should not exist")
@@ -228,13 +234,17 @@ func TestStateDatabaseSnapshots(t *testing.T) {
 	stateDB := NewStateDatabase()
 
 	// Set initial state
-	stateDB.Set("account:node_1:balance", uint64(1000000))
+	if err := stateDB.Set("account:node_1:balance", uint64(1000000)); err != nil {
+		t.Fatalf("failed to set initial state: %v", err)
+	}
 
 	// Record snapshot
 	stateDB.RecordSnapshot(1)
 
 	// Modify state
-	stateDB.Set("account:node_1:balance", uint64(900000))
+	if err := stateDB.Set("account:node_1:balance", uint64(900000)); err != nil {
+		t.Fatalf("failed to update state: %v", err)
+	}
 
 	// Record another snapshot
 	stateDB.RecordSnapshot(2)

@@ -217,7 +217,9 @@ func (vm *SmartContractVM) executeTokenRewardsFunction(contract *Contract, ctx *
 	case "stake":
 		amount := ctx.CallData["amount"].(uint64)
 		key := fmt.Sprintf("stake:%s", ctx.CallerAddress)
-		contract.State.IncrementCounter(key, amount)
+		if err := contract.State.IncrementCounter(key, amount); err != nil {
+			return nil, err
+		}
 		ctx.Events = append(ctx.Events, ContractEvent{
 			ContractAddress: contract.Address,
 			EventName:       "Staked",
@@ -259,7 +261,9 @@ func (vm *SmartContractVM) executeTokenRewardsFunction(contract *Contract, ctx *
 		total := uint64(0)
 		for i, nodeID := range nodes {
 			key := fmt.Sprintf("reward:%s", nodeID)
-			contract.State.IncrementCounter(key, rewards[i])
+			if err := contract.State.IncrementCounter(key, rewards[i]); err != nil {
+				return nil, err
+			}
 			total += rewards[i]
 		}
 		ctx.Events = append(ctx.Events, ContractEvent{

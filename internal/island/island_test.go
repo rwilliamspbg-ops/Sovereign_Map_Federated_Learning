@@ -7,10 +7,11 @@ import (
 )
 
 type syncerStub struct {
-	mu      sync.Mutex
-	called  int
-	updates []Update
-	done    chan struct{}
+	mu       sync.Mutex
+	called   int
+	updates  []Update
+	done     chan struct{}
+	doneOnce sync.Once
 }
 
 func (s *syncerStub) SyncUpdates(updates []Update) error {
@@ -19,8 +20,7 @@ func (s *syncerStub) SyncUpdates(updates []Update) error {
 	s.called++
 	s.updates = append([]Update(nil), updates...)
 	if s.done != nil {
-		close(s.done)
-		s.done = nil
+		s.doneOnce.Do(func() { close(s.done) })
 	}
 	return nil
 }

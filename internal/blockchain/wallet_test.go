@@ -225,8 +225,12 @@ func TestSetAndGetBalance(t *testing.T) {
 func TestCredit(t *testing.T) {
 	l := newTestLedger(t)
 	w, _ := NewWallet()
-	l.Credit(w.Address(), 500)
-	l.Credit(w.Address(), 300)
+	if err := l.Credit(w.Address(), 500); err != nil {
+		t.Fatalf("Credit: %v", err)
+	}
+	if err := l.Credit(w.Address(), 300); err != nil {
+		t.Fatalf("Credit: %v", err)
+	}
 	if bal := l.GetBalance(w.Address()); bal != 800 {
 		t.Errorf("expected 800, got %d", bal)
 	}
@@ -235,7 +239,9 @@ func TestCredit(t *testing.T) {
 func TestDebit(t *testing.T) {
 	l := newTestLedger(t)
 	w, _ := NewWallet()
-	l.SetBalance(w.Address(), 1000)
+	if err := l.SetBalance(w.Address(), 1000); err != nil {
+		t.Fatalf("SetBalance: %v", err)
+	}
 	if err := l.Debit(w.Address(), 400); err != nil {
 		t.Fatalf("Debit: %v", err)
 	}
@@ -247,7 +253,9 @@ func TestDebit(t *testing.T) {
 func TestDebitInsufficientFunds(t *testing.T) {
 	l := newTestLedger(t)
 	w, _ := NewWallet()
-	l.SetBalance(w.Address(), 100)
+	if err := l.SetBalance(w.Address(), 100); err != nil {
+		t.Fatalf("SetBalance: %v", err)
+	}
 	if err := l.Debit(w.Address(), 200); err == nil {
 		t.Error("expected insufficient-funds error")
 	}
@@ -257,7 +265,9 @@ func TestTransfer(t *testing.T) {
 	l := newTestLedger(t)
 	alice, _ := NewWallet()
 	bob, _ := NewWallet()
-	l.SetBalance(alice.Address(), 1000)
+	if err := l.SetBalance(alice.Address(), 1000); err != nil {
+		t.Fatalf("SetBalance: %v", err)
+	}
 	if err := l.Transfer(alice.Address(), bob.Address(), 300); err != nil {
 		t.Fatalf("Transfer: %v", err)
 	}

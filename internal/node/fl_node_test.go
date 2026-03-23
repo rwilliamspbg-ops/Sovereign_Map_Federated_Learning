@@ -70,7 +70,9 @@ func TestTrainRound(t *testing.T) {
 	bc := blockchain.NewBlockChain()
 	mempool := blockchain.NewMempool()
 
-	node.SetupBlockchain(bc, mempool, 10000)
+	if err := node.SetupBlockchain(bc, mempool, 10000); err != nil {
+		t.Fatalf("SetupBlockchain failed: %v", err)
+	}
 
 	ctx := context.Background()
 	result, err := node.TrainRound(ctx)
@@ -98,7 +100,9 @@ func TestSubmitFlRound(t *testing.T) {
 	bc := blockchain.NewBlockChain()
 	mempool := blockchain.NewMempool()
 
-	node.SetupBlockchain(bc, mempool, 10000)
+	if err := node.SetupBlockchain(bc, mempool, 10000); err != nil {
+		t.Fatalf("SetupBlockchain failed: %v", err)
+	}
 
 	ctx := context.Background()
 	result, _ := node.TrainRound(ctx)
@@ -133,14 +137,18 @@ func TestTransactionIncrement(t *testing.T) {
 	bc := blockchain.NewBlockChain()
 	mempool := blockchain.NewMempool()
 
-	node.SetupBlockchain(bc, mempool, 10000)
+	if err := node.SetupBlockchain(bc, mempool, 10000); err != nil {
+		t.Fatalf("SetupBlockchain failed: %v", err)
+	}
 
 	ctx := context.Background()
 
 	// Submit multiple transactions
 	for i := 0; i < 3; i++ {
 		result, _ := node.TrainRound(ctx)
-		node.SubmitFlRound(ctx, result, []byte{})
+		if _, err := node.SubmitFlRound(ctx, result, []byte{}); err != nil {
+			t.Fatalf("SubmitFlRound failed: %v", err)
+		}
 	}
 
 	// Verify nonce incremented
@@ -155,7 +163,9 @@ func TestClaimRewards(t *testing.T) {
 	bc := blockchain.NewBlockChain()
 	mempool := blockchain.NewMempool()
 
-	node.SetupBlockchain(bc, mempool, 10000)
+	if err := node.SetupBlockchain(bc, mempool, 10000); err != nil {
+		t.Fatalf("SetupBlockchain failed: %v", err)
+	}
 
 	ctx := context.Background()
 
@@ -227,7 +237,9 @@ func TestCompleteRound(t *testing.T) {
 
 	// Complete multiple rounds
 	for i := 0; i < 3; i++ {
-		node.CompleteRound(ctx, uint64(i+1))
+		if err := node.CompleteRound(ctx, uint64(i+1)); err != nil {
+			t.Fatalf("CompleteRound failed: %v", err)
+		}
 	}
 
 	state := node.GetState()

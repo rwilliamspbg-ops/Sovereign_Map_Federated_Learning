@@ -90,10 +90,14 @@ func (bp *BlockProposer) computeProjectedStateRoot(txns []Transaction) string {
 		switch txn.Type {
 		case TxTypeFlRound:
 			flKey := fmt.Sprintf("fl_round:%s", txn.Data["round_id"])
-			tempState.Set(flKey, txn.Data)
+			if err := tempState.Set(flKey, txn.Data); err != nil {
+				continue
+			}
 			verification := BuildFLVerificationMetadata(txn.Data, bp.blockchain.Height()+1, txn.Timestamp)
 			verificationKey := fmt.Sprintf("fl_verification:%s", txn.Data["round_id"])
-			tempState.Set(verificationKey, verification)
+			if err := tempState.Set(verificationKey, verification); err != nil {
+				continue
+			}
 
 		case TxTypeStake:
 			stakeKey := fmt.Sprintf("stake:%s", txn.From)
@@ -101,14 +105,18 @@ func (bp *BlockProposer) computeProjectedStateRoot(txns []Transaction) string {
 			if val, err := tempState.Get(stakeKey); err == nil {
 				currentStake = val.(uint64)
 			}
-			tempState.Set(stakeKey, currentStake+txn.Amount)
+			if err := tempState.Set(stakeKey, currentStake+txn.Amount); err != nil {
+				continue
+			}
 
 		case TxTypeUnstake:
 			stakeKey := fmt.Sprintf("stake:%s", txn.From)
 			if val, err := tempState.Get(stakeKey); err == nil {
 				currentStake := val.(uint64)
 				if currentStake >= txn.Amount {
-					tempState.Set(stakeKey, currentStake-txn.Amount)
+					if err := tempState.Set(stakeKey, currentStake-txn.Amount); err != nil {
+						continue
+					}
 				}
 			}
 
@@ -121,7 +129,9 @@ func (bp *BlockProposer) computeProjectedStateRoot(txns []Transaction) string {
 					currentReward = parsed
 				}
 			}
-			tempState.Set(rewardKey, currentReward+txn.Amount)
+			if err := tempState.Set(rewardKey, currentReward+txn.Amount); err != nil {
+				continue
+			}
 
 		case TxTypeTransfer:
 			if err := applyTransferToState(tempState, ledger, &txn); err != nil {
@@ -131,11 +141,15 @@ func (bp *BlockProposer) computeProjectedStateRoot(txns []Transaction) string {
 
 		case TxTypeSmartContract:
 			contractKey := fmt.Sprintf("contract:%s", txn.ID)
-			tempState.Set(contractKey, txn.Data)
+			if err := tempState.Set(contractKey, txn.Data); err != nil {
+				continue
+			}
 
 		case TxTypeCheckpoint:
 			checkpointKey := fmt.Sprintf("checkpoint:%s", txn.Data["checkpoint_hash"])
-			tempState.Set(checkpointKey, txn.Data)
+			if err := tempState.Set(checkpointKey, txn.Data); err != nil {
+				continue
+			}
 		}
 	}
 
@@ -368,7 +382,9 @@ func (bp *BlockProposer) ProcessFlRoundTransaction(txn *Transaction) error {
 	// Update accuracy metrics if available
 	if accuracy, ok := txn.Data["accuracy"]; ok {
 		metricsKey := "accuracy:latest"
-		bp.blockchain.StateDB.Set(metricsKey, accuracy)
+		if err := bp.blockchain.StateDB.Set(metricsKey, accuracy); err != nil {
+			return err
+		}
 	}
 
 	return nil
