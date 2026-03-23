@@ -295,3 +295,29 @@ func (da *DistributedAggregator) GetLastAggregated() []byte {
 	defer da.mu.RUnlock()
 	return append([]byte(nil), da.aggregated...)
 }
+
+// GetRuntimeStatus returns a snapshot of aggregation runtime state.
+func (da *DistributedAggregator) GetRuntimeStatus() map[string]interface{} {
+	da.mu.RLock()
+	defer da.mu.RUnlock()
+
+	metricsCopy := *da.metrics
+	return map[string]interface{}{
+		"node_id":                 da.nodeID,
+		"peer_count":              len(da.peerNodes),
+		"round_number":            da.roundNumber,
+		"buffered_models":         len(da.models),
+		"async_mode":              da.asyncMode,
+		"max_stale_age_ms":        da.maxStaleAge.Milliseconds(),
+		"last_aggregated_present": len(da.aggregated) > 0,
+		"metrics": map[string]interface{}{
+			"total_rounds":       metricsCopy.TotalRounds,
+			"successful_rounds":  metricsCopy.SuccessfulRounds,
+			"failed_rounds":      metricsCopy.FailedRounds,
+			"average_latency_ms": metricsCopy.AverageLatency.Milliseconds(),
+			"stale_drops":        metricsCopy.StaleDrops,
+			"async_rounds":       metricsCopy.AsyncRounds,
+			"last_round_time":    metricsCopy.LastRoundTime,
+		},
+	}
+}

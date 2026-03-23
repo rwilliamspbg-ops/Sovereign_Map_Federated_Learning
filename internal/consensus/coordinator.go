@@ -656,6 +656,34 @@ func (c *Coordinator) GetState() ConsensusState {
 	return c.state
 }
 
+// GetRuntimeStatus returns a snapshot of coordinator runtime configuration and
+// live membership state for observability endpoints.
+func (c *Coordinator) GetRuntimeStatus() map[string]interface{} {
+	c.mu.RLock()
+	defer c.mu.RUnlock()
+
+	status := map[string]interface{}{
+		"state":                 c.state.String(),
+		"total_nodes":           c.totalNodes,
+		"quorum_size":           c.quorumSize,
+		"async_mode":            c.asyncMode,
+		"async_min_votes":       c.asyncMinVotes,
+		"max_vote_staleness_ms": c.maxVoteStaleness.Milliseconds(),
+		"open_rounds":           len(c.roundMembership),
+	}
+
+	activeNodes := make([]string, 0, len(c.activeNodes))
+	for nodeID, active := range c.activeNodes {
+		if active {
+			activeNodes = append(activeNodes, nodeID)
+		}
+	}
+	status["active_nodes"] = activeNodes
+	status["active_node_count"] = len(activeNodes)
+
+	return status
+}
+
 // Reset resets the coordinator for a new round
 func (c *Coordinator) Reset() {
 	c.mu.Lock()
@@ -667,6 +695,22 @@ func (c *Coordinator) Reset() {
 	c.votedByProposal = make(map[string]map[string]bool)
 	c.state = Proposing
 	// Note: roundNumber is NOT reset - it increments monotonically
+}
+
+// String returns a stable string form for the consensus state enum.
+func (s ConsensusState) String() string {
+	switch s {
+	case Proposing:
+		return "proposing"
+	case Voting:
+		return "voting"
+	case Committed:
+		return "committed"
+	case Aborted:
+		return "aborted"
+	default:
+		return "unknown"
+	}
 }
 
 // GetConsensusRound constructs a ConsensusRound from current consensus state (NEW)

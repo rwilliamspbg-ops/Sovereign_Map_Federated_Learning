@@ -48,14 +48,26 @@ type verificationPolicyRequest struct {
 	AllowTEEProof               bool   `json:"allow_tee_proof"`
 }
 
+// ConsensusStatusReader exposes consensus status snapshots for API responses.
+type ConsensusStatusReader interface {
+	GetRuntimeStatus() map[string]interface{}
+}
+
+// AggregationStatusReader exposes aggregation runtime snapshots for API responses.
+type AggregationStatusReader interface {
+	GetRuntimeStatus() map[string]interface{}
+}
+
 // Handler provides HTTP endpoints for the federated learning system
 type Handler struct {
-	convergence *convergence.Detector
-	island      *island.Manager
-	metrics     *monitoring.Collector
-	p2pNetwork  *p2p.Network
-	ledger      *ProofLedger
-	blockchain  *blockchain.BlockChain
+	convergence       *convergence.Detector
+	island            *island.Manager
+	metrics           *monitoring.Collector
+	p2pNetwork        *p2p.Network
+	ledger            *ProofLedger
+	blockchain        *blockchain.BlockChain
+	consensusReader   ConsensusStatusReader
+	aggregationReader AggregationStatusReader
 }
 
 func writeJSON(w http.ResponseWriter, payload interface{}) {
@@ -265,6 +277,12 @@ func (h *Handler) SetBlockchain(chain *blockchain.BlockChain) {
 	h.blockchain = chain
 }
 
+// SetConsensusReaders attaches optional consensus and aggregation status readers.
+func (h *Handler) SetConsensusReaders(consensusReader ConsensusStatusReader, aggregationReader AggregationStatusReader) {
+	h.consensusReader = consensusReader
+	h.aggregationReader = aggregationReader
+}
+
 // RegisterRoutes sets up HTTP routes
 func (h *Handler) RegisterRoutes(mux *http.ServeMux) {
 	// Legacy + current endpoints
@@ -278,6 +296,7 @@ func (h *Handler) RegisterRoutes(mux *http.ServeMux) {
 	mux.HandleFunc("/api/network_status", h.GetNetworkStatus)
 	mux.HandleFunc("/api/trust_status", h.GetTrustStatus)
 	mux.HandleFunc("/api/trust_snapshot", h.GetTrustSnapshot)
+	mux.HandleFunc("/api/consensus/status", h.GetConsensusStatus)
 
 	// Versioned aliases
 	mux.HandleFunc("/api/v1/status", h.GetStatus)
@@ -288,6 +307,7 @@ func (h *Handler) RegisterRoutes(mux *http.ServeMux) {
 	mux.HandleFunc("/api/v1/network_status", h.GetNetworkStatus)
 	mux.HandleFunc("/api/v1/trust_status", h.GetTrustStatus)
 	mux.HandleFunc("/api/v1/trust_snapshot", h.GetTrustSnapshot)
+	mux.HandleFunc("/api/v1/consensus/status", h.GetConsensusStatus)
 	mux.HandleFunc("/api/proof/verify", h.VerifyProof)
 	mux.HandleFunc("/api/v1/proof/verify", h.VerifyProof)
 	mux.HandleFunc("/api/proof/hybrid/verify", h.VerifyHybridProof)
@@ -333,6 +353,13 @@ func (h *Handler) GetStatus(w http.ResponseWriter, r *http.Request) {
 		},
 	}
 
+	if h.consensusReader != nil {
+		response["consensus"] = h.consensusReader.GetRuntimeStatus()
+	}
+	if h.aggregationReader != nil {
+		response["aggregation"] = h.aggregationReader.GetRuntimeStatus()
+	}
+
 	writeJSON(w, response)
 }
 
@@ -343,10 +370,13 @@ func (h *Handler) GetMetrics(w http.ResponseWriter, r *http.Request) {
 	}
 
 	response := map[string]interface{}{
-		"total_rounds":     0,
-		"active_nodes":     0,
-		"convergence_rate": 0.0,
-		"network_lag_ms":   0,
+		"total_rounds":                0,
+		"active_nodes":                0,
+		"convergence_rate":            0.0,
+		"network_lag_ms":              0,
+		"churn_joins_total":           0,
+		"churn_leaves_total":          0,
+		"async_staleness_avg_seconds": 0.0,
 	}
 
 	if h.metrics != nil {
@@ -361,6 +391,44 @@ func (h *Handler) GetMetrics(w http.ResponseWriter, r *http.Request) {
 		if agg := h.metrics.GetAggregation(monitoring.MetricNetworkLag); agg != nil {
 			response["network_lag_ms"] = agg.Mean
 		}
+		if agg := h.metrics.GetAggregation(monitoring.MetricNodeJoin); agg != nil {
+			response["churn_joins_total"] = agg.Sum
+		}
+		if agg := h.metrics.GetAggregation(monitoring.MetricNodeLeave); agg != nil {
+			response["churn_leaves_total"] = agg.Sum
+		}
+		if agg := h.metrics.GetAggregation(monitoring.MetricStaleness); agg != nil {
+			response["async_staleness_avg_seconds"] = agg.Mean
+		}
+	}
+
+	writeJSON(w, response)
+}
+
+// GetConsensusStatus returns consensus and aggregation runtime status.
+func (h *Handler) GetConsensusStatus(w http.ResponseWriter, r *http.Request) {
+	if !ensureGetMethod(w, r) {
+		return
+	}
+
+	response := map[string]interface{}{
+		"consensus": map[string]interface{}{
+			"available": false,
+		},
+		"aggregation": map[string]interface{}{
+			"available": false,
+		},
+	}
+
+	if h.consensusReader != nil {
+		status := h.consensusReader.GetRuntimeStatus()
+		status["available"] = true
+		response["consensus"] = status
+	}
+	if h.aggregationReader != nil {
+		status := h.aggregationReader.GetRuntimeStatus()
+		status["available"] = true
+		response["aggregation"] = status
 	}
 
 	writeJSON(w, response)
@@ -839,6 +907,7 @@ func (h *Handler) GetCapabilities(w http.ResponseWriter, r *http.Request) {
 			"open_endpoints": []string{
 				"GET /health",
 				"GET /api/v1/status",
+				"GET /api/v1/consensus/status",
 				"GET /api/v1/capabilities",
 				"GET /api/v1/verification_policy",
 				"GET /api/v1/trust_snapshot",

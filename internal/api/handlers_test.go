@@ -13,7 +13,20 @@ import (
 	"testing"
 
 	"github.com/rwilliamspbg-ops/Sovereign_Map_Federated_Learning/internal/blockchain"
+	"github.com/rwilliamspbg-ops/Sovereign_Map_Federated_Learning/internal/monitoring"
 )
+
+type mockStatusReader struct {
+	status map[string]interface{}
+}
+
+func (m mockStatusReader) GetRuntimeStatus() map[string]interface{} {
+	copy := make(map[string]interface{}, len(m.status))
+	for k, v := range m.status {
+		copy[k] = v
+	}
+	return copy
+}
 
 func mustStringSlice(t *testing.T, value interface{}, field string) []string {
 	t.Helper()
@@ -157,7 +170,7 @@ func TestCapabilitiesContractV1(t *testing.T) {
 		t.Fatalf("api.base_paths = %v, want %v", got, want)
 	}
 
-	if got, want := mustStringSlice(t, apiSection["open_endpoints"], "api.open_endpoints"), []string{"GET /health", "GET /api/v1/status", "GET /api/v1/capabilities", "GET /api/v1/verification_policy", "GET /api/v1/trust_snapshot"}; !reflect.DeepEqual(got, want) {
+	if got, want := mustStringSlice(t, apiSection["open_endpoints"], "api.open_endpoints"), []string{"GET /health", "GET /api/v1/status", "GET /api/v1/consensus/status", "GET /api/v1/capabilities", "GET /api/v1/verification_policy", "GET /api/v1/trust_snapshot"}; !reflect.DeepEqual(got, want) {
 		t.Fatalf("api.open_endpoints = %v, want %v", got, want)
 	}
 
@@ -555,6 +568,88 @@ func TestGetLedgerEndpointRejectsRoleMismatch(t *testing.T) {
 
 	if w.Code != http.StatusForbidden {
 		t.Fatalf("status = %d, want 403", w.Code)
+	}
+}
+
+func TestGetConsensusStatusEndpoint(t *testing.T) {
+	h := NewHandler(nil, nil, nil, nil)
+	h.SetConsensusReaders(
+		mockStatusReader{status: map[string]interface{}{"state": "voting", "active_node_count": 8}},
+		mockStatusReader{status: map[string]interface{}{"round_number": 12, "async_mode": true}},
+	)
+
+	mux := http.NewServeMux()
+	h.RegisterRoutes(mux)
+
+	req := httptest.NewRequest(http.MethodGet, "/api/v1/consensus/status", nil)
+	w := httptest.NewRecorder()
+	mux.ServeHTTP(w, req)
+
+	if w.Code != http.StatusOK {
+		t.Fatalf("status = %d, want 200", w.Code)
+	}
+
+	var payload map[string]interface{}
+	if err := json.Unmarshal(w.Body.Bytes(), &payload); err != nil {
+		t.Fatalf("json decode failed: %v", err)
+	}
+
+	consensus, ok := payload["consensus"].(map[string]interface{})
+	if !ok {
+		t.Fatalf("consensus missing: %v", payload)
+	}
+	if consensus["available"] != true {
+		t.Fatalf("consensus.available = %v, want true", consensus["available"])
+	}
+	if consensus["state"] != "voting" {
+		t.Fatalf("consensus.state = %v, want voting", consensus["state"])
+	}
+
+	aggregation, ok := payload["aggregation"].(map[string]interface{})
+	if !ok {
+		t.Fatalf("aggregation missing: %v", payload)
+	}
+	if aggregation["available"] != true {
+		t.Fatalf("aggregation.available = %v, want true", aggregation["available"])
+	}
+	if aggregation["async_mode"] != true {
+		t.Fatalf("aggregation.async_mode = %v, want true", aggregation["async_mode"])
+	}
+}
+
+func TestGetMetricsIncludesChurnAndStaleness(t *testing.T) {
+	collector := monitoring.NewCollector(100)
+	collector.RecordNodeJoin("node-a")
+	collector.RecordNodeJoin("node-b")
+	collector.RecordNodeLeave("node-c")
+	collector.RecordAsyncStaleness("node-d", 0.4, map[string]string{"source": "async"})
+	collector.RecordAsyncStaleness("node-e", 0.6, map[string]string{"source": "async"})
+
+	h := NewHandler(nil, nil, collector, nil)
+	mux := http.NewServeMux()
+	h.RegisterRoutes(mux)
+
+	req := httptest.NewRequest(http.MethodGet, "/api/v1/metrics", nil)
+	w := httptest.NewRecorder()
+	mux.ServeHTTP(w, req)
+
+	if w.Code != http.StatusOK {
+		t.Fatalf("status = %d, want 200", w.Code)
+	}
+
+	var payload map[string]interface{}
+	if err := json.Unmarshal(w.Body.Bytes(), &payload); err != nil {
+		t.Fatalf("json decode failed: %v", err)
+	}
+
+	if payload["churn_joins_total"] != float64(2) {
+		t.Fatalf("churn_joins_total = %v, want 2", payload["churn_joins_total"])
+	}
+	if payload["churn_leaves_total"] != float64(1) {
+		t.Fatalf("churn_leaves_total = %v, want 1", payload["churn_leaves_total"])
+	}
+	if payload["async_staleness_avg_seconds"] != 0.5 {
+		t.Fatalf("async_staleness_avg_seconds = %v, want 0.5", payload["async_staleness_avg_seconds"])
 	}
 }
 
