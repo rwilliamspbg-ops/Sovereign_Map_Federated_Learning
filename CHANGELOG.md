@@ -51,6 +51,16 @@ None - 0.2.0 is the first stable release with public APIs.
 - Updated Grafana Operations and Tokenomics dashboards (provisioned + mirrored) with dedicated blockchain and bridge runtime panels.
 - Added `make observability-smoke` to validate dashboard PromQL references and dashboard JSON parse integrity in one command.
 
+### Mobile Shield Release - 2026-03-23
+
+- Added hardware-rooted mobile gradient signing flows:
+   - iOS Secure Enclave signer and canonical payload adapter.
+   - Android StrongBox/Keystore signer and canonical payload adapter.
+- Added backend mobile verification route `POST /mobile/verify_gradient` with verification metrics and contract tests.
+- Added production store-wrapper packages for Google Play and Apple App Store (build/validate scripts, metadata/config templates, and submission checklists).
+- Hardened go-mobile build repeatability with deterministic toolchain wrapper updates and module dependency fixes.
+- Updated control-plane OpenAPI spec coverage for mobile verification endpoint to keep API validation CI green.
+
 ---
 
 ## [0.1.0-alpha.1] - 2026-03-17
