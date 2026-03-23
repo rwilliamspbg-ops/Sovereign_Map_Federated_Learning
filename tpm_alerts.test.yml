@@ -1,0 +1,82 @@
+rule_files:
+  - tpm_alerts.yml
+
+evaluation_interval: 1m
+
+tests:
+  - name: invalid-trust-chain-fires
+    interval: 1m
+    input_series:
+      - series: 'tpm_trust_chain_valid{node_id="node-9"}'
+        values: '0+0x20'
+    alert_rule_test:
+      - eval_time: 6m
+        alertname: InvalidTrustChain
+        exp_alerts:
+          - exp_labels:
+              severity: critical
+              component: tpm
+              node_id: node-9
+            exp_annotations:
+              summary: "Invalid trust chain (Node node-9)"
+              description: "Node node-9 has an invalid trust chain"
+
+  - name: ca-invalid-fires
+    interval: 1m
+    input_series:
+      - series: 'tpm_ca_certificate_valid'
+        values: '0+0x20'
+    alert_rule_test:
+      - eval_time: 2m
+        alertname: CAInvalid
+        exp_alerts:
+          - exp_labels:
+              severity: critical
+              component: tpm
+            exp_annotations:
+              summary: "Certificate Authority is invalid"
+              description: "The root CA certificate is invalid or missing"
+
+  - name: high-signature-failure-rate-fires
+    interval: 1m
+    input_series:
+      - series: 'tpm_signature_verification_failures_total{from_node_id="node-4"}'
+        values: '0+10x30'
+    alert_rule_test:
+      - eval_time: 4m
+        alertname: HighSignatureFailureRate
+        exp_alerts:
+          - exp_labels:
+              severity: critical
+              component: tpm
+              from_node_id: node-4
+            exp_annotations:
+              summary: "High signature failure rate from node node-4"
+              description: "More than 10% of signatures from node node-4 are failing verification"
+
+  - name: certificate-revoked-fires
+    interval: 1m
+    input_series:
+      - series: 'tpm_node_certificate_revoked{node_id="node-6"}'
+        values: '1+0x20'
+    alert_rule_test:
+      - eval_time: 2m
+        alertname: CertificateRevoked
+        exp_alerts:
+          - exp_labels:
+              severity: critical
+              component: tpm
+              node_id: node-6
+            exp_annotations:
+              summary: "Certificate revoked (Node node-6)"
+              description: "Node node-6 certificate has been revoked"
+
+  - name: invalid-trust-chain-not-firing-when-valid
+    interval: 1m
+    input_series:
+      - series: 'tpm_trust_chain_valid{node_id="node-10"}'
+        values: '1+0x20'
+    alert_rule_test:
+      - eval_time: 8m
+        alertname: InvalidTrustChain
+        exp_alerts: []

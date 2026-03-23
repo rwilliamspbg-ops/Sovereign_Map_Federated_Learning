@@ -1,0 +1,79 @@
+rule_files:
+  - fl_detailed_alerts.yml
+
+evaluation_interval: 1m
+
+tests:
+  - name: high-privacy-overhead-fires
+    interval: 1m
+    input_series:
+      - series: 'fl_privacy_overhead_percent{node_id="node-1"}'
+        values: '25+0x20'
+    alert_rule_test:
+      - eval_time: 6m
+        alertname: HighPrivacyOverhead
+        exp_alerts:
+          - exp_labels:
+              severity: warning
+              node_id: node-1
+            exp_annotations:
+              summary: "High Privacy Overhead on node-1"
+              description: "Privacy mechanisms are consuming >20% compute overhead for more than 5 minutes."
+
+  - name: byzantine-nodes-detected-fires
+    interval: 1m
+    input_series:
+      - series: 'fl_byzantine_nodes_total{region="us-east"}'
+        values: '0+5x20'
+    alert_rule_test:
+      - eval_time: 3m
+        alertname: ByzantineNodesDetected
+        exp_alerts:
+          - exp_labels:
+              severity: critical
+              region: us-east
+            exp_annotations:
+              summary: "Byzantine nodes detected in us-east"
+              description: "Active Byzantine behavior detected. Review FL anomaly logs."
+
+  - name: gpu-memory-exhaustion-fires
+    interval: 1m
+    input_series:
+      - series: 'fl_gpu_memory_usage_bytes{node_id="gpu-7"}'
+        values: '16000000000+0x20'
+    alert_rule_test:
+      - eval_time: 6m
+        alertname: GPUMemoryExhaustion
+        exp_alerts:
+          - exp_labels:
+              severity: critical
+              node_id: gpu-7
+            exp_annotations:
+              summary: "GPU Memory Exhaustion on gpu-7"
+              description: "GPU Memory usage is dangerously high."
+
+  - name: network-partition-active-fires
+    interval: 1m
+    input_series:
+      - series: 'fl_network_partition_events_total{region="region-a"}'
+        values: '1+0x20'
+    alert_rule_test:
+      - eval_time: 6m
+        alertname: NetworkPartitionActive
+        exp_alerts:
+          - exp_labels:
+              severity: error
+              region: region-a
+            exp_annotations:
+              summary: "Network Partition >5m in region-a"
+              description: "A network partition block is persisting."
+
+  - name: high-privacy-overhead-not-firing-under-threshold
+    interval: 1m
+    input_series:
+      - series: 'fl_privacy_overhead_percent{node_id="node-2"}'
+        values: '15+0x20'
+    alert_rule_test:
+      - eval_time: 8m
+        alertname: HighPrivacyOverhead
+        exp_alerts: []
