@@ -253,6 +253,7 @@ alerts-test:
 		check rules fl_slo_alerts.yml fl_detailed_alerts.yml tpm_alerts.yml
 	@docker run --rm --entrypoint /bin/promtool -v "$$(pwd):/workspace" -w /workspace prom/prometheus:v2.48.0 \
 		test rules fl_slo_alerts.test.yml fl_detailed_alerts.test.yml tpm_alerts.test.yml
+	@$(GO) test ./internal/monitoring -run "TestAlertmanagerRoutingPolicy|TestAlertmanagerInhibitionPolicy"
 	@echo "✅ Alert rule tests passed"
 
 smoke:

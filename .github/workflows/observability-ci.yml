@@ -41,3 +41,6 @@ jobs:
         run: |
           docker run --rm --entrypoint /bin/promtool -v "$PWD:/workspace" -w /workspace prom/prometheus:v2.48.0 \
             test rules fl_slo_alerts.test.yml fl_detailed_alerts.test.yml tpm_alerts.test.yml
+
+      - name: Validate Alertmanager routing and inhibition semantics
+        run: go test ./internal/monitoring -run "TestAlertmanagerRoutingPolicy|TestAlertmanagerInhibitionPolicy"
