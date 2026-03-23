@@ -4,7 +4,7 @@
 .PHONY: all build test clean deploy logs help \
         test-200-bft setup-200-test clean-200-test benchmark-200 \
 	chaos-test partition-test generate-data smoke testnet-wallet-readiness \
-	wow-start wow-verify screenshots-check go-env observability-smoke
+	wow-start wow-verify screenshots-check go-env observability-smoke alerts-test
 
 COMPOSE ?= docker compose
 TOOLROOT ?= /go/pkg/mod/golang.org/toolchain@v0.0.1-go1.25.7.linux-amd64
@@ -246,6 +246,14 @@ security-scan:
 
 check: fmt vet lint-soft test
 	@echo "✅ All checks passed"
+
+alerts-test:
+	@echo "🚨 Running Prometheus alert rule tests..."
+	@docker run --rm --entrypoint /bin/promtool -v "$$(pwd):/workspace" -w /workspace prom/prometheus:v2.48.0 \
+		check rules fl_slo_alerts.yml fl_detailed_alerts.yml tpm_alerts.yml
+	@docker run --rm --entrypoint /bin/promtool -v "$$(pwd):/workspace" -w /workspace prom/prometheus:v2.48.0 \
+		test rules fl_slo_alerts.test.yml
+	@echo "✅ Alert rule tests passed"
 
 smoke:
 	@echo "🧪 Running reproducibility smoke checks..."

@@ -24,3 +24,20 @@ jobs:
 
       - name: Validate Grafana queries
         run: python scripts/check_dashboard_queries.py
+
+  alert-rules-validation:
+    name: Validate Alert Rules
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd
+
+      - name: Validate rule syntax with promtool
+        run: |
+          docker run --rm --entrypoint /bin/promtool -v "$PWD:/workspace" -w /workspace prom/prometheus:v2.48.0 \
+            check rules fl_slo_alerts.yml fl_detailed_alerts.yml tpm_alerts.yml
+
+      - name: Run alert unit tests
+        run: |
+          docker run --rm --entrypoint /bin/promtool -v "$PWD:/workspace" -w /workspace prom/prometheus:v2.48.0 \
+            test rules fl_slo_alerts.test.yml

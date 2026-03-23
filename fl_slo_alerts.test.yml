@@ -1,0 +1,131 @@
+rule_files:
+  - fl_slo_alerts.yml
+
+evaluation_interval: 1m
+
+tests:
+  - name: consensus-endpoint-down-fires
+    interval: 1m
+    input_series:
+      - series: 'sovereign_consensus_status_up'
+        values: '0+0x20'
+    alert_rule_test:
+      - eval_time: 3m
+        alertname: ConsensusStatusEndpointDown
+        exp_alerts:
+          - exp_labels:
+              severity: critical
+              service: consensus
+              team: platform
+            exp_annotations:
+              summary: "Consensus status endpoint is unavailable"
+              description: "Metrics exporter cannot reach /api/v1/consensus/status for more than 2 minutes."
+              runbook_url: "https://github.com/rwilliamspbg-ops/Sovereign_Map_Federated_Learning/blob/main/docs/ALERT_RUNBOOKS.md#consensusstatusendpointdown"
+
+  - name: consensus-capacity-drift-fires
+    interval: 1m
+    input_series:
+      - series: 'sovereign_consensus_status_up'
+        values: '1+0x20'
+      - series: 'sovereign_consensus_active_nodes'
+        values: '4+0x20'
+      - series: 'sovereign_consensus_quorum_size'
+        values: '4+0x20'
+    alert_rule_test:
+      - eval_time: 6m
+        alertname: ConsensusCapacityDrift
+        exp_alerts:
+          - exp_labels:
+              severity: warning
+              service: consensus
+              team: platform
+            exp_annotations:
+              summary: "Consensus active-node capacity is close to quorum floor"
+              description: "Active node count has drifted below quorum+1 and resilience margin is low."
+              runbook_url: "https://github.com/rwilliamspbg-ops/Sovereign_Map_Federated_Learning/blob/main/docs/ALERT_RUNBOOKS.md#consensuscapacitydrift"
+
+  - name: consensus-open-rounds-backlog-fires
+    interval: 1m
+    input_series:
+      - series: 'sovereign_consensus_status_up'
+        values: '1+0x30'
+      - series: 'sovereign_consensus_open_rounds'
+        values: '4+0x30'
+    alert_rule_test:
+      - eval_time: 12m
+        alertname: ConsensusOpenRoundsBacklog
+        exp_alerts:
+          - exp_labels:
+              severity: warning
+              service: consensus
+              team: platform
+            exp_annotations:
+              summary: "Consensus open-round backlog is elevated"
+              description: "Open consensus rounds exceed 3 for 10 minutes, indicating commit pressure or stalls."
+              runbook_url: "https://github.com/rwilliamspbg-ops/Sovereign_Map_Federated_Learning/blob/main/docs/ALERT_RUNBOOKS.md#consensusopenroundsbacklog"
+
+  - name: async-staleness-high-fires
+    interval: 1m
+    input_series:
+      - series: 'sovereign_aggregation_staleness_avg_seconds'
+        values: '1.8+0x30'
+    alert_rule_test:
+      - eval_time: 12m
+        alertname: AsyncStalenessHigh
+        exp_alerts:
+          - exp_labels:
+              severity: warning
+              service: consensus
+              team: platform
+            exp_annotations:
+              summary: "Async staleness average is above SLO"
+              description: "Average async staleness exceeded 1.5 seconds for 10 minutes."
+              runbook_url: "https://github.com/rwilliamspbg-ops/Sovereign_Map_Federated_Learning/blob/main/docs/ALERT_RUNBOOKS.md#asyncstalenesshigh"
+
+  - name: churn-burst-detected-fires
+    interval: 1m
+    input_series:
+      - series: 'sovereign_aggregation_churn_joins_total'
+        values: '0+5x30'
+      - series: 'sovereign_aggregation_churn_leaves_total'
+        values: '0+0x30'
+    alert_rule_test:
+      - eval_time: 11m
+        alertname: ChurnBurstDetected
+        exp_alerts:
+          - exp_labels:
+              severity: warning
+              service: consensus
+              team: platform
+            exp_annotations:
+              summary: "Node churn burst detected"
+              description: "Join+leave churn exceeded 20 events over 5 minutes."
+              runbook_url: "https://github.com/rwilliamspbg-ops/Sovereign_Map_Federated_Learning/blob/main/docs/ALERT_RUNBOOKS.md#churnburstdetected"
+
+  - name: stale-drop-burst-detected-fires
+    interval: 1m
+    input_series:
+      - series: 'sovereign_aggregation_stale_drops_total'
+        values: '0+3x40'
+    alert_rule_test:
+      - eval_time: 22m
+        alertname: StaleDropBurstDetected
+        exp_alerts:
+          - exp_labels:
+              severity: warning
+              service: consensus
+              team: platform
+            exp_annotations:
+              summary: "Stale model drops are increasing rapidly"
+              description: "Stale model drops increased by more than 25 over 10 minutes."
+              runbook_url: "https://github.com/rwilliamspbg-ops/Sovereign_Map_Federated_Learning/blob/main/docs/ALERT_RUNBOOKS.md#staledropburstdetected"
+
+  - name: consensus-endpoint-down-not-firing-when-up
+    interval: 1m
+    input_series:
+      - series: 'sovereign_consensus_status_up'
+        values: '1+0x20'
+    alert_rule_test:
+      - eval_time: 6m
+        alertname: ConsensusStatusEndpointDown
+        exp_alerts: []
