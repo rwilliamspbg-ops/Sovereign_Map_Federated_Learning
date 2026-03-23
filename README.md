@@ -19,6 +19,29 @@ Production-grade federated learning platform that combines Byzantine-resilient a
 [![PySyft Demo](https://img.shields.io/badge/PySyft-Mohawk%20PoC%20Ready-10b981?style=flat-square)](examples/pysyft-integration)
 [![Prometheus Ready](https://img.shields.io/badge/Prometheus-Scrape%20Ready-ef4444?style=flat-square&logo=prometheus&logoColor=white)](prometheus.yml)
 
+## Mobile Shield Update March 2026
+
+The mobile hardening and store packaging track is now implemented in-repo.
+
+What is now live:
+
+- Hardware-backed mobile signer wrappers:
+    - iOS Secure Enclave signer integration in app flow.
+    - Android StrongBox/Keystore signer integration in app flow.
+- Canonical signed gradient envelope adapter on both mobile platforms, aligned to backend verifier contract.
+- Backend endpoint for signed mobile gradient verification: `/mobile/verify_gradient`.
+- Contract test coverage for valid and invalid mobile signed payloads.
+- Production store wrapper packages for both Android Play Store and Apple App Store submission flows.
+
+Primary references:
+
+- Mobile implementation overview: [mobile-apps/MOBILE_APP_README.md](mobile-apps/MOBILE_APP_README.md)
+- Android store wrapper: [mobile-apps/android-node-app/store-wrapper/README.md](mobile-apps/android-node-app/store-wrapper/README.md)
+- iOS store wrapper: [mobile-apps/ios-node-app/store-wrapper/README.md](mobile-apps/ios-node-app/store-wrapper/README.md)
+- iOS submission checklist: [mobile-apps/ios-node-app/store-wrapper/APP_STORE_CONNECT_SUBMISSION_CHECKLIST.md](mobile-apps/ios-node-app/store-wrapper/APP_STORE_CONNECT_SUBMISSION_CHECKLIST.md)
+- Backend verifier endpoint implementation: [sovereignmap_production_backend_v2.py](sovereignmap_production_backend_v2.py)
+- Mobile verifier contract test: [tests/scripts/python/test_mobile_verify_gradient_contract.py](tests/scripts/python/test_mobile_verify_gradient_contract.py)
+
 ## Observability Upgrade March 2026
 
 This upgrade ties blockchain and bridge execution telemetry directly into the production Grafana surfaces.

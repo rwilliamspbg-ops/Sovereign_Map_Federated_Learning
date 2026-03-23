@@ -16,6 +16,8 @@ Features:
 """
 
 import json
+import base64
+import hashlib
 import logging
 import math
 import os
@@ -36,6 +38,7 @@ from typing import Any, Dict, List, Optional, Set, Tuple
 import ecdsa
 import numpy as np
 from ecdsa import SigningKey, VerifyingKey, SECP256k1
+from ecdsa.util import sigdecode_der
 from flask import Flask, Response, jsonify, request, stream_with_context
 from prometheus_flask_exporter import PrometheusMetrics
 from prometheus_client import Gauge, Counter, Histogram
@@ -371,6 +374,12 @@ llm_policy_rejected_updates_total = Counter(
 )
 # Prime default labelset so Grafana queries have a concrete series from startup.
 llm_policy_rejected_updates_total.labels(reason="adapter_policy_guardrail").inc(0)
+mobile_gradient_verify_total = Counter(
+    "sovereignmap_mobile_gradient_verify_total",
+    "Total mobile gradient verification attempts",
+    ["result", "reason"],
+)
+mobile_gradient_verify_total.labels(result="accepted", reason="ok").inc(0)
 
 # Global state
 dao = None
@@ -523,6 +532,81 @@ def validate_llm_adapter_update(fit_res: FitRes) -> Tuple[bool, str]:
         return False, "required_target_modules_missing"
 
     return True, "ok"
+
+
+def _decode_b64_field(value: Any) -> Tuple[Optional[bytes], str]:
+    if value is None:
+        return None, "missing"
+    try:
+        if not isinstance(value, str) or not value:
+            return None, "invalid"
+        return base64.b64decode(value, validate=True), "ok"
+    except Exception:
+        return None, "invalid"
+
+
+def verify_mobile_signed_gradient(payload: Dict[str, Any]) -> Tuple[bool, str, Dict[str, Any]]:
+    node_id = str(payload.get("node_id", "")).strip()
+    signer_alias = str(payload.get("signer_alias", "")).strip()
+    public_key_pem = str(payload.get("public_key_pem", "")).strip()
+    attestation_required = (
+        str(os.getenv("MOBILE_REQUIRE_ATTESTATION", "true")).lower() == "true"
+    )
+
+    try:
+        round_id = int(payload.get("round", -1))
+    except (TypeError, ValueError):
+        return False, "invalid_round", {}
+
+    if not node_id:
+        return False, "missing_node_id", {}
+    if round_id < 0:
+        return False, "invalid_round", {}
+    if not signer_alias:
+        return False, "missing_signer_alias", {}
+    if not public_key_pem:
+        return False, "missing_public_key", {}
+
+    gradient_payload, payload_state = _decode_b64_field(payload.get("gradient_payload_b64"))
+    if payload_state != "ok" or not gradient_payload:
+        return False, "invalid_gradient_payload", {}
+
+    signature, signature_state = _decode_b64_field(payload.get("gradient_signature_b64"))
+    if signature_state != "ok" or not signature:
+        return False, "invalid_signature_payload", {}
+
+    attestation_raw, attestation_state = _decode_b64_field(
+        payload.get("attestation_payload_b64")
+    )
+    if attestation_required and attestation_state != "ok":
+        return False, "missing_attestation", {}
+
+    try:
+        vk = VerifyingKey.from_pem(public_key_pem)
+        verified = vk.verify(
+            signature,
+            gradient_payload,
+            hashfunc=hashlib.sha256,
+            sigdecode=sigdecode_der,
+        )
+    except Exception:
+        return False, "signature_verification_failed", {}
+
+    if not verified:
+        return False, "signature_verification_failed", {}
+
+    gradient_hash = hashlib.sha256(gradient_payload).hexdigest()
+    details = {
+        "node_id": node_id,
+        "round": round_id,
+        "signer_alias": signer_alias,
+        "gradient_size": len(gradient_payload),
+        "signature_size": len(signature),
+        "gradient_sha256": gradient_hash,
+        "attestation_present": attestation_state == "ok",
+        "attestation_size": len(attestation_raw) if attestation_raw is not None else 0,
+    }
+    return True, "ok", details
 
 
 def _get_cert_manager():
@@ -1137,6 +1221,31 @@ def update_verification_policy():
         data={"policy_fields": sorted(list(data.keys()))},
     )
     return jsonify({"status": "ok", "message": "Policy applied successfully"}), 200
+
+
+@app.route("/mobile/verify_gradient", methods=["POST"])
+def verify_mobile_gradient():
+    payload = request.get_json(silent=True) or {}
+    accepted, reason, details = verify_mobile_signed_gradient(payload)
+    result = "accepted" if accepted else "rejected"
+    mobile_gradient_verify_total.labels(result=result, reason=reason).inc()
+
+    if accepted:
+        emit_ops_event(
+            kind="mobile_gradient",
+            message="Accepted signed mobile gradient update",
+            severity="success",
+            data=details,
+        )
+        return jsonify({"status": "ok", "accepted": True, "reason": reason, "details": details}), 200
+
+    emit_ops_event(
+        kind="mobile_gradient",
+        message="Rejected signed mobile gradient update",
+        severity="warning",
+        data={"reason": reason},
+    )
+    return jsonify({"status": "error", "accepted": False, "reason": reason}), 400
 
 
 # Phase 3D Training Mock Endpoints

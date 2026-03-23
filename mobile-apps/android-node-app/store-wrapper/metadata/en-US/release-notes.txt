@@ -1,0 +1,5 @@
+Initial store wrapper package release.
+
+- Hardware-backed gradient signing path
+- Canonical signed payload envelope for verifier compatibility
+- Mobile telemetry and trust status flow

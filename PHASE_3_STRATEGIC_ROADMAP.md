@@ -13,6 +13,15 @@
 - **Docs Hosting:** Added static multi-spec Swagger UI and a GitHub Pages deployment workflow for hosted API documentation (active when Pages is enabled for the repository).
 - **Operator Visibility:** Added workflow badges and API documentation links in README for fast verification.
 
+## March 23, 2026 Update - Mobile Shield and Store Readiness Track Completed
+
+- **Hardware-Rooted Mobile Signing:** Implemented iOS Secure Enclave and Android StrongBox/Keystore signing wrappers and integrated them into mobile training round flow.
+- **Canonical Mobile Payload Contract:** Implemented platform-aligned canonical signed payload adapters on iOS and Android for verifier consistency.
+- **Backend Verification Endpoint:** Added mobile signed gradient verification endpoint (`/mobile/verify_gradient`) with verification result telemetry.
+- **Contract Test Coverage:** Added backend contract tests validating accepted signatures, rejected invalid signatures, and attestation requirements.
+- **Store Packaging Readiness:** Added production-oriented wrapper packages for both Play Store and App Store, including metadata templates, release build scripts, config templates, and App Store submission checklist.
+- **Android Signing Pipeline:** Wired release signing configuration to `keystore.properties` for deterministic Play-ready release builds.
+
 ### 🔥 Phase 3 Achieved Milestones (PR #62)
 - **Differential Privacy Compression:** 90% bandwidth reduction via Int8 Quantization & Gaussian Noise.
 - **Hardware Integration:** Android Camera2/ARCore LiDAR headers, WebGPU browser sensor pipeline (GPS+Camera).

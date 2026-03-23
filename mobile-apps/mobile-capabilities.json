@@ -1,0 +1,65 @@
+{
+  "schema_version": "1.0.0",
+  "runtime": "mohawk-mobile-shield-v1",
+  "node_profile": {
+    "class": "mobile_participant",
+    "role": "participant",
+    "supports_streaming_aggregation": true,
+    "hot_reload_wasm_tasks": true
+  },
+  "security": {
+    "root_of_trust": {
+      "hardware_backed": true,
+      "provider": "secure_enclave_or_strongbox",
+      "key_alias": "mohawk.mobile.identity",
+      "non_exportable_private_key": true,
+      "attestation_required": true,
+      "mtls_client_cert_bound": true
+    },
+    "signature": {
+      "algorithm": "ecdsa_p256_sha256",
+      "sign_every_gradient": true,
+      "max_signature_age_ms": 15000
+    }
+  },
+  "acceleration": {
+    "cpu": {
+      "enabled": true,
+      "threads_min": 2,
+      "threads_max": 8
+    },
+    "npu": {
+      "auto_detect": true,
+      "enabled": true,
+      "android_backend": "nnapi",
+      "ios_backend": "coreml",
+      "fallback": "cpu"
+    }
+  },
+  "memory_profile": {
+    "aggregation_mode": "mohawk_streaming",
+    "hard_limit_mb": 768,
+    "target_peak_mb": 512,
+    "oom_protection": true,
+    "background_execution_required": true
+  },
+  "telemetry": {
+    "report_interval_seconds": 15,
+    "metrics": [
+      "trust_score",
+      "ram_usage_mb",
+      "battery_impact_mw",
+      "npu_utilization_percent",
+      "gradient_sign_success_rate",
+      "mhc_earnings_preview"
+    ]
+  },
+  "compliance": {
+    "minimum_android_api": 28,
+    "minimum_ios_version": "14.0",
+    "tested_low_end_devices": [
+      "iphone8",
+      "android_go_budget_tier"
+    ]
+  }
+}

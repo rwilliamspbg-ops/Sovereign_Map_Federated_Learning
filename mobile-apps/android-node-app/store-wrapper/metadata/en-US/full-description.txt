@@ -1,0 +1,8 @@
+Sovereign Node turns your device into a high-integrity federated learning participant.
+
+- Hardware-backed signing using Android Keystore/StrongBox
+- On-device model rounds with mobile-safe streaming updates
+- Real-time node trust and resource telemetry
+- Privacy-first local training pipeline
+
+Intended for research, operations, and sovereign network participation.

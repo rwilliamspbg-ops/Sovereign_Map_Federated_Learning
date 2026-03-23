@@ -1,0 +1,6 @@
+Sovereign Node enables secure federated learning participation directly from mobile devices.
+
+- Hardware-backed gradient signing
+- Privacy-first on-device model rounds
+- Trust score and resource impact telemetry
+- Secure mobile node operations for sovereign networks

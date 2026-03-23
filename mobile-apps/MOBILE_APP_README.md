@@ -124,6 +124,29 @@ Watch your node participate in federated learning:
 
 ## Build from Source
 
+## Store Wrapper Packages
+
+Production packaging wrappers are now available for both stores:
+
+- Android Play Store wrapper:
+  - `mobile-apps/android-node-app/store-wrapper/`
+  - Build script: `mobile-apps/android-node-app/store-wrapper/build-release-android.sh`
+  - Validator: `mobile-apps/android-node-app/store-wrapper/validate-store-assets.sh`
+
+- Apple App Store wrapper:
+  - `mobile-apps/ios-node-app/store-wrapper/`
+  - Build script: `mobile-apps/ios-node-app/store-wrapper/build-release-ios.sh`
+  - Validator: `mobile-apps/ios-node-app/store-wrapper/validate-store-assets.sh`
+
+Each wrapper includes:
+
+- release build scripts
+- store metadata templates
+- signing/config templates
+- baseline privacy/compliance files
+
+Run validators before producing release artifacts.
+
 ### iOS
 
 **Prerequisites:**
