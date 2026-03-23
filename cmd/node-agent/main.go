@@ -25,6 +25,8 @@ import (
 	"github.com/prometheus/client_golang/prometheus/promhttp"
 	"github.com/rwilliamspbg-ops/Sovereign_Map_Federated_Learning/internal/api"
 	"github.com/rwilliamspbg-ops/Sovereign_Map_Federated_Learning/internal/blockchain"
+	"github.com/rwilliamspbg-ops/Sovereign_Map_Federated_Learning/internal/consensus"
+	"github.com/rwilliamspbg-ops/Sovereign_Map_Federated_Learning/internal/monitoring"
 	"github.com/rwilliamspbg-ops/Sovereign_Map_Federated_Learning/internal/tpm"
 	"github.com/rwilliamspbg-ops/Sovereign_Map_Federated_Learning/internal/wasmhost"
 )
@@ -102,8 +104,13 @@ func main() {
 		log.Printf("Node %s installed TPM-backed FL proof verifier", conf.NodeID)
 	}
 
-	handler := api.NewHandler(nil, nil, nil, nil)
+	collector := monitoring.NewCollector(1024)
+	coordinator := consensus.NewCoordinator(conf.NodeID, 5, 10*time.Second)
+	distributedAggregator := consensus.NewDistributedAggregator(conf.NodeID, []string{"peer-1", "peer-2", "peer-3", "peer-4"}, 10*time.Second)
+
+	handler := api.NewHandler(nil, nil, collector, nil)
 	handler.SetBlockchain(chain)
+	handler.SetConsensusReaders(coordinator, distributedAggregator)
 	mux := http.NewServeMux()
 	mux.Handle("/metrics", promhttp.Handler())
 	handler.RegisterRoutes(mux)
