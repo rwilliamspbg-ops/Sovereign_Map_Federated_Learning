@@ -258,19 +258,19 @@ func parseMAVLinkTelemetry(msgID int, sysID uint8, payload []byte) (DroneTelemet
 			return DroneTelemetry{}, false
 		}
 		// battery_remaining (int8) at offset 30
-		t.BatteryPercent = float64(int8(payload[30]))
+		t.BatteryPercent = float64(int8(payload[30])) // #nosec G115 -- MAVLink encodes battery_remaining as signed int8
 		return t, true
 
 	case 33: // GLOBAL_POSITION_INT
 		if len(payload) < 28 {
 			return DroneTelemetry{}, false
 		}
-		lat := int32(binary.LittleEndian.Uint32(payload[4:8]))
-		lon := int32(binary.LittleEndian.Uint32(payload[8:12]))
-		altMM := int32(binary.LittleEndian.Uint32(payload[12:16]))
+		lat := int32(binary.LittleEndian.Uint32(payload[4:8]))     // #nosec G115 -- MAVLink encodes signed int32 in two's complement
+		lon := int32(binary.LittleEndian.Uint32(payload[8:12]))    // #nosec G115 -- MAVLink encodes signed int32 in two's complement
+		altMM := int32(binary.LittleEndian.Uint32(payload[12:16])) // #nosec G115 -- MAVLink encodes signed int32 in two's complement
 		hdgCd := binary.LittleEndian.Uint16(payload[26:28])
-		vx := int16(binary.LittleEndian.Uint16(payload[20:22]))
-		vy := int16(binary.LittleEndian.Uint16(payload[22:24]))
+		vx := int16(binary.LittleEndian.Uint16(payload[20:22])) // #nosec G115 -- MAVLink encodes signed int16 in two's complement
+		vy := int16(binary.LittleEndian.Uint16(payload[22:24])) // #nosec G115 -- MAVLink encodes signed int16 in two's complement
 
 		t.Latitude = float64(lat) / 1e7
 		t.Longitude = float64(lon) / 1e7
@@ -289,7 +289,7 @@ func parseMAVLinkTelemetry(msgID int, sysID uint8, payload []byte) (DroneTelemet
 		gsBits := binary.LittleEndian.Uint32(payload[4:8])
 		altBits := binary.LittleEndian.Uint32(payload[12:16])
 		t.GroundSpeedMS = float64(math.Float32frombits(gsBits))
-		t.HeadingDegrees = float64(int16(binary.LittleEndian.Uint16(payload[8:10])))
+		t.HeadingDegrees = float64(int16(binary.LittleEndian.Uint16(payload[8:10]))) // #nosec G115 -- MAVLink encodes heading as signed int16
 		t.AltitudeMeters = float64(math.Float32frombits(altBits))
 		return t, true
 	}

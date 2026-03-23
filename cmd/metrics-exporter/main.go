@@ -109,7 +109,15 @@ func main() {
 	})
 
 	fmt.Printf("starting metrics-exporter on %s\n", *listen)
-	if err := http.ListenAndServe(*listen, nil); err != nil {
+	server := &http.Server{
+		Addr:              *listen,
+		Handler:           nil,
+		ReadHeaderTimeout: 5 * time.Second,
+		ReadTimeout:       15 * time.Second,
+		WriteTimeout:      15 * time.Second,
+		IdleTimeout:       60 * time.Second,
+	}
+	if err := server.ListenAndServe(); err != nil {
 		fmt.Fprintf(os.Stderr, "metrics-exporter failed: %v\n", err)
 		os.Exit(1)
 	}

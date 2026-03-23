@@ -25,7 +25,7 @@ var (
 	nonceMutex sync.Mutex
 )
 
-const quoteSecret = "sovereign-map-tpm-quote-secret-v1"
+const quoteBindingSalt = "sovereign-map-tpm-quote-salt-v1"
 const quoteVersion = "tpm-quote-v2"
 const maxQuoteAge = 10 * time.Minute
 const maxClockSkew = 30 * time.Second
@@ -156,7 +156,7 @@ func verifyQuoteFormatAndDigest(nodeID string, quote []byte) error {
 		return fmt.Errorf("quote node binding mismatch")
 	}
 
-	message := fmt.Sprintf("%d|%s|%s|%s|%s", parsed.timestampNanos, parsed.nonce, parsed.entropy, parsed.nodeBinding, quoteSecret)
+	message := fmt.Sprintf("%d|%s|%s|%s|%s", parsed.timestampNanos, parsed.nonce, parsed.entropy, parsed.nodeBinding, quoteBindingSalt)
 	recomputed := sha256.Sum256([]byte(message))
 	if parsed.digest != hex.EncodeToString(recomputed[:]) {
 		return fmt.Errorf("quote digest mismatch")
@@ -190,7 +190,7 @@ func generateTPMQuoteForNode(nodeID string) ([]byte, error) {
 	entropyPart := hex.EncodeToString(entropy)
 	nodeBinding := hashNodeBinding(nodeID)
 
-	message := fmt.Sprintf("%d|%s|%s|%s|%s", timestampPart, noncePart, entropyPart, nodeBinding, quoteSecret)
+	message := fmt.Sprintf("%d|%s|%s|%s|%s", timestampPart, noncePart, entropyPart, nodeBinding, quoteBindingSalt)
 	digest := sha256.Sum256([]byte(message))
 
 	quote := fmt.Sprintf("%s:%d:%s:%s:%s:%s", quoteVersion, timestampPart, noncePart, entropyPart, nodeBinding, hex.EncodeToString(digest[:]))

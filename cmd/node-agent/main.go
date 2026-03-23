@@ -19,6 +19,7 @@ import (
 	"log"
 	"net/http"
 	"os"
+	"strings"
 	"time"
 
 	"github.com/prometheus/client_golang/prometheus/promhttp"
@@ -112,8 +113,20 @@ func main() {
 		listenAddr = ":8082"
 	}
 
-	log.Printf("Node Agent API listening on %s", listenAddr)
-	if err := http.ListenAndServe(listenAddr, withCORS(mux)); err != nil {
+	log.Printf("Node Agent API listening on %s", sanitizeLogValue(listenAddr)) // #nosec G706 -- value is sanitized to remove control characters
+	server := &http.Server{
+		Addr:              listenAddr,
+		Handler:           withCORS(mux),
+		ReadHeaderTimeout: 5 * time.Second,
+		ReadTimeout:       15 * time.Second,
+		WriteTimeout:      15 * time.Second,
+		IdleTimeout:       60 * time.Second,
+	}
+	if err := server.ListenAndServe(); err != nil { // #nosec G706 -- listen address is sanitized before logging
 		log.Fatalf("API server failed: %v", err)
 	}
+}
+
+func sanitizeLogValue(v string) string {
+	return strings.NewReplacer("\n", "", "\r", "", "\t", " ").Replace(v)
 }

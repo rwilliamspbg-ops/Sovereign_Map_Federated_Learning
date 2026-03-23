@@ -442,7 +442,9 @@ func (bp *BlockProposer) DistributeFlRewardsVerificationWeighted(blockHeight uin
 			case float64:
 				confidenceBps = uint64(cv)
 			case int:
-				confidenceBps = uint64(cv)
+				if cv >= 0 {
+					confidenceBps = uint64(cv)
+				}
 			}
 		}
 	}

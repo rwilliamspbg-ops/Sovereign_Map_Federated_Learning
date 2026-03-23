@@ -6,6 +6,7 @@ import (
 	"crypto/sha256"
 	"encoding/hex"
 	"fmt"
+	"math"
 	"strings"
 	"sync"
 	"time"
@@ -543,7 +544,7 @@ func (bc *BlockChain) GetFLVerificationMetrics() FLVerificationMetrics {
 	}
 
 	if metrics.TotalRounds > 0 {
-		metrics.AverageConfidenceBps = uint32(confidenceSum / metrics.TotalRounds)
+		metrics.AverageConfidenceBps = safeUint32(confidenceSum / metrics.TotalRounds)
 		metrics.VerifiedRatio = float64(metrics.VerifiedRounds) / float64(metrics.TotalRounds)
 	}
 
@@ -594,13 +595,15 @@ func asUint32Default(v interface{}, fallback uint32) uint32 {
 	case uint32:
 		return n
 	case uint64:
-		return uint32(n)
+		if n <= math.MaxUint32 {
+			return uint32(n)
+		}
 	case int:
-		if n >= 0 {
+		if n >= 0 && uint64(n) <= math.MaxUint32 {
 			return uint32(n)
 		}
 	case float64:
-		if n >= 0 {
+		if n >= 0 && n <= math.MaxUint32 {
 			return uint32(n)
 		}
 	}
@@ -614,9 +617,20 @@ func asInt64Default(v interface{}, fallback int64) int64 {
 	case int:
 		return int64(n)
 	case uint64:
-		return int64(n)
+		if n <= math.MaxInt64 {
+			return int64(n)
+		}
 	case float64:
-		return int64(n)
+		if n >= math.MinInt64 && n <= math.MaxInt64 {
+			return int64(n)
+		}
 	}
 	return fallback
+}
+
+func safeUint32(v uint64) uint32 {
+	if v > math.MaxUint32 {
+		return math.MaxUint32
+	}
+	return uint32(v)
 }

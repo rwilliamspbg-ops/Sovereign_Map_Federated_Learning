@@ -8,8 +8,10 @@ import (
 	"encoding/hex"
 	"encoding/json"
 	"fmt"
+	"math"
 	"net/http"
 	"os"
+	"path/filepath"
 	"sort"
 	"strings"
 	"time"
@@ -166,7 +168,12 @@ func loadExpectedToken() (string, error) {
 		tokenFile = "/run/secrets/mohawk_api_token"
 	}
 
-	raw, err := os.ReadFile(tokenFile)
+	cleanTokenFile, err := sanitizeReadablePath(tokenFile)
+	if err != nil {
+		return "", err
+	}
+
+	raw, err := os.ReadFile(cleanTokenFile) // #nosec G304,G703 -- path is sanitized before file read
 	if err != nil {
 		return "", fmt.Errorf("failed to read token file: %w", err)
 	}
@@ -570,12 +577,17 @@ func auditTimestamp(entry map[string]interface{}) int64 {
 	case int:
 		return int64(ts)
 	case uint64:
-		return int64(ts)
+		if ts <= math.MaxInt64 {
+			return int64(ts)
+		}
 	case float64:
-		return int64(ts)
+		if ts >= math.MinInt64 && ts <= math.MaxInt64 {
+			return int64(ts)
+		}
 	default:
 		return 0
 	}
+	return 0
 }
 
 func verificationPolicyPayload(policy blockchain.VerificationPolicy) map[string]interface{} {
@@ -801,11 +813,18 @@ func (h *Handler) GetCapabilities(w http.ResponseWriter, r *http.Request) {
 	capabilities := map[string]interface{}{}
 	bridgePolicies := map[string]interface{}{}
 
-	if raw, err := os.ReadFile(capPath); err == nil {
-		_ = json.Unmarshal(raw, &capabilities)
+	cleanCapPath, capErr := sanitizeReadablePath(capPath)
+	cleanBridgePath, bridgeErr := sanitizeReadablePath(bridgePath)
+
+	if capErr == nil {
+		if raw, err := os.ReadFile(cleanCapPath); err == nil { // #nosec G304,G703 -- path is sanitized before file read
+			_ = json.Unmarshal(raw, &capabilities)
+		}
 	}
-	if raw, err := os.ReadFile(bridgePath); err == nil {
-		_ = json.Unmarshal(raw, &bridgePolicies)
+	if bridgeErr == nil {
+		if raw, err := os.ReadFile(cleanBridgePath); err == nil { // #nosec G304,G703 -- path is sanitized before file read
+			_ = json.Unmarshal(raw, &bridgePolicies)
+		}
 	}
 
 	response := map[string]interface{}{
@@ -867,4 +886,19 @@ func (h *Handler) GetCapabilities(w http.ResponseWriter, r *http.Request) {
 	}
 
 	writeJSON(w, response)
+}
+
+func sanitizeReadablePath(pathValue string) (string, error) {
+	trimmed := strings.TrimSpace(pathValue)
+	if trimmed == "" {
+		return "", fmt.Errorf("path is empty")
+	}
+	if strings.ContainsRune(trimmed, 0) {
+		return "", fmt.Errorf("path contains invalid null byte")
+	}
+	clean := filepath.Clean(trimmed)
+	if clean == "." || strings.HasPrefix(clean, "..") {
+		return "", fmt.Errorf("relative parent paths are not allowed")
+	}
+	return clean, nil
 }

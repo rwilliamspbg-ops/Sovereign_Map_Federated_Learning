@@ -3,11 +3,12 @@
 package blockchain
 
 import (
+	cryptorand "crypto/rand"
 	"fmt"
-	"math/rand"
+	"math"
+	"math/big"
 	"sort"
 	"sync"
-	"time"
 )
 
 const (
@@ -285,7 +286,11 @@ func (vs *ValidatorSet) selectWeighted(validators []*Validator, used map[string]
 	}
 
 	// Select random value between 0 and totalStake
-	r := rand.Uint64() % totalStake
+	r, err := cryptoRandomUint64(totalStake)
+	if err != nil {
+		// Fall back to deterministic selection if secure randomness fails.
+		return available[0]
+	}
 	accumulated := uint64(0)
 
 	for _, v := range available {
@@ -354,7 +359,7 @@ func (vs *ValidatorSet) compositeScore(v *Validator) uint32 {
 		uint64(att)*uint64(vs.Policy.AttestationWeight) +
 		uint64(quality)*uint64(vs.Policy.QualityWeight)
 
-	return uint32(weighted / uint64(totalWeight))
+	return toUint32Saturating(weighted / uint64(totalWeight))
 }
 
 // SetAttestationScore updates attestation trust score for a validator.
@@ -495,7 +500,7 @@ func (vs *ValidatorSet) RecordParticipationQuality(nodeID string, qualityScore u
 		v.ParticipationScore = qualityScore
 	} else {
 		// Smooth updates to avoid single-round gaming spikes.
-		v.ParticipationScore = uint32((uint64(v.ParticipationScore)*4 + uint64(qualityScore)) / 5)
+		v.ParticipationScore = toUint32Saturating((uint64(v.ParticipationScore)*4 + uint64(qualityScore)) / 5)
 	}
 
 	if qualityScore < vs.Policy.MinQualityScore {
@@ -595,9 +600,9 @@ func (vs *ValidatorSet) GetMetrics() ValidatorSetMetrics {
 	}
 
 	count := uint64(len(vs.Validators))
-	metrics.AverageReputation = uint32(repSum / count)
-	metrics.AverageAttestation = uint32(attSum / count)
-	metrics.AverageQuality = uint32(qualitySum / count)
+	metrics.AverageReputation = toUint32Saturating(repSum / count)
+	metrics.AverageAttestation = toUint32Saturating(attSum / count)
+	metrics.AverageQuality = toUint32Saturating(qualitySum / count)
 	return metrics
 }
 
@@ -663,6 +668,20 @@ func (vs *ValidatorSet) RotateEpoch(currentBlock uint64) {
 	}
 }
 
-func init() {
-	rand.Seed(time.Now().UnixNano())
+func cryptoRandomUint64(max uint64) (uint64, error) {
+	if max == 0 {
+		return 0, fmt.Errorf("max must be greater than zero")
+	}
+	n, err := cryptorand.Int(cryptorand.Reader, new(big.Int).SetUint64(max))
+	if err != nil {
+		return 0, err
+	}
+	return n.Uint64(), nil
+}
+
+func toUint32Saturating(v uint64) uint32 {
+	if v > math.MaxUint32 {
+		return math.MaxUint32
+	}
+	return uint32(v)
 }

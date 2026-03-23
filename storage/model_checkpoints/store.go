@@ -66,12 +66,12 @@ func (s Store) putFilesystem(version, digest string, payload []byte) (ArtifactMe
 		s.RootDir = "storage/model_checkpoints/data"
 	}
 
-	if err := os.MkdirAll(s.RootDir, 0o755); err != nil {
+	if err := os.MkdirAll(s.RootDir, 0o750); err != nil {
 		return ArtifactMeta{}, fmt.Errorf("create checkpoint root: %w", err)
 	}
 
 	file := filepath.Join(s.RootDir, version+".ckpt")
-	if err := os.WriteFile(file, payload, 0o644); err != nil {
+	if err := os.WriteFile(file, payload, 0o600); err != nil {
 		return ArtifactMeta{}, fmt.Errorf("write checkpoint file: %w", err)
 	}
 

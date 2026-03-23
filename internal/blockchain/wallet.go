@@ -192,9 +192,13 @@ func (l *WalletLedger) GetBalance(address string) uint64 {
 	case uint64:
 		return v
 	case float64:
-		return uint64(v)
+		if v >= 0 {
+			return uint64(v)
+		}
 	case int:
-		return uint64(v)
+		if v >= 0 {
+			return uint64(v)
+		}
 	}
 	return 0
 }

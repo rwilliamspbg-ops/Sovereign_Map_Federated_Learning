@@ -172,14 +172,14 @@ func (p *NodePool) GetNodeState(nodeID string) (*NodeState, error) {
 
 // GetPoolStats returns aggregate statistics for the pool
 func (p *NodePool) GetPoolStats() *PoolStats {
-	totalRounds := 0
+	totalRounds := uint64(0)
 	totalRewards := uint64(0)
 	totalStake := uint64(0)
 	activeNodes := 0
 
 	for _, node := range p.nodes {
 		state := node.GetState()
-		totalRounds += int(state.TotalRoundsCompleted)
+		totalRounds += state.TotalRoundsCompleted
 		totalRewards += state.TotalRewardsEarned
 		totalStake += state.NodeStake
 		if state.TotalRoundsCompleted > 0 {
@@ -190,7 +190,7 @@ func (p *NodePool) GetPoolStats() *PoolStats {
 	return &PoolStats{
 		TotalNodes:              uint64(len(p.nodes)),
 		ActiveNodes:             uint64(activeNodes),
-		TotalRoundsCompleted:    uint64(totalRounds),
+		TotalRoundsCompleted:    totalRounds,
 		TotalRewardsDistributed: totalRewards,
 		TotalStaked:             totalStake,
 		AverageRewardsPerNode:   totalRewards / uint64(len(p.nodes)),

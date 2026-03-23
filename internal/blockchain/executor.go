@@ -4,6 +4,7 @@ package blockchain
 
 import (
 	"fmt"
+	"math"
 	"time"
 
 	"github.com/rwilliamspbg-ops/Sovereign_Map_Federated_Learning/internal/blockchain/vm"
@@ -334,14 +335,17 @@ func asUint32(v interface{}) (uint32, bool) {
 	case uint32:
 		return n, true
 	case uint64:
+		if n > math.MaxUint32 {
+			return 0, false
+		}
 		return uint32(n), true
 	case int:
-		if n < 0 {
+		if n < 0 || uint64(n) > math.MaxUint32 {
 			return 0, false
 		}
 		return uint32(n), true
 	case float64:
-		if n < 0 {
+		if n < 0 || n > math.MaxUint32 {
 			return 0, false
 		}
 		return uint32(n), true

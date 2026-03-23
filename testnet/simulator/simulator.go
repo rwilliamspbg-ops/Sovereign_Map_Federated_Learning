@@ -53,7 +53,7 @@ func Run(cfg Config) Result {
 		cfg.RandomSeed = time.Now().UnixNano()
 	}
 
-	rng := rand.New(rand.NewSource(cfg.RandomSeed))
+	rng := rand.New(rand.NewSource(cfg.RandomSeed)) // #nosec G404 -- deterministic pseudo-randomness is required for repeatable simulation tests
 	result := Result{NodeCount: cfg.NodeCount, RoundsRequested: cfg.Rounds}
 	var totalDuration time.Duration
 

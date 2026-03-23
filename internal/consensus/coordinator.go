@@ -263,6 +263,10 @@ func (c *Coordinator) CommitModel(ctx context.Context, proposalID string) error 
 				}
 
 				// Distribute rewards to participating validators
+				if c.roundNumber < 0 {
+					fmt.Printf("Error distributing rewards: invalid round number %d\n", c.roundNumber)
+					return
+				}
 				blockHeight := uint64(c.roundNumber)
 				baseReward := uint64(10000) // 10K tokens per round
 				if err := c.blockProposer.DistributeFlRewards(blockHeight, participatingNodes, baseReward); err != nil {

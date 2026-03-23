@@ -247,7 +247,17 @@ func (v externalCommandVerifier) Verify(proof []byte) (bool, error) {
 	ctx, cancel := context.WithTimeout(context.Background(), timeout)
 	defer cancel()
 
-	cmd := exec.CommandContext(ctx, "/bin/sh", "-c", v.command)
+	tokens := strings.Fields(v.command)
+	if len(tokens) == 0 {
+		return false, fmt.Errorf("external stark verify command is not configured")
+	}
+	for _, token := range tokens {
+		if strings.ContainsAny(token, "\n\r;&|`$><") {
+			return false, fmt.Errorf("external stark verify command contains unsupported shell control characters")
+		}
+	}
+
+	cmd := exec.CommandContext(ctx, tokens[0], tokens[1:]...) // #nosec G204,G702 -- tokens are validated and shell control characters are rejected
 	cmd.Stdin = strings.NewReader(string(proof))
 	out, err := cmd.CombinedOutput()
 	if err != nil {
