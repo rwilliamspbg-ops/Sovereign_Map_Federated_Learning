@@ -27,9 +27,7 @@ The mobile hardening and store packaging track is now implemented in-repo.
 
 What is now live:
 
-- Hardware-backed mobile signer wrappers:
-    - iOS Secure Enclave signer integration in app flow.
-    - Android StrongBox/Keystore signer integration in app flow.
+- Hardware-backed mobile signer wrappers for iOS Secure Enclave and Android StrongBox/Keystore integration in app flow.
 - Canonical signed gradient envelope adapter on both mobile platforms, aligned to backend verifier contract.
 - Backend endpoint for signed mobile gradient verification: `/mobile/verify_gradient`.
 - Contract test coverage for valid and invalid mobile signed payloads.
