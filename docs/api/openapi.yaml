@@ -381,6 +381,31 @@ paths:
                     type: string
                     example: Policy applied successfully
 
+  /mobile/verify_gradient:
+    post:
+      tags: [Trust]
+      summary: Verify signed mobile gradient envelope
+      operationId: postMobileVerifyGradient
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/MobileVerifyGradientRequest'
+      responses:
+        '200':
+          description: Mobile gradient signature accepted
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/MobileVerifyGradientSuccess'
+        '400':
+          description: Mobile gradient signature rejected
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/MobileVerifyGradientError'
+
   /llm_policy:
     get:
       tags: [Trust]
@@ -920,6 +945,64 @@ components:
           items:
             type: object
             additionalProperties: true
+
+    MobileVerifyGradientRequest:
+      type: object
+      required:
+        - node_id
+        - round
+        - signer_alias
+        - public_key_pem
+        - gradient_payload_b64
+        - gradient_signature_b64
+      properties:
+        node_id:
+          type: string
+          example: node-7777
+        round:
+          type: integer
+          minimum: 0
+          example: 7
+        signer_alias:
+          type: string
+          example: mohawk.mobile.identity
+        public_key_pem:
+          type: string
+        gradient_payload_b64:
+          type: string
+        gradient_signature_b64:
+          type: string
+        attestation_payload_b64:
+          type: string
+
+    MobileVerifyGradientSuccess:
+      type: object
+      properties:
+        status:
+          type: string
+          example: ok
+        accepted:
+          type: boolean
+          example: true
+        reason:
+          type: string
+          example: ok
+        details:
+          type: object
+          additionalProperties: true
+
+    MobileVerifyGradientError:
+      type: object
+      properties:
+        status:
+          type: string
+          example: error
+        accepted:
+          type: boolean
+          example: false
+        reason:
+          type: string
+          example: signature_verification_failed
 
     LlmPolicy:
       type: object
