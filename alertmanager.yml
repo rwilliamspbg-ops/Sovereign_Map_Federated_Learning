@@ -3,10 +3,63 @@ global:
 
 route:
   receiver: default
-  group_by: ['alertname', 'job']
+  group_by: ['alertname', 'service', 'severity']
   group_wait: 10s
   group_interval: 5m
   repeat_interval: 1h
+  routes:
+    - receiver: consensus-critical
+      matchers:
+        - service="consensus"
+        - severity="critical"
+      group_wait: 10s
+      group_interval: 2m
+      repeat_interval: 30m
+
+    - receiver: consensus-warning
+      matchers:
+        - service="consensus"
+        - severity="warning"
+      group_wait: 30s
+      group_interval: 5m
+      repeat_interval: 2h
+
+    - receiver: fl-critical
+      matchers:
+        - service="federated-learning"
+        - severity="critical"
+      group_wait: 10s
+      group_interval: 2m
+      repeat_interval: 30m
+
+    - receiver: tokenomics-warning
+      matchers:
+        - service="tokenomics"
+        - severity="warning"
+      group_wait: 30s
+      group_interval: 5m
+      repeat_interval: 2h
 
 receivers:
   - name: default
+  - name: consensus-critical
+  - name: consensus-warning
+  - name: fl-critical
+  - name: tokenomics-warning
+
+inhibit_rules:
+  - source_matchers:
+      - alertname="ConsensusStatusEndpointDown"
+      - severity="critical"
+    target_matchers:
+      - service="consensus"
+      - severity="warning"
+    equal:
+      - service
+
+  - source_matchers:
+      - severity="critical"
+    target_matchers:
+      - severity="warning"
+    equal:
+      - service

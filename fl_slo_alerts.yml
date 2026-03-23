@@ -8,9 +8,11 @@ groups:
         labels:
           severity: critical
           service: federated-learning
+          team: platform
         annotations:
           summary: "FL rounds are stalled"
           description: "No federated learning round has completed in the last 10 minutes."
+          runbook_url: "https://github.com/rwilliamspbg-ops/Sovereign_Map_Federated_Learning/blob/main/docs/ALERT_RUNBOOKS.md#flroundstalled"
 
       - alert: FLAccuracyDegraded
         expr: sovereignmap_fl_accuracy < 80
@@ -18,9 +20,11 @@ groups:
         labels:
           severity: warning
           service: federated-learning
+          team: platform
         annotations:
           summary: "FL accuracy below SLO"
           description: "Model accuracy is below 80% for more than 5 minutes."
+          runbook_url: "https://github.com/rwilliamspbg-ops/Sovereign_Map_Federated_Learning/blob/main/docs/ALERT_RUNBOOKS.md#flaccuracydegraded"
 
       - alert: FLClientParticipationLow
         expr: sovereignmap_active_nodes < 5
@@ -28,9 +32,11 @@ groups:
         labels:
           severity: warning
           service: federated-learning
+          team: platform
         annotations:
           summary: "FL client participation low"
           description: "Active FL clients are below minimum participation threshold (5)."
+          runbook_url: "https://github.com/rwilliamspbg-ops/Sovereign_Map_Federated_Learning/blob/main/docs/ALERT_RUNBOOKS.md#flclientparticipationlow"
 
       - alert: FLRoundDurationHighP95
         expr: histogram_quantile(0.95, rate(sovereignmap_fl_round_duration_seconds_bucket[5m])) > 30
@@ -38,9 +44,11 @@ groups:
         labels:
           severity: warning
           service: federated-learning
+          team: platform
         annotations:
           summary: "FL p95 round duration high"
           description: "p95 FL round duration is above 30s for 10 minutes."
+          runbook_url: "https://github.com/rwilliamspbg-ops/Sovereign_Map_Federated_Learning/blob/main/docs/ALERT_RUNBOOKS.md#flrounddurationhighp95"
 
       - alert: BridgeCollateralRatioLow
         expr: sovereignmap_bridge_collateral_ratio_percent < 110
@@ -48,9 +56,11 @@ groups:
         labels:
           severity: warning
           service: tokenomics
+          team: platform
         annotations:
           summary: "Bridge collateral ratio below policy"
           description: "Bridge collateral ratio dropped below 110%."
+          runbook_url: "https://github.com/rwilliamspbg-ops/Sovereign_Map_Federated_Learning/blob/main/docs/ALERT_RUNBOOKS.md#bridgecollateralratiolow"
 
       - alert: ConsensusStatusEndpointDown
         expr: sovereign_consensus_status_up == 0
@@ -58,9 +68,11 @@ groups:
         labels:
           severity: critical
           service: consensus
+          team: platform
         annotations:
           summary: "Consensus status endpoint is unavailable"
           description: "Metrics exporter cannot reach /api/v1/consensus/status for more than 2 minutes."
+          runbook_url: "https://github.com/rwilliamspbg-ops/Sovereign_Map_Federated_Learning/blob/main/docs/ALERT_RUNBOOKS.md#consensusstatusendpointdown"
 
       - alert: ConsensusCapacityDrift
         expr: (sovereign_consensus_status_up == 1) and (sovereign_consensus_active_nodes < (sovereign_consensus_quorum_size + 1))
@@ -68,9 +80,11 @@ groups:
         labels:
           severity: warning
           service: consensus
+          team: platform
         annotations:
           summary: "Consensus active-node capacity is close to quorum floor"
           description: "Active node count has drifted below quorum+1 and resilience margin is low."
+          runbook_url: "https://github.com/rwilliamspbg-ops/Sovereign_Map_Federated_Learning/blob/main/docs/ALERT_RUNBOOKS.md#consensuscapacitydrift"
 
       - alert: ConsensusOpenRoundsBacklog
         expr: (sovereign_consensus_status_up == 1) and (sovereign_consensus_open_rounds > 3)
@@ -78,9 +92,11 @@ groups:
         labels:
           severity: warning
           service: consensus
+          team: platform
         annotations:
           summary: "Consensus open-round backlog is elevated"
           description: "Open consensus rounds exceed 3 for 10 minutes, indicating commit pressure or stalls."
+          runbook_url: "https://github.com/rwilliamspbg-ops/Sovereign_Map_Federated_Learning/blob/main/docs/ALERT_RUNBOOKS.md#consensusopenroundsbacklog"
 
       - alert: AsyncStalenessHigh
         expr: sovereign_aggregation_staleness_avg_seconds > 1.5
@@ -88,9 +104,11 @@ groups:
         labels:
           severity: warning
           service: consensus
+          team: platform
         annotations:
           summary: "Async staleness average is above SLO"
           description: "Average async staleness exceeded 1.5 seconds for 10 minutes."
+          runbook_url: "https://github.com/rwilliamspbg-ops/Sovereign_Map_Federated_Learning/blob/main/docs/ALERT_RUNBOOKS.md#asyncstalenesshigh"
 
       - alert: ChurnBurstDetected
         expr: (clamp_min(delta(sovereign_aggregation_churn_joins_total[5m]), 0) + clamp_min(delta(sovereign_aggregation_churn_leaves_total[5m]), 0)) > 20
@@ -98,9 +116,11 @@ groups:
         labels:
           severity: warning
           service: consensus
+          team: platform
         annotations:
           summary: "Node churn burst detected"
           description: "Join+leave churn exceeded 20 events over 5 minutes."
+          runbook_url: "https://github.com/rwilliamspbg-ops/Sovereign_Map_Federated_Learning/blob/main/docs/ALERT_RUNBOOKS.md#churnburstdetected"
 
       - alert: StaleDropBurstDetected
         expr: clamp_min(delta(sovereign_aggregation_stale_drops_total[10m]), 0) > 25
@@ -108,6 +128,8 @@ groups:
         labels:
           severity: warning
           service: consensus
+          team: platform
         annotations:
           summary: "Stale model drops are increasing rapidly"
           description: "Stale model drops increased by more than 25 over 10 minutes."
+          runbook_url: "https://github.com/rwilliamspbg-ops/Sovereign_Map_Federated_Learning/blob/main/docs/ALERT_RUNBOOKS.md#staledropburstdetected"
