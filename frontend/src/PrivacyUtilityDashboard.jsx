@@ -1,4 +1,4 @@
-import { useEffect, useState, useMemo } from 'react';
+import { useState, useMemo } from 'react';
 import {
   LineChart,
   Line,
@@ -17,28 +17,27 @@ import {
 } from 'recharts';
 import './PrivacyUtilityDashboard.css';
 
+const DEFAULT_METRICS = [
+  { round: 0, epsilon: 1.2, accuracy: 0.098, compression_ratio: 4.0, privacy_overhead: 0.000 },
+  { round: 1, epsilon: 1.2, accuracy: 0.234, compression_ratio: 4.0, privacy_overhead: 0.006 },
+  { round: 2, epsilon: 1.2, accuracy: 0.456, compression_ratio: 4.0, privacy_overhead: 0.006 },
+  { round: 5, epsilon: 1.2, accuracy: 0.723, compression_ratio: 4.0, privacy_overhead: 0.006 },
+  { round: 10, epsilon: 1.2, accuracy: 0.872, compression_ratio: 4.0, privacy_overhead: 0.006 }
+];
+
 /**
  * Privacy-Utility Measurement Dashboard
  * 
  * Visualizes the relationship between privacy budget (epsilon),
  * utility (accuracy), and compression characteristics
  */
-export default function PrivacyUtilityDashboard({ trainingMetrics = [], trainingMode = 'simulation' }) {
+export default function PrivacyUtilityDashboard({ trainingMetrics = [] }) {
   const [selectedEpsilon, setSelectedEpsilon] = useState(1.2);
   const [comparisonMode, setComparisonMode] = useState('epsilon'); // epsilon, compression, combined
   const [privacyscale, setPrivacyScale] = useState('linear'); // linear, log
-  
-  // Default metrics if no training data provided
-  const defaultMetrics = [
-    { round: 0, epsilon: 1.2, accuracy: 0.098, compression_ratio: 4.0, privacy_overhead: 0.000 },
-    { round: 1, epsilon: 1.2, accuracy: 0.234, compression_ratio: 4.0, privacy_overhead: 0.006 },
-    { round: 2, epsilon: 1.2, accuracy: 0.456, compression_ratio: 4.0, privacy_overhead: 0.006 },
-    { round: 5, epsilon: 1.2, accuracy: 0.723, compression_ratio: 4.0, privacy_overhead: 0.006 },
-    { round: 10, epsilon: 1.2, accuracy: 0.872, compression_ratio: 4.0, privacy_overhead: 0.006 }
-  ];
 
   const metrics = useMemo(() => {
-    return trainingMetrics && trainingMetrics.length > 0 ? trainingMetrics : defaultMetrics;
+    return trainingMetrics && trainingMetrics.length > 0 ? trainingMetrics : DEFAULT_METRICS;
   }, [trainingMetrics]);
 
   // Epsilon vs Accuracy curve (showing privacy-utility tradeoff)
