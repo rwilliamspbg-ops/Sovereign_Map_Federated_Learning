@@ -65,6 +65,14 @@ type ConsensusRound struct {
 	ValidatorVotes []*Vote
 }
 
+// RoundMembershipSnapshot captures a per-proposal membership view that can be
+// rebalanced on churn without restarting the round.
+type RoundMembershipSnapshot struct {
+	ActiveNodes map[string]bool
+	ActiveCount int
+	QuorumSize  int
+}
+
 // Coordinator manages distributed consensus for model aggregation
 type Coordinator struct {
 	mu                   sync.RWMutex
@@ -76,6 +84,12 @@ type Coordinator struct {
 	totalNodes           int
 	timeout              time.Duration
 	convergenceThreshold float64
+	activeNodes          map[string]bool
+	roundMembership      map[string]*RoundMembershipSnapshot
+	votedByProposal      map[string]map[string]bool
+	asyncMode            bool
+	asyncMinVotes        int
+	maxVoteStaleness     time.Duration
 
 	// Blockchain integration (NEW)
 	blockchain      *blockchain.BlockChain
@@ -93,7 +107,7 @@ func NewCoordinator(nodeID string, totalNodes int, timeout time.Duration) *Coord
 	// For n nodes, f < n/3, so quorum = ⌈(2n/3)⌉
 	quorumSize := (2 * totalNodes / 3) + 1
 
-	return &Coordinator{
+	coordinator := &Coordinator{
 		nodeID:               nodeID,
 		proposals:            make(map[string]*ModelProposal),
 		votes:                make(map[string][]*Vote),
@@ -102,6 +116,12 @@ func NewCoordinator(nodeID string, totalNodes int, timeout time.Duration) *Coord
 		totalNodes:           totalNodes,
 		timeout:              timeout,
 		convergenceThreshold: 0.01,
+		activeNodes:          make(map[string]bool, totalNodes),
+		roundMembership:      make(map[string]*RoundMembershipSnapshot),
+		votedByProposal:      make(map[string]map[string]bool),
+		asyncMode:            false,
+		asyncMinVotes:        0,
+		maxVoteStaleness:     timeout * 2,
 
 		// Initialize blockchain components (NEW)
 		blockchain:      &blockchain.BlockChain{},
@@ -109,6 +129,100 @@ func NewCoordinator(nodeID string, totalNodes int, timeout time.Duration) *Coord
 		validators:      blockchain.NewValidatorSet(),
 		mempool:         blockchain.NewMempool(),
 		roundNumber:     0,
+	}
+
+	coordinator.activeNodes[nodeID] = true
+	for i := 1; i < totalNodes; i++ {
+		coordinator.activeNodes[fmt.Sprintf("member-%d", i)] = true
+	}
+
+	return coordinator
+}
+
+func quorumForNodes(totalNodes int) int {
+	if totalNodes <= 1 {
+		return 1
+	}
+	return (2*totalNodes/3 + 1)
+}
+
+func cloneMembership(src map[string]bool) map[string]bool {
+	cloned := make(map[string]bool, len(src))
+	for nodeID, active := range src {
+		cloned[nodeID] = active
+	}
+	return cloned
+}
+
+func countActiveNodes(nodes map[string]bool) int {
+	count := 0
+	for _, active := range nodes {
+		if active {
+			count++
+		}
+	}
+	if count == 0 {
+		return 1
+	}
+	return count
+}
+
+// SetAsyncMode toggles asynchronous consensus behavior where commits can
+// succeed with a smaller vote threshold and stale votes are ignored.
+func (c *Coordinator) SetAsyncMode(enabled bool, minVotes int, maxStaleness time.Duration) {
+	c.mu.Lock()
+	defer c.mu.Unlock()
+
+	c.asyncMode = enabled
+	if minVotes > 0 {
+		c.asyncMinVotes = minVotes
+	} else {
+		c.asyncMinVotes = 0
+	}
+	if maxStaleness > 0 {
+		c.maxVoteStaleness = maxStaleness
+	}
+}
+
+// JoinNode marks a node as active for subsequent rounds.
+func (c *Coordinator) JoinNode(nodeID string) {
+	c.mu.Lock()
+	defer c.mu.Unlock()
+	if nodeID == "" {
+		return
+	}
+	c.activeNodes[nodeID] = true
+	c.totalNodes = countActiveNodes(c.activeNodes)
+	if !c.asyncMode {
+		c.quorumSize = quorumForNodes(c.totalNodes)
+	}
+}
+
+// LeaveNode marks a node inactive and rebalances open rounds in-place.
+func (c *Coordinator) LeaveNode(nodeID string) {
+	c.mu.Lock()
+	defer c.mu.Unlock()
+	if nodeID == "" {
+		return
+	}
+	if _, exists := c.activeNodes[nodeID]; exists {
+		c.activeNodes[nodeID] = false
+	}
+
+	for _, snapshot := range c.roundMembership {
+		if snapshot == nil {
+			continue
+		}
+		if active, exists := snapshot.ActiveNodes[nodeID]; exists && active {
+			snapshot.ActiveNodes[nodeID] = false
+			snapshot.ActiveCount = countActiveNodes(snapshot.ActiveNodes)
+			snapshot.QuorumSize = quorumForNodes(snapshot.ActiveCount)
+		}
+	}
+
+	c.totalNodes = countActiveNodes(c.activeNodes)
+	if !c.asyncMode {
+		c.quorumSize = quorumForNodes(c.totalNodes)
 	}
 }
 
@@ -158,6 +272,16 @@ func (c *Coordinator) ProposeModel(ctx context.Context, proposal *ModelProposal)
 	proposalID := fmt.Sprintf("%s-%d-%d", proposal.ProposerID, proposal.Round, proposal.Timestamp.Unix())
 	c.proposals[proposalID] = proposal
 	c.votes[proposalID] = make([]*Vote, 0)
+	c.votedByProposal[proposalID] = make(map[string]bool)
+
+	snapshotNodes := cloneMembership(c.activeNodes)
+	snapshotNodes[proposal.ProposerID] = true
+	snapshot := &RoundMembershipSnapshot{
+		ActiveNodes: snapshotNodes,
+		ActiveCount: countActiveNodes(snapshotNodes),
+	}
+	snapshot.QuorumSize = quorumForNodes(snapshot.ActiveCount)
+	c.roundMembership[proposalID] = snapshot
 
 	// Transition to voting state
 	c.state = Voting
@@ -178,6 +302,23 @@ func (c *Coordinator) CastVote(ctx context.Context, vote *Vote) error {
 	if _, exists := c.proposals[vote.ProposalID]; !exists {
 		return fmt.Errorf("proposal %s not found", vote.ProposalID)
 	}
+	if c.votedByProposal[vote.ProposalID] == nil {
+		c.votedByProposal[vote.ProposalID] = make(map[string]bool)
+	}
+	if c.votedByProposal[vote.ProposalID][vote.NodeID] {
+		return nil
+	}
+	c.votedByProposal[vote.ProposalID][vote.NodeID] = true
+
+	if snapshot, exists := c.roundMembership[vote.ProposalID]; exists {
+		if active, known := snapshot.ActiveNodes[vote.NodeID]; known {
+			if !active {
+				snapshot.ActiveNodes[vote.NodeID] = true
+				snapshot.ActiveCount++
+				snapshot.QuorumSize = quorumForNodes(snapshot.ActiveCount)
+			}
+		}
+	}
 
 	// Record vote
 	c.votes[vote.ProposalID] = append(c.votes[vote.ProposalID], vote)
@@ -195,16 +336,43 @@ func (c *Coordinator) CheckConsensus(proposalID string) (bool, error) {
 		return false, fmt.Errorf("proposal %s not found", proposalID)
 	}
 
+	proposal, hasProposal := c.proposals[proposalID]
+	if !hasProposal {
+		return false, fmt.Errorf("proposal %s not found", proposalID)
+	}
+
 	// Count affirmative votes
 	approvalCount := 0
 	for _, vote := range votes {
+		if vote == nil {
+			continue
+		}
+		if c.asyncMode && c.maxVoteStaleness > 0 {
+			if vote.Timestamp.After(proposal.Timestamp.Add(c.maxVoteStaleness)) {
+				continue
+			}
+		}
 		if vote.Approve {
 			approvalCount++
 		}
 	}
 
+	requiredVotes := c.quorumSize
+	if snapshot, exists := c.roundMembership[proposalID]; exists && snapshot != nil {
+		requiredVotes = snapshot.QuorumSize
+	}
+	if c.asyncMode {
+		requiredVotes = c.asyncMinVotes
+		if requiredVotes <= 0 {
+			requiredVotes = 1
+		}
+		if snapshot, exists := c.roundMembership[proposalID]; exists && snapshot != nil && requiredVotes > snapshot.ActiveCount {
+			requiredVotes = snapshot.ActiveCount
+		}
+	}
+
 	// Check if quorum reached
-	return approvalCount >= c.quorumSize, nil
+	return approvalCount >= requiredVotes, nil
 }
 
 // CommitModel finalizes the consensus and commits the model
@@ -217,14 +385,41 @@ func (c *Coordinator) CommitModel(ctx context.Context, proposalID string) error 
 		return fmt.Errorf("proposal %s not found", proposalID)
 	}
 
+	proposal, hasProposal := c.proposals[proposalID]
+	if !hasProposal {
+		return fmt.Errorf("proposal %s not found", proposalID)
+	}
+
 	approvalCount := 0
 	for _, vote := range votes {
+		if vote == nil {
+			continue
+		}
+		if c.asyncMode && c.maxVoteStaleness > 0 {
+			if vote.Timestamp.After(proposal.Timestamp.Add(c.maxVoteStaleness)) {
+				continue
+			}
+		}
 		if vote.Approve {
 			approvalCount++
 		}
 	}
 
-	if approvalCount < c.quorumSize {
+	requiredVotes := c.quorumSize
+	if snapshot, exists := c.roundMembership[proposalID]; exists && snapshot != nil {
+		requiredVotes = snapshot.QuorumSize
+	}
+	if c.asyncMode {
+		requiredVotes = c.asyncMinVotes
+		if requiredVotes <= 0 {
+			requiredVotes = 1
+		}
+		if snapshot, exists := c.roundMembership[proposalID]; exists && snapshot != nil && requiredVotes > snapshot.ActiveCount {
+			requiredVotes = snapshot.ActiveCount
+		}
+	}
+
+	if approvalCount < requiredVotes {
 		c.state = Aborted
 		return fmt.Errorf("consensus not reached: insufficient votes")
 	}
@@ -468,6 +663,8 @@ func (c *Coordinator) Reset() {
 
 	c.proposals = make(map[string]*ModelProposal)
 	c.votes = make(map[string][]*Vote)
+	c.roundMembership = make(map[string]*RoundMembershipSnapshot)
+	c.votedByProposal = make(map[string]map[string]bool)
 	c.state = Proposing
 	// Note: roundNumber is NOT reset - it increments monotonically
 }

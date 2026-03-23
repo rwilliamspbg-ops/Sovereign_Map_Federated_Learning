@@ -281,3 +281,148 @@ func TestDistributedAggregator(t *testing.T) {
 		t.Error("Expected non-nil metrics")
 	}
 }
+
+func TestDynamicMembershipRebalancesQuorum(t *testing.T) {
+	coord := NewCoordinator("node-1", 10, 5*time.Second)
+	ctx := context.Background()
+
+	proposal := &ModelProposal{
+		Round:      1,
+		Weights:    []byte("model-weights"),
+		ProposerID: "node-1",
+		Proof:      []byte("proof"),
+		Timestamp:  time.Now(),
+	}
+
+	proposalID, err := coord.ProposeModel(ctx, proposal)
+	if err != nil {
+		t.Fatalf("Failed to propose model: %v", err)
+	}
+
+	for i := 2; i <= 6; i++ {
+		vote := &Vote{
+			NodeID:     "node-" + string(rune('0'+i)),
+			ProposalID: proposalID,
+			Approve:    true,
+			Signature:  []byte("sig"),
+			Timestamp:  time.Now(),
+		}
+		if err := coord.CastVote(ctx, vote); err != nil {
+			t.Fatalf("Failed to cast vote: %v", err)
+		}
+	}
+
+	consensusReached, err := coord.CheckConsensus(proposalID)
+	if err != nil {
+		t.Fatalf("Failed to check consensus: %v", err)
+	}
+	if consensusReached {
+		t.Fatal("consensus should not be reached before churn rebalancing")
+	}
+
+	coord.LeaveNode("member-1")
+	coord.LeaveNode("member-2")
+	coord.LeaveNode("member-3")
+
+	consensusReached, err = coord.CheckConsensus(proposalID)
+	if err != nil {
+		t.Fatalf("Failed to check consensus after churn: %v", err)
+	}
+	if !consensusReached {
+		t.Fatal("consensus should be reached after membership rebalance")
+	}
+}
+
+func TestAsyncConsensusModeWithStalenessWindow(t *testing.T) {
+	coord := NewCoordinator("node-1", 10, 5*time.Second)
+	coord.SetAsyncMode(true, 2, 200*time.Millisecond)
+	ctx := context.Background()
+
+	proposal := &ModelProposal{
+		Round:      1,
+		Weights:    []byte("async-weights"),
+		ProposerID: "node-1",
+		Proof:      []byte("proof"),
+		Timestamp:  time.Now(),
+	}
+
+	proposalID, err := coord.ProposeModel(ctx, proposal)
+	if err != nil {
+		t.Fatalf("Failed to propose model: %v", err)
+	}
+
+	if err := coord.CastVote(ctx, &Vote{
+		NodeID:     "node-a",
+		ProposalID: proposalID,
+		Approve:    true,
+		Signature:  []byte("sig-a"),
+		Timestamp:  time.Now().Add(time.Second),
+	}); err != nil {
+		t.Fatalf("Failed to cast stale vote: %v", err)
+	}
+
+	if err := coord.CastVote(ctx, &Vote{
+		NodeID:     "node-b",
+		ProposalID: proposalID,
+		Approve:    true,
+		Signature:  []byte("sig-b"),
+		Timestamp:  time.Now(),
+	}); err != nil {
+		t.Fatalf("Failed to cast fresh vote: %v", err)
+	}
+
+	consensusReached, err := coord.CheckConsensus(proposalID)
+	if err != nil {
+		t.Fatalf("Failed to check consensus: %v", err)
+	}
+	if consensusReached {
+		t.Fatal("consensus should not include stale vote in async mode")
+	}
+
+	if err := coord.CastVote(ctx, &Vote{
+		NodeID:     "node-c",
+		ProposalID: proposalID,
+		Approve:    true,
+		Signature:  []byte("sig-c"),
+		Timestamp:  time.Now(),
+	}); err != nil {
+		t.Fatalf("Failed to cast second fresh vote: %v", err)
+	}
+
+	consensusReached, err = coord.CheckConsensus(proposalID)
+	if err != nil {
+		t.Fatalf("Failed to check consensus: %v", err)
+	}
+	if !consensusReached {
+		t.Fatal("consensus should be reached with required fresh votes in async mode")
+	}
+}
+
+func TestDistributedAggregatorAsyncDropsStaleModels(t *testing.T) {
+	aggregator := NewDistributedAggregator("test-node", []string{"peer1", "peer2"}, 2*time.Second)
+	aggregator.EnableAsyncMode(1, 20*time.Millisecond)
+	ctx := context.Background()
+
+	if err := aggregator.SubmitModel(ctx, "test-node", []byte{8, 8, 8}); err != nil {
+		t.Fatalf("submit model failed: %v", err)
+	}
+
+	aggregator.mu.Lock()
+	aggregator.models["peer-stale"] = modelSubmission{
+		weights:   []byte{1, 1, 1},
+		submitted: time.Now().Add(-time.Second),
+	}
+	aggregator.mu.Unlock()
+
+	if _, err := aggregator.AggregateWithConsensus(ctx); err != nil {
+		t.Fatalf("async aggregate failed: %v", err)
+	}
+
+	metrics := aggregator.GetMetrics()
+	if metrics.AsyncRounds == 0 {
+		t.Fatal("expected async round metric to increment")
+	}
+	if metrics.StaleDrops == 0 {
+		t.Fatal("expected stale model drop metric to increment")
+	}
+}

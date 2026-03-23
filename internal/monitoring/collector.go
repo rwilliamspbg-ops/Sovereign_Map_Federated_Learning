@@ -19,6 +19,9 @@ const (
 	MetricNetworkLag MetricType = "network_lag"
 	MetricTPMAttest  MetricType = "tpm_attestation"
 	MetricConsensus  MetricType = "consensus_votes"
+	MetricNodeJoin   MetricType = "node_join"
+	MetricNodeLeave  MetricType = "node_leave"
+	MetricStaleness  MetricType = "async_staleness"
 )
 
 // Metric represents a single metric observation
@@ -236,4 +239,19 @@ func (c *Collector) GetMetricRate(metricType MetricType, windowSeconds int) floa
 	}
 
 	return (last.Value - first.Value) / timeDiff
+}
+
+// RecordNodeJoin increments churn telemetry when a node joins active membership.
+func (c *Collector) RecordNodeJoin(nodeID string) {
+	c.Record(MetricNodeJoin, 1, map[string]string{"event": "join"}, nodeID)
+}
+
+// RecordNodeLeave increments churn telemetry when a node leaves active membership.
+func (c *Collector) RecordNodeLeave(nodeID string) {
+	c.Record(MetricNodeLeave, 1, map[string]string{"event": "leave"}, nodeID)
+}
+
+// RecordAsyncStaleness captures staleness in seconds for accepted or rejected updates.
+func (c *Collector) RecordAsyncStaleness(nodeID string, stalenessSeconds float64, labels map[string]string) {
+	c.Record(MetricStaleness, stalenessSeconds, labels, nodeID)
 }
