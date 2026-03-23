@@ -464,6 +464,7 @@ data/
 !docs/api/postman_collection.json
 !grafana/dashboards/*.json
 !grafana/provisioning/dashboards/*.json
+!mobile-apps/mobile-capabilities.json
 
 # TPM-related
 tpm_data/
