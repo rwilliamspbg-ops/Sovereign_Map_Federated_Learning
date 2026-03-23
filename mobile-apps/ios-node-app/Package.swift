@@ -15,7 +15,7 @@ let package = Package(
             name: "SovereignNodeApp",
             dependencies: [],
             path: ".",
-            sources: ["ContentView.swift", "SovereignNodeApp.swift", "SecureEnclaveSigner.swift"]
+            sources: ["ContentView.swift", "SovereignNodeApp.swift", "SecureEnclaveSigner.swift", "MobileGradientPayloadAdapter.swift"]
         )
     ]
 )

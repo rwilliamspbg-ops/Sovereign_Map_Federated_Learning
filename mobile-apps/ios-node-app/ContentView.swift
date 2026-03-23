@@ -61,9 +61,16 @@ class NodeViewModel: ObservableObject {
             self.loss = max(0.1, 3.5 - Float(self.round) * 0.1 + Float.random(in: -0.05...0.05))
 
             do {
-                let payload = Data("node=\(self.nodeID);round=\(self.round);ts=\(Int(Date().timeIntervalSince1970 * 1000))".utf8)
-                let signature = try self.signer.sign(alias: self.signerAlias, payload: payload)
-                self.statusMessage = "Round \(self.round) signed (\(signature.count)B)"
+                let gradientChunk = Data("gradient-round-\(self.round)-node-\(self.nodeID)".utf8)
+                let envelope = try MobilePayloadAdapter.buildSignedEnvelope(
+                    nodeID: "node-\(self.nodeID)",
+                    round: self.round,
+                    modelHashHex: "cifar10-v1",
+                    gradientChunk: gradientChunk,
+                    signerAlias: self.signerAlias,
+                    signer: self.signer
+                )
+                self.statusMessage = "Round \(self.round) signed envelope (\(envelope.gradientSignatureB64.count) chars)"
             } catch {
                 self.statusMessage = "Round \(self.round) unsigned: \(error.localizedDescription)"
             }

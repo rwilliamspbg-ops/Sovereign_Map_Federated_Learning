@@ -12,6 +12,7 @@ enum MobileSignerError: Error {
 protocol MobileHardwareSigner {
     func sign(alias: String, payload: Data) throws -> Data
     func attestation(alias: String) throws -> Data
+    func publicKeyPEM(alias: String) throws -> String
 }
 
 final class SecureEnclaveSigner: MobileHardwareSigner {
@@ -128,5 +129,29 @@ final class SecureEnclaveSigner: MobileHardwareSigner {
             throw MobileSignerError.encodingFailed
         }
         return try JSONSerialization.data(withJSONObject: payload, options: [])
+    }
+
+    func publicKeyPEM(alias: String) throws -> String {
+        let key = try privateKey(alias: alias)
+        guard let pub = SecKeyCopyPublicKey(key) else {
+            throw MobileSignerError.publicKeyUnavailable
+        }
+
+        var pubErr: Unmanaged<CFError>?
+        guard let rawPublicKey = SecKeyCopyExternalRepresentation(pub, &pubErr) as Data? else {
+            throw pubErr?.takeRetainedValue() ?? MobileSignerError.publicKeyUnavailable
+        }
+
+        // P-256 SubjectPublicKeyInfo prefix for uncompressed EC point.
+        let spkiPrefix = Data([
+            0x30, 0x59,
+            0x30, 0x13,
+            0x06, 0x07, 0x2A, 0x86, 0x48, 0xCE, 0x3D, 0x02, 0x01,
+            0x06, 0x08, 0x2A, 0x86, 0x48, 0xCE, 0x3D, 0x03, 0x01, 0x07,
+            0x03, 0x42, 0x00,
+        ])
+        let spki = spkiPrefix + rawPublicKey
+        let base64Body = spki.base64EncodedString(options: [.lineLength64Characters])
+        return "-----BEGIN PUBLIC KEY-----\n\(base64Body)\n-----END PUBLIC KEY-----"
     }
 }

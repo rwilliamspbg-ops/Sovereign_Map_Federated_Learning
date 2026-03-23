@@ -16,6 +16,7 @@ import java.security.spec.ECGenParameterSpec
 interface MobileHardwareSigner {
     fun sign(alias: String, payload: ByteArray): ByteArray
     fun attestation(alias: String): ByteArray
+    fun publicKeyPEM(alias: String): String
 }
 
 class StrongBoxSigner : MobileHardwareSigner {
@@ -102,5 +103,15 @@ class StrongBoxSigner : MobileHardwareSigner {
             .put("generated_at_unix", System.currentTimeMillis() / 1000)
 
         return payload.toString().toByteArray(StandardCharsets.UTF_8)
+    }
+
+    override fun publicKeyPEM(alias: String): String {
+        ensureKey(alias)
+        val keyStore = KeyStore.getInstance(keyStoreType).apply { load(null) }
+        val cert = keyStore.getCertificate(alias)
+            ?: throw IllegalStateException("Keystore certificate missing for alias=$alias")
+        val pubSpki = cert.publicKey.encoded
+        val base64Body = Base64.encodeToString(pubSpki, Base64.NO_WRAP)
+        return "-----BEGIN PUBLIC KEY-----\n$base64Body\n-----END PUBLIC KEY-----"
     }
 }

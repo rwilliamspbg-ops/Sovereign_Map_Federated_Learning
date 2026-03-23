@@ -6,7 +6,6 @@ import android.util.Log
 import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.ViewModel
-import java.nio.charset.StandardCharsets
 import kotlin.math.min
 import kotlin.random.Random
 
@@ -49,7 +48,7 @@ class NodeViewModel : ViewModel() {
         _statusMessage.value = "Training in progress..."
 
         try {
-            val warmup = "join-node-${_nodeID.value}".toByteArray(StandardCharsets.UTF_8)
+            val warmup = "join-node-${_nodeID.value}".toByteArray(Charsets.UTF_8)
             val signature = signer.sign(signerAlias, warmup)
             _statusMessage.value = "Hardware signer active (${signature.size}B signature)"
         } catch (err: Exception) {
@@ -89,10 +88,16 @@ class NodeViewModel : ViewModel() {
                 _loss.value = newLoss
 
                 try {
-                    val payload = "node=${_nodeID.value};round=$currentRound;ts=${System.currentTimeMillis()}"
-                        .toByteArray(StandardCharsets.UTF_8)
-                    val signature = signer.sign(signerAlias, payload)
-                    _statusMessage.value = "Round $currentRound signed (${signature.size}B)"
+                    val gradientChunk = "gradient-round-$currentRound-node-${_nodeID.value}".toByteArray(Charsets.UTF_8)
+                    val envelope = MobileGradientPayloadAdapter.buildSignedEnvelope(
+                        nodeId = "node-${_nodeID.value}",
+                        round = currentRound,
+                        modelHashHex = "cifar10-v1",
+                        gradientChunk = gradientChunk,
+                        signerAlias = signerAlias,
+                        signer = signer,
+                    )
+                    _statusMessage.value = "Round $currentRound signed envelope (${envelope.gradientSignatureB64.length} chars)"
                 } catch (err: Exception) {
                     _statusMessage.value = "Round $currentRound unsigned: ${err.message ?: "unknown"}"
                 }
