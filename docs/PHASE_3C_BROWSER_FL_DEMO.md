@@ -1,13 +1,18 @@
 # Phase 3C: Browser Federated Learning Demo
 
+## Status (2026-03-23)
+
+This document is retained as implementation history.
+
+- Browser FL Demo components remain in the repository for reference and targeted testing.
+- The primary operator UX is now HUD-first.
+- The app shell no longer exposes Browser FL Demo as a primary navigation mode.
+
 ## Overview
 
-Phase 3C introduces an in-browser federated learning simulation UI inside the existing frontend app. The interface now supports two operation modes:
+Phase 3C introduced an in-browser federated learning simulation UI inside the frontend app. The production-facing app flow has since been consolidated to HUD-first operation.
 
-1. Browser FL Demo
-2. Network Operations HUD
-
-The Browser FL Demo provides an interactive way to tune federated training inputs and observe convergence, communication cost, privacy/compression tradeoffs, and runtime backend state (WebGPU vs CPU fallback).
+The Browser FL Demo provides an interactive way to tune federated training inputs and observe convergence, communication cost, privacy/compression tradeoffs, and runtime backend state (WebGPU vs CPU fallback) when run directly for exploration.
 
 ## Where It Lives
 

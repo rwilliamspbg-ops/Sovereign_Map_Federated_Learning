@@ -549,9 +549,15 @@ curl -s http://localhost:8000/convergence | jq '.current_round, .current_accurac
 UI flow:
 
 1. Open `http://localhost:3000`.
-2. Switch to **Network Operations HUD**.
+2. Confirm **Network Operations HUD** is the default landing view.
 3. Click **Run Global FL Epoch**.
 4. Confirm the live timeline shows a `TRAINING_ROUND` event and round metrics increment.
+
+Workflow verification (GitHub Actions):
+
+```bash
+gh run list --branch main --limit 20
+```
 
 ### Option C: Full profile with participant scaling
 

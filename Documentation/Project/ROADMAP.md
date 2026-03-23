@@ -46,6 +46,12 @@ This roadmap tracks execution priorities for the current `v1.2.0` platform basel
 - Local participant onboarding API added (invite/register/list/revoke) with cert issuance.
 - Windows laptop client launcher + automated Windows EXE build workflow added.
 
+## Completed in Sprint 10 Documentation and HUD Cleanup (2026-03-23)
+- Frontend mode navigation consolidated to HUD-first operation (Browser FL Studio removed from primary app mode selector).
+- Web runtime telemetry surfaced directly inside HUD (browser RTT/downlink, heap, page load, viewport, device profile).
+- Privacy-Utility dashboard now consumes backend convergence metrics as canonical data source.
+- Dashboard query validator allowlist updated for consensus/aggregation metrics used in operations dashboard panels.
+
 ## Completed in v1.2.0 Cycle (2026-03)
 - Wallet-enabled blockchain core integrated with FL/coordinator pathways.
 - Smart contract runtime and governance execution hooks wired through consensus flow.
@@ -102,6 +108,16 @@ This roadmap tracks execution priorities for the current `v1.2.0` platform basel
   - root status docs and roadmap aligned with current release: met
   - sdk build/test CI paths verified against local baseline commands: met
   - documentation index points to current readiness artifacts: met
+
+### Milestone 8: HUD Consolidation and Metrics Surface
+- Status: completed (2026-03-23)
+- Removed Browser FL Studio from primary frontend navigation and made HUD the default entry view.
+- Added browser runtime telemetry cards/panels to HUD for operator visibility.
+- Realigned privacy analysis mode to backend convergence metrics for consistency.
+- Exit criteria:
+  - HUD is default and Browser FL Studio is no longer a primary mode: met
+  - browser telemetry is visible in HUD KPI/panel surfaces: met
+  - observability dashboard query validation includes all referenced metrics: met
 
 ### Milestone 4: Scale and Readiness Gate
 - Status: completed (2026-03-17)

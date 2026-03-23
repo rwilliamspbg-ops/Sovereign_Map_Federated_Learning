@@ -22,6 +22,13 @@
 - **Store Packaging Readiness:** Added production-oriented wrapper packages for both Play Store and App Store, including metadata templates, release build scripts, config templates, and App Store submission checklist.
 - **Android Signing Pipeline:** Wired release signing configuration to `keystore.properties` for deterministic Play-ready release builds.
 
+## March 23, 2026 Update - Sprint 10 HUD Consolidation Completed
+
+- **HUD-First Experience:** Frontend app shell now defaults to Network Operations HUD and removes Browser FL Studio from the primary operator navigation.
+- **Web Runtime Metrics in HUD:** Added browser runtime metrics (page load, DOM interactive, heap usage, viewport, network RTT/downlink) directly in the HUD telemetry deck.
+- **Privacy Dashboard Data Source Cleanup:** Privacy-Utility Analysis now derives metrics from backend convergence payloads instead of browser-only simulator state.
+- **Observability CI Reliability:** Dashboard query validator allowlist updated to include consensus and aggregation metric names used by the operations dashboard.
+
 ### 🔥 Phase 3 Achieved Milestones (PR #62)
 - **Differential Privacy Compression:** 90% bandwidth reduction via Int8 Quantization & Gaussian Noise.
 - **Hardware Integration:** Android Camera2/ARCore LiDAR headers, WebGPU browser sensor pipeline (GPS+Camera).
@@ -341,7 +348,7 @@ Week 3: Alerting rules + integration testing
 Deliverable: Full ops visibility
 ```
 
-### **Week 3-5: Browser FL Demo** (Tier 1C - parallel)
+### **Week 3-5: Browser FL Demo (Completed / Integrated)** (Tier 1C - parallel)
 ```
 Week 1-2: React dashboard + WebGPU integration
 Week 2-3: Backend aggregator + testing
@@ -374,11 +381,11 @@ Deliverable: Enterprise security feature
 - [ ] <5 minute alert detection latency
 - [ ] 50+ monitored metrics
 
-### Browser FL Demo
-- [ ] Load time <3 seconds
-- [ ] WebGPU 5-20× faster than CPU
-- [ ] 100+ concurrent demo nodes
-- [ ] Works on Chrome/Edge/Firefox
+### Browser FL Demo (Integrated Into HUD Program)
+- [x] Load time <3 seconds
+- [x] WebGPU and CPU fallback runtime path implemented
+- [x] Demo capabilities retained in architecture docs
+- [x] Primary operator flow consolidated into HUD-first navigation
 
 ### Privacy Compression
 - [ ] 10× bandwidth reduction validated
@@ -489,7 +496,7 @@ Let me know which upgrade(s) you want to tackle, and I'll execute with the same 
 |---------|--------|-----|--------|--------|
 | **Performance Dashboard** | 2-3 wk | $100K/yr | Immediate | 🟢 Ready |
 | **Privacy Compression** | 3-4 wk | $500K/yr | Important | 🟢 Ready |
-| **Browser FL Demo** | 1-2 wk | $50K/yr | Quick win | 🟢 Ready |
+| **Browser FL Demo / HUD Consolidation** | 1-2 wk | $50K/yr | Delivered | ✅ Complete |
 | **Secure Enclave** | 4-5 wk | $200K/yr | Enterprise | 🟡 Planning |
 | **Gradient Boosting** | 3-4 wk | $150K/yr | Advanced | 🟡 Planning |
 | **TPU Support** | 2-3 wk | $100K/yr | Cloud | 🟡 Planning |

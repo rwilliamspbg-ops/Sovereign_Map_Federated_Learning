@@ -61,6 +61,13 @@ None - 0.2.0 is the first stable release with public APIs.
 - Hardened go-mobile build repeatability with deterministic toolchain wrapper updates and module dependency fixes.
 - Updated control-plane OpenAPI spec coverage for mobile verification endpoint to keep API validation CI green.
 
+### Sprint 10 HUD and Documentation Cleanup - 2026-03-23
+
+- Frontend app shell now defaults to Network Operations HUD and removes Browser FL Studio from primary navigation.
+- HUD telemetry now includes browser runtime metrics (RTT, downlink, heap usage, load/interactive timing, viewport/device hints).
+- Privacy-Utility analysis mode now uses backend convergence metrics as canonical source.
+- Observability CI dashboard-query validator allowlist updated to include consensus and aggregation metrics referenced by operations dashboards.
+
 ---
 
 ## [0.1.0-alpha.1] - 2026-03-17
