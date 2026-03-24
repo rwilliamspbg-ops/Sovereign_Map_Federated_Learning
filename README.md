@@ -127,6 +127,19 @@ make wow-start
 make wow-verify
 ```
 
+Before running `make wow-start`, confirm Docker has enough space for first-time image builds:
+
+```bash
+df -h
+docker system df
+```
+
+If Docker cache is full, reclaim space and retry:
+
+```bash
+docker system prune -af
+```
+
 Then open:
 
 - HUD: `http://localhost:3000`
@@ -523,6 +536,28 @@ If you want the fastest production-feel walkthrough, run the two commands below 
 ```bash
 make wow-start
 make wow-verify
+```
+
+What `make wow-start` does:
+
+- Starts dev API/UI services (`mongo`, `redis`, `backend`, `frontend`) using [docker-compose.dev.yml](docker-compose.dev.yml).
+- Starts observability services (`prometheus`, `grafana`, `alertmanager`) using [docker-compose.monitoring.yml](docker-compose.monitoring.yml).
+- Prints direct links for API, HUD, Grafana, and Prometheus.
+
+Recommended verification sequence:
+
+```bash
+make wow-start
+docker compose -f docker-compose.dev.yml ps
+docker compose -f docker-compose.monitoring.yml ps
+make wow-verify
+```
+
+Teardown after the walkthrough:
+
+```bash
+docker compose -f docker-compose.dev.yml down
+docker compose -f docker-compose.monitoring.yml down
 ```
 
 Expected outcome in under 2 minutes:

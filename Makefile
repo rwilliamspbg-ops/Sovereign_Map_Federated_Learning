@@ -129,7 +129,7 @@ deploy:
 
 wow-start:
 	@echo "✨ Starting one-pass wow profile (dev stack + monitoring)..."
-	@docker compose -f docker-compose.dev.yml up -d
+	@docker compose -f docker-compose.dev.yml up -d mongo redis backend frontend
 	@docker compose -f docker-compose.monitoring.yml up -d
 	@sleep 8
 	@echo "✅ Stack started"

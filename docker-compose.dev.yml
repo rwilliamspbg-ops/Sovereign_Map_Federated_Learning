@@ -3,7 +3,7 @@ services:
   backend:
     build:
       context: .
-      dockerfile: Dockerfile
+      dockerfile: Dockerfile.backend
     image: sovereignmap/backend:dev
     container_name: sovereignmap-backend-dev
     ports:
