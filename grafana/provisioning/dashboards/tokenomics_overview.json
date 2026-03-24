@@ -103,7 +103,7 @@
       "targets": [
         {
           "refId": "A",
-          "expr": "clamp_max(clamp_min((((tokenomics_mint_rate_per_min or vector(0)) / 150) * 100 * 0.4) + ((((tokenomics_token_supply_minted or vector(0)) / clamp_min((tokenomics_token_supply_total or vector(1)), 1)) * 100) * 0.6), 100), 0)"
+          "expr": "clamp_max(clamp_min((((tokenomics_mint_rate_per_min or sovereignmap_token_mint_rate_per_min or vector(0)) / 150) * 100 * 0.4) + ((((tokenomics_token_supply_minted or sovereignmap_token_supply_minted or vector(0)) / clamp_min((tokenomics_token_supply_total or sovereignmap_token_supply_total or vector(1)), 1)) * 100) * 0.6), 100), 0)"
         }
       ],
       "fieldConfig": {
@@ -165,7 +165,7 @@
       "targets": [
         {
           "refId": "A",
-          "expr": "clamp_max(clamp_min((((tokenomics_bridge_collateral_ratio_percent or vector(0)) / 150) * 100 * 0.7) + ((clamp_min(clamp_max((tokenomics_bridge_net_flow_per_min or vector(0)) + 20, 0), 40) / 40) * 100 * 0.3), 100), 0)"
+          "expr": "clamp_max(clamp_min((((tokenomics_bridge_collateral_ratio_percent or sovereignmap_bridge_collateral_ratio_percent or vector(0)) / 150) * 100 * 0.7) + ((clamp_min(clamp_max((tokenomics_bridge_net_flow_per_min or sovereignmap_bridge_net_flow_per_min or vector(0)) + 20, 0), 40) / 40) * 100 * 0.3), 100), 0)"
         }
       ],
       "fieldConfig": {
@@ -227,7 +227,7 @@
       "targets": [
         {
           "refId": "A",
-          "expr": "clamp_max(clamp_min((((tokenomics_stake_participation_ratio or vector(0)) * 100) * 0.7) + (((1 - (tokenomics_stake_concentration_gini or vector(0.5))) * 100) * 0.3), 100), 0)"
+          "expr": "clamp_max(clamp_min((((tokenomics_stake_participation_ratio or sovereignmap_stake_participation_ratio or vector(0)) * 100) * 0.7) + (((1 - (tokenomics_stake_concentration_gini or sovereignmap_stake_concentration_gini or vector(0.5))) * 100) * 0.3), 100), 0)"
         }
       ],
       "fieldConfig": {
@@ -289,7 +289,7 @@
       "targets": [
         {
           "refId": "A",
-          "expr": "clamp_max(clamp_min((((tokenomics_wallet_liquidity_ratio or vector(0)) * 100) * 0.55) + (((1 - (tokenomics_top_10_holder_concentration or vector(0.8))) * 100) * 0.45), 100), 0)"
+          "expr": "clamp_max(clamp_min((((tokenomics_wallet_liquidity_ratio or sovereignmap_wallet_liquidity_ratio or vector(0)) * 100) * 0.55) + (((1 - (tokenomics_top_10_holder_concentration or sovereignmap_top_10_holder_concentration or vector(0.8))) * 100) * 0.45), 100), 0)"
         }
       ],
       "fieldConfig": {

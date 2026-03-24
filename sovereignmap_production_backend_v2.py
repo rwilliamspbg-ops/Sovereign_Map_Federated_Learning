@@ -701,7 +701,12 @@ def build_ops_health_snapshot() -> Dict[str, Any]:
     policy_rejected = int(simulation_counters.get("llmPolicyRejected", 0))
 
     # Privacy and anomaly-trust posture metrics used by the operator HUD.
-    epsilon_target = 0.35
+    try:
+        epsilon_target = max(
+            0.05, float(os.getenv("OPS_PRIVACY_EPSILON_TARGET", "1.0"))
+        )
+    except (TypeError, ValueError):
+        epsilon_target = 1.0
     cumulative_epsilon = min(
         epsilon_target,
         round(

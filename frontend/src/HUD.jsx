@@ -127,7 +127,7 @@ export default function HUD({
   const browserRtt = Number(webMetrics?.rttMs || 0);
   const browserHeap = Number(webMetrics?.jsHeapUsedMB || 0);
   const cumulativeEpsilon = Number(opsHealth?.privacy_security?.cumulative_epsilon || 0);
-  const epsilonTarget = Number(opsHealth?.privacy_security?.epsilon_target || 0.35);
+  const epsilonTarget = Number(opsHealth?.privacy_security?.epsilon_target || 1.0);
   const stragglerRate = Number(opsHealth?.privacy_security?.straggler_rate_pct || 0);
   const asr = Number(opsHealth?.privacy_security?.attack_success_rate_pct || 0);
   const detectionPrecision = Number(opsHealth?.privacy_security?.detection_precision_pct || 0);
