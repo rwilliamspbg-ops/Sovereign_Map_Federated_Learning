@@ -3,8 +3,8 @@ flwr==1.27.0
 flwr-datasets==0.6.0
 
 # Deep Learning
-torch==2.10.0
-torchvision==0.25.0
+torch==2.11.0
+torchvision==0.26.0
 
 # Privacy & Security
 opacus==1.5.4
@@ -32,7 +32,7 @@ google-generativeai==0.8.6
 google-auth==2.49.1
 
 # Database & Caching
-redis==7.3.0
+redis==7.4.0
 
 # Monitoring & Metrics
 prometheus-client==0.24.1
@@ -47,5 +47,5 @@ pydantic-settings==2.13.1
 # Development & Testing
 pytest==9.0.2
 pytest-asyncio==1.3.0
-pytest-cov==7.0.0
+pytest-cov==7.1.0
 pytest-timeout==2.4.0
