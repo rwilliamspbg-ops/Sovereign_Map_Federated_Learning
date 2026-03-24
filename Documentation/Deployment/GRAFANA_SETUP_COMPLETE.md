@@ -22,7 +22,7 @@ All Grafana dashboards have been successfully created, configured, and integrate
 - [x] All 6 dashboard JSON files created and validated
 
 #### 3. **Docker Compose Integration** ✅
-- [x] Updated `docker-compose.production.yml` with:
+- [x] Updated `docker-compose.full.yml` with:
   - Grafana datasources mount: `./grafana/provisioning/datasources:/etc/grafana/provisioning/datasources:ro`
   - Grafana dashboards mount: `./grafana/provisioning/dashboards:/etc/grafana/provisioning/dashboards:ro`
   - Environment: `GF_PATHS_PROVISIONING=/etc/grafana/provisioning`
@@ -72,7 +72,7 @@ All Grafana dashboards have been successfully created, configured, and integrate
 ```bash
 # 1. Start the full monitoring stack
 cd Sovereign_Map_Federated_Learning
-docker compose -f docker-compose.production.yml up -d
+docker compose -f docker-compose.full.yml up -d
 
 # 2. Wait for services to start (30-60 seconds)
 sleep 60
@@ -172,7 +172,7 @@ Get-ChildItem Sovereign_Map_Federated_Learning/grafana/provisioning/datasources/
 Get-ChildItem Sovereign_Map_Federated_Learning/grafana/provisioning/dashboards/dashboard*
 
 # Check Docker Compose has mounts
-Select-String "grafana/provisioning" Sovereign_Map_Federated_Learning/docker-compose.production.yml
+Select-String "grafana/provisioning" Sovereign_Map_Federated_Learning/docker-compose.full.yml
 ```
 
 ### Files Created/Modified
@@ -188,7 +188,7 @@ Select-String "grafana/provisioning" Sovereign_Map_Federated_Learning/docker-com
 - ✅ `GRAFANA_DASHBOARDS_COMPLETE.md` (comprehensive guide)
 
 **Files Modified:**
-- ✅ `docker-compose.production.yml` (added provisioning mounts)
+- ✅ `docker-compose.full.yml` (added provisioning mounts)
 
 ### Troubleshooting
 
@@ -221,7 +221,7 @@ curl http://localhost:8000/metrics
 
 1. **Start Monitoring Stack**
    ```bash
-   docker compose -f docker-compose.production.yml up -d
+   docker compose -f docker-compose.full.yml up -d
    ```
 
 2. **Verify Services**

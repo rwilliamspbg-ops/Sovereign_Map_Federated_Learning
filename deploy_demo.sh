@@ -8,7 +8,7 @@ USE_NPU=false
 USE_GPU=false
 TPM_TEST=true
 ACCELERATOR_MODE="auto"
-COMPOSE_FILE="${COMPOSE_FILE:-docker-compose.production.yml}"
+COMPOSE_FILE="${COMPOSE_FILE:-docker-compose.full.yml}"
 COMPOSE_ENV_FILE="${COMPOSE_ENV_FILE:-}"
 
 while [[ $# -gt 0 ]]; do
@@ -58,21 +58,8 @@ while [[ $# -gt 0 ]]; do
   esac
 done
 
-if [ -z "$COMPOSE_ENV_FILE" ]; then
-  case "$COMPOSE_FILE" in
-    docker-compose.dev.yml)
-      COMPOSE_ENV_FILE=".env.dev"
-      ;;
-    docker-compose.production.yml|docker-compose.large-scale.yml)
-      COMPOSE_ENV_FILE=".env.production"
-      ;;
-    docker-compose.full.yml)
-      COMPOSE_ENV_FILE=".env.full"
-      ;;
-    *)
-      COMPOSE_ENV_FILE=""
-      ;;
-  esac
+if [ -z "$COMPOSE_ENV_FILE" ] && [ "$COMPOSE_FILE" = "docker-compose.full.yml" ]; then
+  COMPOSE_ENV_FILE=".env.full"
 fi
 
 COMPOSE_ENV_ARGS=()

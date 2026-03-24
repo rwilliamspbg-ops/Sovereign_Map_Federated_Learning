@@ -61,7 +61,7 @@ COPY --from=build /app/dist /usr/share/nginx/html
 
 ### 2. Docker Compose Files
 
-#### `docker-compose.dev.yml` (Development)
+#### `docker-compose.full.yml` (Development)
 **For rapid iteration with hot reload:**
 - 5 node agents (reduced scale)
 - Bind mounts for source code hot reload
@@ -71,11 +71,11 @@ COPY --from=build /app/dist /usr/share/nginx/html
 - Use case: Local development (2 min setup)
 
 ```bash
-docker compose -f docker-compose.dev.yml up -d
+docker compose -f docker-compose.full.yml up -d
 # Access: Frontend http://localhost:3000 | Backend http://localhost:8000
 ```
 
-#### `docker-compose.production.yml` (Staging/QA)
+#### `docker-compose.full.yml` (Staging/QA)
 **Production-grade with monitoring stack:**
 - 50 node agents (default, scalable)
 - Resource limits and reservations
@@ -86,11 +86,11 @@ docker compose -f docker-compose.dev.yml up -d
 - Use case: Staging and QA environments (5 min setup)
 
 ```bash
-docker compose -f docker-compose.production.yml up -d --scale node-agent=50
+docker compose -f docker-compose.full.yml up -d --scale node-agent=50
 # Scales to 100 nodes: --scale node-agent=100
 ```
 
-#### `docker-compose.large-scale.yml` (Production Testnet)
+#### `docker-compose.full.yml` (Production Testnet)
 **Optimized for 500-10,000+ nodes:**
 - MongoDB with replication set and cache optimization
 - Redis with memory management policies
@@ -101,7 +101,7 @@ docker compose -f docker-compose.production.yml up -d --scale node-agent=50
 - Use case: Production testnet deployments (15 min setup)
 
 ```bash
-docker compose -f docker-compose.large-scale.yml up -d --scale node-agent=500
+docker compose -f docker-compose.full.yml up -d --scale node-agent=500
 # Monitor: watch -n 5 'curl http://localhost:8000/convergence | jq'
 ```
 
@@ -174,7 +174,7 @@ docker compose -f docker-compose.large-scale.yml up -d --scale node-agent=500
 
 ### 1. Development (2 minutes, 1GB RAM)
 ```bash
-docker compose -f docker-compose.dev.yml up -d
+docker compose -f docker-compose.full.yml up -d
 
 # Access
 open http://localhost:3000              # Frontend
@@ -184,10 +184,10 @@ open http://localhost:3001              # Grafana (admin/dev)
 
 ### 2. Production (5 minutes, 4-6GB RAM)
 ```bash
-docker compose -f docker-compose.production.yml up -d --scale node-agent=50
+docker compose -f docker-compose.full.yml up -d --scale node-agent=50
 
 # Scale to 100 nodes
-docker compose -f docker-compose.production.yml up -d --scale node-agent=100
+docker compose -f docker-compose.full.yml up -d --scale node-agent=100
 
 # Monitor
 watch -n 5 'curl -s http://localhost:8000/convergence | jq'
@@ -195,7 +195,7 @@ watch -n 5 'curl -s http://localhost:8000/convergence | jq'
 
 ### 3. Large-Scale (15 minutes, 8-16GB+ RAM)
 ```bash
-docker compose -f docker-compose.large-scale.yml up -d --scale node-agent=500
+docker compose -f docker-compose.full.yml up -d --scale node-agent=500
 
 # Monitor convergence
 docker exec sovereignmap-backend curl http://localhost:8000/convergence | jq
@@ -290,7 +290,7 @@ GRAFANA_PASSWORD=your_secure_password
 
 ### Load with Docker Compose:
 ```bash
-docker compose --env-file .env -f docker-compose.production.yml up -d
+docker compose --env-file .env -f docker-compose.full.yml up -d
 ```
 
 ---
@@ -346,7 +346,7 @@ Key sections:
 
 1. **Start development environment:**
    ```bash
-   docker compose -f docker-compose.dev.yml up -d
+   docker compose -f docker-compose.full.yml up -d
    ```
 
 2. **Access dashboards:**
@@ -356,7 +356,7 @@ Key sections:
 
 3. **Scale up for production:**
    ```bash
-   docker compose -f docker-compose.production.yml up -d --scale node-agent=100
+   docker compose -f docker-compose.full.yml up -d --scale node-agent=100
    ```
 
 4. **Monitor convergence:**
@@ -376,9 +376,9 @@ Key sections:
 | `Dockerfile.backend.optimized` | Dockerfile | 1.8KB | Multi-stage Python backend |
 | `Dockerfile.frontend.optimized` | Dockerfile | 1.1KB | Three-stage Node/nginx frontend |
 | `.dockerignore` | Config | 1.1KB | Build context exclusion |
-| `docker-compose.dev.yml` | Compose | 4.5KB | Development with hot reload |
-| `docker-compose.production.yml` | Compose | 7.7KB | Production with monitoring |
-| `docker-compose.large-scale.yml` | Compose | 6.7KB | Large-scale (500+ nodes) |
+| `docker-compose.full.yml` | Compose | 4.5KB | Development with hot reload |
+| `docker-compose.full.yml` | Compose | 7.7KB | Production with monitoring |
+| `docker-compose.full.yml` | Compose | 6.7KB | Large-scale (500+ nodes) |
 | `DOCKER_OPTIMIZATION.md` | Documentation | 9.6KB | Complete setup & troubleshooting guide |
 | `validate-docker.sh` | Script | 3.4KB | Validation script |
 

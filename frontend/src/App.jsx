@@ -1,33 +1,47 @@
-import { useState, useEffect, useMemo } from 'react';
+import { useState, useEffect } from 'react';
 import HUD from './HUD';
 import './App.css';
-import PrivacyUtilityDashboard from './PrivacyUtilityDashboard';
 
 const resolveApiBase = () => {
   if (import.meta.env.VITE_HUD_API_BASE) {
     return import.meta.env.VITE_HUD_API_BASE;
   }
 
-  if (import.meta.env.DEV) {
-    return '/backend';
-  }
-
-  if (typeof window !== 'undefined') {
-    const protocol = window.location.protocol === 'https:' ? 'https:' : 'http:';
-    const host = window.location.hostname;
-    const apiPort = import.meta.env.VITE_HUD_API_PORT || '8000';
-    return `${protocol}//${host}:${apiPort}`;
-  }
-
-  return 'http://localhost:8000';
+  // Always use the frontend reverse-proxy path unless explicitly overridden.
+  // This avoids direct host:8000 reachability/CORS issues for browser clients.
+  return '/backend';
 };
 
 const API_BASE = resolveApiBase();
 const TRUST_API_BASE = API_BASE;
 
-function App() {
-  const [mode, setMode] = useState('network-hud');
+const opsEventKey = (evt) => {
+  if (evt && Number.isFinite(Number(evt.id))) {
+    return `id:${Number(evt.id)}`;
+  }
+  return `sig:${evt?.ts || 0}:${evt?.kind || ''}:${evt?.message || ''}`;
+};
 
+const mergeOpsEvents = (existing, incoming, limit = 220) => {
+  const merged = [];
+  const seen = new Set();
+
+  [...(existing || []), ...(incoming || [])].forEach((evt) => {
+    if (!evt || evt.kind === 'heartbeat') {
+      return;
+    }
+    const key = opsEventKey(evt);
+    if (seen.has(key)) {
+      return;
+    }
+    seen.add(key);
+    merged.push(evt);
+  });
+
+  return merged.slice(-limit);
+};
+
+function App() {
   const [hudData, setHudData] = useState(null);
   const [health, setHealth] = useState(null);
   const [metricsSummary, setMetricsSummary] = useState(null);
@@ -63,8 +77,15 @@ function App() {
   const [policyMessage, setPolicyMessage] = useState('');
   const [trainingStatus, setTrainingStatus] = useState({ status: 'idle', active: false, round: 0 });
   const [opsHealth, setOpsHealth] = useState(null);
+  const [opsTrends, setOpsTrends] = useState(null);
   const [opsEvents, setOpsEvents] = useState([]);
   const [opsStreamStatus, setOpsStreamStatus] = useState('disconnected');
+  const [opsStreamLastError, setOpsStreamLastError] = useState('');
+  const [policyTransport, setPolicyTransport] = useState({
+    endpoint: '',
+    status: 'idle',
+    detail: ''
+  });
   const [enclaveActionMessage, setEnclaveActionMessage] = useState('');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
@@ -72,25 +93,6 @@ function App() {
   const avgFlDuration = Number(metricsSummary?.avg_fl_duration);
   const totalStake = Number(metricsSummary?.total_stake);
   const cxlUtilization = Number(metricsSummary?.cxl_utilization);
-
-  const privacyTrainingMetrics = useMemo(() => {
-    const rounds = Array.isArray(metricsSummary?.convergence?.rounds) ? metricsSummary.convergence.rounds : [];
-    const accuracies = Array.isArray(metricsSummary?.convergence?.accuracies) ? metricsSummary.convergence.accuracies : [];
-    const losses = Array.isArray(metricsSummary?.convergence?.losses) ? metricsSummary.convergence.losses : [];
-
-    if (rounds.length === 0 && accuracies.length === 0 && losses.length === 0) {
-      return [];
-    }
-
-    const count = Math.max(rounds.length, accuracies.length, losses.length);
-    return Array.from({ length: count }, (_, idx) => ({
-      round: Number.isFinite(Number(rounds[idx])) ? Number(rounds[idx]) : idx,
-      accuracy: Number.isFinite(Number(accuracies[idx])) ? Number(accuracies[idx]) : 0,
-      loss: Number.isFinite(Number(losses[idx])) ? Number(losses[idx]) : 0,
-      privacy_overhead: 0,
-      compression_ratio: Number.isFinite(cxlUtilization) && cxlUtilization > 0 ? Number((1 / cxlUtilization).toFixed(2)) : 1
-    }));
-  }, [metricsSummary, cxlUtilization]);
 
   useEffect(() => {
     fetchData();
@@ -111,7 +113,8 @@ function App() {
         const recent = await fetch(`${API_BASE}/ops/events/recent?limit=80`);
         if (recent.ok) {
           const recentPayload = await recent.json();
-          setOpsEvents(Array.isArray(recentPayload?.events) ? recentPayload.events : []);
+          const seedEvents = Array.isArray(recentPayload?.events) ? recentPayload.events : [];
+          setOpsEvents((prev) => mergeOpsEvents(prev, seedEvents));
         }
 
         if (cancelled) {
@@ -119,18 +122,21 @@ function App() {
         }
 
         stream = new EventSource(`${API_BASE}/ops/events`);
-        stream.onopen = () => setOpsStreamStatus('connected');
-        stream.onerror = () => setOpsStreamStatus('degraded');
+        stream.onopen = () => {
+          setOpsStreamStatus('connected');
+          setOpsStreamLastError('');
+        };
+        stream.onerror = () => {
+          setOpsStreamStatus('degraded');
+          setOpsStreamLastError(`SSE transport error @ ${new Date().toLocaleTimeString()}`);
+        };
         stream.onmessage = (evt) => {
           try {
             const payload = JSON.parse(evt.data);
             if (payload?.kind === 'heartbeat') {
               return;
             }
-            setOpsEvents((prev) => {
-              const next = [...prev, payload];
-              return next.slice(-220);
-            });
+            setOpsEvents((prev) => mergeOpsEvents(prev, [payload]));
           } catch (parseErr) {
             console.warn('Failed to parse ops event', parseErr);
           }
@@ -138,6 +144,7 @@ function App() {
       } catch (streamErr) {
         console.warn('Ops event stream unavailable:', streamErr);
         setOpsStreamStatus('disconnected');
+        setOpsStreamLastError(streamErr?.message || 'stream bootstrap failed');
       }
     };
 
@@ -212,13 +219,14 @@ function App() {
   const fetchData = async () => {
     setLoading(true);
     try {
-      const [hudFetch, healthFetch, metricsFetch, foundersFetch, trainingFetch, opsHealthFetch] = await Promise.allSettled([
+      const [hudFetch, healthFetch, metricsFetch, foundersFetch, trainingFetch, opsHealthFetch, opsTrendsFetch] = await Promise.allSettled([
         fetch(`${API_BASE}/hud_data`),
         fetch(`${API_BASE}/health`),
         fetch(`${API_BASE}/metrics_summary`),
         fetch(`${API_BASE}/founders`),
         fetch(`${API_BASE}/training/status`),
-        fetch(`${API_BASE}/ops/health`)
+        fetch(`${API_BASE}/ops/health`),
+        fetch(`${API_BASE}/ops/trends?limit=180`)
       ]);
 
       const toResponse = (settled) => (settled?.status === 'fulfilled' ? settled.value : null);
@@ -233,13 +241,14 @@ function App() {
         }
       };
 
-      const [hud, healthData, metrics, foundersData, trainingData, opsHealthData] = await Promise.all([
+      const [hud, healthData, metrics, foundersData, trainingData, opsHealthData, opsTrendsData] = await Promise.all([
         safeJson(toResponse(hudFetch), hudData || {}),
         safeJson(toResponse(healthFetch), health || {}),
         safeJson(toResponse(metricsFetch), metricsSummary || {}),
         safeJson(toResponse(foundersFetch), founders || []),
         safeJson(toResponse(trainingFetch), { status: 'idle', active: false, round: 0 }),
-        safeJson(toResponse(opsHealthFetch), opsHealth || null)
+        safeJson(toResponse(opsHealthFetch), opsHealth || null),
+        safeJson(toResponse(opsTrendsFetch), opsTrends || null)
       ]);
 
       setHudData(hud);
@@ -248,6 +257,7 @@ function App() {
       setFounders(foundersData);
       setTrainingStatus(trainingData || { status: 'idle', active: false, round: 0 });
       setOpsHealth(opsHealthData);
+      setOpsTrends(opsTrendsData);
 
       try {
         await fetchTrustSnapshot();
@@ -276,9 +286,17 @@ function App() {
     }
   };
 
-  const startTraining = async () => {
+  const startTraining = async (rounds = 0) => {
     try {
-      const response = await fetch(`${API_BASE}/training/start`, { method: 'POST' });
+      const targetRounds = Number(rounds);
+      const payload = Number.isFinite(targetRounds) && targetRounds > 0
+        ? { rounds: Math.floor(targetRounds) }
+        : {};
+      const response = await fetch(`${API_BASE}/training/start`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload)
+      });
       if (!response.ok) {
         throw new Error(`Training start failed with ${response.status}`);
       }
@@ -387,21 +405,29 @@ function App() {
       let response = null;
       for (const endpoint of candidateEndpoints) {
         try {
+          setPolicyTransport({ endpoint, status: 'pending', detail: 'submitting policy update' });
           const candidate = await fetch(endpoint, {
             method: 'POST',
             headers,
             body: requestBody
           });
           response = candidate;
+          setPolicyTransport({
+            endpoint,
+            status: candidate.ok ? 'ok' : 'error',
+            detail: `HTTP ${candidate.status}`
+          });
           if (candidate.ok) {
             break;
           }
         } catch {
+          setPolicyTransport({ endpoint, status: 'error', detail: 'network/transport failure' });
           // Try the next candidate endpoint.
         }
       }
 
       if (!response) {
+        setPolicyTransport({ endpoint: candidateEndpoints[0], status: 'error', detail: 'no endpoint reachable' });
         throw new Error('no policy endpoint reachable');
       }
 
@@ -432,6 +458,7 @@ function App() {
       } catch {
         // Keep unreachable message below.
       }
+      setPolicyTransport({ endpoint: TRUST_API_BASE, status: 'error', detail: 'backend unreachable' });
       setPolicyMessage('Verification policy update failed: backend unreachable');
     }
   };
@@ -442,8 +469,8 @@ function App() {
         <div>
           <h1>Sovereign Map Federated Interface</h1>
           <p>
-            Use the live network operations HUD as the primary command deck, with a dedicated
-            privacy-utility analytics view sourced from backend convergence data.
+            Use the live network operations HUD as the primary command deck for training, marketplace,
+            wallet, and API telemetry.
           </p>
         </div>
 
@@ -453,78 +480,64 @@ function App() {
         </div>
       </header>
 
-      <nav className="mode-nav" aria-label="View selector">
-        <button
-          className={mode === 'network-hud' ? 'active' : ''}
-          onClick={() => setMode('network-hud')}
-          type="button"
-        >
-          Network Operations HUD
-        </button>
-        <button
-          className={mode === 'privacy-dashboard' ? 'active' : ''}
-          onClick={() => setMode('privacy-dashboard')}
-          type="button"
-        >
-          Privacy-Utility Analysis
-        </button>
-      </nav>
+      <HUD
+        hudData={hudData}
+        health={health}
+        metricsSummary={metricsSummary}
+        trustStatus={trustStatus}
+        policyHistory={policyHistory}
+        founders={founders}
+        voiceQuery={voiceQuery}
+        voiceResponse={voiceResponse}
+        policyDraft={policyDraft}
+        policyToken={policyToken}
+        policyRole={policyRole}
+        policyMessage={policyMessage}
+        enclaveActionMessage={enclaveActionMessage}
+        trainingStatus={trainingStatus}
+        opsHealth={opsHealth}
+        opsTrends={opsTrends}
+        opsEvents={opsEvents}
+        opsStreamStatus={opsStreamStatus}
+        connectionDiagnostics={{
+          apiBase: API_BASE,
+          eventsEndpoint: `${API_BASE}/ops/events`,
+          streamLastError: opsStreamLastError,
+          policyEndpoint: policyTransport.endpoint,
+          policyStatus: policyTransport.status,
+          policyDetail: policyTransport.detail
+        }}
+        webMetrics={webMetrics}
+        loading={loading}
+        error={error}
+        onTriggerFLRound={triggerFLRound}
+        onStartTraining={startTraining}
+        onStopTraining={stopTraining}
+        onCreateEnclave={createEnclave}
+        onTriggerSimulation={triggerSimulation}
+        onSubmitVoiceQuery={submitVoiceQuery}
+        onPolicyChange={updatePolicyField}
+        onPolicyTokenChange={setPolicyToken}
+        onPolicyRoleChange={setPolicyRole}
+        onSubmitVerificationPolicy={submitVerificationPolicy}
+        setVoiceQuery={setVoiceQuery}
+      />
 
-      {mode === 'privacy-dashboard' ? (
-        <PrivacyUtilityDashboard trainingMetrics={privacyTrainingMetrics} trainingMode="real" />
-      ) : (
-        <>
-          <HUD
-            hudData={hudData}
-            health={health}
-            metricsSummary={metricsSummary}
-            trustStatus={trustStatus}
-            policyHistory={policyHistory}
-            founders={founders}
-            voiceQuery={voiceQuery}
-            voiceResponse={voiceResponse}
-            policyDraft={policyDraft}
-            policyToken={policyToken}
-            policyRole={policyRole}
-            policyMessage={policyMessage}
-            enclaveActionMessage={enclaveActionMessage}
-            trainingStatus={trainingStatus}
-            opsHealth={opsHealth}
-            opsEvents={opsEvents}
-            opsStreamStatus={opsStreamStatus}
-            webMetrics={webMetrics}
-            loading={loading}
-            error={error}
-            onTriggerFLRound={triggerFLRound}
-            onStartTraining={startTraining}
-            onStopTraining={stopTraining}
-            onCreateEnclave={createEnclave}
-            onTriggerSimulation={triggerSimulation}
-            onSubmitVoiceQuery={submitVoiceQuery}
-            onPolicyChange={updatePolicyField}
-            onPolicyTokenChange={setPolicyToken}
-            onPolicyRoleChange={setPolicyRole}
-            onSubmitVerificationPolicy={submitVerificationPolicy}
-            setVoiceQuery={setVoiceQuery}
-          />
-
-          {metricsSummary && (
-            <div className="metrics-footer">
-              <div className="summary-item">
-                <strong>Total FL Rounds:</strong> {metricsSummary.fl_rounds_total}
-              </div>
-              <div className="summary-item">
-                <strong>Avg FL Duration:</strong> {Number.isFinite(avgFlDuration) ? `${avgFlDuration.toFixed(2)}s` : 'N/A'}
-              </div>
-              <div className="summary-item">
-                <strong>Total Stake:</strong> {Number.isFinite(totalStake) ? totalStake.toFixed(2) : 'N/A'}
-              </div>
-              <div className="summary-item">
-                <strong>CXL Utilization:</strong> {Number.isFinite(cxlUtilization) ? `${(cxlUtilization * 100).toFixed(1)}%` : 'N/A'}
-              </div>
-            </div>
-          )}
-        </>
+      {metricsSummary && (
+        <div className="metrics-footer">
+          <div className="summary-item">
+            <strong>Total FL Rounds:</strong> {metricsSummary.fl_rounds_total}
+          </div>
+          <div className="summary-item">
+            <strong>Avg FL Duration:</strong> {Number.isFinite(avgFlDuration) ? `${avgFlDuration.toFixed(2)}s` : 'N/A'}
+          </div>
+          <div className="summary-item">
+            <strong>Total Stake:</strong> {Number.isFinite(totalStake) ? totalStake.toFixed(2) : 'N/A'}
+          </div>
+          <div className="summary-item">
+            <strong>CXL Utilization:</strong> {Number.isFinite(cxlUtilization) ? `${(cxlUtilization * 100).toFixed(1)}%` : 'N/A'}
+          </div>
+        </div>
       )}
     </div>
   );

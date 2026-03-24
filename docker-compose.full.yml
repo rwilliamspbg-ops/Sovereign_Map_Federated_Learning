@@ -31,8 +31,8 @@ services:
       - FLOWER_SERVER_PORT=8080
       - FLASK_PORT=8000
       - NUM_ROUNDS=${NUM_ROUNDS:-0}
-      - MIN_FIT_CLIENTS=${MIN_FIT_CLIENTS:-10}
-      - MIN_AVAILABLE_CLIENTS=${MIN_AVAILABLE_CLIENTS:-10}
+      - MIN_FIT_CLIENTS=${MIN_FIT_CLIENTS:-3}
+      - MIN_AVAILABLE_CLIENTS=${MIN_AVAILABLE_CLIENTS:-3}
       - ROUND_TIMEOUT_SECONDS=${ROUND_TIMEOUT_SECONDS:-600}
       - TPM_METRICS_ENDPOINT=${TPM_METRICS_ENDPOINT:-http://tpm-metrics:9091/event/attestation}
       - LLM_ADAPTER_POLICY_PATH=${LLM_ADAPTER_POLICY_PATH:-/app/config/llm_adapter_policy.json}
@@ -120,96 +120,6 @@ services:
       - ALL
     tmpfs:
       - /tmp
-    logging:
-      driver: "json-file"
-      options:
-        max-size: "10m"
-        max-file: "3"
-    labels:
-      - "description=Sovereign Maps Federated Learning Node"
-
-  node-agent-2:
-    build:
-      context: .
-      dockerfile: Dockerfile.node-agent
-    environment:
-      - PYTHONUNBUFFERED=1
-      - OMP_NUM_THREADS=1
-      - MKL_NUM_THREADS=1
-      - ENABLE_DP=${ENABLE_DP:-false}
-      - LOCAL_EPOCHS=${LOCAL_EPOCHS:-1}
-      - BATCH_SIZE=${BATCH_SIZE:-16}
-      - MAX_SAMPLES_PER_NODE=${MAX_SAMPLES_PER_NODE:-120}
-      - NODE_ID=2
-      - AGGREGATOR_HOST=backend
-      - AGGREGATOR_PORT=8080
-      - BYZANTINE=false
-      - LLM_ADAPTER_MODEL_FAMILY=${LLM_ADAPTER_MODEL_FAMILY:-llama-3.1}
-      - LLM_ADAPTER_MODEL_VERSION=${LLM_ADAPTER_MODEL_VERSION:-8b-instruct}
-      - LLM_ADAPTER_TOKENIZER_HASH=${LLM_ADAPTER_TOKENIZER_HASH:-local-dev-tokenizer-v1}
-      - LLM_ADAPTER_RANK=${LLM_ADAPTER_RANK:-16}
-      - LLM_ADAPTER_TARGET_MODULES=${LLM_ADAPTER_TARGET_MODULES:-q_proj,v_proj}
-    command: >
-      python -u src/client.py
-      --node-id 2
-      --aggregator backend:8080
-    volumes:
-      - ./src:/app/src:ro
-      - ./requirements.txt:/app/requirements.txt:ro
-    working_dir: /app
-    networks:
-      - sovereign-network
-    depends_on:
-      backend:
-        condition: service_healthy
-    healthcheck:
-      disable: true
-    restart: unless-stopped
-    logging:
-      driver: "json-file"
-      options:
-        max-size: "10m"
-        max-file: "3"
-    labels:
-      - "description=Sovereign Maps Federated Learning Node"
-
-  node-agent-3:
-    build:
-      context: .
-      dockerfile: Dockerfile.node-agent
-    environment:
-      - PYTHONUNBUFFERED=1
-      - OMP_NUM_THREADS=1
-      - MKL_NUM_THREADS=1
-      - ENABLE_DP=${ENABLE_DP:-false}
-      - LOCAL_EPOCHS=${LOCAL_EPOCHS:-1}
-      - BATCH_SIZE=${BATCH_SIZE:-16}
-      - MAX_SAMPLES_PER_NODE=${MAX_SAMPLES_PER_NODE:-120}
-      - NODE_ID=3
-      - AGGREGATOR_HOST=backend
-      - AGGREGATOR_PORT=8080
-      - BYZANTINE=false
-      - LLM_ADAPTER_MODEL_FAMILY=${LLM_ADAPTER_MODEL_FAMILY:-llama-3.1}
-      - LLM_ADAPTER_MODEL_VERSION=${LLM_ADAPTER_MODEL_VERSION:-8b-instruct}
-      - LLM_ADAPTER_TOKENIZER_HASH=${LLM_ADAPTER_TOKENIZER_HASH:-local-dev-tokenizer-v1}
-      - LLM_ADAPTER_RANK=${LLM_ADAPTER_RANK:-16}
-      - LLM_ADAPTER_TARGET_MODULES=${LLM_ADAPTER_TARGET_MODULES:-q_proj,v_proj}
-    command: >
-      python -u src/client.py
-      --node-id 3
-      --aggregator backend:8080
-    volumes:
-      - ./src:/app/src:ro
-      - ./requirements.txt:/app/requirements.txt:ro
-    working_dir: /app
-    networks:
-      - sovereign-network
-    depends_on:
-      backend:
-        condition: service_healthy
-    healthcheck:
-      disable: true
-    restart: unless-stopped
     logging:
       driver: "json-file"
       options:
@@ -353,11 +263,11 @@ services:
     container_name: sovereign-tokenomics-metrics
     volumes:
       - ./tokenomics_metrics_exporter.py:/app/tokenomics_metrics_exporter.py:ro
-      - ./test-data/tokenomics-telemetry.json:/app/data/tokenomics-telemetry.json:ro
+      - ./test-data/tokenomics-telemetry.seed.json:/app/data/tokenomics-telemetry.seed.json:ro
     working_dir: /app
     command: ["sh", "-c", "python -m pip install --no-cache-dir prometheus-client flask && python tokenomics_metrics_exporter.py"]
     environment:
-      - TOKENOMICS_SOURCE_FILE=/app/data/tokenomics-telemetry.json
+      - TOKENOMICS_SOURCE_FILE=/app/data/tokenomics-telemetry.seed.json
       - TOKENOMICS_STATE_FILE=/tmp/tokenomics-telemetry-state.json
       - TOKENOMICS_METRICS_PORT=9105
     ports:

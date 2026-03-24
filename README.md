@@ -123,11 +123,11 @@ Incident tooling CI guard:
 Run the fastest end-to-end path from startup to live dashboards:
 
 ```bash
-make wow-start
-make wow-verify
+docker compose -f docker-compose.full.yml up -d --scale node-agent=5
+make stack-verify
 ```
 
-Before running `make wow-start`, confirm Docker has enough space for first-time image builds:
+Before running the startup command, confirm Docker has enough space for first-time image builds:
 
 ```bash
 df -h
@@ -148,7 +148,7 @@ Then open:
 
 ### Docker Compose Build Details
 
-Use this flow when you want deterministic local image builds and tighter control over startup.
+Use this flow as the canonical local run sequence.
 
 - Step 1: Preflight checks
 
@@ -159,47 +159,38 @@ df -h
 docker system df
 ```
 
-- Step 2: Build dev app images explicitly (no start yet)
+- Step 2: Build all full-stack images explicitly (no start yet)
 
 ```bash
-docker compose -f docker-compose.dev.yml build backend frontend
+docker compose -f docker-compose.full.yml build
 ```
 
-- Step 3: Start core app services
+- Step 3: Start the full stack with five node agents
 
 ```bash
-docker compose -f docker-compose.dev.yml up -d mongo redis backend frontend
+docker compose -f docker-compose.full.yml up -d --scale node-agent=5
 ```
 
-- Step 4: Build/start monitoring services
+- Step 4: Verify service state and health
 
 ```bash
-docker compose -f docker-compose.monitoring.yml pull
-docker compose -f docker-compose.monitoring.yml up -d
-```
-
-- Step 5: Verify service state and health
-
-```bash
-docker compose -f docker-compose.dev.yml ps
-docker compose -f docker-compose.monitoring.yml ps
+docker compose -f docker-compose.full.yml ps
 curl -fsS http://localhost:8000/status | jq
 curl -fsS http://localhost:8000/health | jq
 curl -fsS http://localhost:8000/ops/health | jq
 ```
 
-- Step 6: Follow logs during first run (optional but useful)
+- Step 5: Follow logs during first run (optional but useful)
 
 ```bash
-docker compose -f docker-compose.dev.yml logs -f backend frontend
-docker compose -f docker-compose.monitoring.yml logs -f prometheus grafana alertmanager
+docker compose -f docker-compose.full.yml logs -f backend frontend prometheus grafana alertmanager
 ```
 
 Common build/start options:
 
-- Rebuild from scratch if dependencies changed: `docker compose -f docker-compose.dev.yml build --no-cache backend frontend`
-- Recreate containers after image rebuild: `docker compose -f docker-compose.dev.yml up -d --force-recreate backend frontend`
-- Remove stale orphans after compose changes: `docker compose -f docker-compose.dev.yml up -d --remove-orphans`
+- Rebuild from scratch if dependencies changed: `docker compose -f docker-compose.full.yml build --no-cache`
+- Recreate containers after image rebuild: `docker compose -f docker-compose.full.yml up -d --force-recreate --scale node-agent=5`
+- Remove stale orphans after compose changes: `docker compose -f docker-compose.full.yml up -d --remove-orphans --scale node-agent=5`
 
 If you hit disk pressure during build (`No space left on device`):
 
@@ -211,8 +202,7 @@ docker builder prune -af
 Stop and clean up:
 
 ```bash
-docker compose -f docker-compose.dev.yml down --remove-orphans
-docker compose -f docker-compose.monitoring.yml down --remove-orphans
+docker compose -f docker-compose.full.yml down --remove-orphans
 ```
 
 ## PySyft Integration Demo
@@ -321,7 +311,7 @@ Deployment and Packaging:
 Device and Runtime Footprint:
 
 [![Web](https://img.shields.io/badge/Device-Web%20Dashboard-0ea5e9?style=flat-square&logo=google-chrome&logoColor=white)](frontend/src/HUD.jsx)
-[![Linux](https://img.shields.io/badge/OS-Linux%20Supported-f59e0b?style=flat-square&logo=linux&logoColor=white)](docker-compose.dev.yml)
+[![Linux](https://img.shields.io/badge/OS-Linux%20Supported-f59e0b?style=flat-square&logo=linux&logoColor=white)](docker-compose.full.yml)
 [![macOS](https://img.shields.io/badge/OS-macOS%20Supported-111827?style=flat-square&logo=apple&logoColor=white)](README.md#quick-start)
 [![Windows](https://img.shields.io/badge/OS-Windows%20Supported-2563eb?style=flat-square&logo=windows&logoColor=white)](run-demo-windows.ps1)
 [![Android](https://img.shields.io/badge/Mobile-Android%20Supported-16a34a?style=flat-square&logo=android&logoColor=white)](mobile-apps/android-node-app)
@@ -386,7 +376,7 @@ Core characteristics:
 - Tokenomics metrics exporter: [tokenomics_metrics_exporter.py](tokenomics_metrics_exporter.py)
 - TPM metrics exporter: [tpm_metrics_exporter.py](tpm_metrics_exporter.py)
 - Frontend HUD: [frontend/src/HUD.jsx](frontend/src/HUD.jsx)
-- Compose profiles: [docker-compose.dev.yml](docker-compose.dev.yml), [docker-compose.production.yml](docker-compose.production.yml), [docker-compose.full.yml](docker-compose.full.yml)
+- Primary compose profile: [docker-compose.full.yml](docker-compose.full.yml)
 - Kubernetes scale profile: [kubernetes-5000-node-manifests.yaml](kubernetes-5000-node-manifests.yaml)
 
 ## Visual Walkthrough
@@ -593,35 +583,33 @@ curl -s http://localhost:9105/health | jq
 
 ## Quick Start
 
-### One-Pass Wow Mode
+### One-Pass Full Stack
 
 If you want the fastest production-feel walkthrough, run the two commands below and open HUD + Grafana immediately:
 
 ```bash
-make wow-start
-make wow-verify
+docker compose -f docker-compose.full.yml up -d --scale node-agent=5
+make stack-verify
 ```
 
-What `make wow-start` does:
+What this startup command does:
 
-- Starts dev API/UI services (`mongo`, `redis`, `backend`, `frontend`) using [docker-compose.dev.yml](docker-compose.dev.yml).
-- Starts observability services (`prometheus`, `grafana`, `alertmanager`) using [docker-compose.monitoring.yml](docker-compose.monitoring.yml).
-- Prints direct links for API, HUD, Grafana, and Prometheus.
+- Starts the full runtime profile from [docker-compose.full.yml](docker-compose.full.yml).
+- Scales the `node-agent` service to 5 replicas.
+- Brings up API, HUD, and observability services in one command.
 
 Recommended verification sequence:
 
 ```bash
-make wow-start
-docker compose -f docker-compose.dev.yml ps
-docker compose -f docker-compose.monitoring.yml ps
-make wow-verify
+docker compose -f docker-compose.full.yml up -d --scale node-agent=5
+docker compose -f docker-compose.full.yml ps
+make stack-verify
 ```
 
 Teardown after the walkthrough:
 
 ```bash
-docker compose -f docker-compose.dev.yml down
-docker compose -f docker-compose.monitoring.yml down
+docker compose -f docker-compose.full.yml down
 ```
 
 Expected outcome in under 2 minutes:
@@ -647,11 +635,11 @@ cd Sovereign_Map_Federated_Learning
 ./genesis-launch.sh
 ```
 
-### Option B: Local dev stack
+### Option B: Local full stack
 
 ```bash
-docker compose -f docker-compose.dev.yml up -d
-docker compose ps
+docker compose -f docker-compose.full.yml up -d --scale node-agent=5
+docker compose -f docker-compose.full.yml ps
 ```
 
 ### Verify stack health (required)
@@ -696,10 +684,10 @@ Workflow verification (GitHub Actions):
 gh run list --branch main --limit 20
 ```
 
-### Option C: Full profile with participant scaling
+### Option C: Full profile with custom participant scaling
 
 ```bash
-docker compose -f docker-compose.full.yml up -d --scale node-agent=5
+docker compose -f docker-compose.full.yml up -d --scale node-agent=10
 ```
 
 ## Build and Validation Commands
@@ -746,11 +734,7 @@ For runtime-focused changes (HUD, observability, policy endpoints), include at l
 
 ## Deployment Profiles
 
-- Development: [docker-compose.dev.yml](docker-compose.dev.yml)
-- Production: [docker-compose.production.yml](docker-compose.production.yml)
-- Full topology: [docker-compose.full.yml](docker-compose.full.yml)
-- Monitoring stack: [docker-compose.monitoring.yml](docker-compose.monitoring.yml)
-- Large-scale variants: [docker-compose.large-scale.yml](docker-compose.large-scale.yml), [docker-compose.1000nodes.yml](docker-compose.1000nodes.yml), [docker-compose.200nodes.yml](docker-compose.200nodes.yml)
+- Standard runtime sequence: [docker-compose.full.yml](docker-compose.full.yml)
 
 ## Repository Standards
 

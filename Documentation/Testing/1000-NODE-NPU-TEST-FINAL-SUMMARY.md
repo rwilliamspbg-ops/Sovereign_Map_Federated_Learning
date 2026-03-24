@@ -20,7 +20,7 @@ A comprehensive 1000-node federated learning test demonstrating NPU (Neural Proc
 ## What Was Built
 
 ### Test Infrastructure
-1. **Docker Compose Orchestration** (`docker-compose.1000nodes.yml`)
+1. **Docker Compose Orchestration** (`docker-compose.full.yml`)
    - 1000 node-agent containers (horizontally scalable)
    - MongoDB 7.0 with 8GB cache (state store)
    - Redis 7-Alpine with 4GB cache (distributed cache)
@@ -51,7 +51,7 @@ A comprehensive 1000-node federated learning test demonstrating NPU (Neural Proc
    - Automated git commit with detailed metadata
 
 ### Supporting Artifacts
-- `docker-compose.1000nodes.yml` (8,271 lines)
+- `docker-compose.full.yml` (8,271 lines)
 - `run-1000-node-npu-test.py` (17,074 lines, Windows/Linux compatible)
 - `tests/scripts/bash/run-1000-node-npu-test.sh` (22,751 lines, bash version)
 - `scripts/generate-npu-test-plots.py` (13,819 lines, matplotlib visualizations)
@@ -320,7 +320,7 @@ Results will be generated in: `test-results/1000-node-npu/[NEW_TIMESTAMP]/`
 ### Post-Test Cleanup
 ```bash
 # Stop all containers
-docker compose -f docker-compose.1000nodes.yml down -v
+docker compose -f docker-compose.full.yml down -v
 
 # Optional: Archive results
 tar czf results-backup-$(date +%Y%m%d).tar.gz test-results/1000-node-npu/20260304-103652/

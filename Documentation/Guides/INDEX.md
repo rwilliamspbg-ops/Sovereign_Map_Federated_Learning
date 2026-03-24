@@ -110,7 +110,7 @@ Duration:     2.8 seconds
 3. **[1000-NODE-NPU-TEST-GUIDE.md](/Documentation/Testing/1000-NODE-NPU-TEST-GUIDE.md)** - NPU reproduction guide
 
 ### Level 3: Infrastructure & Execution (For operators)
-1. **[docker-compose.1000nodes.yml](../../docker-compose.1000nodes.yml)** - 1000-node orchestration
+1. **[docker-compose.full.yml](../../docker-compose.full.yml)** - 1000-node orchestration
 2. **[kubernetes-5000-node-manifests.yaml](../../kubernetes-5000-node-manifests.yaml)** - K8s manifests
 3. **[tests/scripts/bash/run-1000-node-npu-test.sh](../../tests/scripts/bash/run-1000-node-npu-test.sh)** - NPU test runner
 4. **[tests/scripts/python/kubernetes-5000-node-test.py](../../tests/scripts/python/kubernetes-5000-node-test.py)** - K8s test suite
@@ -208,7 +208,7 @@ Sovereign_Map_Federated_Learning/
 ├── 1000-NODE-NPU-TEST-FINAL-SUMMARY.md (14 KB) ← EXECUTIVE SUMMARY
 ├── 1000-NODE-NPU-TEST-GUIDE.md (9 KB) - How to run tests
 │
-├── docker-compose.1000nodes.yml (8 KB) - Infrastructure configuration
+├── docker-compose.full.yml (8 KB) - Infrastructure configuration
 ├── run-1000-node-npu-test.py (17 KB) - Main test orchestrator
 ├── tests/scripts/bash/run-1000-node-npu-test.sh (23 KB) - Bash version
 ├── tests/scripts/powershell/run-1000-node-npu-test.ps1 (7 KB) - PowerShell version
@@ -305,7 +305,7 @@ python run-1000-node-npu-test.py
 | `test-results/.../TEST-REPORT.md` | 2 KB | Quick summary | All audiences |
 | `test-results/.../README.md` | 7 KB | Navigation guide | All audiences |
 | `1000-NODE-NPU-TEST-GUIDE.md` | 9 KB | How to run tests | Developers |
-| `docker-compose.1000nodes.yml` | 8 KB | Infrastructure config | DevOps, Developers |
+| `docker-compose.full.yml` | 8 KB | Infrastructure config | DevOps, Developers |
 | `run-1000-node-npu-test.py` | 17 KB | Main orchestrator | Developers |
 
 ---

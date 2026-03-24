@@ -199,7 +199,9 @@ func TestConfirmTransaction(t *testing.T) {
 	bc := blockchain.NewBlockChain()
 	mempool := blockchain.NewMempool()
 
-	node.SetupBlockchain(bc, mempool, 10000)
+	if err := node.SetupBlockchain(bc, mempool, 10000); err != nil {
+		t.Fatalf("SetupBlockchain failed: %v", err)
+	}
 
 	ctx := context.Background()
 	result, _ := node.TrainRound(ctx)
@@ -231,7 +233,9 @@ func TestCompleteRound(t *testing.T) {
 	bc := blockchain.NewBlockChain()
 	mempool := blockchain.NewMempool()
 
-	node.SetupBlockchain(bc, mempool, 10000)
+	if err := node.SetupBlockchain(bc, mempool, 10000); err != nil {
+		t.Fatalf("SetupBlockchain failed: %v", err)
+	}
 
 	ctx := context.Background()
 
@@ -380,7 +384,9 @@ func TestWaitForBlockInclusion(t *testing.T) {
 	bc := blockchain.NewBlockChain()
 	mempool := blockchain.NewMempool()
 
-	node.SetupBlockchain(bc, mempool, 10000)
+	if err := node.SetupBlockchain(bc, mempool, 10000); err != nil {
+		t.Fatalf("SetupBlockchain failed: %v", err)
+	}
 
 	ctx := context.Background()
 	result, _ := node.TrainRound(ctx)
@@ -402,7 +408,9 @@ func TestGetState(t *testing.T) {
 	bc := &blockchain.BlockChain{}
 	mempool := blockchain.NewMempool()
 
-	node.SetupBlockchain(bc, mempool, 10000)
+	if err := node.SetupBlockchain(bc, mempool, 10000); err != nil {
+		t.Fatalf("SetupBlockchain failed: %v", err)
+	}
 
 	state := node.GetState()
 

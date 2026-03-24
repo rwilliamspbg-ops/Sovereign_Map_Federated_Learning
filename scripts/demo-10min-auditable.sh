@@ -2,7 +2,7 @@
 
 set -euo pipefail
 
-COMPOSE_FILE="${COMPOSE_FILE:-docker-compose.dev.yml}"
+COMPOSE_FILE="${COMPOSE_FILE:-docker-compose.full.yml}"
 DURATION_SECONDS="${DURATION_SECONDS:-600}"
 INTERVAL_SECONDS="${INTERVAL_SECONDS:-60}"
 TARGET_NODES="${TARGET_NODES:-25}"

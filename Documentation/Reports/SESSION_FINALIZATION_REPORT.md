@@ -181,7 +181,7 @@ Status: ✅ Ready for GPU/NPU hardware
 
 ### Docker Integration
 ```
-GPU Support: Configured in docker-compose.production.yml
+GPU Support: Configured in docker-compose.full.yml
 NPU Support: Environment variables for device control
 Environment: FORCE_CPU, NPU_ENABLED, ASCEND_RT_VISIBLE_DEVICES
 Status: ✅ Ready for deployment
@@ -448,7 +448,7 @@ python tests/scripts/python/gpu-test-suite.py --all --nodes 30 --json results.js
 python tests/scripts/python/npu-gpu-cpu-benchmark.py --compare-devices
 
 # View Grafana
-docker compose -f docker-compose.production.yml up -d
+docker compose -f docker-compose.full.yml up -d
 # http://localhost:3001
 ```
 

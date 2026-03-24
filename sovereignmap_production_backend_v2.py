@@ -39,7 +39,7 @@ import ecdsa
 import numpy as np
 from ecdsa import SigningKey, VerifyingKey, SECP256k1
 from ecdsa.util import sigdecode_der
-from flask import Flask, Response, jsonify, request, stream_with_context
+from flask import Flask, Request, Response, jsonify, request, stream_with_context
 from prometheus_flask_exporter import PrometheusMetrics
 from prometheus_client import Gauge, Counter, Histogram
 
@@ -404,6 +404,8 @@ simulation_counters = {
 training_state = {
     "status": "idle",
     "active": False,
+    "target_rounds": 0,
+    "training_end_round": None,
     "last_started_at": None,
     "last_stopped_at": None,
     "last_message": "idle",
@@ -420,6 +422,13 @@ ops_event_log = deque(maxlen=400)
 ops_event_subscribers = set()
 ops_event_lock = threading.Lock()
 ops_event_seq = 0
+OPS_TREND_WINDOW = max(60, int(os.getenv("OPS_TREND_WINDOW", "240")))
+ops_trend_lock = threading.Lock()
+ops_trends = {
+    "api_latency_ms": deque(maxlen=OPS_TREND_WINDOW),
+    "api_error_rate_pct": deque(maxlen=OPS_TREND_WINDOW),
+    "ingress_mbps": deque(maxlen=OPS_TREND_WINDOW),
+}
 MODEL_REGISTRY_PATH = os.getenv("MODEL_REGISTRY_PATH", "./data/model_registry.jsonl")
 TPM_METRICS_ENDPOINT = os.getenv(
     "TPM_METRICS_ENDPOINT", "http://tpm-metrics:9091/event/attestation"
@@ -434,13 +443,30 @@ JOIN_INVITES_PATH = os.getenv("JOIN_INVITES_PATH", "/app/data/join_invites.json"
 JOIN_REGISTRATIONS_PATH = os.getenv(
     "JOIN_REGISTRATIONS_PATH", "/app/data/join_registrations.json"
 )
+VERIFICATION_POLICY_STATE_PATH = os.getenv(
+    "VERIFICATION_POLICY_STATE_PATH", "/app/data/verification_policy_state.json"
+)
+VERIFICATION_POLICY_HISTORY_PATH = os.getenv(
+    "VERIFICATION_POLICY_HISTORY_PATH", "/app/data/verification_policy_history.json"
+)
 JOIN_API_ADMIN_TOKEN = os.getenv("JOIN_API_ADMIN_TOKEN", "local-dev-admin-token")
 CERT_DIR = os.getenv("CERT_DIR", "/app/data/certs")
 PUBLIC_AGGREGATOR_HOST = os.getenv("PUBLIC_AGGREGATOR_HOST", "localhost")
 PUBLIC_AGGREGATOR_PORT = int(os.getenv("PUBLIC_AGGREGATOR_PORT", "8080"))
 registry_lock = threading.Lock()
 join_lock = threading.Lock()
+verification_policy_lock = threading.Lock()
 llm_adapter_policy: Dict[str, Any] = {}
+DEFAULT_VERIFICATION_POLICY = {
+    "require_proof": True,
+    "min_confidence_bps": 7500,
+    "reject_on_verification_failure": True,
+    "allow_consensus_proof": True,
+    "allow_zk_proof": True,
+    "allow_tee_proof": True,
+}
+verification_policy_state: Dict[str, Any] = DEFAULT_VERIFICATION_POLICY.copy()
+verification_policy_history: List[Dict[str, Any]] = []
 tpm_cert_manager = None
 
 
@@ -464,6 +490,75 @@ def _save_json_file(file_path: str, payload: Any):
     _ensure_parent_dir(file_path)
     with open(file_path, "w", encoding="utf-8") as handle:
         json.dump(payload, handle, indent=2)
+
+
+def _normalize_verification_policy(payload: Any) -> Dict[str, Any]:
+    normalized = DEFAULT_VERIFICATION_POLICY.copy()
+    if not isinstance(payload, dict):
+        return normalized
+
+    bool_keys = [
+        "require_proof",
+        "reject_on_verification_failure",
+        "allow_consensus_proof",
+        "allow_zk_proof",
+        "allow_tee_proof",
+    ]
+    for key in bool_keys:
+        if key in payload:
+            normalized[key] = bool(payload.get(key))
+
+    if "min_confidence_bps" in payload:
+        try:
+            confidence_bps = int(payload.get("min_confidence_bps"))
+            normalized["min_confidence_bps"] = max(0, min(10000, confidence_bps))
+        except (TypeError, ValueError):
+            normalized["min_confidence_bps"] = DEFAULT_VERIFICATION_POLICY[
+                "min_confidence_bps"
+            ]
+
+    return normalized
+
+
+def load_verification_policy_state() -> Dict[str, Any]:
+    global verification_policy_state, verification_policy_history
+
+    loaded_policy = _load_json_file(VERIFICATION_POLICY_STATE_PATH, {})
+    loaded_history = _load_json_file(VERIFICATION_POLICY_HISTORY_PATH, [])
+
+    with verification_policy_lock:
+        verification_policy_state = _normalize_verification_policy(loaded_policy)
+
+        if isinstance(loaded_history, list):
+            verification_policy_history = [
+                entry for entry in loaded_history if isinstance(entry, dict)
+            ][-150:]
+        else:
+            verification_policy_history = []
+
+        if not verification_policy_history:
+            verification_policy_history = [
+                {
+                    "ts": int(time.time()),
+                    "source": "governance",
+                    "role": "system",
+                    "proposal_id": "bootstrap",
+                    "new_policy": {
+                        "min_confidence_bps": verification_policy_state[
+                            "min_confidence_bps"
+                        ]
+                    },
+                    "changed_fields": ["min_confidence_bps"],
+                }
+            ]
+
+        _save_json_file(VERIFICATION_POLICY_STATE_PATH, verification_policy_state)
+        _save_json_file(VERIFICATION_POLICY_HISTORY_PATH, verification_policy_history)
+
+        return {
+            "verification_policy": verification_policy_state.copy(),
+            "policy_history": list(verification_policy_history),
+        }
 
 
 def _normalize_modules(value: str) -> Set[str]:
@@ -975,7 +1070,19 @@ def emit_ops_event(
             ops_event_subscribers.discard(dead)
 
 
-def _authorized_join_admin(req: request) -> bool:
+def _record_ops_trend(api_latency_ms: float, api_error_rate_pct: float, ingress_mbps: float):
+    sample_ts = int(time.time())
+    with ops_trend_lock:
+        ops_trends["api_latency_ms"].append(
+            {"ts": sample_ts, "value": float(api_latency_ms)}
+        )
+        ops_trends["api_error_rate_pct"].append(
+            {"ts": sample_ts, "value": float(api_error_rate_pct)}
+        )
+        ops_trends["ingress_mbps"].append({"ts": sample_ts, "value": float(ingress_mbps)})
+
+
+def _authorized_join_admin(req: Request) -> bool:
     header_token = req.headers.get("X-Join-Admin-Token", "")
     auth = req.headers.get("Authorization", "")
     bearer = auth[7:] if auth.lower().startswith("bearer ") else ""
@@ -1277,6 +1384,35 @@ def execute_manual_fl_round(reason: str = "manual") -> Dict[str, Any]:
 def _training_loop():
     while not training_stop_event.is_set():
         execute_manual_fl_round(reason="hud_training_loop")
+
+        reached_target = False
+        target_rounds = 0
+        completed_round = int(strategy.round_num) if strategy else 0
+        with training_lock:
+            end_round = training_state.get("training_end_round")
+            target_rounds = int(training_state.get("target_rounds") or 0)
+            if end_round is not None and strategy and strategy.round_num >= int(end_round):
+                training_state["active"] = False
+                training_state["status"] = "completed"
+                training_state["last_stopped_at"] = int(time.time())
+                training_state["last_message"] = (
+                    f"Deterministic training completed: {target_rounds} rounds"
+                )
+                reached_target = True
+
+        if reached_target:
+            training_stop_event.set()
+            emit_ops_event(
+                kind="training",
+                message=f"Deterministic training completed at round {completed_round}",
+                severity="success",
+                data={
+                    "round": completed_round,
+                    "target_rounds": target_rounds,
+                },
+            )
+            break
+
         wait_seconds = max(1.0, float(training_state.get("tick_seconds", 5.0)))
         training_stop_event.wait(wait_seconds)
 
@@ -1308,6 +1444,10 @@ def chat_query():
 # Trust and Verification mocking for the HUD
 @app.route("/trust_snapshot", methods=["GET"])
 def trust_snapshot():
+    with verification_policy_lock:
+        policy_copy = verification_policy_state.copy()
+        history_copy = list(verification_policy_history)
+
     return (
         jsonify(
             {
@@ -1318,22 +1458,9 @@ def trust_snapshot():
                         "failed_rounds": 0,
                         "average_confidence_bps": 9850,
                     },
-                    "verification_policy": {
-                        "require_proof": True,
-                        "min_confidence_bps": 7500,
-                        "reject_on_verification_failure": True,
-                        "allow_consensus_proof": True,
-                        "allow_zk_proof": True,
-                        "allow_tee_proof": True,
-                    },
+                    "verification_policy": policy_copy,
                 },
-                "policy_history": [
-                    {
-                        "source": "governance",
-                        "proposal_id": "prop-001",
-                        "new_policy": {"min_confidence_bps": 7500},
-                    }
-                ],
+                "policy_history": history_copy,
             }
         ),
         200,
@@ -1343,6 +1470,28 @@ def trust_snapshot():
 @app.route("/ops/health", methods=["GET"])
 def ops_health():
     return jsonify(build_ops_health_snapshot()), 200
+
+
+@app.route("/ops/trends", methods=["GET"])
+def ops_trends_view():
+    limit = int(request.args.get("limit", 120))
+    if limit <= 0:
+        limit = 120
+    limit = min(limit, OPS_TREND_WINDOW)
+
+    with ops_trend_lock:
+        payload = {
+            "window": OPS_TREND_WINDOW,
+            "count": {
+                "api_latency_ms": len(ops_trends["api_latency_ms"]),
+                "api_error_rate_pct": len(ops_trends["api_error_rate_pct"]),
+                "ingress_mbps": len(ops_trends["ingress_mbps"]),
+            },
+            "api_latency_ms": list(ops_trends["api_latency_ms"])[-limit:],
+            "api_error_rate_pct": list(ops_trends["api_error_rate_pct"])[-limit:],
+            "ingress_mbps": list(ops_trends["ingress_mbps"])[-limit:],
+        }
+    return jsonify(payload), 200
 
 
 @app.route("/ops/events/recent", methods=["GET"])
@@ -1391,15 +1540,66 @@ def ops_events_stream():
 @app.route("/verification_policy", methods=["POST"])
 def update_verification_policy():
     data = request.json or {}
-    logger.info(f"Verification policy update requested: {data}")
+    actor_role = request.headers.get("X-API-Role", "admin")
+    new_policy = _normalize_verification_policy(data)
+
+    with verification_policy_lock:
+        previous = verification_policy_state.copy()
+        changed_fields = [
+            key for key, value in new_policy.items() if previous.get(key) != value
+        ]
+        verification_policy_state.update(new_policy)
+        history_entry = {
+            "ts": int(time.time()),
+            "source": "hud",
+            "role": actor_role,
+            "new_policy": verification_policy_state.copy(),
+            "changed_fields": changed_fields,
+        }
+        proposal_id = data.get("proposal_id")
+        if proposal_id:
+            history_entry["proposal_id"] = str(proposal_id)
+        verification_policy_history.append(history_entry)
+        verification_policy_history[:] = verification_policy_history[-150:]
+
+        _save_json_file(VERIFICATION_POLICY_STATE_PATH, verification_policy_state)
+        _save_json_file(VERIFICATION_POLICY_HISTORY_PATH, verification_policy_history)
+
+        updated_policy = verification_policy_state.copy()
+        updated_history = list(verification_policy_history)
+
+    logger.info(
+        "Verification policy update requested: role=%s changed_fields=%s",
+        actor_role,
+        changed_fields,
+    )
     ops_control_actions_total.labels(action="verification_policy_update").inc()
     emit_ops_event(
         kind="policy_update",
         message="Verification policy update requested",
         severity="info",
-        data={"policy_fields": sorted(list(data.keys()))},
+        data={
+            "policy_fields": sorted(list(updated_policy.keys())),
+            "changed_fields": changed_fields,
+            "role": actor_role,
+        },
     )
-    return jsonify({"status": "ok", "message": "Policy applied successfully"}), 200
+    return (
+        jsonify(
+            {
+                "status": "ok",
+                "message": "Policy applied successfully",
+                "verification_policy": updated_policy,
+                "policy_history": updated_history,
+                "fl_verification": {
+                    "verified_rounds": strategy.round_num if strategy else 0,
+                    "failed_rounds": 0,
+                    "average_confidence_bps": 9850,
+                },
+            }
+        ),
+        200,
+    )
 
 
 @app.route("/mobile/verify_gradient", methods=["POST"])
@@ -1436,6 +1636,16 @@ def verify_mobile_gradient():
 @app.route("/training/start", methods=["POST"])
 def start_training():
     global training_thread
+    payload = request.get_json(silent=True) or {}
+    requested_rounds_raw = payload.get("rounds", 0)
+    try:
+        requested_rounds = int(requested_rounds_raw)
+    except (TypeError, ValueError):
+        requested_rounds = 0
+
+    if requested_rounds < 0:
+        requested_rounds = 0
+
     with training_lock:
         if training_state["active"]:
             return (
@@ -1444,16 +1654,27 @@ def start_training():
                         "status": "training",
                         "message": "Training already active",
                         "round": strategy.round_num if strategy else 0,
+                        "target_rounds": int(training_state.get("target_rounds") or 0),
                     }
                 ),
                 200,
             )
 
+        current_round = int(strategy.round_num) if strategy else 0
         training_stop_event.clear()
         training_state["active"] = True
         training_state["status"] = "training"
+        training_state["target_rounds"] = requested_rounds
+        training_state["training_end_round"] = (
+            current_round + requested_rounds if requested_rounds > 0 else None
+        )
         training_state["last_started_at"] = int(time.time())
-        training_state["last_message"] = "HUD real training loop started"
+        if requested_rounds > 0:
+            training_state["last_message"] = (
+                f"HUD deterministic training started for {requested_rounds} rounds"
+            )
+        else:
+            training_state["last_message"] = "HUD continuous training loop started"
 
         training_thread = threading.Thread(target=_training_loop, daemon=True)
         training_thread.start()
@@ -1461,17 +1682,29 @@ def start_training():
     ops_control_actions_total.labels(action="training_start").inc()
     emit_ops_event(
         kind="training",
-        message="Real FL training loop started",
+        message=(
+            f"Deterministic FL training started ({requested_rounds} rounds)"
+            if requested_rounds > 0
+            else "Continuous FL training loop started"
+        ),
         severity="success",
-        data={"tick_seconds": training_state["tick_seconds"]},
+        data={
+            "tick_seconds": training_state["tick_seconds"],
+            "target_rounds": requested_rounds,
+        },
     )
 
     return (
         jsonify(
             {
                 "status": "training",
-                "message": "Real FL training loop started",
+                "message": (
+                    f"Deterministic FL training started for {requested_rounds} rounds"
+                    if requested_rounds > 0
+                    else "Continuous FL training loop started"
+                ),
                 "tick_seconds": training_state["tick_seconds"],
+                "target_rounds": requested_rounds,
             }
         ),
         200,
@@ -1484,6 +1717,8 @@ def stop_training():
         training_stop_event.set()
         training_state["active"] = False
         training_state["status"] = "idle"
+        training_state["target_rounds"] = 0
+        training_state["training_end_round"] = None
         training_state["last_stopped_at"] = int(time.time())
         training_state["last_message"] = "HUD training loop stopped"
     ops_control_actions_total.labels(action="training_stop").inc()
@@ -1500,13 +1735,22 @@ def stop_training():
 def training_status():
     acc = _latest_accuracy()
     loss = _latest_loss()
+    current_round = int(strategy.round_num) if strategy else 0
+    target_rounds = int(training_state.get("target_rounds") or 0)
+    end_round = training_state.get("training_end_round")
+    remaining_rounds = None
+    if end_round is not None:
+        remaining_rounds = max(0, int(end_round) - current_round)
+
     return (
         jsonify(
             {
                 "status": training_state["status"],
                 "active": training_state["active"],
-                "round": strategy.round_num if strategy else 0,
-                "total_rounds": strategy.round_num if strategy else 0,
+                "round": current_round,
+                "total_rounds": current_round,
+                "target_rounds": target_rounds,
+                "remaining_rounds": remaining_rounds,
                 "last_started_at": training_state["last_started_at"],
                 "last_stopped_at": training_state["last_stopped_at"],
                 "current_metrics": {
@@ -1593,6 +1837,7 @@ def health():
     ingress_mbps = int(110 + (active_nodes * 2.8))
     api_error_rate = round(min(2.0, 0.02 + (loss * 0.04)), 3)
     saturation = min(98, int(32 + (active_nodes * 0.4) + (loss * 6.0)))
+    _record_ops_trend(latency_ms, api_error_rate, ingress_mbps)
 
     return (
         jsonify(
@@ -2054,6 +2299,7 @@ if __name__ == "__main__":
     # Initialize DAO
     dao = MockDAO()
     load_llm_adapter_policy()
+    load_verification_policy_state()
 
     logger.info("Sovereign Maps Backend v1.0.0 - Starting dual-mode server")
     logger.info("- Flower aggregator: 0.0.0.0:8080")

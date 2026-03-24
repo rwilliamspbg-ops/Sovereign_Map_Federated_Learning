@@ -57,10 +57,10 @@ jobs:
 
       - name: Build Docker images
         run: |
-          docker compose -f docker-compose.200nodes.yml build --no-cache
+          docker compose -f docker-compose.full.yml build --no-cache
 
       - name: Start services
-        run: docker compose -f docker-compose.ci.yml up -d
+        run: docker compose -f docker-compose.full.yml up -d --scale node-agent=5
 
       - name: Wait for backend health
         run: |
@@ -70,7 +70,7 @@ jobs:
       - name: Debug on failure
         if: failure()
         run: |
-          docker compose -f docker-compose.200nodes.yml logs
+          docker compose -f docker-compose.full.yml logs
           docker ps -a
 
       - name: Install Python dependencies

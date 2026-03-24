@@ -22,7 +22,7 @@ This audit identified **7 critical security vulnerabilities** related to hardcod
 ### 1. Hardcoded MongoDB Password - 200 Node Test Configuration
 **CWE**: CWE-798 (Use of Hard-coded Credentials)  
 **Severity**: 🔴 **CRITICAL**  
-**File**: `docker-compose.200nodes.yml`
+**File**: `docker-compose.full.yml`
 
 **Issue**:
 - MongoDB password hardcoded as `<redacted-example-password>`
@@ -50,7 +50,7 @@ MONGO_INITDB_ROOT_PASSWORD: ${MONGO_PASSWORD:-CHANGE_ME_200}
 ### 2. Hardcoded MongoDB Password - Large Scale Configuration
 **CWE**: CWE-798 (Use of Hard-coded Credentials)  
 **Severity**: 🔴 **CRITICAL**  
-**File**: `docker-compose.large-scale.yml`
+**File**: `docker-compose.full.yml`
 
 **Issue**:
 - MongoDB password hardcoded as `sovereignmap`
@@ -69,7 +69,7 @@ MONGO_INITDB_ROOT_PASSWORD: ${MONGO_PASSWORD:-CHANGE_ME_SCALE}
 ### 3. Weak Development Database Password
 **CWE**: CWE-521 (Weak Password Requirements)  
 **Severity**: 🔴 **CRITICAL**  
-**File**: `docker-compose.dev.yml`
+**File**: `docker-compose.full.yml`
 
 **Issue**:
 - Development MongoDB password set to `dev`
@@ -93,7 +93,7 @@ MONGO_INITDB_ROOT_PASSWORD: ${MONGO_PASSWORD:-dev_only_not_for_production}
 ### 4. Weak Grafana Password - 200 Node Configuration
 **CWE**: CWE-521 (Weak Password Requirements)  
 **Severity**: 🟠 **HIGH**  
-**File**: `docker-compose.200nodes.yml`
+**File**: `docker-compose.full.yml`
 
 **Issue**:
 - Grafana admin password set to `<redacted-example-password>`
@@ -113,7 +113,7 @@ GF_SECURITY_ADMIN_PASSWORD: ${GRAFANA_ADMIN_PASSWORD:-changeme}
 ### 5. Weak Redis Password Defaults
 **CWE**: CWE-521 (Weak Password Requirements)  
 **Severity**: 🟠 **HIGH**  
-**File**: `docker-compose.production.yml`
+**File**: `docker-compose.full.yml`
 
 **Issue**:
 - Redis password defaults to `sovereignmap`
@@ -180,14 +180,14 @@ GRAFANA_ADMIN_PASSWORD=CHANGE_ME_BEFORE_DEPLOYMENT
 ## 📋 Files Modified
 
 ### Docker Compose Configurations (3 files)
-1. ✅ `docker-compose.200nodes.yml`
+1. ✅ `docker-compose.full.yml`
    - MongoDB password → environment variable (4 replacements)
    - Grafana password → environment variable
 
-2. ✅ `docker-compose.large-scale.yml`
+2. ✅ `docker-compose.full.yml`
    - MongoDB password → environment variable
 
-3. ✅ `docker-compose.dev.yml`
+3. ✅ `docker-compose.full.yml`
    - MongoDB password → environment variable with safety warning
 
 ### Configuration Files (1 file)
@@ -215,7 +215,7 @@ grep "PASSWORD" .env.example
 ### 3. Test Configuration Loading
 ```bash
 # Ensure compose files load environment variables correctly
-docker compose -f docker-compose.200nodes.yml config | grep "PASSWORD"
+docker compose -f docker-compose.full.yml config | grep "PASSWORD"
 ```
 
 ---
@@ -296,11 +296,11 @@ Before deploying to production, ensure:
 
 Additional production hardening has been completed after the original audit:
 
-- ✅ Enforced authenticated backend datastore URLs in `docker-compose.production.yml`
+- ✅ Enforced authenticated backend datastore URLs in `docker-compose.full.yml`
   - MongoDB URI now includes `${MONGO_USER}` and `${MONGO_PASSWORD}` with `authSource=admin`
   - Redis URL now includes `${REDIS_PASSWORD}`
-- ✅ Enforced authenticated datastore URLs in `docker-compose.large-scale.yml`
-- ✅ Enabled Redis password requirement in `docker-compose.large-scale.yml`
+- ✅ Enforced authenticated datastore URLs in `docker-compose.full.yml`
+- ✅ Enabled Redis password requirement in `docker-compose.full.yml`
 - ✅ Reduced external attack surface by binding MongoDB/Redis ports to localhost in production-scale compose files
 - ✅ Disabled Grafana self-signup in production-scale and full deployment profiles
 - ✅ Added deployment pre-flight secret validation in `deploy.sh` for `prod` and `large-scale` profiles

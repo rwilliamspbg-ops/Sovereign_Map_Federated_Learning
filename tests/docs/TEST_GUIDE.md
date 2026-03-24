@@ -435,10 +435,10 @@ git push origin HEAD
 docker ps
 
 # Verify compose file exists
-ls docker-compose.large-scale.yml
+ls docker-compose.full.yml
 
 # Try building manually
-docker compose -f docker-compose.large-scale.yml build
+docker compose -f docker-compose.full.yml build
 
 # Check system resources
 docker system df
@@ -450,19 +450,19 @@ docker system df
 curl http://localhost:8000/health
 
 # Check docker logs
-docker compose -f docker-compose.large-scale.yml logs backend
+docker compose -f docker-compose.full.yml logs backend
 
 # Check node agents
-docker compose -f docker-compose.large-scale.yml ps node-agent
+docker compose -f docker-compose.full.yml ps node-agent
 
 # Kill and restart
-docker compose -f docker-compose.large-scale.yml restart
+docker compose -f docker-compose.full.yml restart
 ```
 
 ### Low accuracy/not converging
 ```bash
 # Check if nodes are training
-docker compose -f docker-compose.large-scale.yml logs node-agent | tail -20
+docker compose -f docker-compose.full.yml logs node-agent | tail -20
 
 # Verify MongoDB is working
 docker exec sovereignmap-mongo mongosh -u admin -p
@@ -483,7 +483,7 @@ docker exec sovereignmap-backend python -m tpm_cert_manager 2>&1
 docker exec sovereignmap-backend ls -la /etc/sovereign/certs/ 2>/dev/null || echo "Certs not found"
 
 # Regenerate certs
-docker compose -f docker-compose.large-scale.yml exec backend bash tpm-bootstrap.sh
+docker compose -f docker-compose.full.yml exec backend bash tpm-bootstrap.sh
 ```
 
 ---
@@ -539,7 +539,7 @@ For issues or questions:
 1. Check logs: `cat test-results/*/test.log`
 2. View dashboard: `bash tests/scripts/bash/test-dashboard.sh`
 3. Check backend: `curl http://localhost:8000/convergence | jq`
-4. Review docker: `docker compose -f docker-compose.large-scale.yml ps`
+4. Review docker: `docker compose -f docker-compose.full.yml ps`
 
 ---
 

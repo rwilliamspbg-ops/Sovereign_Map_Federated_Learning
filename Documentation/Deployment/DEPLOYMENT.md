@@ -185,10 +185,10 @@ export $(cat .env | xargs)
 docker volume create tpm-certs
 
 # Start monitoring stack (first)
-docker compose -f docker-compose.monitoring.tpm.yml up -d
+docker compose -f docker-compose.full.yml up -d
 
 # Start TPM security layer
-docker compose -f docker-compose.tpm-secure.yml up -d
+docker compose -f docker-compose.full.yml up -d
 
 # Start main application (last)
 docker compose -f docker-compose.full.yml up -d --scale node-agent=100

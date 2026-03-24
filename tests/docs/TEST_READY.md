@@ -285,7 +285,7 @@ Before starting, verify:
 - [ ] Memory available: `free -h` (need ~8-16GB)
 - [ ] jq installed: `jq --version`
 - [ ] Git configured: `git config --list | head -3`
-- [ ] Compose file exists: `ls docker-compose.large-scale.yml`
+- [ ] Compose file exists: `ls docker-compose.full.yml`
 - [ ] Test scripts executable: `ls -l *.sh`
 
 ---
@@ -316,10 +316,10 @@ jq . test-results/*/convergence.log | tail -5
 curl http://localhost:8000/health
 
 # Check containers
-docker compose -f docker-compose.large-scale.yml ps
+docker compose -f docker-compose.full.yml ps
 
 # Restart if needed
-docker compose -f docker-compose.large-scale.yml down
+docker compose -f docker-compose.full.yml down
 bash tests/scripts/bash/test-incremental-scale.sh
 ```
 

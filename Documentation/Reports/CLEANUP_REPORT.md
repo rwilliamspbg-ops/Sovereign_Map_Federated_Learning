@@ -78,7 +78,7 @@ COMPLETION_REPORT.md
 ### Source Code (NOT Deleted)
 ✅ All test infrastructure code preserved:
 ```
-docker-compose.1000nodes.yml
+docker-compose.full.yml
 run-1000-node-npu-test.py
 tests/scripts/bash/run-1000-node-npu-test.sh
 tests/scripts/powershell/run-1000-node-npu-test.ps1
@@ -106,7 +106,7 @@ python run-1000-node-npu-test.py
 ### Scale Testing
 ```bash
 # Scale to 5000 nodes
-docker compose -f docker-compose.1000nodes.yml up -d --scale node-agent=5000
+docker compose -f docker-compose.full.yml up -d --scale node-agent=5000
 ```
 
 ### Production Deployment

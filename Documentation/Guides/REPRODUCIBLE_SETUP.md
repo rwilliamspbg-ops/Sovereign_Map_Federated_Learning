@@ -32,8 +32,8 @@ make smoke
 - `npm ci`
 - `npm --prefix packages/core ci`
 - `npm --prefix packages/privacy ci`
-- `docker compose -f docker-compose.production.yml config >/dev/null`
-- `docker compose -f docker-compose.1000nodes.yml config >/dev/null`
+- `docker compose -f docker-compose.full.yml config >/dev/null`
+- `docker compose -f docker-compose.full.yml config >/dev/null`
 
 Success criteria:
 

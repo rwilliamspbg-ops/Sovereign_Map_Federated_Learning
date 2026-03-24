@@ -8,7 +8,7 @@ This guide covers the optimized Docker setup for the Sovereign Map Byzantine-tol
 
 ### Development (5 nodes, 2 minutes)
 ```bash
-docker compose -f docker-compose.dev.yml up -d
+docker compose -f docker-compose.full.yml up -d
 ```
 
 **Access:**
@@ -19,12 +19,12 @@ docker compose -f docker-compose.dev.yml up -d
 
 ### Production (50 nodes, 5 minutes)
 ```bash
-docker compose -f docker-compose.production.yml up -d --scale node-agent=50
+docker compose -f docker-compose.full.yml up -d --scale node-agent=50
 ```
 
 ### Large-Scale (500+ nodes, 15 minutes)
 ```bash
-docker compose -f docker-compose.large-scale.yml up -d --scale node-agent=500
+docker compose -f docker-compose.full.yml up -d --scale node-agent=500
 ```
 
 ## Architecture Overview
@@ -150,7 +150,7 @@ backend:
 ### Local Development
 ```bash
 # Use local driver (default)
-docker compose -f docker-compose.dev.yml up -d
+docker compose -f docker-compose.full.yml up -d
 ```
 
 ### Production with External Storage
@@ -201,7 +201,7 @@ docker exec sovereignmap-mongo mongorestore /backups/mongo_latest
 
 **Machine 1 (Backend):**
 ```bash
-docker compose -f docker-compose.production.yml up -d
+docker compose -f docker-compose.full.yml up -d
 # Exposes ports 3000, 3001, 8000, 8080, 9090, 9093
 ```
 
@@ -209,7 +209,7 @@ docker compose -f docker-compose.production.yml up -d
 ```bash
 # Point to backend machine (IP: 192.168.1.100)
 BACKEND_URL=http://192.168.1.100:8000 \
-  docker compose -f docker-compose.production.yml up -d node-agent
+  docker compose -f docker-compose.full.yml up -d node-agent
 ```
 
 ## Logging
@@ -365,10 +365,10 @@ docker logs sovereignmap-backend | grep -i "error\|failed"
 ### Add Nodes During Deployment
 ```bash
 # Scale to 100 nodes
-docker compose -f docker-compose.production.yml up -d --scale node-agent=100
+docker compose -f docker-compose.full.yml up -d --scale node-agent=100
 
 # Add 50 more nodes
-docker compose -f docker-compose.production.yml up -d --scale node-agent=150
+docker compose -f docker-compose.full.yml up -d --scale node-agent=150
 ```
 
 ### Monitor Scaling
@@ -385,13 +385,13 @@ docker stats --no-stream
 ### Stop Services
 ```bash
 # Stop dev environment
-docker compose -f docker-compose.dev.yml down
+docker compose -f docker-compose.full.yml down
 
 # Stop but keep volumes
-docker compose -f docker-compose.dev.yml down --volumes
+docker compose -f docker-compose.full.yml down --volumes
 
 # Remove everything
-docker compose -f docker-compose.dev.yml down -v --remove-orphans
+docker compose -f docker-compose.full.yml down -v --remove-orphans
 ```
 
 ### Prune Resources
@@ -400,7 +400,7 @@ docker compose -f docker-compose.dev.yml down -v --remove-orphans
 docker system prune -a
 
 # Remove all Sovereign Map resources
-docker compose -f docker-compose.production.yml down -v
+docker compose -f docker-compose.full.yml down -v
 ```
 
 ## CI/CD Integration

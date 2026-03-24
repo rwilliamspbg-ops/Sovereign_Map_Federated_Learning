@@ -10,11 +10,9 @@ import (
 
 // BlockProposer coordinates block production in a federated learning round
 type BlockProposer struct {
-	nodeID       string
-	blockchain   *BlockChain
-	validator    *BlockValidator
-	miners       []string // Active miners/validators
-	currentIndex int
+	nodeID     string
+	blockchain *BlockChain
+	validator  *BlockValidator
 }
 
 // NewBlockProposer creates a new block proposer

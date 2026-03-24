@@ -92,7 +92,7 @@ Container initialization script:
 - Verifies certificates before startup
 - Handles multi-node coordination
 
-### 4. `docker-compose.tpm-secure.yml`
+### 4. `docker-compose.full.yml`
 
 Docker Compose configuration with:
 
@@ -136,13 +136,13 @@ SAN: node-{id}, node-{id}.sovereign-network, 172.25.0.{id}
 docker network create sovereign-network
 
 # Deploy with secure communication
-docker compose -f docker-compose.tpm-secure.yml up -d
+docker compose -f docker-compose.full.yml up -d
 
 # Check CA service
 docker logs sovereign-tpm-ca
 
 # Verify certificates
-docker compose -f docker-compose.tpm-secure.yml exec tpm-ca-service python -c "
+docker compose -f docker-compose.full.yml exec tpm-ca-service python -c "
 from tpm_cert_manager import TPMCertificateManager
 mgr = TPMCertificateManager('/etc/sovereign/certs')
 print(mgr.get_trust_report())
@@ -153,7 +153,7 @@ print(mgr.get_trust_report())
 
 ```bash
 # Scale node agents to 100 nodes
-docker compose -f docker-compose.tpm-secure.yml up -d --scale node-agent-secure=100
+docker compose -f docker-compose.full.yml up -d --scale node-agent-secure=100
 
 # All nodes automatically get certificates and verify on startup
 ```

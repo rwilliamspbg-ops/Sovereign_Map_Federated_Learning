@@ -10,9 +10,9 @@ if (Get-Variable -Name PSNativeCommandUseErrorActionPreference -ErrorAction Sile
 # regardless of the caller's current location.
 $ScriptRoot = Split-Path -Parent $MyInvocation.MyCommand.Path
 Set-Location $ScriptRoot
-$ComposeFile = "docker-compose.production.yml"
-$AccelComposeFile = "docker-compose.acceleration.yml"
-$UseAccelerationOverride = Test-Path $AccelComposeFile
+$ComposeFile = "docker-compose.full.yml"
+$AccelComposeFile = ""
+$UseAccelerationOverride = $false
 $Nodes = 50  # Reduced for Windows testing
 $Duration = "5m"
 $DurationSeconds = 300

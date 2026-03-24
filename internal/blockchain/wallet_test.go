@@ -283,7 +283,9 @@ func TestTransferInsufficientFunds(t *testing.T) {
 	l := newTestLedger(t)
 	alice, _ := NewWallet()
 	bob, _ := NewWallet()
-	l.SetBalance(alice.Address(), 50)
+	if err := l.SetBalance(alice.Address(), 50); err != nil {
+		t.Fatalf("SetBalance: %v", err)
+	}
 	if err := l.Transfer(alice.Address(), bob.Address(), 100); err == nil {
 		t.Error("expected error for insufficient balance")
 	}
@@ -296,7 +298,9 @@ func TestTransferInsufficientFunds(t *testing.T) {
 func TestTransferToSelf(t *testing.T) {
 	l := newTestLedger(t)
 	w, _ := NewWallet()
-	l.SetBalance(w.Address(), 500)
+	if err := l.SetBalance(w.Address(), 500); err != nil {
+		t.Fatalf("SetBalance: %v", err)
+	}
 	if err := l.Transfer(w.Address(), w.Address(), 100); err == nil {
 		t.Error("expected error for self-transfer")
 	}
@@ -310,7 +314,9 @@ func TestApplyTransactionTransfer(t *testing.T) {
 	l := newTestLedger(t)
 	alice, _ := NewWallet()
 	bob, _ := NewWallet()
-	l.SetBalance(alice.Address(), 1000)
+	if err := l.SetBalance(alice.Address(), 1000); err != nil {
+		t.Fatalf("SetBalance: %v", err)
+	}
 
 	txn, _ := alice.CreateTransfer(bob.Address(), 250, 1)
 	if err := l.ApplyTransaction(txn); err != nil {
@@ -327,7 +333,9 @@ func TestApplyTransactionTransfer(t *testing.T) {
 func TestApplyTransactionReward(t *testing.T) {
 	l := newTestLedger(t)
 	w, _ := NewWallet()
-	l.SetBalance(w.Address(), 0)
+	if err := l.SetBalance(w.Address(), 0); err != nil {
+		t.Fatalf("SetBalance: %v", err)
+	}
 
 	txn := &Transaction{
 		ID:        "reward-tx-1",
@@ -348,7 +356,9 @@ func TestApplyTransactionReward(t *testing.T) {
 func TestApplyTransactionNoop(t *testing.T) {
 	l := newTestLedger(t)
 	w, _ := NewWallet()
-	l.SetBalance(w.Address(), 500)
+	if err := l.SetBalance(w.Address(), 500); err != nil {
+		t.Fatalf("SetBalance: %v", err)
+	}
 
 	// FL round txns don't change balances — should be a no-op
 	txn, _ := w.CreateFlRoundTx(map[string]interface{}{}, 1)

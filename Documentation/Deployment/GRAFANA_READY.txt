@@ -25,7 +25,7 @@ Total: 113.9 KB
 
 ## Quick Start
 1. cd Sovereign_Map_Federated_Learning
-2. docker compose -f docker-compose.production.yml up -d
+2. docker compose -f docker-compose.full.yml up -d
 3. http://localhost:3001 (admin/sovereignmap)
 4. ./run-5000-round-test.ps1
 

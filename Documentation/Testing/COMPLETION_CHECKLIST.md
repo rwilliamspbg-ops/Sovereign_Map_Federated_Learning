@@ -70,7 +70,7 @@ All dashboards use **dynamic queries** (no hardcoded node counts):
 
 ### ✅ Docker Compose Integration
 
-- [x] Updated `docker-compose.production.yml`
+- [x] Updated `docker-compose.full.yml`
   - Grafana datasources mount: `./grafana/provisioning/datasources:/etc/grafana/provisioning/datasources:ro`
   - Grafana dashboards mount: `./grafana/provisioning/dashboards:/etc/grafana/provisioning/dashboards:ro`
   - Environment: `GF_PATHS_PROVISIONING=/etc/grafana/provisioning`
@@ -157,7 +157,7 @@ Scripts (1 file):
   Subtotal: 5.1 KB
 
 MODIFIED FILES: 1
-  docker-compose.production.yml             +20 lines ✅
+  docker-compose.full.yml             +20 lines ✅
 ```
 
 ---
@@ -284,7 +284,7 @@ MODIFIED FILES: 1
 ### Start Stack
 ```bash
 cd Sovereign_Map_Federated_Learning
-docker compose -f docker-compose.production.yml up -d
+docker compose -f docker-compose.full.yml up -d
 ```
 
 ### Access Grafana
@@ -329,7 +329,7 @@ Password: sovereignmap
 ## Ready for Production ✅
 
 ### Immediate Actions
-1. ✅ Start Docker stack: `docker compose -f docker-compose.production.yml up -d`
+1. ✅ Start Docker stack: `docker compose -f docker-compose.full.yml up -d`
 2. ✅ Verify Grafana: http://localhost:3001
 3. ✅ Check datasource: Configuration → Data Sources → Test
 4. ✅ Run test: `./tests/scripts/powershell/run-5000-round-test.ps1`
@@ -432,7 +432,7 @@ SYSTEM OVERVIEW:
 
 **Start testing immediately with:**
 ```bash
-docker compose -f docker-compose.production.yml up -d
+docker compose -f docker-compose.full.yml up -d
 ```
 
 ---

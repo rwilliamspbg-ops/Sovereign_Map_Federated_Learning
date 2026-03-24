@@ -129,7 +129,7 @@ Write-Host "        - Images: $imageCount"
 
 Write-Section "Phase 2: Docker Compose Down"
 
-$composeFile = "docker-compose.production.yml"
+$composeFile = "docker-compose.full.yml"
 if (Test-Path $composeFile) {
     if ($CleanupLevel -eq "selective") {
         Write-Host "    Selective cleanup: Stopping specific services"

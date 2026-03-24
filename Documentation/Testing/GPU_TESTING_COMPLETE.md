@@ -94,7 +94,7 @@ def _select_device(self) -> torch.device:
 
 ### 5. **Docker GPU Support** ✅
 
-Updated `docker-compose.production.yml` configuration for GPU:
+Updated `docker-compose.full.yml` configuration for GPU:
 ```yaml
 deploy:
   resources:
@@ -170,7 +170,7 @@ python tests/scripts/python/gpu-test-suite.py --all --nodes 20 --rounds 10 --jso
 
 1. Start monitoring stack:
    ```bash
-   docker compose -f docker-compose.production.yml up -d
+   docker compose -f docker-compose.full.yml up -d
    ```
 
 2. Open dashboard:
@@ -351,7 +351,7 @@ python tests/scripts/python/gpu-test-suite.py --round-latency --nodes 20
 ### 3. **With Grafana Monitoring**
 ```bash
 # Terminal 1: Start monitoring
-docker compose -f docker-compose.production.yml up -d
+docker compose -f docker-compose.full.yml up -d
 
 # Terminal 2: Run tests
 python tests/scripts/python/gpu-test-suite.py --all --json results.json

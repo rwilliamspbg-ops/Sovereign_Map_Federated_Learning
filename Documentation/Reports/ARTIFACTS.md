@@ -15,7 +15,7 @@
 #### Documentation
 - 📊 **[1000-NODE-NPU-TEST-FINAL-SUMMARY.md](/Documentation/Testing/1000-NODE-NPU-TEST-FINAL-SUMMARY.md)** - Complete test report
 - 📖 **[1000-NODE-NPU-TEST-GUIDE.md](/Documentation/Testing/1000-NODE-NPU-TEST-GUIDE.md)** - Reproduction guide
-- 🐳 **[docker-compose.1000nodes.yml](../../docker-compose.1000nodes.yml)** - Infrastructure orchestration
+- 🐳 **[docker-compose.full.yml](../../docker-compose.full.yml)** - Infrastructure orchestration
 
 #### Test Results
 - 📁 **[test-results/1000-node-npu/20260304-103652/](../../test-results/1000-node-npu/20260304-103652/)** - Raw test data
@@ -137,10 +137,10 @@
 
 ## 🐳 Docker Compose Configurations
 
-- **[docker-compose.1000nodes.yml](../../docker-compose.1000nodes.yml)** - 1000-node NPU test stack
-- **[docker-compose.large-scale.yml](../../docker-compose.large-scale.yml)** - Large-scale deployment
-- **[docker-compose.monitoring.yml](../../docker-compose.monitoring.yml)** - Monitoring stack
-- **[docker-compose.production.yml](../../docker-compose.production.yml)** - Production configuration
+- **[docker-compose.full.yml](../../docker-compose.full.yml)** - 1000-node NPU test stack
+- **[docker-compose.full.yml](../../docker-compose.full.yml)** - Large-scale deployment
+- **[docker-compose.full.yml](../../docker-compose.full.yml)** - Monitoring stack
+- **[docker-compose.full.yml](../../docker-compose.full.yml)** - Production configuration
 - **[docker-compose.full.yml](../../docker-compose.full.yml)** - Complete stack
 
 ---

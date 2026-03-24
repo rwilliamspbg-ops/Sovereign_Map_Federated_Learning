@@ -249,7 +249,7 @@ docker volume prune
 cd Sovereign_Map_Federated_Learning
 
 # Stop all containers
-docker compose -f docker-compose.production.yml down --remove-orphans
+docker compose -f docker-compose.full.yml down --remove-orphans
 
 # Remove all test volumes
 docker volume prune -f
@@ -266,7 +266,7 @@ rm -rf test-results/demo-simulated/*/  # Keeps main test-results
 cd Sovereign_Map_Federated_Learning
 
 # Stop node agents and backend
-docker compose -f docker-compose.production.yml down \
+docker compose -f docker-compose.full.yml down \
   --remove-orphans \
   node-agent backend mongo redis
 

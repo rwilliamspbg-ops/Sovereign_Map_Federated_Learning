@@ -406,7 +406,6 @@ func TestValidatorSlashing(t *testing.T) {
 
 	// Jail validator
 	_ = validators.SlashValidator("node_1", 500000)
-	v, _ = validators.GetValidator("node_1")
 
 	// Note: Jailed flag behavior depends on implementation
 	// This test documents the expected behavior

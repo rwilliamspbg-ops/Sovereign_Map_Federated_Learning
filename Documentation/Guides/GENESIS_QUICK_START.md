@@ -104,13 +104,13 @@ docker compose logs -f
 docker ps | grep node-agent | wc -l
 
 # Scale node-agents
-docker compose -f docker-compose.production.yml up -d --scale node-agent=50
+docker compose -f docker-compose.full.yml up -d --scale node-agent=50
 
 # Stop everything
-docker compose -f docker-compose.production.yml -f docker-compose.monitoring.yml down --remove-orphans
+docker compose -f docker-compose.full.yml -f docker-compose.full.yml down --remove-orphans
 
 # Restart
-docker compose -f docker-compose.production.yml -f docker-compose.monitoring.yml restart
+docker compose -f docker-compose.full.yml -f docker-compose.full.yml restart
 ```
 
 ---
@@ -123,7 +123,7 @@ docker compose -f docker-compose.production.yml -f docker-compose.monitoring.yml
 docker ps | grep grafana
 
 # Restart monitoring
-docker compose -f docker-compose.monitoring.yml restart
+docker compose -f docker-compose.full.yml restart
 ```
 
 ### Issue: Low node-agent count
@@ -132,7 +132,7 @@ docker compose -f docker-compose.monitoring.yml restart
 docker stats
 
 # Increase node-agents manually
-docker compose -f docker-compose.production.yml up -d --scale node-agent=30
+docker compose -f docker-compose.full.yml up -d --scale node-agent=30
 ```
 
 ### Issue: Backend errors
@@ -141,7 +141,7 @@ docker compose -f docker-compose.production.yml up -d --scale node-agent=30
 docker compose logs backend
 
 # Restart backend
-docker compose -f docker-compose.production.yml restart backend
+docker compose -f docker-compose.full.yml restart backend
 ```
 
 ---
@@ -152,7 +152,7 @@ docker compose -f docker-compose.production.yml restart backend
 
 **Common Issues**: See Troubleshooting section in full guide
 
-**Emergency**: Stop all services with `docker compose -f docker-compose.production.yml -f docker-compose.monitoring.yml down --remove-orphans`
+**Emergency**: Stop all services with `docker compose -f docker-compose.full.yml -f docker-compose.full.yml down --remove-orphans`
 
 ---
 

@@ -6,7 +6,6 @@ This folder is a ready-to-demo starter for integrating PySyft Datasite FL workfl
 
 - PySyft-compatible round loop (mock mode and Datasite mode)
 - Mohawk aggregation hook with optional proof verification and gradient compression
-- Docker Compose one-command demo path
 - Notebook for show-and-tell
 
 ## Quick start (mock mode)
@@ -17,13 +16,6 @@ python -m venv .venv
 source .venv/bin/activate
 pip install -r examples/pysyft-integration/requirements-pysyft-demo.txt
 python examples/pysyft-integration/pysyft_mohawk_poc.py --mode mock --rounds 5 --participants 5
-```
-
-## One-command demo with Docker Compose
-
-```bash
-cd /workspaces/Sovereign_Map_Federated_Learning/examples/pysyft-integration
-docker compose -f docker-compose.pysyft-demo.yml up --build
 ```
 
 ## Datasite mode (live PySyft)
@@ -49,7 +41,6 @@ Notes:
 
 - `pysyft_mohawk_poc.py`
 - `requirements-pysyft-demo.txt`
-- `docker-compose.pysyft-demo.yml`
 - `pysyft_mohawk_poc.ipynb`
 
 ## Suggested 10-minute demo flow

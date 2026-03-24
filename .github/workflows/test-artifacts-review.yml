@@ -5,7 +5,7 @@ on:
   pull_request:
     paths:
       - 'tests/scripts/bash/run-1000-node-npu-test.sh'
-      - 'docker-compose.1000nodes.yml'
+      - 'docker-compose.full.yml'
       - 'tests/scripts/python/byzantine-stress-test-suite.py'
       - 'tests/scripts/python/generate-byzantine-test-suite-plots.py'
       - 'test-results/**'
@@ -14,7 +14,7 @@ on:
       - main
     paths:
       - 'tests/scripts/bash/run-1000-node-npu-test.sh'
-      - 'docker-compose.1000nodes.yml'
+      - 'docker-compose.full.yml'
       - 'tests/scripts/python/byzantine-stress-test-suite.py'
       - 'tests/scripts/python/generate-byzantine-test-suite-plots.py'
       - 'test-results/**'

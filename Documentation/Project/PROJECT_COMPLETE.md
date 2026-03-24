@@ -30,9 +30,9 @@
 
 **Docker Compose**
 - `docker-compose.full.yml` - Backend + nodes + monitoring
-- `docker-compose.tpm-secure.yml` - TPM security
-- `docker-compose.monitoring.yml` - Monitoring stack only
-- `docker-compose.monitoring.tpm.yml` - Full pipeline
+- `docker-compose.full.yml` - TPM security
+- `docker-compose.full.yml` - Monitoring stack only
+- `docker-compose.full.yml` - Full pipeline
 
 ### 2. Client & Nodes ✅
 
@@ -296,9 +296,9 @@ Sovereign_Map_Federated_Learning/
 ├── requirements.txt (836B) ✅
 ├── Dockerfile (2KB) ✅
 ├── docker-compose.full.yml (4.7KB) ✅
-├── docker-compose.tpm-secure.yml (3.5KB) ✅
-├── docker-compose.monitoring.yml ✅
-├── docker-compose.monitoring.tpm.yml ✅
+├── docker-compose.full.yml (3.5KB) ✅
+├── docker-compose.full.yml ✅
+├── docker-compose.full.yml ✅
 ├── prometheus.yml (556B) ✅
 ├── tpm_cert_manager.py (13.2KB) ✅
 ├── secure_communication.py (9.3KB) ✅
@@ -348,7 +348,7 @@ curl http://localhost:8000/convergence | jq '.verified_nodes'
 
 ### Production Testnet (100 Nodes)
 ```bash
-docker compose -f docker-compose.tpm-secure.yml up -d --scale node-agent-secure=100
+docker compose -f docker-compose.full.yml up -d --scale node-agent-secure=100
 curl http://localhost:5001/trust/status | jq
 ```
 
@@ -532,7 +532,7 @@ You now have a **complete, production-ready federated learning system** with:
 
 **Deploy Now**:
 ```bash
-docker compose -f docker-compose.tpm-secure.yml up -d --scale node-agent-secure=50
+docker compose -f docker-compose.full.yml up -d --scale node-agent-secure=50
 ```
 
 **Check Status**:

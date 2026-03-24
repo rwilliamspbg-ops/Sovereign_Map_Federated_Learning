@@ -160,7 +160,7 @@
 ## 📊 Monitoring Stack Enhancements
 
 ### Grafana Configuration
-**File**: `docker-compose.monitoring.yml`
+**File**: `docker-compose.full.yml`
 
 **Enhancements:**
 - ✅ Worldmap panel plugin for network topology
@@ -267,7 +267,7 @@ open http://localhost:3001
 
 ### Modified Files (3)
 1. `README.md` - Added Genesis launch section
-2. `docker-compose.monitoring.yml` - Enhanced Grafana config
+2. `docker-compose.full.yml` - Enhanced Grafana config
 3. `grafana/provisioning/dashboards/dashboards.yml` - Genesis folder
 
 ### Dashboard Files (Created Earlier)

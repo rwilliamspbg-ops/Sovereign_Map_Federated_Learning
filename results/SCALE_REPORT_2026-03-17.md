@@ -17,7 +17,7 @@
 | Swap | 0 bytes |
 | Disk | 32 GiB total / ~20 GiB free |
 | Docker | `docker compose` plugin |
-| Compose file | `docker-compose.production.yml` |
+| Compose file | `docker-compose.full.yml` |
 | Env profile | `.env.production` (ports 2xxxx) |
 | Node agent image | `sovereignmap/node-agent:latest` (Python 3.11-slim, flwr 1.7.0, torch 2.1) |
 | Accelerator | CPU (auto-detected; no NPU/GPU device nodes present) |

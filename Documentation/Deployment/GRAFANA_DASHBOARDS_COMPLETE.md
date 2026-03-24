@@ -23,7 +23,7 @@ All 11 Grafana dashboards are provisioned and integrated with Prometheus.
 - Added backend live publisher to emit tokenomics snapshots during FL runtime:
   - `sovereignmap_production_backend_v2.py`
 - Enabled production compose tokenomics pipeline and persistence:
-  - `docker-compose.production.yml`
+  - `docker-compose.full.yml`
   - `test-data/tokenomics-telemetry.json`
 
 ### 3. Final Missing Panel Fix
@@ -121,7 +121,7 @@ All dashboards use `sum(sovereignmap_active_nodes)` instead of hardcoded values:
 
 ### Docker Compose Integration
 
-Updated `docker-compose.production.yml` with Grafana provisioning mounts:
+Updated `docker-compose.full.yml` with Grafana provisioning mounts:
 
 ```yaml
 grafana:
@@ -144,7 +144,7 @@ grafana:
 
 ```bash
 cd Sovereign_Map_Federated_Learning
-docker compose -f docker-compose.production.yml up -d
+docker compose -f docker-compose.full.yml up -d
 ```
 
 #### 2. **Access Grafana**
@@ -401,7 +401,7 @@ docker inspect sovereignmap-grafana | grep -A 10 Mounts
 
 ### Files Modified
 
-- ✅ `docker-compose.production.yml` - Updated Grafana volumes
+- ✅ `docker-compose.full.yml` - Updated Grafana volumes
 - ✅ 6 new dashboard JSON files
 - ✅ Prometheus datasource configuration
 

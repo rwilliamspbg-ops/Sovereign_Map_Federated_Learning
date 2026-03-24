@@ -22,8 +22,8 @@ All TPM (Trusted Platform Module-inspired) trust and security components are ful
 
 | File | Purpose | Status |
 |------|---------|--------|
-| **docker-compose.tpm-secure.yml** | Backend + nodes with mTLS | ✅ Complete |
-| **docker-compose.monitoring.tpm.yml** | Monitoring stack with TPM metrics | ✅ Complete |
+| **docker-compose.full.yml** | Backend + nodes with mTLS | ✅ Complete |
+| **docker-compose.full.yml** | Monitoring stack with TPM metrics | ✅ Complete |
 | **docker-compose.full.yml** | Can integrate TPM security | ✅ Ready |
 
 ### Monitoring & Alerts (2 Files)
@@ -113,7 +113,7 @@ All TPM (Trusted Platform Module-inspired) trust and security components are ful
 
 ```bash
 # Deploy with TPM security
-docker compose -f docker-compose.tpm-secure.yml up -d --scale node-agent-secure=5
+docker compose -f docker-compose.full.yml up -d --scale node-agent-secure=5
 
 # Wait for certificate generation (30-60 seconds)
 sleep 30
@@ -143,7 +143,7 @@ docker compose logs tpm-ca-service
 ### Scale to 50 Nodes (Staging)
 
 ```bash
-docker compose -f docker-compose.tpm-secure.yml up -d --scale node-agent-secure=50
+docker compose -f docker-compose.full.yml up -d --scale node-agent-secure=50
 
 # Monitor certificate generation
 docker compose logs -f tpm-ca-service | grep "Generated"
@@ -156,7 +156,7 @@ curl http://localhost:5001/trust/status | jq '.verified_nodes'
 ### Scale to 100 Nodes (Production)
 
 ```bash
-docker compose -f docker-compose.tpm-secure.yml up -d --scale node-agent-secure=100
+docker compose -f docker-compose.full.yml up -d --scale node-agent-secure=100
 
 # Verify all nodes connected and certs verified
 docker compose ps | grep node-agent-secure
@@ -299,7 +299,7 @@ Response: { nodes_verified: 100, crl_size: 0, cache_hits: 9532 }
 ### Test 1: Certificate Generation
 
 ```bash
-docker compose -f docker-compose.tpm-secure.yml up -d --scale node-agent-secure=5
+docker compose -f docker-compose.full.yml up -d --scale node-agent-secure=5
 sleep 30
 
 # Check certificates exist
@@ -417,7 +417,7 @@ done
 - [x] Verification latency <1ms
 
 ### Deployment
-- [x] docker-compose.tpm-secure.yml
+- [x] docker-compose.full.yml
 - [x] Bootstrap script (tpm-bootstrap.sh)
 - [x] Multi-node coordination
 - [x] Automatic certificate generation
@@ -546,10 +546,10 @@ done
 
 ```bash
 # Instead of docker-compose.full.yml
-docker compose -f docker-compose.tpm-secure.yml up -d
+docker compose -f docker-compose.full.yml up -d
 
 # Or with monitoring
-docker compose -f docker-compose.monitoring.tpm.yml up -d
+docker compose -f docker-compose.full.yml up -d
 ```
 
 ### Send Secure Messages
@@ -593,7 +593,7 @@ curl -X POST http://localhost:5001/trust/verify/5
 
 | Task | Command |
 |------|---------|
-| Deploy secure testnet (5 nodes) | `docker compose -f docker-compose.tpm-secure.yml up -d --scale node-agent-secure=5` |
+| Deploy secure testnet (5 nodes) | `docker compose -f docker-compose.full.yml up -d --scale node-agent-secure=5` |
 | Check trust status | `curl http://localhost:5001/trust/status \| jq` |
 | View trust dashboard | `open http://localhost:3000` (Grafana) |
 | List certificates | `docker exec backend ls /etc/sovereign/certs/*.pem` |
@@ -639,7 +639,7 @@ curl -X POST http://localhost:5001/trust/verify/5
 
 **Deployment Command**:
 ```bash
-docker compose -f docker-compose.tpm-secure.yml up -d --scale node-agent-secure=50
+docker compose -f docker-compose.full.yml up -d --scale node-agent-secure=50
 ```
 
 **Verify Command**:

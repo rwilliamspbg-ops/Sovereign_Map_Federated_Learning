@@ -1,10 +1,11 @@
 #!/usr/bin/env bash
 # Sovereign Map Docker Quick Start Launcher
-# Usage: bash deploy.sh [dev|prod|full|large-scale]
+# Usage: bash deploy.sh [nodes]
 
 set -e
 
-PROFILE="${1:-dev}"
+NODE_SCALE="${1:-5}"
+PROFILE="full"
 
 # Color output
 GREEN='\033[0;32m'
@@ -22,58 +23,21 @@ echo -e "${NC}"
 # Function to display menu
 show_menu() {
     echo ""
-    echo -e "${YELLOW}Select deployment profile:${NC}"
-    echo "  1) dev         - Development (1 node, 2 min)"
-    echo "  2) prod        - Production (50 nodes, 5 min)"
-    echo "  3) full        - Full stack (5 nodes, 3 min)"
-    echo "  4) large-scale - Large-Scale (500 nodes, 15 min)"
-    echo "  5) Exit"
+    echo -e "${YELLOW}Sovereign Map standard runtime:${NC}"
+    echo "  docker compose -f docker-compose.full.yml up -d --scale node-agent=<nodes>"
 }
 
-# Map profile names
-case "$PROFILE" in
-    dev)
-        COMPOSE_FILE="docker-compose.dev.yml"
-        DEFAULT_ENV_FILE=".env.dev"
-        SCALE="1"
-        MEMORY="1-2GB"
-        DESC="Development Environment"
-        ;;
-    prod|production)
-        COMPOSE_FILE="docker-compose.production.yml"
-        DEFAULT_ENV_FILE=".env.production"
-        SCALE="50"
-        MEMORY="4-6GB"
-        DESC="Production Environment"
-        ;;
-    full)
-        COMPOSE_FILE="docker-compose.full.yml"
-        DEFAULT_ENV_FILE=".env.full"
-        SCALE="5"
-        MEMORY="3-6GB"
-        DESC="Full Stack Environment"
-        ;;
-    large-scale)
-        COMPOSE_FILE="docker-compose.large-scale.yml"
-        DEFAULT_ENV_FILE=".env.production"
-        SCALE="500+"
-        MEMORY="8-16GB+"
-        DESC="Large-Scale Testnet"
-        ;;
-    *)
-        show_menu
-        read -r -p "Choose option (1-5): " choice
-        case "$choice" in
-            1) PROFILE="dev" && $0 dev ;;
-            2) PROFILE="prod" && $0 prod ;;
-            3) PROFILE="full" && $0 full ;;
-            4) PROFILE="large-scale" && $0 large-scale ;;
-            5) exit 0 ;;
-            *) echo "Invalid option" && exit 1 ;;
-        esac
-        exit 0
-        ;;
-esac
+if ! [[ "$NODE_SCALE" =~ ^[0-9]+$ ]] || [ "$NODE_SCALE" -lt 1 ]; then
+    echo -e "${RED}✗ Node scale must be a positive integer${NC}"
+    show_menu
+    exit 1
+fi
+
+COMPOSE_FILE="docker-compose.full.yml"
+DEFAULT_ENV_FILE=".env.full"
+SCALE="$NODE_SCALE"
+MEMORY="3-6GB"
+DESC="Full Stack Environment"
 
 COMPOSE_ENV_FILE="${COMPOSE_ENV_FILE:-$DEFAULT_ENV_FILE}"
 COMPOSE_ENV_ARGS=()
@@ -151,7 +115,7 @@ if [ ! -f "$COMPOSE_FILE" ]; then
 fi
 echo -e "${GREEN}✓ $COMPOSE_FILE found${NC}"
 
-if [ "$PROFILE" = "prod" ] || [ "$PROFILE" = "production" ] || [ "$PROFILE" = "large-scale" ]; then
+if [ "$PROFILE" = "full" ]; then
     echo -e "${YELLOW}Validating required security secrets for $PROFILE...${NC}"
 
     MONGO_PASSWORD_VALUE="${MONGO_PASSWORD:-}"
@@ -223,17 +187,7 @@ compose_cmd build
 # Start services
 echo ""
 echo -e "${YELLOW}[3/4] Starting services...${NC}"
-if [ "$PROFILE" = "prod" ] || [ "$PROFILE" = "production" ]; then
-    compose_cmd up -d --scale node-agent=50
-elif [ "$PROFILE" = "full" ]; then
-    compose_cmd up -d --scale node-agent=5
-elif [ "$PROFILE" = "large-scale" ]; then
-    read -r -p "Enter number of nodes (default 500): " NODES
-    NODES=${NODES:-500}
-    compose_cmd up -d --scale node-agent="$NODES"
-else
-    compose_cmd up -d
-fi
+compose_cmd up -d --scale node-agent="$SCALE"
 
 # Wait for services
 echo ""

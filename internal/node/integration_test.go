@@ -353,7 +353,9 @@ func TestErrorHandling(t *testing.T) {
 	// Test 3: Invalid block inclusion timeout
 	bc := blockchain.NewBlockChain()
 	mempool := blockchain.NewMempool()
-	node.SetupBlockchain(bc, mempool, 10000)
+	if err := node.SetupBlockchain(bc, mempool, 10000); err != nil {
+		t.Fatalf("SetupBlockchain failed: %v", err)
+	}
 	result = &TrainingResult{RoundNum: 1}
 	txID, _ := node.SubmitFlRound(ctx, result, []byte{})
 

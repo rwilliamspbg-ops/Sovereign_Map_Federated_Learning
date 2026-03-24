@@ -29,7 +29,7 @@ All dashboards created with dynamic queries (no hardcoded values):
 
 ### 2. **Docker Compose Integration** ✅
 
-`docker-compose.production.yml` updated with:
+`docker-compose.full.yml` updated with:
 - ✅ Grafana datasources mount: `./grafana/provisioning/datasources`
 - ✅ Grafana dashboards mount: `./grafana/provisioning/dashboards`
 - ✅ Environment variable: `GF_PATHS_PROVISIONING=/etc/grafana/provisioning`
@@ -160,7 +160,7 @@ Total Size: 88.7 KB
 ### Modified Files
 
 ```
-docker-compose.production.yml
+docker-compose.full.yml
   • Added Grafana provisioning mounts
   • Added GF_PATHS_PROVISIONING environment variable
   • Verified health check configuration
@@ -173,7 +173,7 @@ docker-compose.production.yml
 ### Step 1: Start the Stack
 ```bash
 cd Sovereign_Map_Federated_Learning
-docker compose -f docker-compose.production.yml up -d
+docker compose -f docker-compose.full.yml up -d
 ```
 
 ### Step 2: Wait for Services
@@ -300,7 +300,7 @@ Get-ChildItem Sovereign_Map_Federated_Learning/grafana/provisioning/dashboards/*
 
 ### Verify Docker Compose Config
 ```bash
-grep -A 5 "grafana:" Sovereign_Map_Federated_Learning/docker-compose.production.yml | grep -E "volumes|ports"
+grep -A 5 "grafana:" Sovereign_Map_Federated_Learning/docker-compose.full.yml | grep -E "volumes|ports"
 # Should show provisioning mounts and port 3001
 ```
 
@@ -445,4 +445,4 @@ All components are configured, tested, and ready for:
 **Date:** 2024
 **Status:** Complete ✅
 **Laptop Maximum:** 100 nodes confirmed
-**Next Action:** `docker compose -f docker-compose.production.yml up -d`
+**Next Action:** `docker compose -f docker-compose.full.yml up -d`

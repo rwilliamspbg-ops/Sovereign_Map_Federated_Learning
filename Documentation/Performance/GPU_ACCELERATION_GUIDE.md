@@ -123,7 +123,7 @@ python tests/scripts/python/gpu-test-suite.py --all --nodes 20 --rounds 10 --jso
 
 1. **Start monitoring stack:**
    ```bash
-   docker compose -f docker-compose.production.yml up -d
+   docker compose -f docker-compose.full.yml up -d
    ```
 
 2. **Open GPU Dashboard:**
@@ -178,7 +178,7 @@ services:
 
 **Start stack with GPU:**
 ```bash
-docker compose -f docker-compose.production.yml up -d
+docker compose -f docker-compose.full.yml up -d
 ```
 
 ## High-Density Testing (20+ Nodes with GPU)
@@ -187,8 +187,8 @@ docker compose -f docker-compose.production.yml up -d
 
 ```bash
 # Method 1: Scale node-agent service
-docker compose -f docker-compose.production.yml up -d
-docker compose -f docker-compose.production.yml up -d --scale node-agent=20
+docker compose -f docker-compose.full.yml up -d
+docker compose -f docker-compose.full.yml up -d --scale node-agent=20
 
 # Method 2: Use provided docker-compose.full.yml
 docker compose -f docker-compose.full.yml up -d --scale node-agent=20
@@ -328,7 +328,7 @@ nvidia-smi  # or rocm-smi
 export BATCH_SIZE=8  # Default: 16
 
 # Reduce number of concurrent nodes
-docker compose -f docker-compose.production.yml up --scale node-agent=5
+docker compose -f docker-compose.full.yml up --scale node-agent=5
 ```
 
 ### Slow GPU Performance
@@ -380,7 +380,7 @@ def aggregate_fit_parallel(self, server_round, results, failures):
 
 - [ ] Verify GPU detection: `python -c "import torch; print(torch.cuda.is_available())"`
 - [ ] Run CPU vs GPU benchmark: `python tests/scripts/python/gpu-test-suite.py --benchmark`
-- [ ] Start Grafana dashboard: `docker compose -f docker-compose.production.yml up -d`
+- [ ] Start Grafana dashboard: `docker compose -f docker-compose.full.yml up -d`
 - [ ] Run 20-node contention test: `python tests/scripts/python/gpu-test-suite.py --contention --nodes 20`
 - [ ] Measure round latency: `python tests/scripts/python/gpu-test-suite.py --round-latency --nodes 20`
 - [ ] Monitor GPU metrics: Open Grafana dashboard

@@ -85,7 +85,7 @@ echo "🏗️ PHASE 3: Infrastructure Deployment"
 echo "Time: $(date)"
 
 echo "  • Starting MongoDB, Redis, Backend, Frontend..."
-docker compose -f "$REPO_ROOT/docker-compose.1000nodes.yml" up -d mongo redis backend frontend 2>&1 | tee "$LOGS_DIR/deploy-infra.log"
+docker compose -f "$REPO_ROOT/docker-compose.full.yml" up -d backend frontend 2>&1 | tee "$LOGS_DIR/deploy-infra.log"
 
 echo "  • Waiting for MongoDB to be healthy..."
 for i in {1..60}; do
@@ -138,15 +138,15 @@ echo "📊 PHASE 4: Monitoring Deployment (Prometheus + Grafana)"
 echo "Time: $(date)"
 
 echo "  • Starting Prometheus..."
-docker compose -f "$REPO_ROOT/docker-compose.1000nodes.yml" up -d prometheus 2>&1 | tee "$LOGS_DIR/deploy-prometheus.log"
+docker compose -f "$REPO_ROOT/docker-compose.full.yml" up -d prometheus 2>&1 | tee "$LOGS_DIR/deploy-prometheus.log"
 sleep 10
 
 echo "  • Starting Grafana..."
-docker compose -f "$REPO_ROOT/docker-compose.1000nodes.yml" up -d grafana 2>&1 | tee "$LOGS_DIR/deploy-grafana.log"
+docker compose -f "$REPO_ROOT/docker-compose.full.yml" up -d grafana 2>&1 | tee "$LOGS_DIR/deploy-grafana.log"
 sleep 10
 
 echo "  • Starting AlertManager..."
-docker compose -f "$REPO_ROOT/docker-compose.1000nodes.yml" up -d alertmanager 2>&1 | tee "$LOGS_DIR/deploy-alertmanager.log"
+docker compose -f "$REPO_ROOT/docker-compose.full.yml" up -d alertmanager 2>&1 | tee "$LOGS_DIR/deploy-alertmanager.log"
 
 echo "✅ Monitoring stack ready"
 echo "   🌐 Grafana: http://localhost:3001 (admin/<configured password>)"
@@ -160,7 +160,7 @@ echo "🚀 PHASE 5: Node Agent Deployment (${NODE_COUNT} Replicas)"
 echo "Time: $(date)"
 
 echo "  • Scaling node-agent to ${NODE_COUNT} replicas..."
-docker compose -f "$REPO_ROOT/docker-compose.1000nodes.yml" up -d --scale "node-agent=${NODE_COUNT}" 2>&1 | tee "$LOGS_DIR/deploy-nodes.log"
+docker compose -f "$REPO_ROOT/docker-compose.full.yml" up -d --scale "node-agent=${NODE_COUNT}" 2>&1 | tee "$LOGS_DIR/deploy-nodes.log"
 
 echo "  • Waiting for nodes to initialize (120 seconds)..."
 for i in {1..12}; do
@@ -395,7 +395,7 @@ docker cp sovereignmap-backend-1000:/app/results/. "$ARTIFACTS_DIR/" 2>/dev/null
 echo "  • Collecting runtime snapshots..."
 docker ps --format '{{.Names}} {{.Status}} {{.RunningFor}}' > "$ARTIFACTS_DIR/runtime/docker-ps.txt" || true
 docker stats --no-stream --format 'table {{.Name}}\t{{.CPUPerc}}\t{{.MemUsage}}\t{{.NetIO}}\t{{.PIDs}}' > "$ARTIFACTS_DIR/runtime/docker-stats.txt" || true
-docker compose -f "$REPO_ROOT/docker-compose.1000nodes.yml" config > "$ARTIFACTS_DIR/runtime/docker-compose.1000nodes.resolved.yml" 2>/dev/null || true
+docker compose -f "$REPO_ROOT/docker-compose.full.yml" config > "$ARTIFACTS_DIR/runtime/docker-compose.full.resolved.yml" 2>/dev/null || true
 
 echo "  • Collecting container logs..."
 docker logs sovereignmap-backend-1000 > "$LOGS_DIR/backend-full.log" 2>&1 || true

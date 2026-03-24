@@ -3,7 +3,7 @@ set -e
 
 TEST_ID="${1:-bft-200-$(date +%Y%m%d-%H%M%S)}"
 RESULTS_DIR="test-results/200-node-bft/$(date +%Y-%m-%d)"
-COMPOSE_FILE="docker-compose.200nodes.yml"
+COMPOSE_FILE="docker-compose.full.yml"
 
 mkdir -p "$RESULTS_DIR"
 
@@ -15,7 +15,7 @@ command -v docker >/dev/null 2>&1 || { echo "❌ Docker required"; exit 1; }
 command -v go >/dev/null 2>&1 || { echo "❌ Go required"; exit 1; }
 
 # Cleanup
-docker-compose -f "$COMPOSE_FILE" down -v 2>/dev/null || true
+docker compose -f "$COMPOSE_FILE" down -v 2>/dev/null || true
 
 # Generate test data
 echo "📊 Generating test data..."
@@ -23,18 +23,18 @@ go run scripts/generate-test-data.go
 
 # Deploy infrastructure
 echo "🔧 Deploying infrastructure..."
-docker-compose -f "$COMPOSE_FILE" up -d mongo backend aggregator
+docker compose -f "$COMPOSE_FILE" up -d backend
 sleep 30
 
 # Check backend health
-if ! curl -s http://localhost:5000/health >/dev/null; then
+if ! curl -s http://localhost:8000/health >/dev/null; then
     echo "❌ Backend not healthy"
     exit 1
 fi
 
 # Deploy 200 nodes
 echo "🚀 Deploying 200 node agents..."
-docker-compose -f "$COMPOSE_FILE" up -d node-agent
+docker compose -f "$COMPOSE_FILE" up -d --scale node-agent=200 node-agent
 sleep 90
 
 # Verify node count
@@ -87,7 +87,7 @@ echo "✅ Test complete. Results in $RESULTS_DIR"
 read -t 10 -p "Teardown infrastructure? (Y/n) " -n 1 -r || true
 echo
 if [[ ! ${REPLY:-Y} =~ ^[Nn]$ ]]; then
-    docker-compose -f "$COMPOSE_FILE" down -v
+    docker compose -f "$COMPOSE_FILE" down -v
     echo "🧹 Infrastructure stopped"
 else
     echo "🔌 Infrastructure still running"

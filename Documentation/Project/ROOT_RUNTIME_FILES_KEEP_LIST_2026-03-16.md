@@ -20,18 +20,18 @@ This list records why root-level `.sh`, `.yml`, and `.yaml` files are still kept
 
 ### Active Deployment and Compose
 - `docker-compose.yml` - Base stack compose file.
-- `docker-compose.production.yml` - Production compose stack.
+- `docker-compose.full.yml` - Production compose stack.
 - `docker-compose.full.yml` - Full local/integration stack.
-- `docker-compose.monitoring.yml` - Monitoring overlay compose.
-- `docker-compose.monitoring.tpm.yml` - TPM monitoring overlay.
-- `docker-compose.tpm-secure.yml` - TPM-secure deployment overlay.
-- `docker-compose.participant.yml` - Participant onboarding/local participant profile.
-- `docker-compose.dev.yml` - Development compose profile.
-- `docker-compose.ci.yml` - CI compose profile.
-- `docker-compose.1000nodes.yml` - 1000-node benchmark/test profile.
-- `docker-compose.200nodes.yml` - 200-node BFT test profile.
-- `docker-compose.large-scale.yml` - Large-scale scenario profile.
-- `docker-compose.mohawk-capabilities.yml` - Mohawk capability profile.
+- `docker-compose.full.yml` - Monitoring overlay compose.
+- `docker-compose.full.yml` - TPM monitoring overlay.
+- `docker-compose.full.yml` - TPM-secure deployment overlay.
+- `docker-compose.full.yml` - Participant onboarding/local participant profile.
+- `docker-compose.full.yml` - Development compose profile.
+- `docker-compose.full.yml` - CI compose profile.
+- `docker-compose.full.yml` - 1000-node benchmark/test profile.
+- `docker-compose.full.yml` - 200-node BFT test profile.
+- `docker-compose.full.yml` - Large-scale scenario profile.
+- `docker-compose.full.yml` - Mohawk capability profile.
 - `kubernetes-5000-node-manifests.yaml` - 5000-node k8s scenario manifests.
 
 ### Active Operational Scripts

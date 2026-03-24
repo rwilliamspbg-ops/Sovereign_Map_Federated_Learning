@@ -39,7 +39,7 @@ This creates:
 - participants/alice/.participant.env
 - participants/alice/join-registration.json
 
-And starts a local participant client using docker-compose.participant.yml.
+And starts a local participant client using docker-compose.full.yml.
 
 ## 3. Verify policy and registrations
 
@@ -61,6 +61,6 @@ curl -s -X POST \
 ## 5. Stop participant
 
 ```bash
-docker compose -f docker-compose.participant.yml \
+docker compose -f docker-compose.full.yml \
   --env-file participants/alice/.participant.env down
 ```

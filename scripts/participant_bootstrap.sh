@@ -133,8 +133,8 @@ echo "Aggregator: ${AGG_HOST}:${AGG_PORT}"
 
 if [[ "$START_NODE" == "true" ]]; then
   docker network create sovereign-network >/dev/null 2>&1 || true
-  docker compose -f docker-compose.participant.yml --env-file "${OUT_DIR}/.participant.env" up -d --build
-  echo "Participant node started with docker-compose.participant.yml"
+  docker compose -f docker-compose.full.yml --env-file "${OUT_DIR}/.participant.env" up -d --build --scale node-agent=1 node-agent
+  echo "Participant node started with docker-compose.full.yml"
 else
   echo "Skipping node start (--no-start)"
 fi

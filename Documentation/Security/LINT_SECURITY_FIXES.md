@@ -66,9 +66,9 @@ func NewRunner(ctx context.Context, wasmBin []byte) (*Host, error) {
 **CWE**: CWE-798 (Use of Hard-coded Credentials)
 
 **Affected Files**:
-1. `docker-compose.monitoring.yml`
-2. `docker-compose.monitoring.tpm.yml`
-3. `monitoring/docker-compose.monitoring.yml`
+1. `docker-compose.full.yml`
+2. `docker-compose.full.yml`
+3. `monitoring/docker-compose.full.yml`
 
 **Fix**: Changed to use environment variable with secure default
 
@@ -201,14 +201,14 @@ environment:
 - All Go production files formatted with `gofmt`
 
 ### Security Fixes (4 files)
-- `docker-compose.monitoring.yml` - Password env var
-- `docker-compose.monitoring.tpm.yml` - Password env var  
-- `monitoring/docker-compose.monitoring.yml` - Password env var
+- `docker-compose.full.yml` - Password env var
+- `docker-compose.full.yml` - Password env var  
+- `monitoring/docker-compose.full.yml` - Password env var
 - `.env.example` - Security warnings
 
 ### Lint Fixes (2 files)
 - `internal/wasmhost/host.go` - Removed duplicate function
-- `docker-compose.dev.yml` - Password env var
+- `docker-compose.full.yml` - Password env var
 
 ### New Files (1 file)
 - `.env` - Environment configuration (git-ignored)

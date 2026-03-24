@@ -221,7 +221,7 @@ git diff HEAD~1
 ### Docker Compose Status
 ```bash
 # Watch container status
-docker compose -f docker-compose.1000nodes.yml ps
+docker compose -f docker-compose.full.yml ps
 
 # View logs
 docker logs -f sovereignmap-backend-1000
@@ -292,7 +292,7 @@ docker network inspect sovereignmap-1000
 ## Advanced Options
 
 ### Custom Node Count
-Edit `docker-compose.1000nodes.yml`:
+Edit `docker-compose.full.yml`:
 ```yaml
 node-agent:
   deploy:
@@ -317,12 +317,12 @@ Add custom Prometheus queries in `/monitoring/prometheus.1000.yml`:
 
 ### Stop Running Services
 ```bash
-docker compose -f docker-compose.1000nodes.yml down
+docker compose -f docker-compose.full.yml down
 ```
 
 ### Remove All Test Data
 ```bash
-docker compose -f docker-compose.1000nodes.yml down -v
+docker compose -f docker-compose.full.yml down -v
 rm -rf test-results/1000-node-npu/
 ```
 

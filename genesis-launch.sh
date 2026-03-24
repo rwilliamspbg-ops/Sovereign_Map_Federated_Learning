@@ -25,8 +25,8 @@ NETWORK_NAME="sovereign-genesis"
 DEFAULT_NODE_COUNT=3
 MIN_NODES="${MIN_NODES:-$DEFAULT_NODE_COUNT}"
 TARGET_NODES="${TARGET_NODES:-$MIN_NODES}"
-COMPOSE_FILE="docker-compose.production.yml"
-COMPOSE_ENV_FILE="${COMPOSE_ENV_FILE:-.env.production}"
+COMPOSE_FILE="docker-compose.full.yml"
+COMPOSE_ENV_FILE="${COMPOSE_ENV_FILE:-.env.full}"
 COMPOSE_ENV_ARGS=()
 if [ -n "$COMPOSE_ENV_FILE" ] && [ -f "$COMPOSE_ENV_FILE" ]; then
     COMPOSE_ENV_ARGS=(--env-file "$COMPOSE_ENV_FILE")
@@ -112,7 +112,7 @@ pre_launch_checks() {
     
     # Check required files
     local required_files=(
-        "docker-compose.production.yml"
+        "docker-compose.full.yml"
         "prometheus.yml"
         "alertmanager.yml"
         "grafana/dashboards/genesis-launch-overview.json"
@@ -270,7 +270,7 @@ launch_network() {
     mapfile -t node_services < <(get_node_services)
     available_nodes=${#node_services[@]}
     if [ "$available_nodes" -eq 0 ]; then
-        log_error "No node-agent services found in docker-compose.production.yml"
+        log_error "No node-agent services found in docker-compose.full.yml"
         return 1
     fi
 

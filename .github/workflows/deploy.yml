@@ -52,7 +52,7 @@ jobs:
       - name: Validate Docker Compose files
         run: |
           echo "Validating docker-compose files..."
-          for file in docker-compose.full.yml docker-compose.monitoring.yml docker-compose.tpm-secure.yml docker-compose.monitoring.tpm.yml; do
+          for file in docker-compose.full.yml; do
             if [ -f "$file" ]; then
               echo "Checking $file..."
               docker compose -f "$file" config > /dev/null 2>&1 && echo "✅ $file valid" || echo "⚠️  $file validation skipped (Docker not available in test env)"

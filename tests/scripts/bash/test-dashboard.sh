@@ -105,12 +105,12 @@ print_system_health() {
     
     # Container health
     local running
-    running=$(docker compose -f docker-compose.large-scale.yml ps --services --filter "status=running" 2>/dev/null | wc -l || echo 0)
+    running=$(docker compose -f docker-compose.full.yml ps --services --filter "status=running" 2>/dev/null | wc -l || echo 0)
     echo "  Services:     $running running"
     
     # Node agents
     local node_agents
-    node_agents=$(docker compose -f docker-compose.large-scale.yml ps node-agent --no-trunc 2>/dev/null | tail -n +2 | wc -l || echo 0)
+    node_agents=$(docker compose -f docker-compose.full.yml ps node-agent --no-trunc 2>/dev/null | tail -n +2 | wc -l || echo 0)
     echo "  Node Agents:  $node_agents active"
     
     # Memory usage
@@ -217,7 +217,7 @@ print_commands() {
     echo "  View detailed report:     cat $RESULTS_DIR/TEST_REPORT.md"
     echo "  View all convergence:     jq . $RESULTS_DIR/convergence.log"
     echo "  View test log:            tail -f $RESULTS_DIR/test.log"
-    echo "  View docker compose logs: docker compose -f docker-compose.large-scale.yml logs -f backend"
+    echo "  View docker compose logs: docker compose -f docker-compose.full.yml logs -f backend"
     echo "  Stop test:                Press Ctrl+C"
     echo ""
 }

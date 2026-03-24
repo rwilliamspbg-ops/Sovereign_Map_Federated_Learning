@@ -15,22 +15,19 @@ jobs:
 
       - name: SGP-001 Standards Check
         run: |
-          FILE="docker-compose.200nodes.yml"
-          
-          # 1. Check NODE_COUNT (The cluster size)
-          NODE_COUNT=$(grep "NODE_COUNT" "$FILE" | sed 's/[^0-9]//g' | head -1)
-          
-          # 2. Check replicas (The actual deployed agents)
-          REPLICAS=$(grep "replicas:" "$FILE" | sed 's/[^0-9]//g' | head -1)
+          FILE="docker-compose.full.yml"
 
-          echo "Audit Debug: Found $NODE_COUNT nodes and $REPLICAS replicas."
-
-          if [ "$NODE_COUNT" != "200" ] || [ "$REPLICAS" != "200" ]; then
-            echo "❌ SGP-001 Violation: Cluster size must be 200."
+          if [ ! -f "$FILE" ]; then
+            echo "❌ Missing required compose file: $FILE"
             exit 1
           fi
-          
-          echo "✅ Audit Verified: 200-node quorum confirmed."
+
+          if ! grep -q '^  node-agent:' "$FILE"; then
+            echo "❌ SGP-001 Violation: node-agent service missing from full compose profile."
+            exit 1
+          fi
+
+          echo "✅ Audit Verified: full compose profile contains node-agent service."
 
   lint-scripts:
     runs-on: ubuntu-latest

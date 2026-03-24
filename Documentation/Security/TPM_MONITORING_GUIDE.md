@@ -125,7 +125,7 @@ Comprehensive dashboard with 18 panels monitoring all aspects of TPM trust.
    - Cache hit rate
    - Verification status summary table
 
-### 4. Docker Compose (`docker-compose.monitoring.tpm.yml`)
+### 4. Docker Compose (`docker-compose.full.yml`)
 
 Complete monitoring stack with TPM integration.
 
@@ -149,15 +149,15 @@ docker network create sovereign-network
 docker volume create tpm-certs
 
 # Deploy complete monitoring stack
-docker compose -f docker-compose.monitoring.tpm.yml up -d
+docker compose -f docker-compose.full.yml up -d
 
 # Verify services
-docker compose -f docker-compose.monitoring.tpm.yml ps
+docker compose -f docker-compose.full.yml ps
 ```
 
 ### Grafana Provisioning Mounts (Required)
 
-Use the same mount layout in both `docker-compose.monitoring.tpm.yml` and `docker-compose.monitoring.yml` so Grafana auto-loads dashboards and picks up updates without manual imports.
+Use the same mount layout in both `docker-compose.full.yml` and `docker-compose.full.yml` so Grafana auto-loads dashboards and picks up updates without manual imports.
 
 ```yaml
 grafana:
@@ -176,8 +176,8 @@ Notes:
 Reload after dashboard edits:
 
 ```bash
-docker compose -f docker-compose.monitoring.tpm.yml restart grafana
-docker compose -f docker-compose.monitoring.yml restart grafana
+docker compose -f docker-compose.full.yml restart grafana
+docker compose -f docker-compose.full.yml restart grafana
 ```
 
 ### Access Points
@@ -473,7 +473,7 @@ with ThreadPoolExecutor(max_workers=4) as executor:
 
 ```bash
 # Adjust Prometheus retention (default 30d)
-# In docker-compose.monitoring.tpm.yml
+# In docker-compose.full.yml
 command:
   - '--storage.tsdb.retention.time=60d'  # Keep 60 days
 ```

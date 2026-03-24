@@ -93,7 +93,7 @@ EOF
 }
 
 create_docker_compose() {
-    cat > docker-compose.200nodes.yml << 'EOF'
+    cat > docker-compose.generated.yml << 'EOF'
 version: '3.8'
 
 services:
@@ -203,7 +203,7 @@ volumes:
   prometheus_data_200:
   grafana_data_200:
 EOF
-    echo "✅ docker-compose.200nodes.yml"
+    echo "✅ docker-compose.generated.yml"
 }
 
 create_test_script() {
@@ -213,7 +213,7 @@ set -e
 
 TEST_ID="${1:-bft-200-$(date +%Y%m%d-%H%M%S)}"
 RESULTS_DIR="test-results/200-node-bft/$(date +%Y-%m-%d)"
-COMPOSE_FILE="docker-compose.200nodes.yml"
+COMPOSE_FILE="docker-compose.generated.yml"
 
 mkdir -p "$RESULTS_DIR"
 
@@ -604,7 +604,7 @@ test-200-bft: setup-200-test
 	@./scripts/run-200-bft-test.sh
 
 clean-200-test:
-	@docker-compose -f docker-compose.200nodes.yml down -v 2>/dev/null || true
+  @docker-compose -f docker-compose.generated.yml down -v 2>/dev/null || true
 	@rm -rf test-results/200-node-bft/* test-data/*
 	@echo "🧹 200-node test environment cleaned"
 EOF
@@ -665,7 +665,7 @@ echo ""
 echo "Next steps:"
 echo "  1. Review created files"
 echo "  2. Run: make test-200-bft"
-echo "  3. Or manually: docker-compose -f docker-compose.200nodes.yml up -d"
+echo "  3. Or manually: docker-compose -f docker-compose.generated.yml up -d"
 echo ""
 echo "File summary:"
 find . -name "*.go" -o -name "*.yaml" -o -name "*.yml" -o -name "*.sh" -o -name "*.conf" | grep -E "(200node|200-node|200nodes)" | head -10

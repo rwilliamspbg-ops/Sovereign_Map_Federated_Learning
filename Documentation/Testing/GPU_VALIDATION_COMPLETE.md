@@ -221,7 +221,7 @@ python tests/scripts/python/gpu-test-suite.py --round-latency --nodes 20
 
 **Monitor:**
 ```bash
-docker compose -f docker-compose.production.yml up -d
+docker compose -f docker-compose.full.yml up -d
 # Open Grafana: http://localhost:3001
 # Dashboard: Sovereign Map - GPU/CUDA Acceleration
 ```

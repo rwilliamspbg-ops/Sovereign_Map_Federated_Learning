@@ -1,36 +1,36 @@
 Issue #1: Service Won't Start
   Solution:
-    1. Check logs: docker-compose logs service-name
-    2. Restart service: docker-compose restart service-name
-    3. Full rebuild: docker-compose down && docker-compose up -d
+    1. Check logs: docker compose -f docker-compose.full.yml logs service-name
+    2. Restart service: docker compose -f docker-compose.full.yml restart service-name
+    3. Full rebuild: docker compose -f docker-compose.full.yml down && docker compose -f docker-compose.full.yml up -d --scale node-agent=5
 
 Issue #2: Health Check Failures
   Solution:
     1. Test health endpoint: curl http://localhost:PORT/health
-    2. Check service logs: docker-compose logs service-name
-    3. Verify dependencies: docker-compose exec service-name ping dependency-service
+    2. Check service logs: docker compose -f docker-compose.full.yml logs service-name
+    3. Verify dependencies: docker compose -f docker-compose.full.yml exec service-name ping dependency-service
 
 Issue #3: Port Conflicts
   Solution:
     1. Find process: lsof -i :PORT
-    2. Update docker-compose.yml port mappings
-    3. Restart services: docker-compose restart
+    2. Update docker-compose.full.yml port mappings
+    3. Restart services: docker compose -f docker-compose.full.yml restart
 
 Issue #4: Memory/CPU Issues
   Solution:
     1. Check resource usage: docker stats
-    2. Adjust limits in docker-compose.yml
-    3. Restart services: docker-compose up -d
+    2. Adjust limits in docker-compose.full.yml
+    3. Restart services: docker compose -f docker-compose.full.yml up -d --scale node-agent=5
 
 Issue #5: Database Connection Errors
   Solution:
-    1. Test MongoDB: docker-compose exec backend curl http://mongo:27017
-    2. Check connection string: docker-compose exec backend env | grep DATABASE
-    3. Reset database: docker-compose down -v && docker-compose up -d
+    1. Test service connectivity: docker compose -f docker-compose.full.yml exec backend curl -f http://localhost:8000/health
+    2. Check connection string: docker compose -f docker-compose.full.yml exec backend env | grep -E 'MONGO|REDIS|DATABASE'
+    3. Reset stack: docker compose -f docker-compose.full.yml down -v && docker compose -f docker-compose.full.yml up -d --scale node-agent=5
 
 Debug Commands:
-  Enter container: docker-compose exec backend bash
-  Check env vars: docker-compose exec backend env | grep FL_
-  Test connectivity: docker-compose exec backend ping mongo
-  Check mounted volumes: docker-compose exec backend ls -la /models
+  Enter container: docker compose -f docker-compose.full.yml exec backend bash
+  Check env vars: docker compose -f docker-compose.full.yml exec backend env | grep FL_
+  Test connectivity: docker compose -f docker-compose.full.yml exec backend ping backend
+  Check mounted volumes: docker compose -f docker-compose.full.yml exec backend ls -la /app
   View resource limits: docker inspect sovereignmap-fl | grep -A 20 Resources

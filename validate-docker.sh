@@ -38,9 +38,9 @@ for dockerfile in Dockerfile.backend.optimized Dockerfile.frontend.optimized; do
 done
 echo ""
 
-# 3. Validate Docker Compose files
-echo -e "${YELLOW}[3/5] Validating Docker Compose files...${NC}"
-for compose_file in docker-compose.dev.yml docker-compose.production.yml docker-compose.large-scale.yml; do
+# 3. Validate Docker Compose file
+echo -e "${YELLOW}[3/5] Validating Docker Compose file...${NC}"
+for compose_file in docker-compose.full.yml; do
     if [ -f "$compose_file" ]; then
         echo -e "${GREEN}✓ $compose_file found${NC}"
         services=$(grep -c "^  [a-z].*:" "$compose_file" || true)
@@ -93,9 +93,9 @@ echo "  • Structured logging: ✓ (observability)"
 echo ""
 
 echo -e "${GREEN}Quick Start:${NC}"
-echo "  Development:  docker compose -f docker-compose.dev.yml up -d"
-echo "  Production:   docker compose -f docker-compose.production.yml up -d --scale node-agent=50"
-echo "  Large-Scale:  docker compose -f docker-compose.large-scale.yml up -d --scale node-agent=500"
+echo "  Standard:     docker compose -f docker-compose.full.yml up -d --scale node-agent=5"
+echo "  Scale out:    docker compose -f docker-compose.full.yml up -d --scale node-agent=50"
+echo "  Teardown:     docker compose -f docker-compose.full.yml down --remove-orphans"
 echo ""
 
 echo -e "${GREEN}Access Points:${NC}"

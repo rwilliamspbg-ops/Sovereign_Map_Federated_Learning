@@ -3,7 +3,7 @@
 set -euo pipefail
 
 TARGET_NODES="${1:-25}"
-COMPOSE_FILE="${2:-docker-compose.dev.yml}"
+COMPOSE_FILE="${2:-docker-compose.full.yml}"
 SERVICE_NAME="${SERVICE_NAME:-node-agent}"
 CERT_DIR="${CERT_DIR:-/etc/sovereign/certs}"
 

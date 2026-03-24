@@ -336,7 +336,7 @@ echo "Next: Run the test scripts from scripts/ directory"
 4. **Start the application:**
    ```bash
    cd Sovereign_Map_Federated_Learning
-   docker-compose -f docker-compose.production.yml up -d
+   docker-compose -f docker-compose.full.yml up -d
    ```
 
 5. **Run tests:**

@@ -1,38 +1,29 @@
-Development Deployment:
-  docker-compose -f docker-compose.yml -f docker-compose.dev.yml up -d
+Standard Deployment:
+  Step 1: Build full stack images
+    docker compose -f docker-compose.full.yml build
 
-Production Deployment:
-  Step 1: Build production images
-    docker-compose build --no-cache
-  
-  Step 2: Deploy with health checks
-    docker-compose up -d
-  
+  Step 2: Deploy with node-agent scaling
+    docker compose -f docker-compose.full.yml up -d --scale node-agent=5
+
   Step 3: Verify all services
-    docker-compose ps
-  
+    docker compose -f docker-compose.full.yml ps
+
   Step 4: Check resource usage
     docker stats
 
 Scaling:
-  Scale to 5 worker nodes:
-    docker-compose up -d --scale federated-learning=5
-  
-  Scale to 10 worker nodes:
-    docker-compose up -d --scale federated-learning=10
-  
+  Scale to 5 node agents:
+    docker compose -f docker-compose.full.yml up -d --scale node-agent=5
+
+  Scale to 10 node agents:
+    docker compose -f docker-compose.full.yml up -d --scale node-agent=10
+
   Monitor scaling:
-    watch -n 5 'docker-compose ps'
+    watch -n 5 'docker compose -f docker-compose.full.yml ps'
 
 Backup & Recovery:
-  Backup Database:
-    docker-compose exec mongo mongodump --out /backup/
-  
-  Restore Database:
-    docker-compose exec mongo mongorestore /backup/
-  
-  Backup Volumes:
-    docker run --rm -v mongo_data:/data -v $(pwd):/backup busybox tar czf /backup/mongo_data.tar.gz -C /data .
-  
-  Restore Volumes:
-    docker run --rm -v mongo_data:/data -v $(pwd):/backup busybox tar xzf /backup/mongo_data.tar.gz -C /data
+  Backup backend data volume:
+    docker run --rm -v sovereign_map_federated_learning_backend_data:/data -v $(pwd):/backup busybox tar czf /backup/backend_data.tar.gz -C /data .
+
+  Restore backend data volume:
+    docker run --rm -v sovereign_map_federated_learning_backend_data:/data -v $(pwd):/backup busybox tar xzf /backup/backend_data.tar.gz -C /data

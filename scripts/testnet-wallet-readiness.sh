@@ -68,10 +68,7 @@ run_check "Wallet-enabled binaries build" go build ./cmd/node-agent ./cmd/metric
 
 if command -v docker >/dev/null 2>&1; then
   if docker compose version >/dev/null 2>&1; then
-    run_check "Compose config: dev" docker compose -f docker-compose.dev.yml config >/dev/null
-    run_check "Compose config: production" docker compose -f docker-compose.production.yml config >/dev/null
-    run_check "Compose config: participant" docker compose -f docker-compose.participant.yml config >/dev/null
-    run_check "Compose config: monitoring" docker compose -f docker-compose.monitoring.yml config >/dev/null
+    run_check "Compose config: full" docker compose -f docker-compose.full.yml config >/dev/null
   else
     log_warn "Docker is installed but docker compose plugin is unavailable"
   fi

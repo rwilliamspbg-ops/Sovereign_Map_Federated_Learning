@@ -5,7 +5,7 @@ Validates Grafana dashboard setup and configuration.
 
 .DESCRIPTION
 Checks that all 6 dashboards exist, provisioning directories are configured,
-and docker-compose.production.yml has proper Grafana mounts.
+and docker-compose.full.yml has proper Grafana mounts.
 #>
 
 param(
@@ -72,10 +72,10 @@ if (-not $allFound) {
     exit 1
 }
 
-# Check docker-compose.production.yml mounts
-Write-Host "`n[3/4] Checking docker-compose.production.yml Grafana config..." -ForegroundColor Yellow
+# Check docker-compose.full.yml mounts
+Write-Host "`n[3/4] Checking docker-compose.full.yml Grafana config..." -ForegroundColor Yellow
 
-$dockerComposePath = "$projectPath/docker-compose.production.yml"
+$dockerComposePath = "$projectPath/docker-compose.full.yml"
 $content = Get-Content $dockerComposePath -Raw
 
 $checks = @(
@@ -138,7 +138,7 @@ Write-Host "  • Provisioning mounts: 2 (datasources + dashboards)"
 Write-Host "  • Unique metrics: $($uniqueMetrics.Count)"
 
 Write-Host "`nNext Steps:" -ForegroundColor Yellow
-Write-Host "  1. docker compose -f docker-compose.production.yml up -d" -ForegroundColor Cyan
+Write-Host "  1. docker compose -f docker-compose.full.yml up -d --scale node-agent=5" -ForegroundColor Cyan
 Write-Host "  2. Wait 30 seconds for services to start"
 Write-Host "  3. Open http://localhost:3001 (admin/sovereignmap)"
 Write-Host "  4. View dashboards in 'Sovereign' folder"

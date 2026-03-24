@@ -179,7 +179,7 @@ docker system prune -a --volumes
 ### Scenario 1: Full Capacity Test
 ```bash
 # Start monitoring stack
-docker compose -f docker-compose.production.yml up -d
+docker compose -f docker-compose.full.yml up -d
 
 # Wait 60 seconds for services
 # Run full test
@@ -195,7 +195,7 @@ docker compose -f docker-compose.production.yml up -d
 ### Scenario 2: Progressive Load Test
 ```bash
 # Start stack
-docker compose -f docker-compose.production.yml up -d
+docker compose -f docker-compose.full.yml up -d
 
 # Run incremental scaling
 ./tests/scripts/bash/test-incremental-scale.sh
@@ -211,7 +211,7 @@ docker compose -f docker-compose.production.yml up -d
 ### Scenario 3: Long-Running Stability Test
 ```bash
 # Start stack
-docker compose -f docker-compose.production.yml up -d
+docker compose -f docker-compose.full.yml up -d
 
 # Run continuous load test to find limits
 ./tests/scripts/powershell/continuous-load-test.ps1
@@ -226,7 +226,7 @@ docker compose -f docker-compose.production.yml up -d
 ### Scenario 4: Dashboard Verification
 ```bash
 # Start stack with monitoring
-docker compose -f docker-compose.production.yml up -d
+docker compose -f docker-compose.full.yml up -d
 
 # Open all dashboards in parallel
 # http://localhost:3001 (Grafana)

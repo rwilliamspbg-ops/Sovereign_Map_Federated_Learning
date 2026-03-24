@@ -69,13 +69,13 @@ echo 🏗️ PHASE 3: Infrastructure Deployment
 echo Time: %date% %time%
 
 echo   - Starting MongoDB, Redis, Backend, Frontend...
-docker compose -f docker-compose.1000nodes.yml up -d mongo redis backend frontend > %LOGS_DIR%\deploy-infra.log 2>&1
+docker compose -f docker-compose.full.yml up -d backend frontend > %LOGS_DIR%\deploy-infra.log 2>&1
 
 echo   - Waiting for services to be healthy...
 timeout /t 30 /nobreak
 
 echo   - Starting Prometheus and Grafana...
-docker compose -f docker-compose.1000nodes.yml up -d prometheus grafana alertmanager > %LOGS_DIR%\deploy-monitoring.log 2>&1
+docker compose -f docker-compose.full.yml up -d prometheus grafana alertmanager > %LOGS_DIR%\deploy-monitoring.log 2>&1
 
 echo ✅ Infrastructure ready
 echo.
@@ -87,7 +87,7 @@ echo 🚀 PHASE 4: Node Agent Deployment (1000 Replicas)
 echo Time: %date% %time%
 
 echo   - Scaling node-agent to 1000 replicas...
-docker compose -f docker-compose.1000nodes.yml up -d --scale node-agent=1000 > %LOGS_DIR%\deploy-nodes.log 2>&1
+docker compose -f docker-compose.full.yml up -d --scale node-agent=1000 > %LOGS_DIR%\deploy-nodes.log 2>&1
 
 echo   - Waiting for nodes to initialize (60 seconds)...
 timeout /t 60 /nobreak

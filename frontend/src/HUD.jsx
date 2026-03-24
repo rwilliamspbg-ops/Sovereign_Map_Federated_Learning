@@ -17,8 +17,10 @@ export default function HUD({
   enclaveActionMessage,
   trainingStatus,
   opsHealth,
+  opsTrends,
   opsEvents,
   opsStreamStatus,
+  connectionDiagnostics,
   webMetrics,
   loading,
   error,
@@ -34,17 +36,57 @@ export default function HUD({
   onSubmitVerificationPolicy,
   setVoiceQuery
 }) {
+  const [compactMode, setCompactMode] = useState(false);
+  const [isMobile, setIsMobile] = useState(false);
+  const [collapsedClusters, setCollapsedClusters] = useState({
+    api: false,
+    llm: false,
+    network: false
+  });
+  const [trendSeries, setTrendSeries] = useState({
+    apiLatency: [],
+    apiError: [],
+    ingress: []
+  });
   const [simulationState, setSimulationState] = useState({
     byzantineAttacks: 0,
     networkPartitions: 0,
     hardwareFaults: 0
   });
+  const [requestedRounds, setRequestedRounds] = useState(10);
+
+  useEffect(() => {
+    const updateViewport = () => {
+      const mobile = window.innerWidth <= 720;
+      setIsMobile(mobile);
+      setCollapsedClusters((prev) => {
+        if (!mobile) {
+          return { api: false, llm: false, network: false };
+        }
+        if (prev.api || prev.llm || prev.network) {
+          return prev;
+        }
+        return { api: false, llm: true, network: true };
+      });
+    };
+
+    updateViewport();
+    window.addEventListener('resize', updateViewport);
+    return () => window.removeEventListener('resize', updateViewport);
+  }, []);
 
   useEffect(() => {
     if (hudData?.simulation_counters) {
       setSimulationState((prev) => ({ ...prev, ...hudData.simulation_counters }));
     }
   }, [hudData]);
+
+  useEffect(() => {
+    const target = Number(trainingStatus?.target_rounds || 0);
+    if (target > 0) {
+      setRequestedRounds(target);
+    }
+  }, [trainingStatus?.target_rounds]);
 
   const triggerSimulation = async (type) => {
     setSimulationState(prev => ({
@@ -61,11 +103,36 @@ export default function HUD({
   const founderList = Array.isArray(founders) ? founders.slice(0, 6) : [];
   const healthStatus = opsHealth?.status || 'unknown';
   const streamLabel = opsStreamStatus || 'disconnected';
+  const diagnostics = connectionDiagnostics || {};
+  const streamLastError = diagnostics.streamLastError || '';
+  const policyStatus = diagnostics.policyStatus || 'idle';
   const trustMode = trustStatus?.trust_mode || 'governed-verification';
   const confidencePct = Number(trustStatus?.fl_verification?.average_confidence_bps || 0) / 100;
   const memUsed = Number(opsHealth?.system?.memory?.used_percent || 0);
+  const apiLatencyMs = Number(health?.telemetry?.api_latency_ms || 0);
+  const apiErrorRatePct = Number(health?.telemetry?.api_error_rate || 0);
+  const ingressMbps = Number(health?.telemetry?.ingress_mbps || 0);
+  const trainingRound = Number(metricsSummary?.federated_learning?.current_round || trainingStatus?.round || 0);
+  const trainingLoss = Number(metricsSummary?.federated_learning?.current_loss || 0);
+  const targetRounds = Number(trainingStatus?.target_rounds || 0);
+  const remainingRounds = Number(trainingStatus?.remaining_rounds);
+  const llmPolicyValid = Number(hudData?.simulation_counters?.llmPolicyValid || 0);
+  const llmPolicyRejected = Number(hudData?.simulation_counters?.llmPolicyRejected || 0);
+  const llmPolicyTotal = llmPolicyValid + llmPolicyRejected;
+  const llmPassRatePct = llmPolicyTotal > 0 ? (llmPolicyValid / llmPolicyTotal) * 100 : 100;
+  const registryCount = Array.isArray(founders) ? founders.length : 0;
+  const verifiedRegistryCount = Array.isArray(founders) ? founders.filter((founder) => founder?.verified).length : 0;
+  const listedStake = Array.isArray(founders)
+    ? founders.reduce((acc, founder) => acc + Number(founder?.stake || 0), 0)
+    : 0;
   const promReachable = Boolean(opsHealth?.dependencies?.prometheus?.reachable ?? opsHealth?.ports?.prometheus_9090);
-  const opsAlerts = Array.isArray(opsHealth?.alerts) ? opsHealth.alerts : [];
+  const apiPortUp = Boolean(opsHealth?.ports?.api_8000);
+  const flPortUp = Boolean(opsHealth?.ports?.flower_8080);
+  const promPortUp = Boolean(opsHealth?.ports?.prometheus_9090);
+  const portHealthUpCount = [apiPortUp, flPortUp, promPortUp].filter(Boolean).length;
+  const opsAlerts = Array.isArray(opsHealth?.alerts)
+    ? opsHealth.alerts.filter((alert) => String(alert?.component || '').toLowerCase() !== 'privacy-budget')
+    : [];
   const runbookByComponent = {
     prometheus: {
       section: 'ConsensusStatusEndpointDown',
@@ -99,14 +166,6 @@ export default function HUD({
         'Tune attestation cache TTL and nonce mode before scaling enclave load.'
       ]
     },
-    'privacy-budget': {
-      section: 'FLAccuracyDegraded',
-      owner: 'platform',
-      checks: [
-        'Review epsilon burn against target and reduce round cadence when near cap.',
-        'Coordinate policy update if sustained high-frequency rounds are required.'
-      ]
-    }
   };
   const runbookCards = opsAlerts.map((alert, idx) => {
     const key = String(alert?.component || '').toLowerCase();
@@ -126,11 +185,6 @@ export default function HUD({
   });
   const browserRtt = Number(webMetrics?.rttMs || 0);
   const browserHeap = Number(webMetrics?.jsHeapUsedMB || 0);
-  const cumulativeEpsilon = Number(opsHealth?.privacy_security?.cumulative_epsilon || 0);
-  const epsilonTarget = Number(opsHealth?.privacy_security?.epsilon_target || 1.0);
-  const stragglerRate = Number(opsHealth?.privacy_security?.straggler_rate_pct || 0);
-  const asr = Number(opsHealth?.privacy_security?.attack_success_rate_pct || 0);
-  const detectionPrecision = Number(opsHealth?.privacy_security?.detection_precision_pct || 0);
   const epcUtilization = Number(opsHealth?.tee_hardware?.epc_utilization_pct || 0);
   const attestationLatencyMs = Number(opsHealth?.tee_hardware?.attestation_latency_ms || 0);
   const cxlThroughputGbps = Number(opsHealth?.tee_hardware?.cxl_throughput_gbps || 0);
@@ -142,6 +196,44 @@ export default function HUD({
     ? opsHealth.governance_economics.recent_slashing_events
     : [];
 
+  useEffect(() => {
+    const append = (series, value) => {
+      const parsed = Number(value);
+      if (!Number.isFinite(parsed)) {
+        return series;
+      }
+      const next = [...series, parsed];
+      return next.slice(-18);
+    };
+
+    setTrendSeries((prev) => ({
+      apiLatency: append(prev.apiLatency, apiLatencyMs),
+      apiError: append(prev.apiError, apiErrorRatePct),
+      ingress: append(prev.ingress, ingressMbps)
+    }));
+  }, [apiLatencyMs, apiErrorRatePct, ingressMbps]);
+
+  const normalizeTrend = (items) => {
+    if (!Array.isArray(items)) {
+      return [];
+    }
+    return items
+      .map((entry) => {
+        if (entry && typeof entry === 'object' && entry.value != null) {
+          return Number(entry.value);
+        }
+        return Number(entry);
+      })
+      .filter((value) => Number.isFinite(value));
+  };
+
+  const latencySeries = normalizeTrend(opsTrends?.api_latency_ms);
+  const errorSeries = normalizeTrend(opsTrends?.api_error_rate_pct);
+  const ingressSeries = normalizeTrend(opsTrends?.ingress_mbps);
+  const resolvedLatencySeries = latencySeries.length > 0 ? latencySeries : trendSeries.apiLatency;
+  const resolvedErrorSeries = errorSeries.length > 0 ? errorSeries : trendSeries.apiError;
+  const resolvedIngressSeries = ingressSeries.length > 0 ? ingressSeries : trendSeries.ingress;
+
   const numberOrFallback = (value, suffix = '') => {
     const parsed = Number(value);
     return Number.isFinite(parsed) ? `${parsed}${suffix}` : 'N/A';
@@ -152,19 +244,82 @@ export default function HUD({
     return Number.isFinite(parsed) ? `${parsed.toFixed(decimals)}${suffix}` : 'N/A';
   };
 
+  const toggleCluster = (key) => {
+    setCollapsedClusters((prev) => ({ ...prev, [key]: !prev[key] }));
+  };
+
+  const sparklinePoints = (series) => {
+    if (!Array.isArray(series) || series.length === 0) {
+      return '0,22 96,22';
+    }
+    if (series.length === 1) {
+      return `0,12 96,12`;
+    }
+    const min = Math.min(...series);
+    const max = Math.max(...series);
+    const span = max - min || 1;
+    return series.map((point, index) => {
+      const x = (index / (series.length - 1)) * 96;
+      const y = 22 - (((point - min) / span) * 20);
+      return `${x.toFixed(2)},${y.toFixed(2)}`;
+    }).join(' ');
+  };
+
+  const endpointClass = (isUp) => (isUp ? 'endpoint-up' : 'endpoint-down');
+
   return (
-    <div className="hud-ops-root">
+    <div className={`hud-ops-root ${compactMode ? 'density-compact' : ''}`}>
       <header className="hud-ops-header">
         <div>
           <p className="hud-kicker">SovereignMap Operator Console</p>
-          <h2>Federated Learning Operating Deck</h2>
-          <p className="hud-subline">Unified command surface for training, governance, simulation, and platform telemetry.</p>
+          <h2>Marketplace + LLM Training Command Deck</h2>
+          <p className="hud-subline">Readable operations cockpit for API health, model training, wallet registry, governance signals, and live network connectivity.</p>
         </div>
         <div className="header-right">
+          <button
+            className={`density-toggle ${compactMode ? 'active' : ''}`}
+            onClick={() => setCompactMode((value) => !value)}
+            type="button"
+          >
+            {compactMode ? 'Standard Density' : 'Wallboard Density'}
+          </button>
           <div className="ops-clock">{new Date().toLocaleString()}</div>
           {loading && <div className="loading-spinner">SYNCING</div>}
         </div>
       </header>
+
+      <section className="ops-diagnostics-strip">
+        <div className="diag-item">
+          <span className="diag-label">API Base</span>
+          <span className="diag-value">{diagnostics.apiBase || 'N/A'}</span>
+        </div>
+        <div className="diag-item">
+          <span className="diag-label">Events Endpoint</span>
+          <span className="diag-value">{diagnostics.eventsEndpoint || 'N/A'}</span>
+        </div>
+        <div className="diag-item">
+          <span className="diag-label">SSE Status</span>
+          <span className={`diag-value ${streamLabel === 'connected' ? 'diag-ok' : streamLabel === 'connecting' ? 'diag-warning' : 'diag-critical'}`}>
+            {streamLabel.toUpperCase()}
+          </span>
+        </div>
+        <div className="diag-item">
+          <span className="diag-label">Last Transport Error</span>
+          <span className={`diag-value ${streamLastError ? 'diag-warning' : ''}`}>
+            {streamLastError || 'none'}
+          </span>
+        </div>
+        <div className="diag-item">
+          <span className="diag-label">Policy Endpoint</span>
+          <span className="diag-value">{diagnostics.policyEndpoint || 'N/A'}</span>
+        </div>
+        <div className="diag-item">
+          <span className="diag-label">Policy Transport</span>
+          <span className={`diag-value ${policyStatus === 'ok' ? 'diag-ok' : policyStatus === 'pending' ? 'diag-warning' : policyStatus === 'error' ? 'diag-critical' : ''}`}>
+            {`${String(policyStatus).toUpperCase()}${diagnostics.policyDetail ? ` (${diagnostics.policyDetail})` : ''}`}
+          </span>
+        </div>
+      </section>
 
       <section className="ops-ribbon">
         <div className="ops-chip">
@@ -174,15 +329,35 @@ export default function HUD({
           </span>
         </div>
         <div className="ops-chip">
+          <span className="ops-chip-label">API Plane</span>
+          <span className={`ops-chip-value ${apiErrorRatePct >= 1 ? 'chip-warning' : 'chip-ok'}`}>
+            {fixedOrFallback(apiLatencyMs, 0, ' ms')} latency | {fixedOrFallback(apiErrorRatePct, 2, '%')} errors
+          </span>
+        </div>
+        <div className="ops-chip">
           <span className="ops-chip-label">Event Bus</span>
           <span className={`ops-chip-value ${streamLabel === 'connected' ? 'chip-ok' : streamLabel === 'connecting' ? 'chip-warning' : 'chip-critical'}`}>
             {streamLabel.toUpperCase()}
           </span>
         </div>
         <div className="ops-chip">
-          <span className="ops-chip-label">Training</span>
+          <span className="ops-chip-label">LLM Guardrail</span>
+          <span className={`ops-chip-value ${llmPolicyRejected > llmPolicyValid ? 'chip-warning' : 'chip-ok'}`}>
+            pass {fixedOrFallback(llmPassRatePct, 1, '%')} | valid {llmPolicyValid} / rejected {llmPolicyRejected}
+          </span>
+        </div>
+        <div className="ops-chip">
+          <span className="ops-chip-label">Training Loop</span>
           <span className={`ops-chip-value ${trainingStatus?.active ? 'chip-ok' : 'chip-warning'}`}>
-            {trainingStatus?.status || 'idle'} / round {trainingStatus?.round ?? 0}
+            {trainingStatus?.status || 'idle'} / round {trainingRound}
+          </span>
+        </div>
+        <div className="ops-chip">
+          <span className="ops-chip-label">Training Target</span>
+          <span className={`ops-chip-value ${targetRounds > 0 ? 'chip-ok' : 'chip-warning'}`}>
+            {targetRounds > 0
+              ? `${targetRounds} rounds (${Number.isFinite(remainingRounds) ? `${remainingRounds} remaining` : 'running'})`
+              : 'continuous'}
           </span>
         </div>
         <div className="ops-chip">
@@ -194,27 +369,27 @@ export default function HUD({
           <span className="ops-chip-value">{hudData?.active_nodes ?? 0}</span>
         </div>
         <div className="ops-chip">
-          <span className="ops-chip-label">Core Ports</span>
-          <span className={`ops-chip-value ${promReachable ? '' : 'chip-critical'}`}>
-            API:{opsHealth?.ports?.api_8000 ? 'up' : 'down'} | FL:{opsHealth?.ports?.flower_8080 ? 'up' : 'down'} | PROM:{opsHealth?.ports?.prometheus_9090 ? 'up' : 'down'}
+          <span className="ops-chip-label">Connections</span>
+          <span className={`ops-chip-value ${portHealthUpCount === 3 ? 'chip-ok' : 'chip-warning'}`}>
+            {portHealthUpCount}/3 core endpoints up
           </span>
         </div>
         <div className="ops-chip">
-          <span className="ops-chip-label">Privacy Budget</span>
-          <span className={`ops-chip-value ${cumulativeEpsilon >= epsilonTarget * 0.95 ? 'chip-warning' : 'chip-ok'}`}>
-            eps {fixedOrFallback(cumulativeEpsilon, 3)} / {fixedOrFallback(epsilonTarget, 2)}
+          <span className="ops-chip-label">Wallet Registry</span>
+          <span className={`ops-chip-value ${verifiedRegistryCount === registryCount && registryCount > 0 ? 'chip-ok' : 'chip-warning'}`}>
+            {verifiedRegistryCount}/{registryCount} verified
           </span>
         </div>
         <div className="ops-chip">
-          <span className="ops-chip-label">Straggler Rate</span>
-          <span className={`ops-chip-value ${stragglerRate >= 12 ? 'chip-warning' : 'chip-ok'}`}>
-            {fixedOrFallback(stragglerRate, 2, '%')}
+          <span className="ops-chip-label">Stake + Yield</span>
+          <span className="ops-chip-value">
+            {fixedOrFallback(listedStake, 2)} stake | APY {fixedOrFallback(rewardApyPct, 2, '%')}
           </span>
         </div>
         <div className="ops-chip">
-          <span className="ops-chip-label">Byzantine ASR</span>
-          <span className={`ops-chip-value ${asr >= 40 ? 'chip-critical' : asr >= 20 ? 'chip-warning' : 'chip-ok'}`}>
-            {fixedOrFallback(asr, 2, '%')} (detect {fixedOrFallback(detectionPrecision, 2, '%')})
+          <span className="ops-chip-label">Marketplace Risk</span>
+          <span className={`ops-chip-value ${slashingEvents > 0 ? 'chip-warning' : 'chip-ok'}`}>
+            {slashingEvents} slashing events
           </span>
         </div>
       </section>
@@ -241,7 +416,33 @@ export default function HUD({
           <h3>Command Orchestration</h3>
           <p className="panel-subtitle">Primary operator controls for federated runtime and enclave lifecycle.</p>
           <div className="button-stack">
-            <button className="btn cmd-start" onClick={onStartTraining} disabled={loading || trainingStatus?.active}>Start Training Loop</button>
+            <label className="input-row">
+              Deterministic Rounds (0 = continuous)
+              <input
+                type="number"
+                min="0"
+                step="1"
+                value={requestedRounds}
+                onChange={(event) => setRequestedRounds(Math.max(0, Number(event.target.value) || 0))}
+                disabled={loading || trainingStatus?.active}
+              />
+            </label>
+            <div className="round-presets" role="group" aria-label="Deterministic round presets">
+              {[5, 10, 20].map((preset) => (
+                <button
+                  key={preset}
+                  type="button"
+                  className={`preset-btn ${requestedRounds === preset ? 'active' : ''}`}
+                  onClick={() => setRequestedRounds(preset)}
+                  disabled={loading || trainingStatus?.active}
+                >
+                  {preset} rounds
+                </button>
+              ))}
+            </div>
+            <button className="btn cmd-start" onClick={() => onStartTraining(requestedRounds)} disabled={loading || trainingStatus?.active}>
+              {requestedRounds > 0 ? `Start Training (${requestedRounds} rounds)` : 'Start Training (continuous)'}
+            </button>
             <button className="btn cmd-stop" onClick={onStopTraining} disabled={loading || !trainingStatus?.active}>Stop Training Loop</button>
             <button className="btn cmd-epoch" onClick={onTriggerFLRound} disabled={loading}>Run Global FL Epoch</button>
             <button className="btn cmd-enclave" onClick={onCreateEnclave} disabled={loading}>Provision TEE Enclave</button>
@@ -257,23 +458,24 @@ export default function HUD({
         </aside>
 
         <main className="ops-panel telemetry-panel">
-          <h3>Operations Telemetry</h3>
+          <h3>API + LLM Training Dashboard</h3>
+          <p className="panel-subtitle">Critical service telemetry for endpoint responsiveness, model rounds, and connection quality.</p>
           <div className="kpi-grid">
             <div className="kpi-card">
               <span>API Latency</span>
-              <strong>{numberOrFallback(health?.telemetry?.api_latency_ms, ' ms')}</strong>
+              <strong>{numberOrFallback(apiLatencyMs, ' ms')}</strong>
             </div>
             <div className="kpi-card">
               <span>Ingress</span>
-              <strong>{numberOrFallback(health?.telemetry?.ingress_mbps, ' Mbps')}</strong>
+              <strong>{numberOrFallback(ingressMbps, ' Mbps')}</strong>
             </div>
             <div className="kpi-card">
               <span>Error Rate</span>
-              <strong>{fixedOrFallback(health?.telemetry?.api_error_rate, 2, '%')}</strong>
+              <strong>{fixedOrFallback(apiErrorRatePct, 2, '%')}</strong>
             </div>
             <div className="kpi-card">
-              <span>Saturation</span>
-              <strong>{numberOrFallback(health?.telemetry?.global_saturation_pct, '%')}</strong>
+              <span>Training Round</span>
+              <strong>{trainingRound}</strong>
             </div>
             <div className="kpi-card">
               <span>Model Accuracy</span>
@@ -281,19 +483,19 @@ export default function HUD({
             </div>
             <div className="kpi-card">
               <span>FL Loss</span>
-              <strong>{fixedOrFallback(metricsSummary?.federated_learning?.current_loss, 4)}</strong>
+              <strong>{fixedOrFallback(trainingLoss, 4)}</strong>
             </div>
             <div className="kpi-card">
-              <span>CPU Load (1m)</span>
-              <strong>{numberOrFallback(opsHealth?.system?.load_1m)}</strong>
+              <span>LLM Valid Updates</span>
+              <strong>{llmPolicyValid}</strong>
             </div>
             <div className="kpi-card">
-              <span>Memory Used</span>
-              <strong className={memUsed >= 94 ? 'kpi-critical' : memUsed >= 88 ? 'kpi-warning' : ''}>{numberOrFallback(opsHealth?.system?.memory?.used_percent, '%')}</strong>
+              <span>LLM Rejected Updates</span>
+              <strong className={llmPolicyRejected > llmPolicyValid ? 'kpi-warning' : ''}>{llmPolicyRejected}</strong>
             </div>
             <div className="kpi-card">
-              <span>Disk Used</span>
-              <strong>{numberOrFallback(opsHealth?.system?.disk?.used_percent, '%')}</strong>
+              <span>Guardrail Pass Rate</span>
+              <strong className={llmPassRatePct < 80 ? 'kpi-warning' : ''}>{fixedOrFallback(llmPassRatePct, 1, '%')}</strong>
             </div>
             <div className="kpi-card">
               <span>Browser RTT</span>
@@ -308,8 +510,20 @@ export default function HUD({
               <strong className={browserHeap >= 600 ? 'kpi-warning' : ''}>{numberOrFallback(webMetrics?.jsHeapUsedMB, ' MB')}</strong>
             </div>
             <div className="kpi-card">
-              <span>EPC Utilization</span>
-              <strong className={epcUtilization >= 90 ? 'kpi-critical' : epcUtilization >= 80 ? 'kpi-warning' : ''}>{numberOrFallback(epcUtilization, '%')}</strong>
+              <span>Connection Health</span>
+              <strong className={portHealthUpCount < 3 ? 'kpi-warning' : ''}>{portHealthUpCount}/3 endpoints up</strong>
+            </div>
+            <div className="kpi-card">
+              <span>CPU Load (1m)</span>
+              <strong>{numberOrFallback(opsHealth?.system?.load_1m)}</strong>
+            </div>
+            <div className="kpi-card">
+              <span>Memory Used</span>
+              <strong className={memUsed >= 94 ? 'kpi-critical' : memUsed >= 88 ? 'kpi-warning' : ''}>{numberOrFallback(opsHealth?.system?.memory?.used_percent, '%')}</strong>
+            </div>
+            <div className="kpi-card">
+              <span>Disk Used</span>
+              <strong>{numberOrFallback(opsHealth?.system?.disk?.used_percent, '%')}</strong>
             </div>
             <div className="kpi-card">
               <span>Attestation Latency</span>
@@ -319,19 +533,85 @@ export default function HUD({
               <span>CXL Throughput</span>
               <strong>{numberOrFallback(cxlThroughputGbps, ' GB/s')}</strong>
             </div>
-            <div className="kpi-card">
-              <span>NPU Temp</span>
-              <strong className={npuTempC >= 85 ? 'kpi-warning' : ''}>{numberOrFallback(npuTempC, ' C')}</strong>
-            </div>
-            <div className="kpi-card">
-              <span>TPM Temp</span>
-              <strong className={tpmTempC >= 75 ? 'kpi-warning' : ''}>{numberOrFallback(tpmTempC, ' C')}</strong>
-            </div>
-            <div className="kpi-card">
-              <span>Reward Yield (APY)</span>
-              <strong>{numberOrFallback(rewardApyPct, '%')}</strong>
-            </div>
           </div>
+
+          <section className="domain-cluster-grid">
+            <article className={`domain-cluster ${collapsedClusters.api ? 'collapsed' : ''}`}>
+              <div className="cluster-head">
+                <h4>API Endpoint Cluster</h4>
+                {isMobile && (
+                  <button type="button" className="cluster-toggle" onClick={() => toggleCluster('api')}>
+                    {collapsedClusters.api ? 'Expand' : 'Collapse'}
+                  </button>
+                )}
+              </div>
+              {!collapsedClusters.api && (
+                <div className="cluster-body">
+                  <div className="endpoint-badges">
+                    <span className={`endpoint-badge ${endpointClass(apiPortUp)}`}>API 8000</span>
+                    <span className={`endpoint-badge ${endpointClass(flPortUp)}`}>FL 8080</span>
+                    <span className={`endpoint-badge ${endpointClass(promPortUp)}`}>PROM 9090</span>
+                  </div>
+                  <div className="sparkline-row">
+                    <span>Latency</span>
+                    <svg viewBox="0 0 96 24" preserveAspectRatio="none" aria-label="API latency trend">
+                      <polyline points={sparklinePoints(resolvedLatencySeries)} className="sparkline-latency" />
+                    </svg>
+                    <strong>{fixedOrFallback(apiLatencyMs, 0, ' ms')}</strong>
+                  </div>
+                  <div className="sparkline-row">
+                    <span>Error</span>
+                    <svg viewBox="0 0 96 24" preserveAspectRatio="none" aria-label="API error trend">
+                      <polyline points={sparklinePoints(resolvedErrorSeries)} className="sparkline-error" />
+                    </svg>
+                    <strong>{fixedOrFallback(apiErrorRatePct, 2, '%')}</strong>
+                  </div>
+                  <div className="sparkline-row">
+                    <span>Ingress</span>
+                    <svg viewBox="0 0 96 24" preserveAspectRatio="none" aria-label="Ingress trend">
+                      <polyline points={sparklinePoints(resolvedIngressSeries)} className="sparkline-ingress" />
+                    </svg>
+                    <strong>{fixedOrFallback(ingressMbps, 1, ' Mbps')}</strong>
+                  </div>
+                </div>
+              )}
+            </article>
+            <article className={`domain-cluster ${collapsedClusters.llm ? 'collapsed' : ''}`}>
+              <div className="cluster-head">
+                <h4>LLM Training Cluster</h4>
+                {isMobile && (
+                  <button type="button" className="cluster-toggle" onClick={() => toggleCluster('llm')}>
+                    {collapsedClusters.llm ? 'Expand' : 'Collapse'}
+                  </button>
+                )}
+              </div>
+              {!collapsedClusters.llm && (
+                <div className="cluster-body">
+                  <div className="audit-row"><span>Training State</span><span>{trainingStatus?.status || 'idle'}</span></div>
+                  <div className="audit-row"><span>Current Round</span><span>{trainingRound}</span></div>
+                  <div className="audit-row"><span>Current Loss</span><span>{fixedOrFallback(trainingLoss, 4)}</span></div>
+                  <div className="audit-row"><span>Guardrail Pass</span><span>{fixedOrFallback(llmPassRatePct, 1, '%')}</span></div>
+                </div>
+              )}
+            </article>
+            <article className={`domain-cluster ${collapsedClusters.network ? 'collapsed' : ''}`}>
+              <div className="cluster-head">
+                <h4>Network Connections</h4>
+                {isMobile && (
+                  <button type="button" className="cluster-toggle" onClick={() => toggleCluster('network')}>
+                    {collapsedClusters.network ? 'Expand' : 'Collapse'}
+                  </button>
+                )}
+              </div>
+              {!collapsedClusters.network && (
+                <div className="cluster-body">
+                  <div className="audit-row"><span>Event Stream</span><span>{streamLabel}</span></div>
+                  <div className="audit-row"><span>Node Connectivity</span><span>{hudData?.active_nodes ?? 0} active</span></div>
+                  <div className="audit-row"><span>Browser Downlink</span><span>{numberOrFallback(webMetrics?.downlinkMbps, ' Mbps')}</span></div>
+                </div>
+              )}
+            </article>
+          </section>
 
           <LiveTerminal events={opsEvents} />
 
@@ -396,26 +676,6 @@ export default function HUD({
             <div className="audit-row">
               <span>Heap Capacity</span>
               <span>{numberOrFallback(webMetrics?.jsHeapTotalMB, ' MB')}</span>
-            </div>
-          </div>
-
-          <div className="aux-panel">
-            <h4>Privacy and Security</h4>
-            <div className="audit-row">
-              <span>Cumulative Epsilon</span>
-              <span>{fixedOrFallback(cumulativeEpsilon, 4)} / {fixedOrFallback(epsilonTarget, 2)}</span>
-            </div>
-            <div className="audit-row">
-              <span>Straggler Rate</span>
-              <span>{fixedOrFallback(stragglerRate, 2, '%')}</span>
-            </div>
-            <div className="audit-row">
-              <span>Attack Success Rate</span>
-              <span>{fixedOrFallback(asr, 2, '%')}</span>
-            </div>
-            <div className="audit-row">
-              <span>Detection Precision</span>
-              <span>{fixedOrFallback(detectionPrecision, 2, '%')}</span>
             </div>
           </div>
 
@@ -498,10 +758,34 @@ export default function HUD({
         </main>
 
         <aside className="ops-panel governance-panel">
-          <h3>Governance + Assistant</h3>
+          <h3>Marketplace + Wallet + Assistant</h3>
           <div className="governance-meta">
             <div><span>Trust Mode</span><strong>{trustMode}</strong></div>
             <div><span>Avg Confidence</span><strong>{fixedOrFallback(confidencePct, 2, '%')}</strong></div>
+          </div>
+
+          <div className="aux-panel marketplace-panel">
+            <h4>Marketplace and Wallet Registry</h4>
+            <div className="audit-row">
+              <span>Listed Wallets</span>
+              <span>{registryCount}</span>
+            </div>
+            <div className="audit-row">
+              <span>Verified Wallets</span>
+              <span>{verifiedRegistryCount}</span>
+            </div>
+            <div className="audit-row">
+              <span>Visible Stake</span>
+              <span>{fixedOrFallback(listedStake, 2)}</span>
+            </div>
+            <div className="audit-row">
+              <span>Reward APY</span>
+              <span>{fixedOrFallback(rewardApyPct, 2, '%')}</span>
+            </div>
+            <div className="audit-row">
+              <span>Stake Concentration</span>
+              <span>{fixedOrFallback(opsHealth?.governance_economics?.stake_concentration_pct, 2, '%')}</span>
+            </div>
           </div>
 
           <div className="policy-form">
