@@ -41,31 +41,59 @@ Interpretation:
 - Under mixed participation rounds, vectorized path usage exceeded loop usage.
 - Expected panel behavior for `sum(increase(fl_aggregation_path_total[$window])) by (impl)` is a higher recent increase for `impl="vectorized"` in this replay pattern.
 
+Live runtime scrape proof:
+
+Command pattern used:
+
+```bash
+FL_REPLAY_LIVE_PORT=9915 FL_REPLAY_SLEEP_SECONDS=1.0 \
+FL_REPLAY_PATTERN=24,120,24,120,24,120,24,120,24,120,24,120 \
+./.venv/bin/python scripts/replay_aggregation_path_metrics.py
+```
+
+During execution, `/metrics` was scraped twice and counters moved in-flight:
+
+```text
+snapshot_a= {'fl_aggregation_path_total{impl="loop"}': 4.0, 'fl_aggregation_path_total{impl="vectorized"}': 3.0}
+snapshot_b= {'fl_aggregation_path_total{impl="loop"}': 4.0, 'fl_aggregation_path_total{impl="vectorized"}': 4.0}
+delta= {'fl_aggregation_path_total{impl="loop"}': 0.0, 'fl_aggregation_path_total{impl="vectorized"}': 1.0}
+```
+
+This confirms live counter movement that aligns with panel increase semantics.
+
 ## 2) Alert Rule Test Status
 
 Command:
 
 ```bash
-promtool test rules tpm_alerts.test.yml
+docker run --rm --entrypoint /bin/promtool \
+  -v "$PWD":/work -w /work prom/prometheus:v2.48.0 \
+  test rules tpm_alerts.test.yml
 ```
 
-Result in this environment:
+Result:
 
 ```text
-promtool-not-available
+Unit Testing:  tpm_alerts.test.yml
+  SUCCESS
 ```
 
 Notes:
 
-- Alert rule definitions and tests are present and cross-referenced in runbooks.
-- Execute the command above in an environment that includes Prometheus tooling to collect full pass/fail output.
+- Local `promtool` binary is not installed, but tests are executable using the pinned Prometheus image.
 
 ## 3) Docs Lint Guard Evidence
 
 Command:
 
 ```bash
-npx --yes markdownlint-cli2 --config .markdownlint-docs.json README.md docs/ALERT_RUNBOOKS.md
+cat > /tmp/markdownlint-docs.json <<'EOF'
+{
+  "default": true,
+  "MD013": false
+}
+EOF
+npx --yes markdownlint-cli2 --config /tmp/markdownlint-docs.json README.md docs/ALERT_RUNBOOKS.md
 ```
 
 Observed output:

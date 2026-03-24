@@ -11,9 +11,10 @@ from __future__ import annotations
 from collections import Counter
 from dataclasses import dataclass
 import os
+import time
 
 import numpy as np
-from prometheus_client import Counter as PromCounter, CollectorRegistry, generate_latest
+from prometheus_client import Counter as PromCounter, CollectorRegistry, generate_latest, start_http_server
 
 
 @dataclass(frozen=True)
@@ -22,6 +23,8 @@ class ReplayConfig:
     vectorize_min_clients: int
     vectorize_max_peak_bytes: int
     replay_pattern: tuple[int, ...]
+    live_port: int
+    round_sleep_seconds: float
 
 
 def mnist_layer_shapes() -> list[tuple[int, ...]]:
@@ -95,11 +98,21 @@ def parse_config() -> ReplayConfig:
     if not pattern:
         pattern = (24, 120, 24, 120)
 
+    live_port = int(os.getenv("FL_REPLAY_LIVE_PORT", "0"))
+    if live_port < 0:
+        live_port = 0
+
+    round_sleep_seconds = float(os.getenv("FL_REPLAY_SLEEP_SECONDS", "0"))
+    if round_sleep_seconds < 0:
+        round_sleep_seconds = 0.0
+
     return ReplayConfig(
         mode=mode,
         vectorize_min_clients=max(1, min_clients),
         vectorize_max_peak_bytes=max(1, max_peak),
         replay_pattern=pattern,
+        live_port=live_port,
+        round_sleep_seconds=round_sleep_seconds,
     )
 
 
@@ -116,6 +129,10 @@ def main() -> None:
     window: list[str] = []
     totals = Counter()
 
+    if config.live_port > 0:
+        start_http_server(config.live_port, registry=registry)
+        print(f"live_metrics_port= {config.live_port}")
+
     for idx, clients in enumerate(config.replay_pattern, start=1):
         weights = generate_client_weights(clients, seed=1000 + idx)
         use_vectorized = should_use_vectorized(weights, config)
@@ -127,6 +144,8 @@ def main() -> None:
         aggregation_path_counter.labels(impl=impl).inc()
         totals[impl] += 1
         window.append(impl)
+        if config.round_sleep_seconds > 0:
+            time.sleep(config.round_sleep_seconds)
 
     last5 = Counter(window[-5:])
     trend = "vectorized_up" if last5["vectorized"] > last5["loop"] else "loop_up_or_flat"
