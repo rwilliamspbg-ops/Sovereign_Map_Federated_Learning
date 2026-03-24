@@ -166,6 +166,32 @@ class TrainingConfig:
 }
 ```
 
+### Operator Tuning Defaults (.env)
+
+Use these defaults from [.env.example](.env.example) as the baseline when validating production-like behavior:
+
+```bash
+# FL aggregation strategy
+FL_AGGREGATION_MODE=auto
+FL_AGGREGATION_VECTORIZE_MIN_CLIENTS=1000
+FL_AGGREGATION_VECTORIZE_MAX_PEAK_BYTES=536870912
+
+# Differential privacy
+DP_NOISE_MULTIPLIER=1.1
+DP_MAX_GRAD_NORM=1.0
+
+# TPM attestation cache behavior
+TPM_ATTESTATION_MAX_REPORTS=256
+TPM_ATTESTATION_CACHE_TTL=30s
+TPM_ATTESTATION_SPIKE_THRESHOLD=200us
+```
+
+Operational guidance:
+
+- Keep `FL_AGGREGATION_MODE=auto` unless benchmark evidence supports forcing a mode.
+- Tune `DP_NOISE_MULTIPLIER` and `DP_MAX_GRAD_NORM` together to preserve privacy/utility balance.
+- Increase `TPM_ATTESTATION_CACHE_TTL` and confirm miss-rate improvement before increasing worker concurrency.
+
 ## API Endpoints
 
 ### GET `/health`

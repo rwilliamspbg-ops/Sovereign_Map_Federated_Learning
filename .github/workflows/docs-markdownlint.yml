@@ -1,0 +1,39 @@
+name: docs-markdownlint
+
+on:
+  pull_request:
+    paths:
+      - "README.md"
+      - "docs/**"
+      - ".github/workflows/docs-markdownlint.yml"
+  push:
+    branches: [main]
+    paths:
+      - "README.md"
+      - "docs/**"
+      - ".github/workflows/docs-markdownlint.yml"
+
+jobs:
+  markdownlint:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+
+      - name: Run markdownlint (targeted docs)
+        run: |
+          cat > /tmp/markdownlint-docs.json <<'EOF'
+          {
+            "default": true,
+            "MD013": false
+          }
+          EOF
+          npx --yes markdownlint-cli2 \
+            --config /tmp/markdownlint-docs.json \
+            README.md \
+            docs/ALERT_RUNBOOKS.md
