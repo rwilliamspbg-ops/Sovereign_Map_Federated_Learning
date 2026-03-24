@@ -631,6 +631,71 @@ body {
   border-bottom: 0;
 }
 
+.runbook-match-panel {
+  border-color: rgba(60, 208, 199, 0.28);
+}
+
+.runbook-card {
+  border: 1px solid rgba(168, 192, 214, 0.2);
+  border-left: 3px solid rgba(60, 208, 199, 0.7);
+  border-radius: 10px;
+  background: rgba(13, 26, 38, 0.7);
+  padding: 8px;
+  margin-bottom: 8px;
+}
+
+.runbook-card:last-child {
+  margin-bottom: 0;
+}
+
+.runbook-card-head {
+  display: flex;
+  justify-content: space-between;
+  gap: 8px;
+  margin-bottom: 6px;
+  font-family: var(--font-mono);
+  font-size: 0.7rem;
+  color: var(--mist-300);
+}
+
+.runbook-component {
+  color: var(--teal-400);
+}
+
+.runbook-owner {
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.runbook-message {
+  color: var(--mist-100);
+  font-size: 0.78rem;
+  margin-bottom: 6px;
+}
+
+.runbook-section {
+  font-size: 0.74rem;
+  color: var(--mist-300);
+  margin-bottom: 6px;
+}
+
+.runbook-section a {
+  color: var(--amber-400);
+  text-decoration: none;
+}
+
+.runbook-section a:hover {
+  text-decoration: underline;
+}
+
+.runbook-checks {
+  margin: 0;
+  padding-left: 16px;
+  color: var(--mist-300);
+  font-size: 0.73rem;
+  line-height: 1.35;
+}
+
 .error-box {
   margin-top: 12px;
   border-radius: 10px;

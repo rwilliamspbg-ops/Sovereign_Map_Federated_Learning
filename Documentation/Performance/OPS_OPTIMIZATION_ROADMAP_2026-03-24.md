@@ -14,7 +14,7 @@ Improve operations maturity across visual clarity, runtime performance, and oper
 
 ## Phase 1 (Week 1): Operator Clarity and Fast Triage
 
-Status: In progress.
+Status: Completed (2026-03-24).
 
 Planned outcomes:
 
@@ -30,7 +30,7 @@ Acceptance criteria:
 
 ## Phase 2 (Week 2): Performance and Query Efficiency
 
-Status: Planned.
+Status: In progress.
 
 Planned outcomes:
 
@@ -45,7 +45,7 @@ Acceptance criteria:
 
 ## Phase 3 (Week 3): Guided Operations and HUD Actions
 
-Status: Planned.
+Status: In progress.
 
 Planned outcomes:
 
@@ -77,4 +77,8 @@ Acceptance criteria:
 
 - Added a "What Changed (Current vs Prior Window)" panel to Operations dashboard.
 - Added incident-bundle export helper script for operator workflows.
+- Added runbook-match cards in HUD for active alerts.
+- Added timeline annotations for config/control changes in Grafana.
+- Added recording-rule groundwork for expensive TPM/operator dashboard queries.
+- Added CI guard workflow for incident bundle tooling.
 - Added roadmap and execution checkpoints in this document.

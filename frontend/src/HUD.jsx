@@ -66,6 +66,64 @@ export default function HUD({
   const memUsed = Number(opsHealth?.system?.memory?.used_percent || 0);
   const promReachable = Boolean(opsHealth?.dependencies?.prometheus?.reachable ?? opsHealth?.ports?.prometheus_9090);
   const opsAlerts = Array.isArray(opsHealth?.alerts) ? opsHealth.alerts : [];
+  const runbookByComponent = {
+    prometheus: {
+      section: 'ConsensusStatusEndpointDown',
+      owner: 'platform',
+      checks: [
+        'Check metrics-exporter reachability and Prometheus datasource status.',
+        'Validate endpoint availability before triaging dependent warnings.'
+      ]
+    },
+    memory: {
+      section: 'FLRoundDurationHighP95',
+      owner: 'platform',
+      checks: [
+        'Inspect memory pressure alongside FL round duration p95 and queue depth.',
+        'Reduce concurrency or scale workers before OOM thresholds are reached.'
+      ]
+    },
+    'federated-network': {
+      section: 'FLClientParticipationLow',
+      owner: 'platform',
+      checks: [
+        'Inspect active peer count and partition indicators for stragglers.',
+        'Trigger controlled client rejoin for degraded participants.'
+      ]
+    },
+    'tee-enclave': {
+      section: 'SlowTrustVerification',
+      owner: 'tpm',
+      checks: [
+        'Correlate trust verification p95 with cache miss and lock contention metrics.',
+        'Tune attestation cache TTL and nonce mode before scaling enclave load.'
+      ]
+    },
+    'privacy-budget': {
+      section: 'FLAccuracyDegraded',
+      owner: 'platform',
+      checks: [
+        'Review epsilon burn against target and reduce round cadence when near cap.',
+        'Coordinate policy update if sustained high-frequency rounds are required.'
+      ]
+    }
+  };
+  const runbookCards = opsAlerts.map((alert, idx) => {
+    const key = String(alert?.component || '').toLowerCase();
+    const match = runbookByComponent[key] || {
+      section: 'FLRoundStalled',
+      owner: 'platform',
+      checks: ['Use default FL runbook triage and escalate if unresolved in 10 minutes.']
+    };
+    return {
+      id: `${key || 'alert'}-${idx}`,
+      component: key || 'unknown',
+      message: alert?.message || 'No alert message provided.',
+      section: match.section,
+      owner: match.owner,
+      checks: match.checks
+    };
+  });
   const browserRtt = Number(webMetrics?.rttMs || 0);
   const browserHeap = Number(webMetrics?.jsHeapUsedMB || 0);
   const cumulativeEpsilon = Number(opsHealth?.privacy_security?.cumulative_epsilon || 0);
@@ -391,6 +449,29 @@ export default function HUD({
               {opsAlerts.map((alert, idx) => (
                 <div className="notice-box" key={`${alert?.component || 'alert'}-${idx}`}>
                   <strong>{(alert?.component || 'component').toUpperCase()}:</strong> {alert?.message}
+                </div>
+              ))}
+            </div>
+          )}
+
+          {runbookCards.length > 0 && (
+            <div className="aux-panel runbook-match-panel">
+              <h4>Runbook Match Cards</h4>
+              {runbookCards.map((card) => (
+                <div className="runbook-card" key={card.id}>
+                  <div className="runbook-card-head">
+                    <span className="runbook-component">{card.component.toUpperCase()}</span>
+                    <span className="runbook-owner">owner: {card.owner}</span>
+                  </div>
+                  <div className="runbook-message">{card.message}</div>
+                  <div className="runbook-section">
+                    Runbook: <a href="../docs/ALERT_RUNBOOKS.md" target="_blank" rel="noreferrer">{card.section}</a>
+                  </div>
+                  <ul className="runbook-checks">
+                    {card.checks.map((check, idx) => (
+                      <li key={`${card.id}-check-${idx}`}>{check}</li>
+                    ))}
+                  </ul>
                 </div>
               ))}
             </div>

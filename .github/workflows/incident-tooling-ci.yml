@@ -1,0 +1,38 @@
+name: incident-tooling-ci
+
+on:
+  pull_request:
+    paths:
+      - "scripts/export_incident_bundle.py"
+      - ".github/workflows/incident-tooling-ci.yml"
+  push:
+    branches: [main]
+    paths:
+      - "scripts/export_incident_bundle.py"
+      - ".github/workflows/incident-tooling-ci.yml"
+
+permissions:
+  contents: read
+
+jobs:
+  incident-bundle-tooling:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v4
+
+      - name: Setup Python
+        uses: actions/setup-python@a309ff8b426b58ec0e2a45f0f869d46889d02405 # v5
+        with:
+          python-version: "3.11"
+
+      - name: Python syntax check
+        run: python -m py_compile scripts/export_incident_bundle.py
+
+      - name: CLI help check
+        run: python scripts/export_incident_bundle.py --help
+
+      - name: Offline smoke run
+        run: |
+          python scripts/export_incident_bundle.py --timeout 0.5 --output-dir /tmp/incidents
+          ls -1 /tmp/incidents | tail -n 1

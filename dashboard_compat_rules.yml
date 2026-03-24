@@ -188,3 +188,21 @@ groups:
 
       - record: sovereignmap_wallets_by_balance_bucket_small
         expr: tokenomics_wallets_by_balance_bucket_small or (clamp_min(sovereignmap_unique_wallets_count - sovereignmap_wallets_by_balance_bucket_large - sovereignmap_wallets_by_balance_bucket_medium, 1) unless on() tokenomics_wallets_by_balance_bucket_small)
+
+  - name: ops_query_efficiency
+    interval: 15s
+    rules:
+      - record: sovereign_ops_http_request_p95_ms_5m
+        expr: histogram_quantile(0.95, sum(rate(flask_http_request_duration_seconds_bucket[5m])) by (le)) * 1000
+
+      - record: sovereign_ops_tpm_lock_wait_p95_seconds_5m
+        expr: histogram_quantile(0.95, sum(rate(mohawk_tpm_lock_wait_seconds_bucket[5m])) by (le, target, mode))
+
+      - record: sovereign_ops_tpm_cache_events_per_second_5m
+        expr: sum(rate(mohawk_tpm_cache_events_total[5m])) by (cache, result)
+
+      - record: sovereign_ops_tpm_nonce_events_per_second_5m
+        expr: sum(rate(mohawk_tpm_nonce_replay_rejections_total[5m])) + sum(rate(mohawk_tpm_nonce_cleanup_runs_total[5m]))
+
+      - record: sovereign_ops_control_actions_per_second_5m
+        expr: sum(rate(sovereign_ops_control_actions_total[5m])) by (action)

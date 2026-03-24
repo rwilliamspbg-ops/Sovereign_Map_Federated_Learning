@@ -101,6 +101,8 @@ Operational notes:
 - Aggregation path usage is exported as `fl_aggregation_path_total{impl="loop|vectorized"}`.
 - The Operations dashboard includes a "FL Aggregation Path Usage" panel to verify auto-mode behavior.
 - The Operations dashboard includes a "What Changed (Current vs Prior Window)" panel for rapid delta-based triage.
+- The Operations dashboard includes annotations for control/config changes via `sovereign_ops_control_actions_total`.
+- The HUD includes runbook-match cards for active `opsHealth.alerts` to accelerate first-response triage.
 
 Roadmap and execution tracking:
 
@@ -111,6 +113,10 @@ Incident bundle export (first-response evidence):
 ```bash
 python3 scripts/export_incident_bundle.py
 ```
+
+Incident tooling CI guard:
+
+- Workflow: [.github/workflows/incident-tooling-ci.yml](.github/workflows/incident-tooling-ci.yml)
 
 ## Two-Minute Experience
 

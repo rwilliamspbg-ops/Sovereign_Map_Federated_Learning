@@ -38,6 +38,32 @@
         "titleFormat": "Trust verification failure",
         "textFormat": "Trust verification failures increased",
         "type": "tags"
+      },
+      {
+        "datasource": {
+          "type": "prometheus",
+          "uid": "prometheus"
+        },
+        "enable": true,
+        "expr": "increase(sovereign_ops_control_actions_total{action=~\"verification_policy_update|training_start|training_stop\"}[5m]) > 0",
+        "iconColor": "rgba(247, 185, 85, 1)",
+        "name": "Config and Control Changes",
+        "titleFormat": "Operator control action",
+        "textFormat": "Verification policy or training control action detected",
+        "type": "tags"
+      },
+      {
+        "datasource": {
+          "type": "prometheus",
+          "uid": "prometheus"
+        },
+        "enable": true,
+        "expr": "increase(tpm_trust_verification_failures_total[5m]) > 2",
+        "iconColor": "rgba(240, 109, 109, 1)",
+        "name": "Incident Signal Burst",
+        "titleFormat": "Potential incident burst",
+        "textFormat": "Trust failure burst suggests deploy/config regression candidate",
+        "type": "tags"
       }
     ]
   },

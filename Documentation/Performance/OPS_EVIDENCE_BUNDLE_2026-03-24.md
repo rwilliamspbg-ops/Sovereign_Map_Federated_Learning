@@ -126,3 +126,45 @@ Query semantics:
 - `sum(increase(fl_aggregation_path_total[$window])) by (impl)`
 
 The replay evidence above demonstrates the expected relative trend movement for this panel under a mixed client-load pattern.
+
+## 6) Phase 1 Acceptance Checks (Roadmap)
+
+Incident bundle export command:
+
+```bash
+python3 scripts/export_incident_bundle.py --timeout 1.0
+```
+
+Observed output:
+
+```text
+Incident bundle written: artifacts/incidents/incident-bundle-20260324T133427Z
+Summary file: artifacts/incidents/incident-bundle-20260324T133427Z/summary.json
+```
+
+Summary snapshot highlights:
+
+- Bundle directory and metadata were generated successfully.
+- Endpoint captures were written for backend, TPM, and Prometheus targets.
+- In this run, service endpoints were not reachable (all `ok=false`), which is acceptable for offline artifact smoke validation.
+
+Dashboard query validation command:
+
+```bash
+python3 scripts/check_dashboard_queries.py
+```
+
+Observed output:
+
+```text
+Dashboard query validation passed.
+```
+
+## 7) Roadmap Implementation Evidence (Single Commit Execution)
+
+Implemented in this execution wave:
+
+- HUD runbook-match cards mapped from active `opsHealth.alerts` components.
+- Grafana annotations for control/config actions and incident-signal bursts.
+- New recording rules for heavy TPM/operator queries (`ops_query_efficiency` group).
+- New incident-tooling CI guard workflow with syntax/help/smoke checks.

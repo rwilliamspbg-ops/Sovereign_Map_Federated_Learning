@@ -380,6 +380,14 @@ mobile_gradient_verify_total = Counter(
     ["result", "reason"],
 )
 mobile_gradient_verify_total.labels(result="accepted", reason="ok").inc(0)
+ops_control_actions_total = Counter(
+    "sovereign_ops_control_actions_total",
+    "Total operator control actions emitted by the HUD backend",
+    ["action"],
+)
+ops_control_actions_total.labels(action="verification_policy_update").inc(0)
+ops_control_actions_total.labels(action="training_start").inc(0)
+ops_control_actions_total.labels(action="training_stop").inc(0)
 
 # Global state
 dao = None
@@ -1365,6 +1373,7 @@ def ops_events_stream():
 def update_verification_policy():
     data = request.json or {}
     logger.info(f"Verification policy update requested: {data}")
+    ops_control_actions_total.labels(action="verification_policy_update").inc()
     emit_ops_event(
         kind="policy_update",
         message="Verification policy update requested",
@@ -1425,6 +1434,7 @@ def start_training():
         training_thread = threading.Thread(target=_training_loop, daemon=True)
         training_thread.start()
 
+    ops_control_actions_total.labels(action="training_start").inc()
     emit_ops_event(
         kind="training",
         message="Real FL training loop started",
@@ -1452,6 +1462,7 @@ def stop_training():
         training_state["status"] = "idle"
         training_state["last_stopped_at"] = int(time.time())
         training_state["last_message"] = "HUD training loop stopped"
+    ops_control_actions_total.labels(action="training_stop").inc()
     emit_ops_event(
         kind="training",
         message="Training loop stopped",
