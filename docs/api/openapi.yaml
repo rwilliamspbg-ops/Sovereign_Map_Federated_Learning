@@ -263,6 +263,27 @@ paths:
               schema:
                 $ref: '#/components/schemas/OpsHealthResponse'
 
+  /ops/trends:
+    get:
+      tags: [Operations]
+      summary: Get rolling operational trend series
+      operationId: getOpsTrends
+      parameters:
+        - name: limit
+          in: query
+          required: false
+          schema:
+            type: integer
+            minimum: 1
+            default: 120
+      responses:
+        '200':
+          description: Rolling trend payload for HUD sparklines
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/OpsTrendsResponse'
+
   /ops/events/recent:
     get:
       tags: [Operations]
@@ -933,6 +954,36 @@ components:
           items:
             type: object
             additionalProperties: true
+
+    OpsTrendPoint:
+      type: object
+      properties:
+        ts:
+          type: integer
+        value:
+          type: number
+
+    OpsTrendsResponse:
+      type: object
+      properties:
+        window:
+          type: integer
+        count:
+          type: object
+          additionalProperties:
+            type: integer
+        api_latency_ms:
+          type: array
+          items:
+            $ref: '#/components/schemas/OpsTrendPoint'
+        api_error_rate_pct:
+          type: array
+          items:
+            $ref: '#/components/schemas/OpsTrendPoint'
+        ingress_mbps:
+          type: array
+          items:
+            $ref: '#/components/schemas/OpsTrendPoint'
 
     TrustSnapshotResponse:
       type: object
