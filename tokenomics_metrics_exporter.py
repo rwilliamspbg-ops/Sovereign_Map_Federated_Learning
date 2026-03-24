@@ -27,8 +27,10 @@ logger = logging.getLogger(__name__)
 
 
 class TokenomicsMetricsExporter:
-    def __init__(self, source_file: str):
+    def __init__(self, source_file: str, state_file: str | None = None):
         self.source_file = self._resolve_source_file(source_file)
+        self.state_file = self._resolve_state_file(state_file)
+        self.persistence_file = self._select_persistence_file()
         self.registry = CollectorRegistry()
         self._lock = Lock()
         self._last_payload: Dict[str, Any] = {}
@@ -199,6 +201,44 @@ class TokenomicsMetricsExporter:
             return resolved
         return expanded
 
+    @staticmethod
+    def _resolve_state_file(state_file: str | None) -> str | None:
+        if not state_file:
+            return None
+        return os.path.expanduser(state_file)
+
+    @staticmethod
+    def _is_writable_path(path: str) -> bool:
+        if os.path.isdir(path):
+            return os.access(path, os.W_OK)
+        if os.path.exists(path):
+            return os.access(path, os.W_OK)
+        parent = os.path.dirname(path) or "."
+        return os.path.exists(parent) and os.access(parent, os.W_OK)
+
+    def _select_persistence_file(self) -> str | None:
+        candidates = []
+        if self.state_file:
+            candidates.append(self.state_file)
+        candidates.append(self.source_file)
+
+        for candidate in candidates:
+            if self._is_writable_path(candidate):
+                if candidate != self.source_file:
+                    logger.info(
+                        "Persisting tokenomics payloads to writable state file %s",
+                        candidate,
+                    )
+                return candidate
+
+        logger.warning(
+            "Tokenomics payload persistence disabled: no writable path available "
+            "(source=%s, state=%s)",
+            self.source_file,
+            self.state_file,
+        )
+        return None
+
     def _apply_payload(self, payload: Dict[str, Any]):
         self._last_payload = dict(payload)
         mint_rate = self._safe_float(payload, "mint_rate_per_min")
@@ -337,13 +377,15 @@ class TokenomicsMetricsExporter:
         self.last_update_ts.set(time.time())
 
     def _persist_payload(self, payload: Dict[str, Any]):
-        directory = os.path.dirname(self.source_file)
+        if not self.persistence_file:
+            return
+        directory = os.path.dirname(self.persistence_file)
         if directory:
             os.makedirs(directory, exist_ok=True)
-        temp_file = f"{self.source_file}.tmp"
+        temp_file = f"{self.persistence_file}.tmp"
         with open(temp_file, "w", encoding="utf-8") as handle:
             json.dump(payload, handle, indent=2)
-        os.replace(temp_file, self.source_file)
+        os.replace(temp_file, self.persistence_file)
 
     def load_source_file(self):
         try:
@@ -412,7 +454,8 @@ def run_simulation(exporter):
 
 def create_app(source_file: str):
     app = Flask(__name__)
-    exporter = TokenomicsMetricsExporter(source_file=source_file)
+    state_file = os.getenv("TOKENOMICS_STATE_FILE")
+    exporter = TokenomicsMetricsExporter(source_file=source_file, state_file=state_file)
     exporter.load_source_file()
     import threading
 

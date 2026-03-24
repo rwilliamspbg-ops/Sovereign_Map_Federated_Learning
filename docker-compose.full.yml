@@ -358,6 +358,7 @@ services:
     command: ["sh", "-c", "python -m pip install --no-cache-dir prometheus-client flask && python tokenomics_metrics_exporter.py"]
     environment:
       - TOKENOMICS_SOURCE_FILE=/app/data/tokenomics-telemetry.json
+      - TOKENOMICS_STATE_FILE=/tmp/tokenomics-telemetry-state.json
       - TOKENOMICS_METRICS_PORT=9105
     ports:
       - "${TOKENOMICS_HOST_PORT:-9105}:9105"
