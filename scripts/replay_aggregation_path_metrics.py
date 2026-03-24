@@ -14,7 +14,12 @@ import os
 import time
 
 import numpy as np
-from prometheus_client import Counter as PromCounter, CollectorRegistry, generate_latest, start_http_server
+from prometheus_client import (
+    Counter as PromCounter,
+    CollectorRegistry,
+    generate_latest,
+    start_http_server,
+)
 
 
 @dataclass(frozen=True)
@@ -43,7 +48,10 @@ def mnist_layer_shapes() -> list[tuple[int, ...]]:
 def generate_client_weights(clients: int, seed: int) -> list[list[np.ndarray]]:
     rng = np.random.default_rng(seed)
     shapes = mnist_layer_shapes()
-    return [[rng.standard_normal(shape, dtype=np.float32) for shape in shapes] for _ in range(clients)]
+    return [
+        [rng.standard_normal(shape, dtype=np.float32) for shape in shapes]
+        for _ in range(clients)
+    ]
 
 
 def estimate_vectorized_peak_bytes(weights_list: list[list[np.ndarray]]) -> int:
@@ -55,7 +63,9 @@ def estimate_vectorized_peak_bytes(weights_list: list[list[np.ndarray]]) -> int:
     return peak
 
 
-def should_use_vectorized(weights_list: list[list[np.ndarray]], config: ReplayConfig) -> bool:
+def should_use_vectorized(
+    weights_list: list[list[np.ndarray]], config: ReplayConfig
+) -> bool:
     if config.mode == "loop":
         return False
     if config.mode == "vectorized":
@@ -91,9 +101,15 @@ def parse_config() -> ReplayConfig:
         mode = "auto"
 
     min_clients = int(os.getenv("FL_AGGREGATION_VECTORIZE_MIN_CLIENTS", "50"))
-    max_peak = int(os.getenv("FL_AGGREGATION_VECTORIZE_MAX_PEAK_BYTES", str(2 * 1024 * 1024 * 1024)))
+    max_peak = int(
+        os.getenv(
+            "FL_AGGREGATION_VECTORIZE_MAX_PEAK_BYTES", str(2 * 1024 * 1024 * 1024)
+        )
+    )
 
-    pattern_raw = os.getenv("FL_REPLAY_PATTERN", "24,28,26,120,130,140,125,24,22,128,136,132")
+    pattern_raw = os.getenv(
+        "FL_REPLAY_PATTERN", "24,28,26,120,130,140,125,24,22,128,136,132"
+    )
     pattern = tuple(int(p.strip()) for p in pattern_raw.split(",") if p.strip())
     if not pattern:
         pattern = (24, 120, 24, 120)
@@ -148,7 +164,9 @@ def main() -> None:
             time.sleep(config.round_sleep_seconds)
 
     last5 = Counter(window[-5:])
-    trend = "vectorized_up" if last5["vectorized"] > last5["loop"] else "loop_up_or_flat"
+    trend = (
+        "vectorized_up" if last5["vectorized"] > last5["loop"] else "loop_up_or_flat"
+    )
 
     print("replay_rounds=", len(config.replay_pattern))
     print("mode=", config.mode)
