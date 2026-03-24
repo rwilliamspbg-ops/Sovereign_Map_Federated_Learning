@@ -356,9 +356,7 @@ class TokenomicsMetricsExporter:
         self._set_if_present(self.bridge_routes_active, bridge_routes_active)
         self._set_if_present(self.chain_height, chain_height)
         self._set_if_present(self.fl_verification_ratio, fl_verification_ratio)
-        self._set_if_present(
-            self.fl_average_confidence_bps, fl_average_confidence_bps
-        )
+        self._set_if_present(self.fl_average_confidence_bps, fl_average_confidence_bps)
         self._set_if_present(self.token_supply_minted, minted_supply)
         self._set_if_present(self.validator_count, validator_count)
         self._set_if_present(self.stake_participation_ratio, stake_participation_ratio)
