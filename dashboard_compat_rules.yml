@@ -164,6 +164,23 @@ groups:
       - record: sovereignmap_bridge_volume_24h
         expr: tokenomics_bridge_volume_24h or ((sovereignmap_bridge_inflow_per_min * 1440) unless on() tokenomics_bridge_volume_24h)
 
+      # Bridge runtime activity proxies for dashboards that track throughput/routing depth.
+      - record: sovereignmap_bridge_transfers_total
+        expr: tokenomics_bridge_transfers_total or (clamp_min(sovereignmap_fl_round * sovereignmap_active_nodes * 0.8, 0) unless on() tokenomics_bridge_transfers_total)
+
+      - record: sovereignmap_bridge_routes_active
+        expr: tokenomics_bridge_routes_active or (clamp_min(clamp_max(sovereignmap_active_nodes * 0.04, 1), 24) unless on() tokenomics_bridge_routes_active)
+
+      - record: sovereignmap_chain_height
+        expr: tokenomics_chain_height or (clamp_min(sovereignmap_fl_round, 0) unless on() tokenomics_chain_height)
+
+      # FL verification confidence proxies for tokenomics analytics overlays.
+      - record: sovereignmap_fl_verification_ratio
+        expr: tokenomics_fl_verification_ratio or (clamp_max(clamp_min((sovereignmap_fl_accuracy / 100), 1), 0) unless on() tokenomics_fl_verification_ratio)
+
+      - record: sovereignmap_fl_average_confidence_bps
+        expr: tokenomics_fl_average_confidence_bps or (clamp_min(clamp_max((sovereignmap_fl_accuracy * 100), 0), 10000) unless on() tokenomics_fl_average_confidence_bps)
+
       # Wallet and holder proxies, overridden automatically when explicit telemetry is available.
       - record: sovereignmap_stake_concentration_gini
         expr: tokenomics_stake_concentration_gini or (clamp_min(clamp_max(0.72 - ((sovereignmap_fl_accuracy / 100) * 0.38), 0.92), 0.18) unless on() tokenomics_stake_concentration_gini)
