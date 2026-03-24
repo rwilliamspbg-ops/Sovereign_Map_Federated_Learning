@@ -146,6 +146,75 @@ Then open:
 - Grafana: `http://localhost:3001`
 - Prometheus: `http://localhost:9090`
 
+### Docker Compose Build Details
+
+Use this flow when you want deterministic local image builds and tighter control over startup.
+
+- Step 1: Preflight checks
+
+```bash
+docker --version
+docker compose version
+df -h
+docker system df
+```
+
+- Step 2: Build dev app images explicitly (no start yet)
+
+```bash
+docker compose -f docker-compose.dev.yml build backend frontend
+```
+
+- Step 3: Start core app services
+
+```bash
+docker compose -f docker-compose.dev.yml up -d mongo redis backend frontend
+```
+
+- Step 4: Build/start monitoring services
+
+```bash
+docker compose -f docker-compose.monitoring.yml pull
+docker compose -f docker-compose.monitoring.yml up -d
+```
+
+- Step 5: Verify service state and health
+
+```bash
+docker compose -f docker-compose.dev.yml ps
+docker compose -f docker-compose.monitoring.yml ps
+curl -fsS http://localhost:8000/status | jq
+curl -fsS http://localhost:8000/health | jq
+curl -fsS http://localhost:8000/ops/health | jq
+```
+
+- Step 6: Follow logs during first run (optional but useful)
+
+```bash
+docker compose -f docker-compose.dev.yml logs -f backend frontend
+docker compose -f docker-compose.monitoring.yml logs -f prometheus grafana alertmanager
+```
+
+Common build/start options:
+
+- Rebuild from scratch if dependencies changed: `docker compose -f docker-compose.dev.yml build --no-cache backend frontend`
+- Recreate containers after image rebuild: `docker compose -f docker-compose.dev.yml up -d --force-recreate backend frontend`
+- Remove stale orphans after compose changes: `docker compose -f docker-compose.dev.yml up -d --remove-orphans`
+
+If you hit disk pressure during build (`No space left on device`):
+
+```bash
+docker system prune -af
+docker builder prune -af
+```
+
+Stop and clean up:
+
+```bash
+docker compose -f docker-compose.dev.yml down --remove-orphans
+docker compose -f docker-compose.monitoring.yml down --remove-orphans
+```
+
 ## PySyft Integration Demo
 
 A ready-to-run PySyft x Mohawk integration proof-of-concept lives in [examples/pysyft-integration](examples/pysyft-integration).
@@ -396,57 +465,52 @@ sequenceDiagram
 
 ### Backend API Functions
 
-Live API examples and integration snippets:
+Use this quick index to jump directly to API command groups and docs.
 
-- [docs/api/http-examples.md](docs/api/http-examples.md)
+API command index:
 
-OpenAPI/Postman status:
+- [Control Plane API commands](#control-plane-api-commands)
+- [Training Service API commands](#training-service-api-commands)
+- [TPM Exporter API commands](#tpm-exporter-api-commands)
+- [Tokenomics Exporter API commands](#tokenomics-exporter-api-commands)
 
-- OpenAPI spec: [docs/api/openapi.yaml](docs/api/openapi.yaml)
-- Training service OpenAPI spec: [docs/api/openapi.training.yaml](docs/api/openapi.training.yaml)
-- TPM exporter OpenAPI spec: [docs/api/openapi.tpm.yaml](docs/api/openapi.tpm.yaml)
-- Tokenomics exporter OpenAPI spec: [docs/api/openapi.tokenomics.yaml](docs/api/openapi.tokenomics.yaml)
+API docs index:
+
+- HTTP examples: [docs/api/http-examples.md](docs/api/http-examples.md)
 - Swagger UI (multi-spec): [docs/api/swagger-ui.html](docs/api/swagger-ui.html)
-- Swagger UI (hosted via GitHub Pages, only when Pages is enabled for this repo): [rwilliamspbg-ops.github.io/Sovereign_Map_Federated_Learning/api/swagger-ui.html](https://rwilliamspbg-ops.github.io/Sovereign_Map_Federated_Learning/api/swagger-ui.html)
-- Alternative hosted viewer (Control Plane): [petstore.swagger.io for openapi.yaml](https://petstore.swagger.io/?url=https://raw.githubusercontent.com/rwilliamspbg-ops/Sovereign_Map_Federated_Learning/main/docs/api/openapi.yaml)
-- Alternative hosted viewer (Training Service): [petstore.swagger.io for openapi.training.yaml](https://petstore.swagger.io/?url=https://raw.githubusercontent.com/rwilliamspbg-ops/Sovereign_Map_Federated_Learning/main/docs/api/openapi.training.yaml)
-- Alternative hosted viewer (TPM Exporter): [petstore.swagger.io for openapi.tpm.yaml](https://petstore.swagger.io/?url=https://raw.githubusercontent.com/rwilliamspbg-ops/Sovereign_Map_Federated_Learning/main/docs/api/openapi.tpm.yaml)
-- Alternative hosted viewer (Tokenomics Exporter): [petstore.swagger.io for openapi.tokenomics.yaml](https://petstore.swagger.io/?url=https://raw.githubusercontent.com/rwilliamspbg-ops/Sovereign_Map_Federated_Learning/main/docs/api/openapi.tokenomics.yaml)
+- OpenAPI specs: [docs/api/openapi.yaml](docs/api/openapi.yaml), [docs/api/openapi.training.yaml](docs/api/openapi.training.yaml), [docs/api/openapi.tpm.yaml](docs/api/openapi.tpm.yaml), [docs/api/openapi.tokenomics.yaml](docs/api/openapi.tokenomics.yaml)
 - Postman collection: [docs/api/postman_collection.json](docs/api/postman_collection.json)
-- HTTP examples quick start: [docs/api/http-examples.md](docs/api/http-examples.md)
-- API coverage validator: `npm run api:validate`
-- CI workflow: [.github/workflows/api-spec-validation.yml](.github/workflows/api-spec-validation.yml)
-- Pages workflow: [.github/workflows/api-docs-pages.yml](.github/workflows/api-docs-pages.yml)
+- API validator command: `npm run api:validate`
+- API docs CI: [.github/workflows/api-spec-validation.yml](.github/workflows/api-spec-validation.yml), [.github/workflows/api-docs-pages.yml](.github/workflows/api-docs-pages.yml)
 
-Brief tutorial (use Swagger docs without enabling Pages in this repo):
-
-1. Choose one of the Alternative hosted viewer links above and open it in your browser.
-2. Use the top-right server selector (if shown) and point calls to your running target (for example localhost or your deployed API URL).
-3. Expand an endpoint, click Try it out, and execute requests directly from the Swagger UI.
-4. For local/manual calls, copy request examples from [docs/api/http-examples.md](docs/api/http-examples.md).
-5. For collection-based testing, import [docs/api/postman_collection.json](docs/api/postman_collection.json) into Postman.
-
-Troubleshooting:
-
-1. If Try it out fails with CORS errors, test with curl/Postman first and ensure your API allows browser-origin requests from the viewer origin.
-2. If requests target the wrong host, change the server URL in the Swagger UI selector before executing.
-3. If you see mixed-content or blocked-request errors, use HTTPS API endpoints when opening Swagger from an HTTPS page.
-4. If a viewer link does not load, verify the raw spec URL path is reachable and points to an existing file in [docs/api](docs/api).
-5. If your endpoint requires auth, add the required headers/tokens in Swagger Authorize (or use Postman for complex auth flows).
-
-Quick curl smoke commands (one per API surface):
+#### Control Plane API commands
 
 ```bash
-# Control Plane API (:8000)
 curl -s http://localhost:8000/status | jq
+curl -s http://localhost:8000/health | jq
+curl -s http://localhost:8000/ops/health | jq
+curl -s -X POST http://localhost:8000/trigger_fl | jq
+curl -s http://localhost:8000/metrics_summary | jq
+curl -s http://localhost:8000/convergence | jq
+```
 
-# Training Service API (:5001)
+#### Training Service API commands
+
+```bash
 curl -s http://localhost:5001/health | jq
+curl -s http://localhost:8000/training/status | jq
+```
 
-# TPM Exporter API (:9091)
+#### TPM Exporter API commands
+
+```bash
 curl -s http://localhost:9091/health | jq
+curl -s http://localhost:9091/metrics/summary | jq
+```
 
-# Tokenomics Exporter API (:9105)
+#### Tokenomics Exporter API commands
+
+```bash
 curl -s http://localhost:9105/health | jq
 ```
 
