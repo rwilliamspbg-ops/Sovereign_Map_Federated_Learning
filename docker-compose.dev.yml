@@ -101,7 +101,7 @@ services:
   node-agent:
     build:
       context: .
-      dockerfile: Dockerfile
+      dockerfile: Dockerfile.node-agent
     image: sovereignmap/node-agent:dev
     environment:
       - NODE_AGENT_MODE=true

@@ -32,22 +32,35 @@ scrape_configs:
     scrape_interval: 10s
     scrape_timeout: 5s
 
-  # Node agent API proof/ledger metrics
-  - job_name: 'node-agent-api'
-    static_configs:
-      - targets: ['node-agent:8082']
-    metrics_path: '/metrics'
-    scrape_interval: 10s
-    scrape_timeout: 5s
-
-  # Backend API metrics
+  # Backend API metrics (Flask)
   - job_name: 'backend'
     static_configs:
-      - targets: ['backend:3001']
+      - targets: ['backend:8000']
     metrics_path: '/metrics'
     scrape_interval: 10s
 
-  # MongoDB exporter
+  # Optional tokenomics metrics exporter
+  - job_name: 'tokenomics-metrics'
+    static_configs:
+      - targets: ['tokenomics-metrics:9105']
+    metrics_path: '/metrics'
+    scrape_interval: 10s
+
+  # Optional TPM trust metrics exporter
+  - job_name: 'tpm-metrics'
+    static_configs:
+      - targets: ['tpm-metrics:9091']
+    metrics_path: '/metrics'
+    scrape_interval: 10s
+
+  # Optional FL performance exporter
+  - job_name: 'fl-performance-metrics'
+    static_configs:
+      - targets: ['fl-performance:8001']
+    metrics_path: '/metrics'
+    scrape_interval: 15s
+
+  # MongoDB exporter (optional)
   - job_name: 'mongodb'
     static_configs:
       - targets: ['mongodb-exporter:9216']
@@ -65,41 +78,9 @@ scrape_configs:
       - targets: ['cadvisor:8080']
     scrape_interval: 15s
 
-  # Federated learning specific metrics
-  - job_name: 'fl-aggregator'
-    static_configs:
-      - targets: ['node-agent:8080']
-    metrics_path: '/metrics/fl'
-    scrape_interval: 5s
-    metric_relabel_configs:
-      - source_labels: [__name__]
-        regex: 'fl_.*'
-        action: keep
-
-  # Convergence monitoring
-  - job_name: 'convergence'
-    static_configs:
-      - targets: ['node-agent:8080']
-    metrics_path: '/metrics/convergence'
-    scrape_interval: 10s
-
-  # Island Mode monitoring
-  - job_name: 'island-mode'
-    static_configs:
-      - targets: ['node-agent:8080']
-    metrics_path: '/metrics/island'
-    scrape_interval: 30s
-
-  # Scheduler exporter metrics
-  - job_name: 'scheduler-exporter'
+  # Generic metrics-exporter endpoint (optional)
+  - job_name: 'metrics-exporter'
     static_configs:
       - targets: ['metrics-exporter:9108']
-    metrics_path: '/metrics/scheduler'
-    scrape_interval: 10s
-
-  # Simulator exporter metrics
-  - job_name: 'simulator-exporter'
-    static_configs:
-      - targets: ['metrics-exporter:9108']
-    metrics_path: '/metrics/simulator'
+    metrics_path: '/metrics'
     scrape_interval: 15s

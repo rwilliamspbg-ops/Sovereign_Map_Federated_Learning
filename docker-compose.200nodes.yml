@@ -49,13 +49,18 @@ services:
       - sovereign-net-200
 
   node-agent:
-    build: .
+    build:
+      context: .
+      dockerfile: Dockerfile.node-agent
     image: federated-learning:latest
     environment:
       - AGGREGATOR_URL=http://aggregator:8080
+      - AGGREGATOR_HOST=aggregator
+      - AGGREGATOR_PORT=8080
       - DATABASE_URI=mongodb://admin:${MONGO_PASSWORD:-CHANGE_ME_200}@mongo:27017/sovereign_200?authSource=admin
       - BATCH_SIZE=32
       - TPM_ENABLED=false
+    command: ["python", "-u", "src/client.py", "--node-id", "${NODE_ID:-1}", "--aggregator", "aggregator:8080"]
     depends_on:
       - aggregator
       - mongo

@@ -123,7 +123,7 @@ services:
   node-agent:
     build:
       context: .
-      dockerfile: Dockerfile
+      dockerfile: Dockerfile.node-agent
     image: sovereignmap/node-agent:latest
     environment:
       - FL_SERVER_MODE=false
@@ -131,6 +131,9 @@ services:
       - BACKEND_URL=http://backend:8000
       - PYTHONUNBUFFERED=1
       - NODE_PEER_ID={{NODE_ID}}
+      - AGGREGATOR_HOST=backend
+      - AGGREGATOR_PORT=8080
+    command: ["python", "-u", "src/client.py", "--node-id", "${NODE_ID:-1}", "--aggregator", "backend:8080"]
     depends_on:
       backend:
         condition: service_healthy

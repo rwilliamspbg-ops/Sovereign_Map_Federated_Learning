@@ -165,7 +165,7 @@ services:
   node-agent:
     build:
       context: .
-      dockerfile: Dockerfile
+      dockerfile: Dockerfile.node-agent
     image: sovereignmap/node-agent:1000-test
     environment:
       - FL_SERVER_MODE=false
@@ -176,6 +176,8 @@ services:
       - XPU_ENABLED=${XPU_ENABLED:-true}
       - GPU_ENABLED=${GPU_ENABLED:-true}
       - NODE_PEER_ID={{.Node.ID}}
+      - AGGREGATOR_HOST=backend
+      - AGGREGATOR_PORT=8080
       - REDIS_URL=redis://redis:6379/0
       - DATABASE_URI=mongodb://admin:${MONGO_PASSWORD:-CHANGE_ME_MONGO}@mongo:27017/sovereignmap_1000?authSource=admin
       # Memory-conscious client defaults so 1000 replicas can fit on constrained hosts.
@@ -185,6 +187,7 @@ services:
       - FORCE_CPU=${NODE_AGENT_FORCE_CPU:-false}
       - PYTHONMALLOC=${NODE_AGENT_PYTHONMALLOC:-malloc}
       - MALLOC_ARENA_MAX=${NODE_AGENT_MALLOC_ARENA_MAX:-2}
+    command: ["python", "-u", "src/client.py", "--node-id", "${NODE_ID:-1}", "--aggregator", "backend:8080"]
     depends_on:
       backend:
         condition: service_healthy
