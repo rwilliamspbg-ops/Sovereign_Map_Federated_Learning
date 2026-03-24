@@ -2068,6 +2068,83 @@
           "sort": "none"
         }
       }
+    },
+    {
+      "id": 71,
+      "type": "bargauge",
+      "title": "What Changed (Current vs Prior Window)",
+      "datasource": {
+        "type": "prometheus",
+        "uid": "prometheus"
+      },
+      "gridPos": {
+        "x": 0,
+        "y": 114,
+        "w": 24,
+        "h": 8
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "expr": "sum(increase(sovereignmap_fl_rounds_total[$window])) - sum(increase(sovereignmap_fl_rounds_total[$window] offset $window))",
+          "legendFormat": "FL rounds delta"
+        },
+        {
+          "refId": "B",
+          "expr": "sum(increase(fl_aggregation_path_total{impl=\"vectorized\"}[$window])) - sum(increase(fl_aggregation_path_total{impl=\"vectorized\"}[$window] offset $window))",
+          "legendFormat": "Vectorized path delta"
+        },
+        {
+          "refId": "C",
+          "expr": "sum(increase(mohawk_tpm_nonce_replay_rejections_total[$window])) - sum(increase(mohawk_tpm_nonce_replay_rejections_total[$window] offset $window))",
+          "legendFormat": "Nonce replay delta"
+        },
+        {
+          "refId": "D",
+          "expr": "sum(increase(mohawk_tpm_nonce_cleanup_removed_total[$window])) - sum(increase(mohawk_tpm_nonce_cleanup_removed_total[$window] offset $window))",
+          "legendFormat": "Nonce cleanup delta"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "short",
+          "color": {
+            "mode": "thresholds"
+          },
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              },
+              {
+                "color": "orange",
+                "value": 1
+              },
+              {
+                "color": "red",
+                "value": 5
+              }
+            ]
+          }
+        },
+        "overrides": []
+      },
+      "options": {
+        "displayMode": "gradient",
+        "orientation": "horizontal",
+        "reduceOptions": {
+          "values": false,
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": ""
+        },
+        "showUnfilled": true,
+        "minVizHeight": 16,
+        "minVizWidth": 8
+      }
     }
   ],
   "refresh": "10s",

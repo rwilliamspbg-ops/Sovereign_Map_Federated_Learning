@@ -100,6 +100,17 @@ Operational notes:
 
 - Aggregation path usage is exported as `fl_aggregation_path_total{impl="loop|vectorized"}`.
 - The Operations dashboard includes a "FL Aggregation Path Usage" panel to verify auto-mode behavior.
+- The Operations dashboard includes a "What Changed (Current vs Prior Window)" panel for rapid delta-based triage.
+
+Roadmap and execution tracking:
+
+- [Documentation/Performance/OPS_OPTIMIZATION_ROADMAP_2026-03-24.md](Documentation/Performance/OPS_OPTIMIZATION_ROADMAP_2026-03-24.md)
+
+Incident bundle export (first-response evidence):
+
+```bash
+python3 scripts/export_incident_bundle.py
+```
 
 ## Two-Minute Experience
 
