@@ -58,7 +58,7 @@ cat > ${RESULTS_DIR}/pre-test-state.json << EOF
     "rounds": 30,
     "byzantine_nodes": 20,
     "dataset": "MNIST",
-    "privacy_epsilon": 3.88
+        "privacy_epsilon": 1.0
   }
 }
 EOF

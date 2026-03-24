@@ -18,11 +18,11 @@ import {
 import './PrivacyUtilityDashboard.css';
 
 const DEFAULT_METRICS = [
-  { round: 0, epsilon: 1.2, accuracy: 0.098, compression_ratio: 4.0, privacy_overhead: 0.000 },
-  { round: 1, epsilon: 1.2, accuracy: 0.234, compression_ratio: 4.0, privacy_overhead: 0.006 },
-  { round: 2, epsilon: 1.2, accuracy: 0.456, compression_ratio: 4.0, privacy_overhead: 0.006 },
-  { round: 5, epsilon: 1.2, accuracy: 0.723, compression_ratio: 4.0, privacy_overhead: 0.006 },
-  { round: 10, epsilon: 1.2, accuracy: 0.872, compression_ratio: 4.0, privacy_overhead: 0.006 }
+  { round: 0, epsilon: 1.0, accuracy: 0.098, compression_ratio: 4.0, privacy_overhead: 0.000 },
+  { round: 1, epsilon: 1.0, accuracy: 0.234, compression_ratio: 4.0, privacy_overhead: 0.006 },
+  { round: 2, epsilon: 1.0, accuracy: 0.456, compression_ratio: 4.0, privacy_overhead: 0.006 },
+  { round: 5, epsilon: 1.0, accuracy: 0.723, compression_ratio: 4.0, privacy_overhead: 0.006 },
+  { round: 10, epsilon: 1.0, accuracy: 0.872, compression_ratio: 4.0, privacy_overhead: 0.006 }
 ];
 
 /**
@@ -32,7 +32,7 @@ const DEFAULT_METRICS = [
  * utility (accuracy), and compression characteristics
  */
 export default function PrivacyUtilityDashboard({ trainingMetrics = [] }) {
-  const [selectedEpsilon, setSelectedEpsilon] = useState(1.2);
+  const [selectedEpsilon, setSelectedEpsilon] = useState(1.0);
   const [comparisonMode, setComparisonMode] = useState('epsilon'); // epsilon, compression, combined
   const [privacyscale, setPrivacyScale] = useState('linear'); // linear, log
 
@@ -43,7 +43,7 @@ export default function PrivacyUtilityDashboard({ trainingMetrics = [] }) {
   // Epsilon vs Accuracy curve (showing privacy-utility tradeoff)
   const epsilonAccuracyCurve = useMemo(() => {
     // Simulate different epsilon values based on training data
-    const epsilons = [0.2, 0.3, 0.5, 0.7, 1.0, 1.2, 1.5, 2.0, 3.0];
+    const epsilons = [0.2, 0.3, 0.5, 0.7, 1.0, 1.5, 2.0, 3.0];
     
     // Get final round from metrics
     const finalMetrics = metrics[metrics.length - 1] || {};
@@ -59,7 +59,7 @@ export default function PrivacyUtilityDashboard({ trainingMetrics = [] }) {
         epsilon: eps,
         accuracy: Number(accuracy.toFixed(4)),
         privacy_level: eps < 0.5 ? 'Very Strong' : eps < 1.0 ? 'Strong' : eps < 1.5 ? 'Moderate' : 'Weak',
-        recommended: eps === 1.2 ? true : false
+        recommended: eps === 1.0 ? true : false
       };
     });
   }, [metrics]);
@@ -265,7 +265,7 @@ export default function PrivacyUtilityDashboard({ trainingMetrics = [] }) {
           </ResponsiveContainer>
           <div className="chart-insights">
             <p>📌 <strong>Insight:</strong> Lower epsilon (higher privacy) results in accuracy loss. 
-               Epsilon=1.2 balances privacy and utility well.</p>
+              Epsilon=1.0 balances privacy and utility well.</p>
           </div>
         </div>
 
@@ -422,7 +422,7 @@ export default function PrivacyUtilityDashboard({ trainingMetrics = [] }) {
             </ResponsiveContainer>
             <div className="chart-insights">
                 <p>📌 <strong>Insight:</strong> Extreme compression (4-bit) provides 8x reduction with less than 2% accuracy loss.
-                  Epsilon=1.2 adds approximately 5% accuracy cost.</p>
+                  Epsilon=1.0 adds approximately 5% accuracy cost.</p>
             </div>
           </div>
         )}

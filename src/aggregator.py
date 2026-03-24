@@ -3,6 +3,7 @@
 
 import flwr as fl
 from typing import List, Dict
+import os
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
@@ -17,6 +18,11 @@ ROUND_COUNTER = Counter("fl_rounds_total", "Total FL rounds completed")
 ACCURACY_GAUGE = Gauge("fl_accuracy", "Current model accuracy")
 CLIENT_GAUGE = Gauge("fl_connected_clients", "Number of connected clients")
 BYZANTINE_COUNTER = Counter("fl_byzantine_detected", "Byzantine nodes detected")
+AGGREGATION_PATH_COUNTER = Counter(
+    "fl_aggregation_path_total",
+    "Total aggregation path selections by implementation.",
+    ["impl"],
+)
 
 
 class MNISTNet(nn.Module):
@@ -42,6 +48,43 @@ class MultiKrumStrategy(fl.server.strategy.Strategy):
         self.num_clients = num_clients
         self.num_byzantine = num_byzantine
         self.model = MNISTNet()
+        self.aggregation_mode = self._parse_aggregation_mode()
+        self.vectorize_min_clients = self._parse_positive_int_env(
+            "FL_AGGREGATION_VECTORIZE_MIN_CLIENTS", 1000
+        )
+        self.vectorize_max_peak_bytes = self._parse_positive_int_env(
+            "FL_AGGREGATION_VECTORIZE_MAX_PEAK_BYTES", 512 * 1024 * 1024
+        )
+        self._last_aggregation_impl = ""
+        logger.info(
+            "FL aggregation config: mode=%s vectorize_min_clients=%d vectorize_max_peak_bytes=%d",
+            self.aggregation_mode,
+            self.vectorize_min_clients,
+            self.vectorize_max_peak_bytes,
+        )
+
+    def _parse_aggregation_mode(self) -> str:
+        mode = os.getenv("FL_AGGREGATION_MODE", "auto").strip().lower()
+        if mode not in {"auto", "loop", "vectorized"}:
+            logger.warning(
+                "Invalid FL_AGGREGATION_MODE=%s, defaulting to auto", mode
+            )
+            return "auto"
+        return mode
+
+    def _parse_positive_int_env(self, key: str, default: int) -> int:
+        raw = os.getenv(key)
+        if raw is None or raw.strip() == "":
+            return default
+        try:
+            value = int(raw)
+        except ValueError:
+            logger.warning("Invalid %s=%s, using default=%d", key, raw, default)
+            return default
+        if value <= 0:
+            logger.warning("Non-positive %s=%d, using default=%d", key, value, default)
+            return default
+        return value
 
     def initialize_parameters(self, client_manager):
         return [val.cpu().numpy() for _, val in self.model.state_dict().items()]
@@ -105,6 +148,49 @@ class MultiKrumStrategy(fl.server.strategy.Strategy):
         return [idx for _, idx in scores[:num_selection]]
 
     def _aggregate_weights(self, weights_list):
+        use_vectorized = self._should_use_vectorized(weights_list)
+        impl = "vectorized" if use_vectorized else "loop"
+        AGGREGATION_PATH_COUNTER.labels(impl=impl).inc()
+        if self._last_aggregation_impl != impl:
+            logger.info(
+                "FL aggregation path selected: impl=%s clients=%d mode=%s",
+                impl,
+                len(weights_list),
+                self.aggregation_mode,
+            )
+            self._last_aggregation_impl = impl
+
+        if use_vectorized:
+            return self._aggregate_weights_vectorized(weights_list)
+        return self._aggregate_weights_loop(weights_list)
+
+    def _should_use_vectorized(self, weights_list: List[List[np.ndarray]]) -> bool:
+        if self.aggregation_mode == "loop":
+            return False
+        if self.aggregation_mode == "vectorized":
+            return True
+
+        # Auto mode: conservative default to loop unless workload is large and
+        # projected peak stack size is within a bounded memory budget.
+        client_count = len(weights_list)
+        if client_count < self.vectorize_min_clients:
+            return False
+
+        peak_bytes = self._estimate_vectorized_peak_bytes(weights_list)
+        if peak_bytes > self.vectorize_max_peak_bytes:
+            return False
+
+        return True
+
+    def _estimate_vectorized_peak_bytes(self, weights_list: List[List[np.ndarray]]) -> int:
+        client_count = len(weights_list)
+        peak = 0
+        for layer in weights_list[0]:
+            layer_bytes = int(np.prod(layer.shape)) * layer.dtype.itemsize * client_count
+            peak = max(peak, layer_bytes)
+        return peak
+
+    def _aggregate_weights_loop(self, weights_list: List[List[np.ndarray]]) -> List[np.ndarray]:
         n = len(weights_list)
         aggregated = []
         for layer_idx in range(len(weights_list[0])):
@@ -112,6 +198,22 @@ class MultiKrumStrategy(fl.server.strategy.Strategy):
             for weights in weights_list:
                 layer_sum += weights[layer_idx]
             aggregated.append(layer_sum / n)
+        return aggregated
+
+    def _aggregate_weights_vectorized(
+        self, weights_list: List[List[np.ndarray]]
+    ) -> List[np.ndarray]:
+        num_layers = len(weights_list[0])
+        aggregated = [
+            np.stack([client[layer_idx] for client in weights_list], axis=0).mean(axis=0)
+            for layer_idx in range(num_layers)
+        ]
+        if len(aggregated) != num_layers:
+            logger.warning(
+                "Aggregation layer count mismatch: expected=%s got=%s",
+                num_layers,
+                len(aggregated),
+            )
         return aggregated
 
     def configure_evaluate(self, server_round, parameters, client_manager):

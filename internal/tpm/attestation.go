@@ -38,6 +38,8 @@ type AttestationManager struct {
 	reports          map[string]*AttestationReport
 	maxReports       int
 	attestationCache *AttestationCache
+	latencySpikeUs   time.Duration
+	spikeCount       uint64
 	enabled          bool
 }
 
@@ -63,8 +65,24 @@ func NewAttestationManager(maxReports int, cacheTTL time.Duration, enabled bool)
 			entries: make(map[string]*CacheEntry),
 			ttl:     cacheTTL,
 		},
-		enabled: enabled,
+		latencySpikeUs: 200 * time.Microsecond,
+		enabled:        enabled,
 	}
+}
+
+// SetLatencySpikeThreshold configures the verification latency threshold that
+// triggers cache eviction and spike accounting.
+func (am *AttestationManager) SetLatencySpikeThreshold(threshold time.Duration) {
+	am.mu.Lock()
+	defer am.mu.Unlock()
+	am.latencySpikeUs = threshold
+}
+
+// LatencySpikeCount returns the number of verification latency spikes observed.
+func (am *AttestationManager) LatencySpikeCount() uint64 {
+	am.mu.RLock()
+	defer am.mu.RUnlock()
+	return am.spikeCount
 }
 
 // GenerateAttestation creates a new TPM attestation report
@@ -125,6 +143,8 @@ func (am *AttestationManager) GenerateAttestation(nodeID string, nonce []byte) (
 
 // VerifyAttestation verifies a TPM attestation report
 func (am *AttestationManager) VerifyAttestation(report *AttestationReport) (bool, error) {
+	verifyStart := time.Now()
+
 	if !am.enabled {
 		return true, nil // Skip verification if TPM is disabled
 	}
@@ -166,10 +186,32 @@ func (am *AttestationManager) VerifyAttestation(report *AttestationReport) (bool
 		return false, fmt.Errorf("PCR verification failed: %w", err)
 	}
 
-	// Cache the verified attestation
+	verificationLatency := time.Since(verifyStart)
+	if am.isLatencySpike(verificationLatency) {
+		am.recordLatencySpike()
+		am.attestationCache.Delete(report.AttestationID)
+		return true, nil
+	}
+
+	// Cache the verified attestation only when verification latency is healthy.
 	am.attestationCache.Set(report.AttestationID, report, true)
 
 	return true, nil
+}
+
+func (am *AttestationManager) isLatencySpike(latency time.Duration) bool {
+	am.mu.RLock()
+	defer am.mu.RUnlock()
+	if am.latencySpikeUs <= 0 {
+		return false
+	}
+	return latency > am.latencySpikeUs
+}
+
+func (am *AttestationManager) recordLatencySpike() {
+	am.mu.Lock()
+	defer am.mu.Unlock()
+	am.spikeCount++
 }
 
 // GetAttestationReport retrieves a stored attestation report
@@ -211,20 +253,26 @@ func (am *AttestationManager) evictOldestReport() {
 
 // Get retrieves a cached attestation entry
 func (ac *AttestationCache) Get(attestationID string) *CacheEntry {
+	lockWaitStart := time.Now()
 	ac.mu.RLock()
+	observeAttestationCacheLockWait("read", time.Since(lockWaitStart))
 	defer ac.mu.RUnlock()
 
 	entry, exists := ac.entries[attestationID]
 	if !exists || time.Now().After(entry.ExpiresAt) {
+		observeAttestationCacheMiss()
 		return nil
 	}
+	observeAttestationCacheHit()
 
 	return entry
 }
 
 // Set stores an attestation in the cache
 func (ac *AttestationCache) Set(attestationID string, report *AttestationReport, verified bool) {
+	lockWaitStart := time.Now()
 	ac.mu.Lock()
+	observeAttestationCacheLockWait("write", time.Since(lockWaitStart))
 	defer ac.mu.Unlock()
 
 	ac.entries[attestationID] = &CacheEntry{
@@ -232,6 +280,15 @@ func (ac *AttestationCache) Set(attestationID string, report *AttestationReport,
 		ExpiresAt: time.Now().Add(ac.ttl),
 		Verified:  verified,
 	}
+}
+
+// Delete removes a cache entry by attestation ID.
+func (ac *AttestationCache) Delete(attestationID string) {
+	lockWaitStart := time.Now()
+	ac.mu.Lock()
+	observeAttestationCacheLockWait("write", time.Since(lockWaitStart))
+	defer ac.mu.Unlock()
+	delete(ac.entries, attestationID)
 }
 
 // Helper functions (stubs for actual TPM operations)

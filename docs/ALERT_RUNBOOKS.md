@@ -54,15 +54,18 @@ Inhibition semantics:
 | HighCRLSize | pending | warning | tpm | default | Service-scope inhibition does not apply without service label | tpm_alerts.test.yml | No |
 | LowNodeTrustScore | pending | warning | tpm | default | Service-scope inhibition does not apply without service label | tpm_alerts.test.yml | No |
 | ZeroNodeTrustScore | pending | critical | tpm | default | Acts as source only when service label exists | tpm_alerts.test.yml | No |
-| SlowTrustVerification | pending | warning | tpm | default | Service-scope inhibition does not apply without service label | tpm_alerts.test.yml | No |
-| SlowMessageVerification | pending | warning | tpm | default | Service-scope inhibition does not apply without service label | tpm_alerts.test.yml | No |
+| SlowTrustVerification | pending | warning | tpm | default | Service-scope inhibition does not apply without service label | tpm_alerts.test.yml | Yes |
+| SlowMessageVerification | pending | warning | tpm | default | Service-scope inhibition does not apply without service label | tpm_alerts.test.yml | Yes |
+| TPMCacheMissSurge | pending | warning | tpm | default | Service-scope inhibition does not apply without service label | tpm_alerts.test.yml | Yes |
+| TPMLockWaitP95Regression | pending | warning | tpm | default | Service-scope inhibition does not apply without service label | tpm_alerts.test.yml | Yes |
+| TPMNonceReplayRejectionSpike | pending | warning | tpm | default | Service-scope inhibition does not apply without service label | tpm_alerts.test.yml | Yes |
 | MostCertificatesNotVerified | pending | warning | tpm | default | Service-scope inhibition does not apply without service label | tpm_alerts.test.yml | No |
 | HighRatioOfRevokedCertificates | pending | warning | tpm | default | Service-scope inhibition does not apply without service label | tpm_alerts.test.yml | No |
 
 ### Coverage Summary
-- Total alerts configured: 31
-- Alerts with explicit runbook section in this document: 11
-- Alerts with promtool rule unit tests: 31
+- Total alerts configured: 34
+- Alerts with explicit runbook section in this document: 16
+- Alerts with promtool rule unit tests: 34
 - Alertmanager routing and inhibition policy tests: covered by internal/monitoring/alertmanager_config_test.go
 
 ## FLRoundStalled
@@ -119,3 +122,28 @@ Inhibition semantics:
 - Correlate stale drop spikes with transport latency and node saturation.
 - Confirm async mode thresholds are appropriate for current load.
 - Mitigate by reducing source lag and improving peer synchronization.
+
+## SlowTrustVerification
+- Confirm current p95 trust verification against `tpm_trust_verification_duration_seconds_bucket` and identify if regression is sustained for at least 5 minutes.
+- Check cache efficiency using `tpm_trust_cache_hits_total` and `tpm_trust_cache_misses_total`; if hit rate is below expected round baseline, apply round-scoped nonce and extend attestation TTL.
+- Inspect SDK/FFI path latency and runtime spikes; trigger circuit-breaker handling for outliers above 200 us and capture traces for postmortem.
+
+## SlowMessageVerification
+- Validate p95 message verification latency from `tpm_message_verification_duration_seconds_bucket` and correlate with signature verification failure rates.
+- Review HMAC cache cardinality versus active node count; increase cache size when repeated `(pcr0, nonce)` pairs are evicted too aggressively.
+- If latency remains elevated, reduce per-call serialization overhead (prefer pre-parsed payload path) and assess lock contention in thread pool and cache critical sections.
+
+## TPMCacheMissSurge
+- Confirm miss ratio with `mohawk_tpm_cache_events_total{cache=~"quote|attestation",result=~"hit|miss"}` over 5m and verify the condition persists for at least 10m.
+- Check round nonce mode (`TPM_ROUND_SCOPED_NONCE`) and attestation TTL (`TPM_ATTESTATION_CACHE_TTL`); enable round-scoped nonce and raise TTL when misses remain elevated.
+- Review cache cardinality pressure by comparing active node count to configured attestation report capacity (`TPM_ATTESTATION_MAX_REPORTS`).
+
+## TPMLockWaitP95Regression
+- Inspect `mohawk_tpm_lock_wait_seconds_bucket` by `{target,mode}` to isolate contention hotspot (`quote_cache`, `attestation_cache`, or `nonce_cache`).
+- Correlate with request surge and cache miss signals; lock-wait regressions paired with high misses usually indicate ineffective cache reuse.
+- Mitigate by restoring cache hit rate first (nonce/TTL tuning) before scaling worker concurrency.
+
+## TPMNonceReplayRejectionSpike
+- Verify replay rate trend from `mohawk_tpm_nonce_replay_rejections_total` and determine whether it is expected (duplicate retries) or anomalous (nonce generation collision/replay attack).
+- Correlate with client retry storms and transport retransmissions; high replay without failure spikes usually indicates duplicate delivery.
+- If anomalous, rotate nonce derivation context for the affected round and audit ingress paths for duplicate submissions.

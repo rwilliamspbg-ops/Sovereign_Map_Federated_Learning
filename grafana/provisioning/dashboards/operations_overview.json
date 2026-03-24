@@ -1825,6 +1825,249 @@
           "sort": "none"
         }
       }
+    },
+    {
+      "id": 66,
+      "type": "row",
+      "title": "TPM Verification Internals",
+      "gridPos": {
+        "x": 0,
+        "y": 89,
+        "w": 24,
+        "h": 1
+      },
+      "collapsed": false,
+      "panels": []
+    },
+    {
+      "id": 67,
+      "type": "timeseries",
+      "title": "TPM Cache Hit vs Miss Rate",
+      "datasource": {
+        "type": "prometheus",
+        "uid": "prometheus"
+      },
+      "gridPos": {
+        "x": 0,
+        "y": 90,
+        "w": 12,
+        "h": 8
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "expr": "sum(rate(mohawk_tpm_cache_events_total{cache=\"quote\",result=\"hit\"}[$__rate_interval])) or vector(0)",
+          "legendFormat": "Quote cache hit/s"
+        },
+        {
+          "refId": "B",
+          "expr": "sum(rate(mohawk_tpm_cache_events_total{cache=\"quote\",result=\"miss\"}[$__rate_interval])) or vector(0)",
+          "legendFormat": "Quote cache miss/s"
+        },
+        {
+          "refId": "C",
+          "expr": "sum(rate(mohawk_tpm_cache_events_total{cache=\"attestation\",result=\"hit\"}[$__rate_interval])) or vector(0)",
+          "legendFormat": "Attestation cache hit/s"
+        },
+        {
+          "refId": "D",
+          "expr": "sum(rate(mohawk_tpm_cache_events_total{cache=\"attestation\",result=\"miss\"}[$__rate_interval])) or vector(0)",
+          "legendFormat": "Attestation cache miss/s"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "ops",
+          "color": {
+            "mode": "palette-classic"
+          },
+          "custom": {
+            "drawStyle": "line",
+            "lineWidth": 2,
+            "fillOpacity": 14,
+            "showPoints": "never",
+            "lineInterpolation": "smooth",
+            "gradientMode": "opacity"
+          }
+        },
+        "overrides": []
+      },
+      "options": {
+        "legend": {
+          "displayMode": "table",
+          "placement": "bottom",
+          "showLegend": true
+        },
+        "tooltip": {
+          "mode": "multi",
+          "sort": "none"
+        }
+      }
+    },
+    {
+      "id": 68,
+      "type": "timeseries",
+      "title": "TPM Lock Wait p95 (us)",
+      "datasource": {
+        "type": "prometheus",
+        "uid": "prometheus"
+      },
+      "gridPos": {
+        "x": 12,
+        "y": 90,
+        "w": 12,
+        "h": 8
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "expr": "histogram_quantile(0.95, sum by (le, target, mode) (rate(mohawk_tpm_lock_wait_seconds_bucket[$__rate_interval]))) * 1000000 or vector(0)",
+          "legendFormat": "{{target}} {{mode}}"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "\u00b5s",
+          "color": {
+            "mode": "palette-classic"
+          },
+          "custom": {
+            "drawStyle": "line",
+            "lineWidth": 2,
+            "fillOpacity": 14,
+            "showPoints": "never",
+            "lineInterpolation": "smooth",
+            "gradientMode": "opacity"
+          }
+        },
+        "overrides": []
+      },
+      "options": {
+        "legend": {
+          "displayMode": "table",
+          "placement": "bottom",
+          "showLegend": true
+        },
+        "tooltip": {
+          "mode": "multi",
+          "sort": "none"
+        }
+      }
+    },
+    {
+      "id": 69,
+      "type": "timeseries",
+      "title": "TPM Nonce Replay and Cleanup",
+      "datasource": {
+        "type": "prometheus",
+        "uid": "prometheus"
+      },
+      "gridPos": {
+        "x": 0,
+        "y": 98,
+        "w": 24,
+        "h": 8
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "expr": "sum(rate(mohawk_tpm_nonce_replay_rejections_total[$__rate_interval])) or vector(0)",
+          "legendFormat": "Replay rejections/s"
+        },
+        {
+          "refId": "B",
+          "expr": "sum(rate(mohawk_tpm_nonce_cleanup_runs_total[$__rate_interval])) or vector(0)",
+          "legendFormat": "Cleanup runs/s"
+        },
+        {
+          "refId": "C",
+          "expr": "sum(rate(mohawk_tpm_nonce_cleanup_removed_total[$__rate_interval])) or vector(0)",
+          "legendFormat": "Expired nonces removed/s"
+        },
+        {
+          "refId": "D",
+          "expr": "sum(rate(mohawk_tpm_prewarm_warmed_nodes_total[$__rate_interval])) or vector(0)",
+          "legendFormat": "Prewarmed nodes/s"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "ops",
+          "color": {
+            "mode": "palette-classic"
+          },
+          "custom": {
+            "drawStyle": "line",
+            "lineWidth": 2,
+            "fillOpacity": 14,
+            "showPoints": "never",
+            "lineInterpolation": "smooth",
+            "gradientMode": "opacity"
+          }
+        },
+        "overrides": []
+      },
+      "options": {
+        "legend": {
+          "displayMode": "table",
+          "placement": "bottom",
+          "showLegend": true
+        },
+        "tooltip": {
+          "mode": "multi",
+          "sort": "none"
+        }
+      }
+    },
+    {
+      "id": 70,
+      "type": "timeseries",
+      "title": "FL Aggregation Path Usage",
+      "datasource": {
+        "type": "prometheus",
+        "uid": "prometheus"
+      },
+      "gridPos": {
+        "x": 0,
+        "y": 106,
+        "w": 24,
+        "h": 8
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "expr": "sum(increase(fl_aggregation_path_total[$window])) by (impl) or vector(0)",
+          "legendFormat": "{{impl}}"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "short",
+          "color": {
+            "mode": "palette-classic"
+          },
+          "custom": {
+            "drawStyle": "line",
+            "lineWidth": 2,
+            "fillOpacity": 14,
+            "showPoints": "never",
+            "lineInterpolation": "smooth",
+            "gradientMode": "opacity"
+          }
+        },
+        "overrides": []
+      },
+      "options": {
+        "legend": {
+          "displayMode": "table",
+          "placement": "bottom",
+          "showLegend": true
+        },
+        "tooltip": {
+          "mode": "multi",
+          "sort": "none"
+        }
+      }
     }
   ],
   "refresh": "10s",

@@ -123,7 +123,7 @@ class TrainingConfig:
     local_epochs: int = 1             # Training epochs per client
     batch_size: int = 32              # Batch size for SGD
     learning_rate: float = 0.01       # Initial learning rate
-    epsilon: float = 1.2              # Differential privacy budget
+    epsilon: float = 1.0              # Differential privacy budget
     delta: float = 1e-5               # Privacy failure probability
     compression_bits: int = 8         # Quantization bit depth
     use_compression: bool = True      # Enable gradient compression
@@ -142,7 +142,7 @@ class TrainingConfig:
   "num_clients": 10,
   "local_epochs": 1,
   "learning_rate": 0.02,
-  "epsilon": 1.2,
+  "epsilon": 1.0,
   "compression_bits": 8
 }
 ```
@@ -190,7 +190,7 @@ Start a new federated learning session.
   "num_clients": 10,
   "local_epochs": 1,
   "learning_rate": 0.01,
-  "epsilon": 1.2,
+  "epsilon": 1.0,
   "compression_bits": 8
 }
 ```
@@ -219,7 +219,7 @@ Poll current training status and latest metrics.
     "accuracy": 0.876,
     "compression_ratio": 4.0,
     "privacy_overhead": 0.006,
-    "epsilon": 1.2,
+    "epsilon": 1.0,
     "compression_bits": 8
   },
   "error": null
@@ -238,7 +238,7 @@ Get complete training history.
       "accuracy": 0.098,
       "compression_ratio": 4.0,
       "privacy_overhead": 0.006,
-      "epsilon": 1.2,
+      "epsilon": 1.0,
       "compression_bits": 8
     },
     ...
@@ -261,7 +261,7 @@ Get latest metrics in compact format (for browser polling).
   "loss": 1.234,
   "compression_ratio": 4.0,
   "privacy_overhead": 0.006,
-  "epsilon_used": 1.2,
+  "epsilon_used": 1.0,
   "compression_bits": 8
 }
 ```
@@ -302,7 +302,7 @@ noise_scale = sensitivity * sqrt(2 * ln(1.25/delta)) / epsilon
 ```
 
 - Lower epsilon → More privacy, but slower convergence
-- Typical: epsilon=1.2 provides strong privacy with ~10% accuracy reduction
+- Typical: epsilon=1.0 provides strong privacy with ~10% accuracy reduction
 - Recommended minimum: epsilon=0.5
 
 ### Gradient Compression
@@ -427,7 +427,7 @@ Recommended epsilon values:
 
 ### Batch Size & Learning Rate
 Dynamic defaults based on epsilon:
-- High epsilon (1.2+): learning_rate=0.02, batch_size=32
+- High epsilon (1.0+): learning_rate=0.02, batch_size=32
 - Low epsilon (<0.5): learning_rate=0.01, batch_size=16 (stability)
 
 ## Performance Expectations

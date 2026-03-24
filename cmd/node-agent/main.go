@@ -19,7 +19,9 @@ import (
 	"log"
 	"net/http"
 	"os"
+	"strconv"
 	"strings"
+	"sync"
 	"time"
 
 	"github.com/prometheus/client_golang/prometheus/promhttp"
@@ -98,10 +100,34 @@ func main() {
 	}
 
 	chain := blockchain.NewBlockChain()
+	var proofVerifier blockchain.ProofVerifier
 	if os.Getenv("MOHAWK_ENABLE_TPM_VERIFIER") != "false" {
-		attestationManager := tpm.NewAttestationManager(256, 5*time.Minute, true)
-		chain.SetProofVerifier(tpm.NewTPMProofVerifier(attestationManager))
-		log.Printf("Node %s installed TPM-backed FL proof verifier", conf.NodeID)
+		maxReports := parsePositiveIntEnv("TPM_ATTESTATION_MAX_REPORTS", 256)
+		cacheTTL := parseDurationEnv("TPM_ATTESTATION_CACHE_TTL", 30*time.Second)
+		spikeThreshold := parseDurationEnv("TPM_ATTESTATION_SPIKE_THRESHOLD", 200*time.Microsecond)
+		attestationManager := tpm.NewAttestationManager(maxReports, cacheTTL, true)
+		attestationManager.SetLatencySpikeThreshold(spikeThreshold)
+		proofVerifier = tpm.NewTPMProofVerifier(attestationManager)
+		chain.SetProofVerifier(proofVerifier)
+		log.Printf(
+			"Node %s installed TPM-backed FL proof verifier (max_reports=%d cache_ttl=%s spike_threshold=%s)",
+			conf.NodeID,
+			maxReports,
+			cacheTTL,
+			spikeThreshold,
+		)
+
+		syntheticBatchCount := parseIntEnv("MOHAWK_TPM_SYNTHETIC_BATCH", 0)
+		syntheticWorkers := parseIntEnv("MOHAWK_TPM_SYNTHETIC_WORKERS", 4)
+		if syntheticBatchCount > 0 {
+			if syntheticWorkers <= 0 {
+				syntheticWorkers = 1
+			}
+			if syntheticWorkers > syntheticBatchCount {
+				syntheticWorkers = syntheticBatchCount
+			}
+			go runTPMSyntheticBatch(proofVerifier, syntheticBatchCount, syntheticWorkers)
+		}
 	}
 
 	collector := monitoring.NewCollector(1024)
@@ -136,4 +162,80 @@ func main() {
 
 func sanitizeLogValue(v string) string {
 	return strings.NewReplacer("\n", "", "\r", "", "\t", " ").Replace(v)
+}
+
+func parseDurationEnv(key string, fallback time.Duration) time.Duration {
+	raw := strings.TrimSpace(os.Getenv(key))
+	if raw == "" {
+		return fallback
+	}
+	parsed, err := time.ParseDuration(raw)
+	if err != nil {
+		log.Printf("warning: invalid duration for %s=%q, using %s", key, sanitizeLogValue(raw), fallback)
+		return fallback
+	}
+	if parsed <= 0 {
+		log.Printf("warning: non-positive duration for %s=%q, using %s", key, sanitizeLogValue(raw), fallback)
+		return fallback
+	}
+	return parsed
+}
+
+func parseIntEnv(key string, fallback int) int {
+	raw := strings.TrimSpace(os.Getenv(key))
+	if raw == "" {
+		return fallback
+	}
+	parsed, err := strconv.Atoi(raw)
+	if err != nil {
+		log.Printf("warning: invalid int for %s=%q, using %d", key, sanitizeLogValue(raw), fallback)
+		return fallback
+	}
+	return parsed
+}
+
+func parsePositiveIntEnv(key string, fallback int) int {
+	parsed := parseIntEnv(key, fallback)
+	if parsed <= 0 {
+		log.Printf("warning: non-positive int for %s=%d, using %d", key, parsed, fallback)
+		return fallback
+	}
+	return parsed
+}
+
+func runTPMSyntheticBatch(verifier blockchain.ProofVerifier, total int, workers int) {
+	if verifier == nil || total <= 0 || workers <= 0 {
+		return
+	}
+
+	log.Printf("running TPM synthetic verification batch (requests=%d workers=%d)", total, workers)
+	started := time.Now()
+	jobs := make(chan int, total)
+
+	for i := 0; i < total; i++ {
+		jobs <- i
+	}
+	close(jobs)
+
+	var wg sync.WaitGroup
+	for w := 0; w < workers; w++ {
+		wg.Add(1)
+		go func(workerID int) {
+			defer wg.Done()
+			for i := range jobs {
+				nodeID := "synthetic-node-" + strconv.Itoa(i%64)
+				_, _, _ = verifier.VerifyProof(blockchain.ProofVerificationRequest{
+					RoundID:   "synthetic-round-main",
+					ProofType: "tee",
+					ProofHash: "synthetic-proof-" + strconv.Itoa(i),
+					Payload: map[string]interface{}{
+						"node_id": nodeID,
+					},
+				})
+			}
+		}(w)
+	}
+
+	wg.Wait()
+	log.Printf("completed TPM synthetic verification batch in %s", time.Since(started))
 }

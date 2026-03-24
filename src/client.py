@@ -109,6 +109,8 @@ class SovereignClient(fl.client.NumPyClient):
         self.batch_size = int(os.getenv("BATCH_SIZE", "16"))
         self.local_epochs = int(os.getenv("LOCAL_EPOCHS", "1"))
         self.enable_dp = os.getenv("ENABLE_DP", "false").lower() in ("1", "true", "yes")
+        self.dp_noise_multiplier = float(os.getenv("DP_NOISE_MULTIPLIER", "1.1"))
+        self.dp_max_grad_norm = float(os.getenv("DP_MAX_GRAD_NORM", "1.0"))
         self.max_samples_per_node = int(os.getenv("MAX_SAMPLES_PER_NODE", "120"))
         self.llm_model_family = os.getenv("LLM_ADAPTER_MODEL_FAMILY", "llama-3.1")
         self.llm_model_version = os.getenv("LLM_ADAPTER_MODEL_VERSION", "8b-instruct")
@@ -135,10 +137,15 @@ class SovereignClient(fl.client.NumPyClient):
                     module=self.model,
                     optimizer=self.optimizer,
                     data_loader=self.trainloader,
-                    noise_multiplier=1.1,
-                    max_grad_norm=1.0,
+                    noise_multiplier=self.dp_noise_multiplier,
+                    max_grad_norm=self.dp_max_grad_norm,
                 )
-                logger.info(f"Node {self.node_id}: Differential privacy enabled")
+                logger.info(
+                    "Node %s: Differential privacy enabled (noise_multiplier=%s, max_grad_norm=%s)",
+                    self.node_id,
+                    self.dp_noise_multiplier,
+                    self.dp_max_grad_norm,
+                )
             except Exception as e:
                 logger.warning(
                     f"Node {self.node_id}: Could not enable DP: {e}, continuing without privacy"

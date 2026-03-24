@@ -4,6 +4,10 @@
 package tpm
 
 import (
+	"os"
+	"strings"
+	"sync"
+
 	"github.com/rwilliamspbg-ops/Sovereign_Map_Federated_Learning/internal/blockchain"
 )
 
@@ -14,7 +18,12 @@ import (
 // semantics (trusted-by-consensus) so the verifier can be installed without
 // disrupting non-TPM FL rounds.
 type TPMProofVerifier struct {
-	manager *AttestationManager
+	manager          *AttestationManager
+	roundScopedNonce bool
+	prewarmEnabled   bool
+	prewarmNodeIDs   []string
+	prewarmMu        sync.Mutex
+	lastPrewarmRound string
 }
 
 // NewTPMProofVerifier creates a ProofVerifier backed by the given AttestationManager.
@@ -25,14 +34,41 @@ func NewTPMProofVerifier(manager *AttestationManager) *TPMProofVerifier {
 	if manager == nil {
 		panic("tpm: NewTPMProofVerifier requires a non-nil AttestationManager")
 	}
-	return &TPMProofVerifier{manager: manager}
+	roundScopedNonce := true
+	if raw := strings.TrimSpace(strings.ToLower(os.Getenv("TPM_ROUND_SCOPED_NONCE"))); raw != "" {
+		roundScopedNonce = raw != "false"
+	}
+
+	prewarmEnabled := true
+	if raw := strings.TrimSpace(strings.ToLower(os.Getenv("TPM_ROUND_PREWARM"))); raw != "" {
+		prewarmEnabled = raw != "false"
+	}
+
+	var prewarmNodeIDs []string
+	if raw := strings.TrimSpace(os.Getenv("TPM_PREWARM_NODE_IDS")); raw != "" {
+		for _, nodeID := range strings.Split(raw, ",") {
+			nodeID = strings.TrimSpace(nodeID)
+			if nodeID != "" {
+				prewarmNodeIDs = append(prewarmNodeIDs, nodeID)
+			}
+		}
+	}
+
+	return &TPMProofVerifier{
+		manager:          manager,
+		roundScopedNonce: roundScopedNonce,
+		prewarmEnabled:   prewarmEnabled,
+		prewarmNodeIDs:   prewarmNodeIDs,
+	}
 }
 
 // VerifyProof implements blockchain.ProofVerifier.
 //
 // For "tee" / "tpm" proof types:
-//   - The ProofHash field is used as the nonce for attestation generation (falls back
-//     to RoundID if empty).
+//   - Uses a round-scoped nonce derived from RoundID by default to maximize cache reuse
+//     across all nodes in the same FL round.
+//   - Falls back to ProofHash/RoundID/fallback token when RoundID is not available.
+//   - Legacy per-request nonce mode can be re-enabled with TPM_ROUND_SCOPED_NONCE=false.
 //   - Node ID is derived from the Payload["node_id"] or Payload["from"] key.
 //   - Successful attestation yields confidence 9500 bps.
 //   - Any attestation failure yields (false, 2500, nil) — a soft error that allows
@@ -49,10 +85,9 @@ func (v *TPMProofVerifier) VerifyProof(req blockchain.ProofVerificationRequest) 
 			nodeID = payloadString(req.Payload, "from", "unknown")
 		}
 
-		nonce := []byte(req.ProofHash)
-		if len(nonce) == 0 {
-			nonce = []byte(req.RoundID)
-		}
+		v.prewarmRoundStart(req.RoundID, nodeID)
+
+		nonce := v.nonceForRequest(req)
 
 		report, err := v.manager.GenerateAttestation(nodeID, nonce)
 		if err != nil {
@@ -75,6 +110,50 @@ func (v *TPMProofVerifier) VerifyProof(req blockchain.ProofVerificationRequest) 
 		}
 		return true, 9000, nil
 	}
+}
+
+func (v *TPMProofVerifier) nonceForRequest(req blockchain.ProofVerificationRequest) []byte {
+	if v.roundScopedNonce {
+		roundID := strings.TrimSpace(req.RoundID)
+		if roundID != "" {
+			nonce := make([]byte, 0, len("round:")+len(roundID))
+			nonce = append(nonce, "round:"...)
+			nonce = append(nonce, roundID...)
+			return nonce
+		}
+	}
+
+	if req.ProofHash != "" {
+		return []byte(req.ProofHash)
+	}
+	if req.RoundID != "" {
+		return []byte(req.RoundID)
+	}
+	return []byte("nonce:fallback")
+}
+
+func (v *TPMProofVerifier) prewarmRoundStart(roundID, currentNodeID string) {
+	if !v.prewarmEnabled {
+		return
+	}
+
+	roundID = strings.TrimSpace(roundID)
+	if roundID == "" {
+		return
+	}
+
+	v.prewarmMu.Lock()
+	if v.lastPrewarmRound == roundID {
+		v.prewarmMu.Unlock()
+		return
+	}
+	v.lastPrewarmRound = roundID
+	v.prewarmMu.Unlock()
+
+	nodeIDs := make([]string, 0, len(v.prewarmNodeIDs)+1)
+	nodeIDs = append(nodeIDs, currentNodeID)
+	nodeIDs = append(nodeIDs, v.prewarmNodeIDs...)
+	PrewarmVerifiedQuotes(nodeIDs)
 }
 
 // payloadString extracts a string value from a round payload, returning fallback

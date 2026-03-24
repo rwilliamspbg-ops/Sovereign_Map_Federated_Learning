@@ -80,6 +80,27 @@ Operator validation commands:
 - `make observability-smoke`
 - `python3 scripts/check_dashboard_queries.py`
 
+## Performance Tuning Knobs
+
+The following environment variables are available for safe runtime tuning:
+
+- FL aggregation path selection:
+- `FL_AGGREGATION_MODE=auto|loop|vectorized`
+- `FL_AGGREGATION_VECTORIZE_MIN_CLIENTS` (default `1000`)
+- `FL_AGGREGATION_VECTORIZE_MAX_PEAK_BYTES` (default `536870912`)
+- DP/Opacus parameters:
+- `DP_NOISE_MULTIPLIER` (default `1.1`)
+- `DP_MAX_GRAD_NORM` (default `1.0`)
+- TPM cache and spike controls:
+- `TPM_ATTESTATION_MAX_REPORTS` (default `256`)
+- `TPM_ATTESTATION_CACHE_TTL` (default `30s`)
+- `TPM_ATTESTATION_SPIKE_THRESHOLD` (default `200us`)
+
+Operational notes:
+
+- Aggregation path usage is exported as `fl_aggregation_path_total{impl="loop|vectorized"}`.
+- The Operations dashboard includes a "FL Aggregation Path Usage" panel to verify auto-mode behavior.
+
 ## Two-Minute Experience
 
 Run the fastest end-to-end path from startup to live dashboards:
@@ -356,12 +377,11 @@ OpenAPI/Postman status:
 - TPM exporter OpenAPI spec: [docs/api/openapi.tpm.yaml](docs/api/openapi.tpm.yaml)
 - Tokenomics exporter OpenAPI spec: [docs/api/openapi.tokenomics.yaml](docs/api/openapi.tokenomics.yaml)
 - Swagger UI (multi-spec): [docs/api/swagger-ui.html](docs/api/swagger-ui.html)
-- Swagger UI (hosted via GitHub Pages, only when Pages is enabled for this repo): https://rwilliamspbg-ops.github.io/Sovereign_Map_Federated_Learning/api/swagger-ui.html
-- Alternative hosted viewer links (recommended; no GitHub Pages required):
-    - Control Plane: https://petstore.swagger.io/?url=https://raw.githubusercontent.com/rwilliamspbg-ops/Sovereign_Map_Federated_Learning/main/docs/api/openapi.yaml
-    - Training Service: https://petstore.swagger.io/?url=https://raw.githubusercontent.com/rwilliamspbg-ops/Sovereign_Map_Federated_Learning/main/docs/api/openapi.training.yaml
-    - TPM Exporter: https://petstore.swagger.io/?url=https://raw.githubusercontent.com/rwilliamspbg-ops/Sovereign_Map_Federated_Learning/main/docs/api/openapi.tpm.yaml
-    - Tokenomics Exporter: https://petstore.swagger.io/?url=https://raw.githubusercontent.com/rwilliamspbg-ops/Sovereign_Map_Federated_Learning/main/docs/api/openapi.tokenomics.yaml
+- Swagger UI (hosted via GitHub Pages, only when Pages is enabled for this repo): [rwilliamspbg-ops.github.io/Sovereign_Map_Federated_Learning/api/swagger-ui.html](https://rwilliamspbg-ops.github.io/Sovereign_Map_Federated_Learning/api/swagger-ui.html)
+- Alternative hosted viewer (Control Plane): [petstore.swagger.io for openapi.yaml](https://petstore.swagger.io/?url=https://raw.githubusercontent.com/rwilliamspbg-ops/Sovereign_Map_Federated_Learning/main/docs/api/openapi.yaml)
+- Alternative hosted viewer (Training Service): [petstore.swagger.io for openapi.training.yaml](https://petstore.swagger.io/?url=https://raw.githubusercontent.com/rwilliamspbg-ops/Sovereign_Map_Federated_Learning/main/docs/api/openapi.training.yaml)
+- Alternative hosted viewer (TPM Exporter): [petstore.swagger.io for openapi.tpm.yaml](https://petstore.swagger.io/?url=https://raw.githubusercontent.com/rwilliamspbg-ops/Sovereign_Map_Federated_Learning/main/docs/api/openapi.tpm.yaml)
+- Alternative hosted viewer (Tokenomics Exporter): [petstore.swagger.io for openapi.tokenomics.yaml](https://petstore.swagger.io/?url=https://raw.githubusercontent.com/rwilliamspbg-ops/Sovereign_Map_Federated_Learning/main/docs/api/openapi.tokenomics.yaml)
 - Postman collection: [docs/api/postman_collection.json](docs/api/postman_collection.json)
 - HTTP examples quick start: [docs/api/http-examples.md](docs/api/http-examples.md)
 - API coverage validator: `npm run api:validate`

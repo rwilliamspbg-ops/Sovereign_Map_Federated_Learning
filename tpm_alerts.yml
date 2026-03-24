@@ -168,6 +168,36 @@ groups:
         annotations:
           summary: "Message verification is slow"
           description: "95th percentile message verification time is {{ $value | humanizeDuration }}"
+
+      - alert: TPMCacheMissSurge
+        expr: (sum(rate(mohawk_tpm_cache_events_total{cache=~"quote|attestation",result="miss"}[5m])) / clamp_min(sum(rate(mohawk_tpm_cache_events_total{cache=~"quote|attestation",result=~"hit|miss"}[5m])), 0.001)) > 0.3
+        for: 10m
+        labels:
+          severity: warning
+          component: tpm
+        annotations:
+          summary: "TPM cache miss surge detected"
+          description: "TPM cache miss ratio exceeded 30% for 10 minutes"
+
+      - alert: TPMLockWaitP95Regression
+        expr: histogram_quantile(0.95, sum by (le, target, mode) (rate(mohawk_tpm_lock_wait_seconds_bucket[5m]))) > 0.0002
+        for: 10m
+        labels:
+          severity: warning
+          component: tpm
+        annotations:
+          summary: "TPM lock wait p95 regression"
+          description: "TPM lock wait p95 exceeded 200us for target={{ $labels.target }} mode={{ $labels.mode }}"
+
+      - alert: TPMNonceReplayRejectionSpike
+        expr: sum(rate(mohawk_tpm_nonce_replay_rejections_total[5m])) > 0.1
+        for: 5m
+        labels:
+          severity: warning
+          component: tpm
+        annotations:
+          summary: "TPM nonce replay rejection spike"
+          description: "Replay rejections exceeded 0.1/s over 5 minutes"
       
       # =========================================================================
       # Network Trust Alerts

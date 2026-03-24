@@ -80,3 +80,65 @@ tests:
       - eval_time: 8m
         alertname: InvalidTrustChain
         exp_alerts: []
+
+  - name: tpm-cache-miss-surge-fires
+    interval: 1m
+    input_series:
+      - series: 'mohawk_tpm_cache_events_total{cache="quote",result="miss"}'
+        values: '0+40x40'
+      - series: 'mohawk_tpm_cache_events_total{cache="quote",result="hit"}'
+        values: '0+5x40'
+      - series: 'mohawk_tpm_cache_events_total{cache="attestation",result="miss"}'
+        values: '0+30x40'
+      - series: 'mohawk_tpm_cache_events_total{cache="attestation",result="hit"}'
+        values: '0+10x40'
+    alert_rule_test:
+      - eval_time: 16m
+        alertname: TPMCacheMissSurge
+        exp_alerts:
+          - exp_labels:
+              severity: warning
+              component: tpm
+            exp_annotations:
+              summary: "TPM cache miss surge detected"
+              description: "TPM cache miss ratio exceeded 30% for 10 minutes"
+
+  - name: tpm-lock-wait-p95-regression-fires
+    interval: 1m
+    input_series:
+      - series: 'mohawk_tpm_lock_wait_seconds_bucket{target="attestation_cache",mode="write",le="0.0001"}'
+        values: '0+5x40'
+      - series: 'mohawk_tpm_lock_wait_seconds_bucket{target="attestation_cache",mode="write",le="0.0002"}'
+        values: '0+10x40'
+      - series: 'mohawk_tpm_lock_wait_seconds_bucket{target="attestation_cache",mode="write",le="0.0005"}'
+        values: '0+20x40'
+      - series: 'mohawk_tpm_lock_wait_seconds_bucket{target="attestation_cache",mode="write",le="+Inf"}'
+        values: '0+30x40'
+    alert_rule_test:
+      - eval_time: 16m
+        alertname: TPMLockWaitP95Regression
+        exp_alerts:
+          - exp_labels:
+              severity: warning
+              component: tpm
+              target: attestation_cache
+              mode: write
+            exp_annotations:
+              summary: "TPM lock wait p95 regression"
+              description: "TPM lock wait p95 exceeded 200us for target=attestation_cache mode=write"
+
+  - name: tpm-nonce-replay-rejection-spike-fires
+    interval: 1m
+    input_series:
+      - series: 'mohawk_tpm_nonce_replay_rejections_total'
+        values: '0+20x40'
+    alert_rule_test:
+      - eval_time: 8m
+        alertname: TPMNonceReplayRejectionSpike
+        exp_alerts:
+          - exp_labels:
+              severity: warning
+              component: tpm
+            exp_annotations:
+              summary: "TPM nonce replay rejection spike"
+              description: "Replay rejections exceeded 0.1/s over 5 minutes"
