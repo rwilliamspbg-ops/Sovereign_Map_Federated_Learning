@@ -553,7 +553,9 @@ def _decode_b64_field(value: Any) -> Tuple[Optional[bytes], str]:
         return None, "invalid"
 
 
-def verify_mobile_signed_gradient(payload: Dict[str, Any]) -> Tuple[bool, str, Dict[str, Any]]:
+def verify_mobile_signed_gradient(
+    payload: Dict[str, Any]
+) -> Tuple[bool, str, Dict[str, Any]]:
     node_id = str(payload.get("node_id", "")).strip()
     signer_alias = str(payload.get("signer_alias", "")).strip()
     public_key_pem = str(payload.get("public_key_pem", "")).strip()
@@ -575,11 +577,15 @@ def verify_mobile_signed_gradient(payload: Dict[str, Any]) -> Tuple[bool, str, D
     if not public_key_pem:
         return False, "missing_public_key", {}
 
-    gradient_payload, payload_state = _decode_b64_field(payload.get("gradient_payload_b64"))
+    gradient_payload, payload_state = _decode_b64_field(
+        payload.get("gradient_payload_b64")
+    )
     if payload_state != "ok" or not gradient_payload:
         return False, "invalid_gradient_payload", {}
 
-    signature, signature_state = _decode_b64_field(payload.get("gradient_signature_b64"))
+    signature, signature_state = _decode_b64_field(
+        payload.get("gradient_signature_b64")
+    )
     if signature_state != "ok" or not signature:
         return False, "invalid_signature_payload", {}
 
@@ -749,15 +755,23 @@ def build_ops_health_snapshot() -> Dict[str, Any]:
         max(6.0, 40.0 - (cxl_utilization_pct * 0.24) - (partition_count * 0.7)),
         2,
     )
-    npu_temp_c = round(min(96.0, 48.0 + (load_1m * 5.2) + (hardware_fault_count * 2.1)), 2)
+    npu_temp_c = round(
+        min(96.0, 48.0 + (load_1m * 5.2) + (hardware_fault_count * 2.1)), 2
+    )
     tpm_temp_c = round(min(88.0, 40.0 + (load_1m * 3.1) + (byzantine_count * 1.2)), 2)
 
     # Governance and economics telemetry.
-    founder_stakes = [1500.0 + (int(founder_id) * 175.25) for founder_id, _, _, _ in FOUNDERS]
+    founder_stakes = [
+        1500.0 + (int(founder_id) * 175.25) for founder_id, _, _, _ in FOUNDERS
+    ]
     total_stake = round(sum(founder_stakes), 2)
     top_founder_stake = max(founder_stakes) if founder_stakes else 0.0
-    stake_concentration_pct = round((top_founder_stake / max(1.0, total_stake)) * 100.0, 2)
-    slashing_events_total = max(0, int(byzantine_count / 2) + int(hardware_fault_count / 3))
+    stake_concentration_pct = round(
+        (top_founder_stake / max(1.0, total_stake)) * 100.0, 2
+    )
+    slashing_events_total = max(
+        0, int(byzantine_count / 2) + int(hardware_fault_count / 3)
+    )
     reward_apy_pct = round(
         3.4
         + min(4.8, (_latest_accuracy() / 35.0))
@@ -1397,7 +1411,12 @@ def verify_mobile_gradient():
             severity="success",
             data=details,
         )
-        return jsonify({"status": "ok", "accepted": True, "reason": reason, "details": details}), 200
+        return (
+            jsonify(
+                {"status": "ok", "accepted": True, "reason": reason, "details": details}
+            ),
+            200,
+        )
 
     emit_ops_event(
         kind="mobile_gradient",
