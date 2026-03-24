@@ -554,7 +554,7 @@ def _decode_b64_field(value: Any) -> Tuple[Optional[bytes], str]:
 
 
 def verify_mobile_signed_gradient(
-    payload: Dict[str, Any]
+    payload: Dict[str, Any],
 ) -> Tuple[bool, str, Dict[str, Any]]:
     node_id = str(payload.get("node_id", "")).strip()
     signer_alias = str(payload.get("signer_alias", "")).strip()
