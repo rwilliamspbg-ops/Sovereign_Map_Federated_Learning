@@ -41,6 +41,39 @@ Production-grade federated learning platform that combines Byzantine-resilient a
 
 Documentation entrypoint: [docs/README.md](docs/README.md)
 
+## New Contributor Fast Path
+
+If you just cloned the repo and want to run tests quickly, use this sequence.
+
+### 1) Clone and enter workspace
+
+```bash
+git clone https://github.com/rwilliamspbg-ops/Sovereign_Map_Federated_Learning.git
+cd Sovereign_Map_Federated_Learning
+```
+
+### 2) Discover and run maintainer test path
+
+```bash
+make help
+make fmt
+make lint
+make test
+```
+
+### 3) Run optional reproducibility checks
+
+```bash
+make smoke
+make observability-smoke
+```
+
+Where to get contribution guidance:
+
+- Full contribution process and PR checklist: [CONTRIBUTING.md](CONTRIBUTING.md)
+- Quick contribution opportunities: [README.md#help-wanted-quick-wins](README.md#help-wanted-quick-wins)
+- Runtime validation expectations: [README.md#contributor-first-steps](README.md#contributor-first-steps)
+
 ## Mobile Shield Update March 2026
 
 The mobile hardening and store packaging track is now implemented in-repo.
