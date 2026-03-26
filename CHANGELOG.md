@@ -7,6 +7,8 @@ All notable changes to Sovereign Map SDK packages are documented here.
 This is the first stable release of the Sovereign Map SDK with complete API contracts and comprehensive test coverage.
 
 ### Added
+- **FedAvg benchmark compare CI and report artifact**: Added `.github/workflows/fedavg-benchmark-compare.yml` and `scripts/benchmark_fedavg_compare.sh` to generate and upload base-vs-current benchmark comparison markdown.
+- **Benchmark compare Make target**: Added `make benchmark-fedavg-compare` to generate `results/metrics/fedavg_benchmark_compare.md` locally.
 - **@sovereignmap/core**: 100% line coverage with comprehensive lifecycle, network integration, aggregation, error handling, and signal tests
 - **@sovereignmap/privacy**: 100% test coverage for SGP-001 differential privacy engine
 - **@sovereignmap/consensus**: 91.13% test coverage for Byzantine fault-tolerant consensus

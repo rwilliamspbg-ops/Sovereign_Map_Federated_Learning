@@ -3,7 +3,7 @@
 
 .PHONY: all build test clean deploy logs help \
 	smoke testnet-wallet-readiness \
-	stack-start stack-verify stack-down screenshots-check go-env observability-smoke observability-live-smoke compose-service-drift-check quickstart-verify alerts-test
+	stack-start stack-verify stack-down screenshots-check go-env observability-smoke observability-live-smoke compose-service-drift-check quickstart-verify alerts-test benchmark-fedavg-compare
 
 COMPOSE ?= docker compose
 FULL_COMPOSE_FILE ?= docker-compose.full.yml
@@ -61,6 +61,12 @@ test-bft:
 benchmark:
 	@echo "📊 Running benchmarks..."
 	$(GO) test -bench=. -benchmem ./...
+
+benchmark-fedavg-compare:
+	@echo "📊 Running FedAvg base-vs-current benchmark comparison..."
+	@chmod +x scripts/benchmark_fedavg_compare.sh
+	@BASE_REF=$${BASE_REF:-origin/main} BENCH_RUNS=$${BENCH_RUNS:-3} REPORT_PATH=$${REPORT_PATH:-results/metrics/fedavg_benchmark_compare.md} ./scripts/benchmark_fedavg_compare.sh
+	@echo "✅ Wrote report to $${REPORT_PATH:-results/metrics/fedavg_benchmark_compare.md}"
 
 # =============================================================================
 # Docker Compose Operations
@@ -250,6 +256,7 @@ help:
 	@echo "  make smoke          - Quick clone/reproducibility checks"
 	@echo "  make test-consensus - Run consensus tests only"
 	@echo "  make test-bft       - Run BFT tests only"
+	@echo "  make benchmark-fedavg-compare - Compare FedAvg benchmark table vs base branch"
 	@echo ""
 	@echo "Stack Run Sequence:"
 	@echo "  make stack-start     - Start full compose stack with node-agent scale"

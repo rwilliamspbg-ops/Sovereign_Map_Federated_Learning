@@ -27,6 +27,7 @@ Production-grade federated learning platform that combines Byzantine-resilient a
 [![Release](https://img.shields.io/github/v/release/rwilliamspbg-ops/Sovereign_Map_Federated_Learning?display_name=tag&style=flat-square&logo=github)](https://github.com/rwilliamspbg-ops/Sovereign_Map_Federated_Learning/releases)
 [![Build and Test](https://github.com/rwilliamspbg-ops/Sovereign_Map_Federated_Learning/actions/workflows/build.yml/badge.svg?branch=main)](https://github.com/rwilliamspbg-ops/Sovereign_Map_Federated_Learning/actions/workflows/build.yml)
 [![Observability CI](https://github.com/rwilliamspbg-ops/Sovereign_Map_Federated_Learning/actions/workflows/observability-ci.yml/badge.svg?branch=main)](https://github.com/rwilliamspbg-ops/Sovereign_Map_Federated_Learning/actions/workflows/observability-ci.yml)
+[![FedAvg Benchmark Compare](https://github.com/rwilliamspbg-ops/Sovereign_Map_Federated_Learning/actions/workflows/fedavg-benchmark-compare.yml/badge.svg?branch=main)](https://github.com/rwilliamspbg-ops/Sovereign_Map_Federated_Learning/actions/workflows/fedavg-benchmark-compare.yml)
 [![API Spec Validation](https://github.com/rwilliamspbg-ops/Sovereign_Map_Federated_Learning/actions/workflows/api-spec-validation.yml/badge.svg?branch=main)](https://github.com/rwilliamspbg-ops/Sovereign_Map_Federated_Learning/actions/workflows/api-spec-validation.yml)
 [![API Docs Pages](https://github.com/rwilliamspbg-ops/Sovereign_Map_Federated_Learning/actions/workflows/api-docs-pages.yml/badge.svg?branch=main)](https://github.com/rwilliamspbg-ops/Sovereign_Map_Federated_Learning/actions/workflows/api-docs-pages.yml)
 [![CodeQL Security Analysis](https://github.com/rwilliamspbg-ops/Sovereign_Map_Federated_Learning/actions/workflows/codeql-analysis.yml/badge.svg?branch=main)](https://github.com/rwilliamspbg-ops/Sovereign_Map_Federated_Learning/actions/workflows/codeql-analysis.yml)
@@ -740,6 +741,15 @@ curl -s http://localhost:8000/ops/health | jq
 curl -s http://localhost:8000/training/status | jq
 ```
 
+Control-plane mTLS verification (expected behavior when mTLS control plane is enabled):
+
+```bash
+# This should fail without a client certificate.
+curl -kfsS https://localhost:8080/p2p/info || echo "expected: mTLS client certificate required"
+```
+
+If this request succeeds without a client certificate, verify your control-plane TLS policy before production use.
+
 Expected checkpoints:
 
 - `/status` returns service identity and ports.
@@ -794,6 +804,26 @@ npm run test:ci
 npm --prefix frontend ci
 npm --prefix frontend run build
 ```
+
+### FedAvg Benchmark Compare (base vs current)
+
+```bash
+make benchmark-fedavg-compare
+```
+
+To compare against a different baseline and output path:
+
+```bash
+BASE_REF=origin/main BENCH_RUNS=3 REPORT_PATH=results/metrics/fedavg_benchmark_compare.md make benchmark-fedavg-compare
+```
+
+Generated report:
+
+- [results/metrics/fedavg_benchmark_compare.md](results/metrics/fedavg_benchmark_compare.md)
+
+CI workflow:
+
+- [FedAvg Benchmark Compare workflow](.github/workflows/fedavg-benchmark-compare.yml)
 
 ## Contributor First Steps
 

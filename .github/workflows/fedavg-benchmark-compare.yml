@@ -1,0 +1,61 @@
+name: FedAvg Benchmark Compare
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: fedavg-benchmark-compare-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  fedavg-benchmark-compare:
+    if: github.event_name != 'pull_request' || github.actor != 'dependabot[bot]'
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+        with:
+          fetch-depth: 0
+
+      - name: Set up Python
+        uses: actions/setup-python@a309ff8b426b58ec0e2a45f0f869d46889d02405 # v5.6.0
+        with:
+          python-version: '3.12'
+
+      - name: Install Python dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+
+      - name: Run FedAvg benchmark comparison
+        run: |
+          chmod +x scripts/benchmark_fedavg_compare.sh
+
+          BASE="origin/main"
+          if [ "${{ github.event_name }}" = "pull_request" ]; then
+            BASE="origin/${{ github.base_ref }}"
+          fi
+
+          git fetch origin "${BASE#origin/}" --depth=1 || true
+
+          BASE_REF="$BASE" \
+          BENCH_CLIENTS="100 500 1000" \
+          BENCH_RUNS="2" \
+          REPORT_PATH="results/metrics/fedavg_benchmark_compare.md" \
+          ./scripts/benchmark_fedavg_compare.sh
+
+      - name: Upload FedAvg benchmark report
+        if: always()
+        uses: actions/upload-artifact@bbbca2ddaa5d8feaa63e36b76fdaad77386f024f # v4
+        with:
+          name: fedavg-benchmark-report
+          path: results/metrics/fedavg_benchmark_compare.md
