@@ -2,6 +2,20 @@
 
 Thanks for contributing.
 
+## Quick Start for New Contributors
+
+After cloning, run the onboarding-safe baseline checks:
+
+- `make help`
+- `make quickstart-verify`
+
+If you want starter tasks, browse labels:
+
+- `good first issue`
+- `help wanted`
+- `documentation`
+- `observability`
+
 ## Pull Request Checklist
 
 Before opening or merging a PR, confirm all items below:

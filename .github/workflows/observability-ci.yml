@@ -25,6 +25,33 @@ jobs:
       - name: Validate Grafana queries
         run: python scripts/check_dashboard_queries.py
 
+      - name: Validate compose service references in scripts
+        run: python scripts/check_compose_service_references.py
+
+  operations-live-query-smoke:
+    name: Operations Live Query Smoke
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd
+
+      - name: Set up Python
+        uses: actions/setup-python@a309ff8b426b58ec0e2a45f0f869d46889d02405
+        with:
+          python-version: "3.11"
+
+      - name: Start observability stack subset
+        run: |
+          docker compose -f docker-compose.full.yml up -d backend prometheus tpm-metrics tokenomics-metrics fl-performance
+          sleep 20
+
+      - name: Validate lower-half operations dashboard queries against live Prometheus
+        run: python scripts/check_operations_overview_live_queries.py
+
+      - name: Stop observability stack subset
+        if: always()
+        run: docker compose -f docker-compose.full.yml down --remove-orphans
+
   alert-rules-validation:
     name: Validate Alert Rules
     runs-on: ubuntu-latest

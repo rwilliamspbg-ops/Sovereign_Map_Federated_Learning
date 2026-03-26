@@ -178,3 +178,17 @@ Inhibition semantics:
 - Validate current locked amount against expected round budget and contract volume.
 - Inspect for stale contracts that remain pending after round completion and release in controlled batches.
 - If sustained, tighten intent budget limits or increase release cadence to keep escrow within policy bounds.
+
+## Grafana Lower-Half Operations Panels Show No Data
+
+- Confirm Prometheus target health first:
+	- `curl -fsS http://localhost:9090/api/v1/targets | jq '.data.activeTargets[] | {job: .labels.job, health: .health, lastError: .lastError}'`
+- Required targets for lower-half operations panels are: `sovereign-backend`, `tpm-metrics`, `tokenomics-metrics`, and `fl-performance-metrics`.
+- Run static dashboard compatibility check:
+	- `python3 scripts/check_dashboard_queries.py`
+- Run live lower-half panel query smoke:
+	- `python3 scripts/check_operations_overview_live_queries.py`
+- If script references are stale after compose changes, run:
+	- `python3 scripts/check_compose_service_references.py`
+- Contract reference for expected panel-to-metric mapping:
+	- [docs/OPERATIONS_DASHBOARD_METRIC_CONTRACT.md](OPERATIONS_DASHBOARD_METRIC_CONTRACT.md)

@@ -3,7 +3,7 @@
 
 .PHONY: all build test clean deploy logs help \
 	smoke testnet-wallet-readiness \
-	stack-start stack-verify stack-down screenshots-check go-env observability-smoke alerts-test
+	stack-start stack-verify stack-down screenshots-check go-env observability-smoke observability-live-smoke compose-service-drift-check quickstart-verify alerts-test
 
 COMPOSE ?= docker compose
 FULL_COMPOSE_FILE ?= docker-compose.full.yml
@@ -188,6 +188,24 @@ observability-smoke:
 	@node -e 'const fs=require("fs"); const files=["grafana/provisioning/dashboards/operations_overview.json","grafana/provisioning/dashboards/tokenomics_overview.json","grafana/provisioning/dashboards/llm_overview.json"]; files.forEach(f=>JSON.parse(fs.readFileSync(f,"utf8"))); console.log("dashboard json ok")'
 	@echo "✅ Observability smoke checks passed"
 
+observability-live-smoke:
+	@echo "📡 Running live operations dashboard query smoke checks..."
+	@$(COMPOSE) -f $(FULL_COMPOSE_FILE) up -d backend prometheus tpm-metrics tokenomics-metrics fl-performance
+	@sleep 15
+	@python3 scripts/check_operations_overview_live_queries.py
+	@echo "✅ Live operations dashboard query smoke passed"
+
+compose-service-drift-check:
+	@echo "🧭 Checking scripts for stale compose service references..."
+	@python3 scripts/check_compose_service_references.py
+	@echo "✅ Compose service reference check passed"
+
+quickstart-verify:
+	@echo "🚀 Running new contributor quickstart verification..."
+	@make compose-service-drift-check
+	@make observability-smoke
+	@echo "✅ Quickstart verification complete"
+
 testnet-wallet-readiness:
 	@echo "🧪 Running testnet wallet readiness checks..."
 	@bash scripts/testnet-wallet-readiness.sh
@@ -253,5 +271,8 @@ help:
 	@echo "  make lint-soft - Run linters without failing target"
 	@echo "  make go-env  - Print effective Go toolchain settings"
 	@echo "  make observability-smoke - Validate dashboard queries and JSON syntax"
+	@echo "  make observability-live-smoke - Validate lower-half operations panel queries against live Prometheus"
+	@echo "  make compose-service-drift-check - Detect stale compose service names in scripts"
+	@echo "  make quickstart-verify - Run onboarding-safe baseline verification targets"
 	@echo "  make check   - Run all checks"
 	@echo ""

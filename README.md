@@ -66,6 +66,7 @@ make test
 ```bash
 make smoke
 make observability-smoke
+make quickstart-verify
 ```
 
 Where to get contribution guidance:
@@ -73,6 +74,7 @@ Where to get contribution guidance:
 - Full contribution process and PR checklist: [CONTRIBUTING.md](CONTRIBUTING.md)
 - Quick contribution opportunities: [README.md#help-wanted-quick-wins](README.md#help-wanted-quick-wins)
 - Runtime validation expectations: [README.md#contributor-first-steps](README.md#contributor-first-steps)
+- Operations dashboard metric contract: [docs/OPERATIONS_DASHBOARD_METRIC_CONTRACT.md](docs/OPERATIONS_DASHBOARD_METRIC_CONTRACT.md)
 
 ## Mobile Shield Update March 2026
 
@@ -156,9 +158,16 @@ Primary references:
 Validation commands:
 
 - `make observability-smoke`
+- `make observability-live-smoke`
 - `make alerts-test`
 - `python3 tests/scripts/python/test_marketplace_local_contracts.py`
 - `python3 tests/scripts/python/test_marketplace_negative_paths.py`
+
+Canonical auditable artifact capture command:
+
+```bash
+RESULTS_ROOT=artifacts/final-verification/$(date +%F) TARGET_NODES=10 STRICT_NPU=0 DURATION_SECONDS=600 INTERVAL_SECONDS=60 bash scripts/demo-10min-auditable.sh
+```
 
 ## Performance Tuning Knobs
 
@@ -831,6 +840,13 @@ If you want to contribute quickly, these areas have high impact and low setup fr
 - Apple Silicon (MPS) acceleration optimization and benchmark baselines.
 - Additional Grafana panel tuning for high-cardinality node fleets.
 - Better synthetic fault workloads for Byzantine and partition simulation paths.
+
+Jump directly to open issues by label:
+
+- Good first issue: https://github.com/rwilliamspbg-ops/Sovereign_Map_Federated_Learning/labels/good%20first%20issue
+- Help wanted: https://github.com/rwilliamspbg-ops/Sovereign_Map_Federated_Learning/labels/help%20wanted
+- Documentation: https://github.com/rwilliamspbg-ops/Sovereign_Map_Federated_Learning/labels/documentation
+- Observability: https://github.com/rwilliamspbg-ops/Sovereign_Map_Federated_Learning/labels/observability
 
 Contribution process and coding standards are in [CONTRIBUTING.md](CONTRIBUTING.md).
 
