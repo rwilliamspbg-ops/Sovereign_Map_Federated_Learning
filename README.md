@@ -5,7 +5,22 @@
 Production-grade federated learning platform that combines Byzantine-resilient aggregation, trust verification, governance policy controls, tokenomics telemetry, and full-stack observability.
 
 [![Discord](https://img.shields.io/badge/Discord-Join%20Community-5865F2?style=flat-square&logo=discord&logoColor=white)](https://discord.gg/raBz79CJ)
-![Live 10-Node Test](https://img.shields.io/badge/Live_10--node_test-99.50%25_%40_Round_702-brightgreen)
+![Go Version](https://img.shields.io/github/go-mod/go-version/rwilliamspbg-ops/Sovereign-Mohawk-Proto)
+![Python SDK v2](https://img.shields.io/badge/SDK-2.0.1.Alpha-blue?logo=python)
+![Python Support](https://img.shields.io/badge/Python-3.8%2B-blue?logo=python)
+![Protocol Stage](https://img.shields.io/badge/Protocol-Go--Live%20Formalization%20Complete-2ea043)
+![Go-Live Gate](https://img.shields.io/badge/Go--Live%20Gate-PASS%20(8%2F8%20Attestations)-2ea043)
+![BFT Safety](https://img.shields.io/badge/BFT%20Resilience-55.5%25-green)
+![Proof Verify Mean](https://img.shields.io/badge/Proof%20Verify-10.55ms-success)
+![Gradient Compression Mean](https://img.shields.io/badge/Compression-0.996ms-informational)
+![Chaos Recovery SLO](https://img.shields.io/badge/Chaos%20Recovery-SLO%20Enforced-critical)
+![PQC Transport KEX](https://img.shields.io/badge/PQC%20Transport-x25519--mlkem768--hybrid-6f42c1)
+![TPM Attestation Mode](https://img.shields.io/badge/TPM%20Identity-XMSS%20Enforced-6f42c1)
+![PQC Migration Cutover](https://img.shields.io/badge/Migration-Crypto%20After%20Epoch%20Enabled-2ea043)
+![Host Preflight Policy](https://img.shields.io/badge/Host%20Preflight-Strict%20By%20Default-d73a49)
+![Genesis Testnet](https://img.shields.io/badge/Testnet-global--testnet-orange)
+![WASM Hot Reload](https://img.shields.io/badge/WASM-Hot%20Reload-blueviolet)
+![Tokenomics Dashboard](https://img.shields.io/badge/Grafana-Tokenomics%20Live-F46800?logo=grafana&logoColor=white)
 
 ## Live Project Pulse
 
