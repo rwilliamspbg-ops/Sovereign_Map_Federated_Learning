@@ -395,8 +395,8 @@ data:
 
 ## Contributing
 
-See [CONTRIBUTING.md](../../CONTRIBUTING.md) for development guidelines.
+See [CONTRIBUTING.md](../CONTRIBUTING.md) for development guidelines.
 
 ## License
 
-Apache 2.0 - See [LICENSE](../../LICENSE)
+Apache 2.0 - See [LICENSE](../LICENSE)

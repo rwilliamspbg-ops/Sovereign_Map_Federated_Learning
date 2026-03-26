@@ -308,7 +308,7 @@ if (stats?.device === 'cuda') {
 
 ## References
 
-- [SGP-001 Privacy Specification](../docs/SGP-001.md)
+- [Privacy engine integration overview](../README.md)
 - [Differential Privacy: A Survey of Results](https://arxiv.org/abs/1908.01756)
 - [Box-Muller Transform](https://en.wikipedia.org/wiki/Box%E2%80%93Muller_transform)
 - [CUDA Random Number Generation](https://docs.nvidia.com/cuda/curand/)

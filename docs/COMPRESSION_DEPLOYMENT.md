@@ -508,4 +508,4 @@ console.log(engine.getCalibrationBounds());
 For issues or questions:
 - GitHub Issues: [sovereignty-map-federated-learning/issues](https://github.com/sovereign-map/sovereign-map-federated-learning/issues)
 - Documentation: [docs/](../)
-- Examples: [examples/compression/](../../examples/compression/)
+- Examples: [packages/compression/](../packages/compression/)

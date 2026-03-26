@@ -294,7 +294,7 @@ console.log(`Avg: ${avg.toFixed(2)}ms, P99: ${p99.toFixed(2)}ms, P99.9: ${p99_9.
 
 ## Next Steps
 
-- Read [Complete GPU/NPU Acceleration Guide](docs/GPU_NPU_ACCELERATION.md)
+- Read [Complete GPU/NPU Acceleration Guide](./GPU_NPU_ACCELERATION.md)
 - Run benchmarks: `npm --prefix packages/privacy run bench`
 - Explore examples in `packages/privacy/src/index.test.ts`
 - Monitor performance in production

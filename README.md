@@ -24,6 +24,8 @@ Production-grade federated learning platform that combines Byzantine-resilient a
 [![Open Ecosystem](https://img.shields.io/badge/Open%20Ecosystem-Sprint%203%20Local--First-0ea5e9?style=flat-square)](docs/OPEN_ECOSYSTEM_FIRST_10_MINUTES.md)
 [![Marketplace Alerts](https://img.shields.io/badge/Alerts-Marketplace%20Guardrails-f97316?style=flat-square)](marketplace_alerts.yml)
 
+Documentation entrypoint: [docs/README.md](docs/README.md)
+
 ## Mobile Shield Update March 2026
 
 The mobile hardening and store packaging track is now implemented in-repo.

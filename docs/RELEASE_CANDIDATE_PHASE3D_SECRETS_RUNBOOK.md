@@ -6,10 +6,10 @@ This document is the operator-facing release-candidate checklist for production 
 
 Ensure all required secrets and environment wiring exist before running:
 
-- [deploy/production/deploy-phase3d-production.sh](deploy/production/deploy-phase3d-production.sh)
-- [deploy/production/publish-frontend-cdn.sh](deploy/production/publish-frontend-cdn.sh)
-- [ .github/workflows/phase3d-production-deploy.yml](.github/workflows/phase3d-production-deploy.yml)
-- Optional post-production jobs in [ .github/workflows/deploy.yml](.github/workflows/deploy.yml)
+- [deploy/production/deploy-phase3d-production.sh](../deploy/production/deploy-phase3d-production.sh)
+- [deploy/production/publish-frontend-cdn.sh](../deploy/production/publish-frontend-cdn.sh)
+- [.github/workflows/phase3d-production-deploy.yml](../.github/workflows/phase3d-production-deploy.yml)
+- Optional post-production jobs in [.github/workflows/build.yml](../.github/workflows/build.yml)
 
 ## Required GitHub Secrets
 
@@ -88,7 +88,7 @@ cd packages/training && python -m py_compile phase3d_training.py api.py && cd ..
 
 ### Path A: Manual workflow
 
-1. Run [ .github/workflows/phase3d-production-deploy.yml](.github/workflows/phase3d-production-deploy.yml)
+1. Run [.github/workflows/phase3d-production-deploy.yml](../.github/workflows/phase3d-production-deploy.yml)
 2. Choose inputs:
    - `image_tag` = commit SHA (recommended)
    - `enable_gpu` = `true` if cluster has GPU nodes
@@ -103,7 +103,7 @@ curl http://localhost:5001/health
 
 ### Path B: main deploy workflow with optional jobs
 
-1. Trigger or merge into [ .github/workflows/deploy.yml](.github/workflows/deploy.yml)
+1. Trigger or merge into [.github/workflows/build.yml](../.github/workflows/build.yml)
 2. Ensure optional jobs are not skipped due to missing secrets
 3. Confirm post-production jobs complete:
    - `deploy-phase3d-k8s`

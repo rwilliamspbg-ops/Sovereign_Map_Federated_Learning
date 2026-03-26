@@ -7,8 +7,9 @@ This manifest captures deliverables completed in the PySyft + dashboard consolid
 - [examples/pysyft-integration/README.md](../examples/pysyft-integration/README.md)
 - [examples/pysyft-integration/pysyft_mohawk_poc.py](../examples/pysyft-integration/pysyft_mohawk_poc.py)
 - [examples/pysyft-integration/pysyft_mohawk_poc.ipynb](../examples/pysyft-integration/pysyft_mohawk_poc.ipynb)
-- [examples/pysyft-integration/docker-compose.pysyft-demo.yml](../examples/pysyft-integration/docker-compose.pysyft-demo.yml)
 - [examples/pysyft-integration/requirements-pysyft-demo.txt](../examples/pysyft-integration/requirements-pysyft-demo.txt)
+
+Note: legacy PySyft demo compose file was removed during stack consolidation; run the demo via script and requirements listed above.
 
 ## Canonical STARRED Live Dashboards
 
@@ -19,15 +20,9 @@ This manifest captures deliverables completed in the PySyft + dashboard consolid
 
 ## Compose Profiles Updated
 
-- [docker-compose.1000nodes.yml](../docker-compose.1000nodes.yml)
-- [docker-compose.200nodes.yml](../docker-compose.200nodes.yml)
-- [docker-compose.dev.yml](../docker-compose.dev.yml)
 - [docker-compose.full.yml](../docker-compose.full.yml)
-- [docker-compose.large-scale.yml](../docker-compose.large-scale.yml)
-- [docker-compose.monitoring.tpm.yml](../docker-compose.monitoring.tpm.yml)
-- [docker-compose.monitoring.yml](../docker-compose.monitoring.yml)
-- [docker-compose.production.yml](../docker-compose.production.yml)
-- [monitoring/docker-compose.monitoring.yml](../monitoring/docker-compose.monitoring.yml)
+
+Legacy compose profiles referenced in older notes were consolidated; use `docker-compose.full.yml` as the canonical stack entrypoint.
 
 ## Validation Snapshot
 

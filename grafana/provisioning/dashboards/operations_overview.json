@@ -704,7 +704,7 @@
       "targets": [
         {
           "refId": "A",
-          "expr": "avg(tpm_node_trust_score{node_id!=\"\"}) or max(((clamp_max(100 * (tpm_certificates_verified_total / clamp_min(tpm_certificates_total, 1)), 100) and (tpm_certificates_total > 0)) or (100 * tpm_ca_certificate_valid))) or vector(0)"
+          "expr": "avg(tpm_node_trust_score) or max(((clamp_max(100 * (tpm_certificates_verified_total / clamp_min(tpm_certificates_total, 1)), 100) and (tpm_certificates_total > 0)) or (100 * tpm_ca_certificate_valid))) or vector(0)"
         }
       ],
       "fieldConfig": {
