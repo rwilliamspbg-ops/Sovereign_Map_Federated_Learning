@@ -5,13 +5,14 @@ from __future__ import annotations
 
 import json
 import os
-import sys
 import urllib.parse
 import urllib.request
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
-DASHBOARD_PATH = ROOT / "grafana" / "provisioning" / "dashboards" / "operations_overview.json"
+DASHBOARD_PATH = (
+    ROOT / "grafana" / "provisioning" / "dashboards" / "operations_overview.json"
+)
 PROM_URL = os.getenv("PROM_URL", "http://localhost:9090")
 WINDOW = os.getenv("WINDOW", "15m")
 RATE_INTERVAL = os.getenv("RATE_INTERVAL", "5m")

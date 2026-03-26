@@ -182,13 +182,13 @@ Inhibition semantics:
 ## Grafana Lower-Half Operations Panels Show No Data
 
 - Confirm Prometheus target health first:
-	- `curl -fsS http://localhost:9090/api/v1/targets | jq '.data.activeTargets[] | {job: .labels.job, health: .health, lastError: .lastError}'`
+  - `curl -fsS http://localhost:9090/api/v1/targets | jq '.data.activeTargets[] | {job: .labels.job, health: .health, lastError: .lastError}'`
 - Required targets for lower-half operations panels are: `sovereign-backend`, `tpm-metrics`, `tokenomics-metrics`, and `fl-performance-metrics`.
 - Run static dashboard compatibility check:
-	- `python3 scripts/check_dashboard_queries.py`
+  - `python3 scripts/check_dashboard_queries.py`
 - Run live lower-half panel query smoke:
-	- `python3 scripts/check_operations_overview_live_queries.py`
+  - `python3 scripts/check_operations_overview_live_queries.py`
 - If script references are stale after compose changes, run:
-	- `python3 scripts/check_compose_service_references.py`
+  - `python3 scripts/check_compose_service_references.py`
 - Contract reference for expected panel-to-metric mapping:
-	- [docs/OPERATIONS_DASHBOARD_METRIC_CONTRACT.md](OPERATIONS_DASHBOARD_METRIC_CONTRACT.md)
+  - [docs/OPERATIONS_DASHBOARD_METRIC_CONTRACT.md](OPERATIONS_DASHBOARD_METRIC_CONTRACT.md)

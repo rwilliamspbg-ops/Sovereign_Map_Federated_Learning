@@ -843,10 +843,10 @@ If you want to contribute quickly, these areas have high impact and low setup fr
 
 Jump directly to open issues by label:
 
-- Good first issue: https://github.com/rwilliamspbg-ops/Sovereign_Map_Federated_Learning/labels/good%20first%20issue
-- Help wanted: https://github.com/rwilliamspbg-ops/Sovereign_Map_Federated_Learning/labels/help%20wanted
-- Documentation: https://github.com/rwilliamspbg-ops/Sovereign_Map_Federated_Learning/labels/documentation
-- Observability: https://github.com/rwilliamspbg-ops/Sovereign_Map_Federated_Learning/labels/observability
+- Good first issue: [good first issue label](https://github.com/rwilliamspbg-ops/Sovereign_Map_Federated_Learning/labels/good%20first%20issue)
+- Help wanted: [help wanted label](https://github.com/rwilliamspbg-ops/Sovereign_Map_Federated_Learning/labels/help%20wanted)
+- Documentation: [documentation label](https://github.com/rwilliamspbg-ops/Sovereign_Map_Federated_Learning/labels/documentation)
+- Observability: [observability label](https://github.com/rwilliamspbg-ops/Sovereign_Map_Federated_Learning/labels/observability)
 
 Contribution process and coding standards are in [CONTRIBUTING.md](CONTRIBUTING.md).
 
