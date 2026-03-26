@@ -22,7 +22,7 @@ echo "[burst] service: $SERVICE_NAME"
 echo "[burst] target nodes: $TARGET_NODES"
 
 echo "[burst] ensuring core services are running..."
-docker compose -f "$COMPOSE_FILE" up -d mongo redis backend tpm-metrics
+docker compose -f "$COMPOSE_FILE" up -d backend tpm-metrics
 
 echo "[burst] scaling $SERVICE_NAME to $TARGET_NODES..."
 docker compose -f "$COMPOSE_FILE" up -d --scale "$SERVICE_NAME=$TARGET_NODES" "$SERVICE_NAME"

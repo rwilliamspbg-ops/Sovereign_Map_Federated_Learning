@@ -38,7 +38,7 @@ node scripts/audit-compose-ports.mjs \
   --target-file "$COMPOSE_FILE" | tee "$OUT_DIR/port-audit-summary.txt"
 
 log "Bringing up baseline stack"
-docker compose -f "$COMPOSE_FILE" up -d mongo redis backend prometheus tpm-metrics grafana
+docker compose -f "$COMPOSE_FILE" up -d backend prometheus tpm-metrics tokenomics-metrics grafana alertmanager
 
 log "Burst-scaling node agents with auto certificate issuance"
 bash scripts/burst-scale-with-certs.sh "$TARGET_NODES" "$COMPOSE_FILE" | tee "$OUT_DIR/burst-scale.log"
