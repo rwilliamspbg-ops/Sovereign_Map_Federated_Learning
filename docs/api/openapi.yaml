@@ -19,6 +19,9 @@ tags:
   - name: Operations
   - name: Trust
   - name: Join
+  - name: Marketplace
+  - name: Governance
+  - name: Network
 
 paths:
   /status:
@@ -629,6 +632,651 @@ paths:
                   message:
                     type: string
                     example: node certificate not found
+
+  /marketplace/offers:
+    post:
+      tags: [Marketplace]
+      summary: Create marketplace offer
+      operationId: postMarketplaceOffer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+      responses:
+        '201':
+          description: Offer created
+          content:
+            application/json:
+              schema:
+                type: object
+        '400':
+          description: Validation error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+    get:
+      tags: [Marketplace]
+      summary: List marketplace offers
+      operationId: getMarketplaceOffers
+      responses:
+        '200':
+          description: Offer list
+          content:
+            application/json:
+              schema:
+                type: object
+
+  /marketplace/offers/{offer_id}:
+    patch:
+      tags: [Marketplace]
+      summary: Update marketplace offer
+      operationId: patchMarketplaceOffer
+      parameters:
+        - name: offer_id
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+      responses:
+        '200':
+          description: Offer updated
+          content:
+            application/json:
+              schema:
+                type: object
+        '404':
+          description: Offer not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /marketplace/round_intents:
+    post:
+      tags: [Marketplace]
+      summary: Create marketplace round intent
+      operationId: postMarketplaceRoundIntent
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+      responses:
+        '201':
+          description: Round intent created
+          content:
+            application/json:
+              schema:
+                type: object
+        '400':
+          description: Validation error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+    get:
+      tags: [Marketplace]
+      summary: List marketplace round intents
+      operationId: getMarketplaceRoundIntents
+      responses:
+        '200':
+          description: Round intent list
+          content:
+            application/json:
+              schema:
+                type: object
+
+  /marketplace/round_intents/{round_intent_id}:
+    patch:
+      tags: [Marketplace]
+      summary: Update marketplace round intent
+      operationId: patchMarketplaceRoundIntent
+      parameters:
+        - name: round_intent_id
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+      responses:
+        '200':
+          description: Round intent updated
+          content:
+            application/json:
+              schema:
+                type: object
+        '404':
+          description: Round intent not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /marketplace/match:
+    post:
+      tags: [Marketplace]
+      summary: Create marketplace match contract
+      operationId: postMarketplaceMatch
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+      responses:
+        '201':
+          description: Match contract created
+          content:
+            application/json:
+              schema:
+                type: object
+        '422':
+          description: No compatible offers found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /marketplace/escrow/release:
+    post:
+      tags: [Marketplace]
+      summary: Release marketplace escrow
+      operationId: postMarketplaceEscrowRelease
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+      responses:
+        '200':
+          description: Escrow released
+          content:
+            application/json:
+              schema:
+                type: object
+        '409':
+          description: Escrow already released
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /marketplace/contracts:
+    get:
+      tags: [Marketplace]
+      summary: List marketplace contracts
+      operationId: getMarketplaceContracts
+      responses:
+        '200':
+          description: Contract list
+          content:
+            application/json:
+              schema:
+                type: object
+
+  /marketplace/disputes:
+    post:
+      tags: [Marketplace]
+      summary: Create marketplace dispute
+      operationId: postMarketplaceDispute
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+      responses:
+        '201':
+          description: Dispute created
+          content:
+            application/json:
+              schema:
+                type: object
+        '400':
+          description: Validation error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+    get:
+      tags: [Marketplace]
+      summary: List marketplace disputes
+      operationId: getMarketplaceDisputes
+      responses:
+        '200':
+          description: Dispute list
+          content:
+            application/json:
+              schema:
+                type: object
+
+  /marketplace/disputes/{dispute_id}:
+    patch:
+      tags: [Marketplace]
+      summary: Update marketplace dispute
+      operationId: patchMarketplaceDispute
+      parameters:
+        - name: dispute_id
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+      responses:
+        '200':
+          description: Dispute updated
+          content:
+            application/json:
+              schema:
+                type: object
+        '404':
+          description: Dispute not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /governance/actions:
+    post:
+      tags: [Governance]
+      summary: Record governance action
+      operationId: postGovernanceAction
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+      responses:
+        '201':
+          description: Governance action created
+          content:
+            application/json:
+              schema:
+                type: object
+    get:
+      tags: [Governance]
+      summary: List governance actions
+      operationId: getGovernanceActions
+      responses:
+        '200':
+          description: Governance action list
+          content:
+            application/json:
+              schema:
+                type: object
+
+  /marketplace/policy/preview:
+    post:
+      tags: [Marketplace]
+      summary: Preview marketplace policy impact
+      operationId: postMarketplacePolicyPreview
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+      responses:
+        '200':
+          description: Preview result
+          content:
+            application/json:
+              schema:
+                type: object
+
+  /governance/proposals:
+    post:
+      tags: [Governance]
+      summary: Create governance proposal
+      operationId: postGovernanceProposal
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+      responses:
+        '201':
+          description: Proposal created
+          content:
+            application/json:
+              schema:
+                type: object
+    get:
+      tags: [Governance]
+      summary: List governance proposals
+      operationId: getGovernanceProposals
+      responses:
+        '200':
+          description: Proposal list
+          content:
+            application/json:
+              schema:
+                type: object
+
+  /governance/proposals/{proposal_id}:
+    get:
+      tags: [Governance]
+      summary: Get governance proposal
+      operationId: getGovernanceProposal
+      parameters:
+        - name: proposal_id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Proposal details
+          content:
+            application/json:
+              schema:
+                type: object
+        '404':
+          description: Proposal not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+    patch:
+      tags: [Governance]
+      summary: Update governance proposal
+      operationId: patchGovernanceProposal
+      parameters:
+        - name: proposal_id
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+      responses:
+        '200':
+          description: Proposal updated
+          content:
+            application/json:
+              schema:
+                type: object
+        '404':
+          description: Proposal not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /governance/proposals/{proposal_id}/vote:
+    post:
+      tags: [Governance]
+      summary: Cast vote on governance proposal
+      operationId: postGovernanceProposalVote
+      parameters:
+        - name: proposal_id
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+      responses:
+        '200':
+          description: Vote accepted
+          content:
+            application/json:
+              schema:
+                type: object
+        '409':
+          description: Proposal not open
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /join/request_invite:
+    post:
+      tags: [Join]
+      summary: Submit join invite request
+      operationId: postJoinRequestInvite
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+      responses:
+        '201':
+          description: Invite request created
+          content:
+            application/json:
+              schema:
+                type: object
+        '400':
+          description: Validation error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /join/invite_requests:
+    get:
+      tags: [Join]
+      summary: List invite requests (admin)
+      operationId: getJoinInviteRequests
+      security:
+        - JoinAdminHeader: []
+        - BearerAuth: []
+      responses:
+        '200':
+          description: Invite request list
+          content:
+            application/json:
+              schema:
+                type: object
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /join/invite_requests/{request_id}/reject:
+    post:
+      tags: [Join]
+      summary: Reject invite request (admin)
+      operationId: postJoinInviteRequestReject
+      security:
+        - JoinAdminHeader: []
+        - BearerAuth: []
+      parameters:
+        - name: request_id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Invite request rejected
+          content:
+            application/json:
+              schema:
+                type: object
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /join/invite_requests/{request_id}/approve:
+    post:
+      tags: [Join]
+      summary: Approve invite request (admin)
+      operationId: postJoinInviteRequestApprove
+      security:
+        - JoinAdminHeader: []
+        - BearerAuth: []
+      parameters:
+        - name: request_id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Invite request approved
+          content:
+            application/json:
+              schema:
+                type: object
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /join/invites:
+    get:
+      tags: [Join]
+      summary: List invites (admin)
+      operationId: getJoinInvites
+      security:
+        - JoinAdminHeader: []
+        - BearerAuth: []
+      responses:
+        '200':
+          description: Invite list
+          content:
+            application/json:
+              schema:
+                type: object
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /join/invites/{invite_id}/revoke:
+    post:
+      tags: [Join]
+      summary: Revoke invite (admin)
+      operationId: postJoinInviteRevoke
+      security:
+        - JoinAdminHeader: []
+        - BearerAuth: []
+      parameters:
+        - name: invite_id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Invite revoked
+          content:
+            application/json:
+              schema:
+                type: object
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /admin/auth/methods:
+    get:
+      tags: [Join]
+      summary: Get supported admin auth methods
+      operationId: getAdminAuthMethods
+      responses:
+        '200':
+          description: Auth methods
+          content:
+            application/json:
+              schema:
+                type: object
+
+  /attestations/share:
+    post:
+      tags: [Network]
+      summary: Share compute attestation
+      operationId: postAttestationShare
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+      responses:
+        '201':
+          description: Attestation created
+          content:
+            application/json:
+              schema:
+                type: object
+        '400':
+          description: Validation error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /attestations/feed:
+    get:
+      tags: [Network]
+      summary: List shared compute attestations
+      operationId: getAttestationFeed
+      responses:
+        '200':
+          description: Attestation feed
+          content:
+            application/json:
+              schema:
+                type: object
+
+  /network/expansion_summary:
+    get:
+      tags: [Network]
+      summary: Get network expansion summary
+      operationId: getNetworkExpansionSummary
+      responses:
+        '200':
+          description: Expansion summary
+          content:
+            application/json:
+              schema:
+                type: object
 
 components:
   securitySchemes:

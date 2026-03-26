@@ -18,7 +18,9 @@ import sovereignmap_production_backend_v2 as backend
 
 def _configure_temp_marketplace_state(tmpdir: Path) -> None:
     backend.MARKETPLACE_OFFERS_PATH = str(tmpdir / "marketplace_offers.json")
-    backend.MARKETPLACE_ROUND_INTENTS_PATH = str(tmpdir / "marketplace_round_intents.json")
+    backend.MARKETPLACE_ROUND_INTENTS_PATH = str(
+        tmpdir / "marketplace_round_intents.json"
+    )
     backend.MARKETPLACE_CONTRACTS_PATH = str(tmpdir / "marketplace_contracts.json")
     backend.MARKETPLACE_DISPUTES_PATH = str(tmpdir / "marketplace_disputes.json")
     backend.GOVERNANCE_ACTION_LOG_PATH = str(tmpdir / "governance_actions.json")
@@ -133,7 +135,10 @@ def run() -> int:
             json={"status": "cancelled"},
         )
         assert invalid_transition_resp.status_code == 409
-        assert invalid_transition_resp.get_json().get("code") == "invalid_status_transition"
+        assert (
+            invalid_transition_resp.get_json().get("code")
+            == "invalid_status_transition"
+        )
 
         first_release_resp = client.post(
             "/marketplace/escrow/release",
@@ -160,14 +165,20 @@ def run() -> int:
             json={"round_intent_id": "intent-does-not-exist", "max_offers": 1},
         )
         assert missing_preview_intent_resp.status_code == 404
-        assert missing_preview_intent_resp.get_json().get("code") == "round_intent_not_found"
+        assert (
+            missing_preview_intent_resp.get_json().get("code")
+            == "round_intent_not_found"
+        )
 
         missing_title_proposal_resp = client.post(
             "/governance/proposals",
             json={"proposal_type": "policy_update", "created_by": "test-suite"},
         )
         assert missing_title_proposal_resp.status_code == 400
-        assert missing_title_proposal_resp.get_json().get("code") == "proposal_title_required"
+        assert (
+            missing_title_proposal_resp.get_json().get("code")
+            == "proposal_title_required"
+        )
 
         create_proposal_resp = client.post(
             "/governance/proposals",
@@ -208,7 +219,10 @@ def run() -> int:
             },
         )
         assert missing_participant_resp.status_code == 400
-        assert missing_participant_resp.get_json().get("code") == "participant_name_required"
+        assert (
+            missing_participant_resp.get_json().get("code")
+            == "participant_name_required"
+        )
 
         invalid_attestation_status_resp = client.post(
             "/attestations/share",
@@ -302,7 +316,9 @@ def run() -> int:
             headers=admin_headers,
         )
         assert missing_request_approve_resp.status_code == 404
-        assert missing_request_approve_resp.get_json().get("code") == "request_not_found"
+        assert (
+            missing_request_approve_resp.get_json().get("code") == "request_not_found"
+        )
 
         invalid_request_approve_limits_resp = client.post(
             "/join/request_invite",
@@ -313,7 +329,9 @@ def run() -> int:
             },
         )
         assert invalid_request_approve_limits_resp.status_code == 201
-        pending_request_id = invalid_request_approve_limits_resp.get_json()["request_id"]
+        pending_request_id = invalid_request_approve_limits_resp.get_json()[
+            "request_id"
+        ]
 
         invalid_request_limits_resp = client.post(
             f"/join/invite_requests/{pending_request_id}/approve",

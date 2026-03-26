@@ -16,7 +16,9 @@ import sovereignmap_production_backend_v2 as backend
 
 def _configure_temp_marketplace_state(tmpdir: Path) -> None:
     backend.MARKETPLACE_OFFERS_PATH = str(tmpdir / "marketplace_offers.json")
-    backend.MARKETPLACE_ROUND_INTENTS_PATH = str(tmpdir / "marketplace_round_intents.json")
+    backend.MARKETPLACE_ROUND_INTENTS_PATH = str(
+        tmpdir / "marketplace_round_intents.json"
+    )
     backend.MARKETPLACE_CONTRACTS_PATH = str(tmpdir / "marketplace_contracts.json")
     backend.MARKETPLACE_DISPUTES_PATH = str(tmpdir / "marketplace_disputes.json")
     backend.GOVERNANCE_ACTION_LOG_PATH = str(tmpdir / "governance_actions.json")
@@ -249,7 +251,9 @@ def run() -> int:
                 "motivation": "Contribute nightly compute",
             },
         )
-        assert invite_request_resp.status_code == 201, invite_request_resp.get_data(as_text=True)
+        assert invite_request_resp.status_code == 201, invite_request_resp.get_data(
+            as_text=True
+        )
         invite_request = invite_request_resp.get_json()
         assert invite_request["status"] == "pending"
 
