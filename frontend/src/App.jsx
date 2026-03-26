@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import HUD from './HUD';
+import BrowserFLDemo from './BrowserFLDemo';
 import './App.css';
 
 const resolveApiBase = () => {
@@ -14,6 +15,18 @@ const resolveApiBase = () => {
 
 const API_BASE = resolveApiBase();
 const TRUST_API_BASE = API_BASE;
+const DEFAULT_VIEW = String(import.meta.env.VITE_DEFAULT_VIEW || 'hud').toLowerCase();
+
+const resolveViewMode = () => {
+  if (typeof window === 'undefined') {
+    return DEFAULT_VIEW;
+  }
+  const requestedView = new URLSearchParams(window.location.search).get('view');
+  if (requestedView) {
+    return String(requestedView).toLowerCase();
+  }
+  return DEFAULT_VIEW;
+};
 
 const opsEventKey = (evt) => {
   if (evt && Number.isFinite(Number(evt.id))) {
@@ -42,6 +55,9 @@ const mergeOpsEvents = (existing, incoming, limit = 220) => {
 };
 
 function App() {
+  const viewMode = resolveViewMode();
+  const showBrowserDemo = viewMode === 'browser_demo' || viewMode === 'admin';
+
   const [hudData, setHudData] = useState(null);
   const [health, setHealth] = useState(null);
   const [metricsSummary, setMetricsSummary] = useState(null);
@@ -89,6 +105,10 @@ function App() {
   const [enclaveActionMessage, setEnclaveActionMessage] = useState('');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
+
+  if (showBrowserDemo) {
+    return <BrowserFLDemo enableBackendMetrics />;
+  }
 
   const avgFlDuration = Number(metricsSummary?.avg_fl_duration);
   const totalStake = Number(metricsSummary?.total_stake);

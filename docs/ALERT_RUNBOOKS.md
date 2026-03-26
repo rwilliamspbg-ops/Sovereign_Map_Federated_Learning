@@ -7,8 +7,8 @@ This document defines first-response procedures for SLO and consensus alerts.
 ### Routing and Inhibition Baseline
 
 - Route policy source: [alertmanager.yml](../alertmanager.yml)
-- Rule sources: [fl_slo_alerts.yml](../fl_slo_alerts.yml), [fl_detailed_alerts.yml](../fl_detailed_alerts.yml), [tpm_alerts.yml](../tpm_alerts.yml)
-- Unit test sources: [fl_slo_alerts.test.yml](../fl_slo_alerts.test.yml), [fl_detailed_alerts.test.yml](../fl_detailed_alerts.test.yml), [tpm_alerts.test.yml](../tpm_alerts.test.yml), [internal/monitoring/alertmanager_config_test.go](../internal/monitoring/alertmanager_config_test.go)
+- Rule sources: [fl_slo_alerts.yml](../fl_slo_alerts.yml), [fl_detailed_alerts.yml](../fl_detailed_alerts.yml), [tpm_alerts.yml](../tpm_alerts.yml), [marketplace_alerts.yml](../marketplace_alerts.yml)
+- Unit test sources: [fl_slo_alerts.test.yml](../fl_slo_alerts.test.yml), [fl_detailed_alerts.test.yml](../fl_detailed_alerts.test.yml), [tpm_alerts.test.yml](../tpm_alerts.test.yml), [marketplace_alerts.test.yml](../marketplace_alerts.test.yml), [internal/monitoring/alertmanager_config_test.go](../internal/monitoring/alertmanager_config_test.go)
 
 Inhibition semantics:
 
@@ -66,9 +66,9 @@ Inhibition semantics:
 
 ### Coverage Summary
 
-- Total alerts configured: 34
-- Alerts with explicit runbook section in this document: 16
-- Alerts with promtool rule unit tests: 34
+- Total alerts configured: 36
+- Alerts with explicit runbook section in this document: 18
+- Alerts with promtool rule unit tests: 36
 - Alertmanager routing and inhibition policy tests: covered by internal/monitoring/alertmanager_config_test.go
 
 ## FLRoundStalled
@@ -166,3 +166,15 @@ Inhibition semantics:
 - Verify replay rate trend from `mohawk_tpm_nonce_replay_rejections_total` and determine whether it is expected (duplicate retries) or anomalous (nonce generation collision/replay attack).
 - Correlate with client retry storms and transport retransmissions; high replay without failure spikes usually indicates duplicate delivery.
 - If anomalous, rotate nonce derivation context for the affected round and audit ingress paths for duplicate submissions.
+
+## MarketplaceEscrowStalled
+
+- Confirm `sovereign_marketplace_escrow_locked` is non-zero and verify `increase(sovereign_marketplace_payout_total[30m]) == 0` in Prometheus UI.
+- Inspect pending contracts via `/marketplace/contracts?payout_status=pending` and verify no active disputes are blocking payout release.
+- Triage release path by checking `/marketplace/escrow/release` API logs and recent governance actions for moderation holds.
+
+## MarketplaceEscrowHighWatermark
+
+- Validate current locked amount against expected round budget and contract volume.
+- Inspect for stale contracts that remain pending after round completion and release in controlled batches.
+- If sustained, tighten intent budget limits or increase release cadence to keep escrow within policy bounds.

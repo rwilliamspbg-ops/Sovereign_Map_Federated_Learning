@@ -388,6 +388,43 @@ ops_control_actions_total = Counter(
 ops_control_actions_total.labels(action="verification_policy_update").inc(0)
 ops_control_actions_total.labels(action="training_start").inc(0)
 ops_control_actions_total.labels(action="training_stop").inc(0)
+ops_control_actions_total.labels(action="marketplace_offer_create").inc(0)
+ops_control_actions_total.labels(action="marketplace_offer_update").inc(0)
+ops_control_actions_total.labels(action="marketplace_intent_create").inc(0)
+ops_control_actions_total.labels(action="marketplace_intent_update").inc(0)
+ops_control_actions_total.labels(action="marketplace_match_create").inc(0)
+ops_control_actions_total.labels(action="marketplace_escrow_release").inc(0)
+ops_control_actions_total.labels(action="marketplace_dispute_create").inc(0)
+ops_control_actions_total.labels(action="marketplace_dispute_update").inc(0)
+ops_control_actions_total.labels(action="governance_action_create").inc(0)
+ops_control_actions_total.labels(action="marketplace_policy_preview").inc(0)
+ops_control_actions_total.labels(action="governance_proposal_create").inc(0)
+ops_control_actions_total.labels(action="governance_proposal_update").inc(0)
+ops_control_actions_total.labels(action="governance_vote_cast").inc(0)
+ops_control_actions_total.labels(action="join_invite_request_create").inc(0)
+ops_control_actions_total.labels(action="join_invite_request_approve").inc(0)
+ops_control_actions_total.labels(action="join_invite_request_reject").inc(0)
+ops_control_actions_total.labels(action="join_invite_revoke").inc(0)
+marketplace_offers_total = Counter(
+    "sovereign_marketplace_offers_total",
+    "Total marketplace offers created",
+)
+marketplace_matches_total = Counter(
+    "sovereign_marketplace_matches_total",
+    "Total marketplace match contracts created",
+)
+marketplace_escrow_locked = Gauge(
+    "sovereign_marketplace_escrow_locked",
+    "Current locally locked escrow amount for pending marketplace contracts",
+)
+marketplace_payout_total = Counter(
+    "sovereign_marketplace_payout_total",
+    "Total released marketplace payouts",
+)
+marketplace_match_latency_seconds = Histogram(
+    "sovereign_marketplace_match_latency_seconds",
+    "Latency of local marketplace matching operation",
+)
 
 # Global state
 dao = None
@@ -418,6 +455,34 @@ simulation_effects = {
     "accuracy_penalty_pct": 0.0,
     "loss_multiplier": 1.0,
 }
+
+
+def refresh_marketplace_metrics() -> Dict[str, float]:
+    offers = _list_marketplace_documents(MARKETPLACE_OFFERS_PATH)
+    intents = _list_marketplace_documents(MARKETPLACE_ROUND_INTENTS_PATH)
+    contracts = _list_marketplace_documents(MARKETPLACE_CONTRACTS_PATH)
+
+    locked_total = 0.0
+    released_total = 0.0
+    for contract in contracts:
+        amount = float(contract.get("agreed_price_per_round_total", 0.0) or 0.0)
+        payout_status = str(contract.get("payout_status", "pending")).lower()
+        if payout_status == "released":
+            released_total += amount
+        else:
+            locked_total += amount
+
+    marketplace_escrow_locked.set(max(0.0, locked_total))
+
+    return {
+        "offers_total": float(len(offers)),
+        "open_intents": float(
+            len([item for item in intents if str(item.get("status", "")) == "open"])
+        ),
+        "contracts_total": float(len(contracts)),
+        "locked_escrow_total": round(max(0.0, locked_total), 6),
+        "released_payout_total": round(max(0.0, released_total), 6),
+    }
 ops_event_log = deque(maxlen=400)
 ops_event_subscribers = set()
 ops_event_lock = threading.Lock()
@@ -443,6 +508,30 @@ JOIN_INVITES_PATH = os.getenv("JOIN_INVITES_PATH", "/app/data/join_invites.json"
 JOIN_REGISTRATIONS_PATH = os.getenv(
     "JOIN_REGISTRATIONS_PATH", "/app/data/join_registrations.json"
 )
+JOIN_INVITE_REQUESTS_PATH = os.getenv(
+    "JOIN_INVITE_REQUESTS_PATH", "./data/join_invite_requests.json"
+)
+COMPUTE_ATTESTATIONS_PATH = os.getenv(
+    "COMPUTE_ATTESTATIONS_PATH", "./data/compute_attestations.json"
+)
+MARKETPLACE_OFFERS_PATH = os.getenv(
+    "MARKETPLACE_OFFERS_PATH", "./data/marketplace_offers.json"
+)
+MARKETPLACE_ROUND_INTENTS_PATH = os.getenv(
+    "MARKETPLACE_ROUND_INTENTS_PATH", "./data/marketplace_round_intents.json"
+)
+MARKETPLACE_CONTRACTS_PATH = os.getenv(
+    "MARKETPLACE_CONTRACTS_PATH", "./data/marketplace_contracts.json"
+)
+MARKETPLACE_DISPUTES_PATH = os.getenv(
+    "MARKETPLACE_DISPUTES_PATH", "./data/marketplace_disputes.json"
+)
+GOVERNANCE_ACTION_LOG_PATH = os.getenv(
+    "GOVERNANCE_ACTION_LOG_PATH", "./data/governance_actions.json"
+)
+GOVERNANCE_PROPOSALS_PATH = os.getenv(
+    "GOVERNANCE_PROPOSALS_PATH", "./data/governance_proposals.json"
+)
 VERIFICATION_POLICY_STATE_PATH = os.getenv(
     "VERIFICATION_POLICY_STATE_PATH", "/app/data/verification_policy_state.json"
 )
@@ -455,6 +544,7 @@ PUBLIC_AGGREGATOR_HOST = os.getenv("PUBLIC_AGGREGATOR_HOST", "localhost")
 PUBLIC_AGGREGATOR_PORT = int(os.getenv("PUBLIC_AGGREGATOR_PORT", "8080"))
 registry_lock = threading.Lock()
 join_lock = threading.Lock()
+marketplace_lock = threading.Lock()
 verification_policy_lock = threading.Lock()
 llm_adapter_policy: Dict[str, Any] = {}
 DEFAULT_VERIFICATION_POLICY = {
@@ -559,6 +649,292 @@ def load_verification_policy_state() -> Dict[str, Any]:
             "verification_policy": verification_policy_state.copy(),
             "policy_history": list(verification_policy_history),
         }
+
+
+def _normalize_marketplace_status(raw_status: Any) -> str:
+    status = str(raw_status or "active").strip().lower()
+    if status not in {"active", "paused", "retired"}:
+        return "active"
+    return status
+
+
+def _list_marketplace_documents(file_path: str) -> List[Dict[str, Any]]:
+    loaded = _load_json_file(file_path, [])
+    if not isinstance(loaded, list):
+        return []
+    return [entry for entry in loaded if isinstance(entry, dict)]
+
+
+def _marketplace_error(
+    code: str,
+    message: str,
+    status_code: int,
+    details: Optional[Dict[str, Any]] = None,
+):
+    payload: Dict[str, Any] = {
+        "error": code,
+        "code": code,
+        "message": message,
+    }
+    if details:
+        payload["details"] = details
+    return jsonify(payload), status_code
+
+
+def _record_contract_timeline_event(
+    contract: Dict[str, Any], event: str, data: Optional[Dict[str, Any]] = None
+):
+    timeline = contract.get("timeline")
+    if not isinstance(timeline, list):
+        timeline = []
+    timeline.append(
+        {
+            "ts": int(time.time()),
+            "event": event,
+            "data": data or {},
+        }
+    )
+    contract["timeline"] = timeline[-50:]
+
+
+def _collect_offer_rejection_reasons(
+    offer: Dict[str, Any], intent: Dict[str, Any], now_ts: int
+) -> List[str]:
+    reasons: List[str] = []
+
+    if str(offer.get("status", "active")).strip().lower() != "active":
+        reasons.append("offer_not_active")
+
+    expires_at = int(offer.get("expires_at", 0) or 0)
+    if expires_at > 0 and now_ts > expires_at:
+        reasons.append("offer_expired")
+
+    allowed_tasks = offer.get("allowed_tasks") or []
+    if isinstance(allowed_tasks, list) and allowed_tasks:
+        requested_task = str(intent.get("task_type", "")).strip()
+        supported_tasks = {str(task).strip() for task in allowed_tasks}
+        if requested_task not in supported_tasks:
+            reasons.append("task_not_supported")
+
+    required_modalities = intent.get("required_modalities") or []
+    if isinstance(required_modalities, list) and required_modalities:
+        offer_modality = str(offer.get("modality", "")).strip()
+        if offer_modality not in {str(mod).strip() for mod in required_modalities}:
+            reasons.append("modality_mismatch")
+
+    min_quality = float(intent.get("min_quality_score", 0.0) or 0.0)
+    offer_quality = float(offer.get("quality_score", 0.0) or 0.0)
+    if offer_quality < min_quality:
+        reasons.append("quality_below_threshold")
+
+    return reasons
+
+
+def _offer_compatible_with_intent(
+    offer: Dict[str, Any], intent: Dict[str, Any], now_ts: int
+) -> bool:
+    if str(offer.get("status", "active")) != "active":
+        return False
+
+    expires_at = int(offer.get("expires_at", 0) or 0)
+    if expires_at > 0 and now_ts > expires_at:
+        return False
+
+    allowed_tasks = offer.get("allowed_tasks") or []
+    if isinstance(allowed_tasks, list) and allowed_tasks:
+        if str(intent.get("task_type", "")) not in {
+            str(task).strip() for task in allowed_tasks
+        }:
+            return False
+
+    required_modalities = intent.get("required_modalities") or []
+    if isinstance(required_modalities, list) and required_modalities:
+        offer_modality = str(offer.get("modality", "")).strip()
+        if offer_modality not in {str(mod).strip() for mod in required_modalities}:
+            return False
+
+    min_quality = float(intent.get("min_quality_score", 0.0) or 0.0)
+    offer_quality = float(offer.get("quality_score", 0.0) or 0.0)
+    if offer_quality < min_quality:
+        return False
+
+    return True
+
+
+def _score_offer_for_intent(offer: Dict[str, Any]) -> float:
+    score = _score_offer_breakdown(offer)
+    return float(score["total"])
+
+
+def _score_offer_breakdown(offer: Dict[str, Any]) -> Dict[str, float]:
+    quality_score = float(offer.get("quality_score", 0.5) or 0.5)
+    price_per_round = float(offer.get("price_per_round", 0.0) or 0.0)
+    affordability_score = 1.0 / (1.0 + max(0.0, price_per_round))
+    attestation_status = str(offer.get("attestation_status", "unknown")).lower()
+    trust_score = 1.0 if attestation_status == "verified" else 0.5
+
+    quality_component = 0.5 * quality_score
+    cost_component = 0.3 * affordability_score
+    trust_component = 0.2 * trust_score
+    total = quality_component + cost_component + trust_component
+    return {
+        "quality_component": round(quality_component, 6),
+        "cost_component": round(cost_component, 6),
+        "trust_component": round(trust_component, 6),
+        "total": round(total, 6),
+    }
+
+
+def _append_governance_action(
+    action_type: str,
+    actor: str,
+    payload: Dict[str, Any],
+    source: str = "marketplace",
+) -> Dict[str, Any]:
+    entry = {
+        "action_id": f"gov-{secrets.token_hex(8)}",
+        "ts": int(time.time()),
+        "action_type": action_type,
+        "actor": actor,
+        "source": source,
+        "payload": payload,
+    }
+    with marketplace_lock:
+        items = _list_marketplace_documents(GOVERNANCE_ACTION_LOG_PATH)
+        items.append(entry)
+        items = items[-500:]
+        _save_json_file(GOVERNANCE_ACTION_LOG_PATH, items)
+    return entry
+
+
+def _simulate_marketplace_selection(
+    intent: Dict[str, Any],
+    offers: List[Dict[str, Any]],
+    max_offers: int,
+    now_ts: int,
+) -> Dict[str, Any]:
+    rejection_counts: Dict[str, int] = defaultdict(int)
+    compatible_offers: List[Dict[str, Any]] = []
+    for offer in offers:
+        reasons = _collect_offer_rejection_reasons(offer, intent, now_ts)
+        if reasons:
+            for reason in reasons:
+                rejection_counts[reason] += 1
+            continue
+        compatible_offers.append(offer)
+
+    ranked_offers = sorted(
+        compatible_offers,
+        key=_score_offer_for_intent,
+        reverse=True,
+    )
+
+    budget_total = float(intent.get("budget_total", 0.0) or 0.0)
+    selected_offers: List[Dict[str, Any]] = []
+    running_cost = 0.0
+    budget_rejected = 0
+    for offer in ranked_offers:
+        if len(selected_offers) >= max_offers:
+            break
+
+        offer_cost = float(offer.get("price_per_round", 0.0) or 0.0)
+        if budget_total > 0.0 and (running_cost + offer_cost) > budget_total:
+            budget_rejected += 1
+            continue
+
+        selected_offers.append(
+            {
+                "offer_id": offer.get("offer_id"),
+                "seller_node_id": offer.get("seller_node_id"),
+                "price_per_round": offer_cost,
+                "quality_score": float(offer.get("quality_score", 0.0) or 0.0),
+                "score": round(_score_offer_for_intent(offer), 6),
+                "score_breakdown": _score_offer_breakdown(offer),
+            }
+        )
+        running_cost += offer_cost
+
+    diagnostics = {
+        "offers_evaluated": len(offers),
+        "compatible_offers": len(compatible_offers),
+        "budget_rejected": budget_rejected,
+        "rejection_reasons": dict(rejection_counts),
+        "top_ranked_offers": [
+            {
+                "offer_id": item.get("offer_id"),
+                "score_breakdown": _score_offer_breakdown(item),
+            }
+            for item in ranked_offers[:5]
+        ],
+    }
+
+    return {
+        "selected_offers": selected_offers,
+        "ranked_offers_count": len(ranked_offers),
+        "agreed_price_per_round_total": round(running_cost, 6),
+        "selection_diagnostics": diagnostics,
+        "has_match": len(selected_offers) > 0,
+    }
+
+
+def _compute_proposal_tally(votes: List[Dict[str, Any]]) -> Dict[str, Any]:
+    yes = 0.0
+    no = 0.0
+    abstain = 0.0
+    for vote in votes:
+        decision = str(vote.get("decision", "abstain")).lower()
+        weight = float(vote.get("weight", 1.0) or 1.0)
+        if decision == "yes":
+            yes += weight
+        elif decision == "no":
+            no += weight
+        else:
+            abstain += weight
+
+    total = yes + no + abstain
+    yes_ratio = (yes / total) if total > 0 else 0.0
+    return {
+        "yes": round(yes, 6),
+        "no": round(no, 6),
+        "abstain": round(abstain, 6),
+        "total_weight": round(total, 6),
+        "yes_ratio": round(yes_ratio, 6),
+    }
+
+
+def _resolve_marketplace_contract_for_round(next_round: int) -> Optional[Dict[str, Any]]:
+    round_tag = f"round-{next_round}"
+    with marketplace_lock:
+        contracts = _list_marketplace_documents(MARKETPLACE_CONTRACTS_PATH)
+        pending = [
+            item
+            for item in contracts
+            if str(item.get("payout_status", "pending")).lower() == "pending"
+            and str(item.get("escrow_status", "locked_local")).lower()
+            == "locked_local"
+        ]
+
+        if not pending:
+            return None
+
+        targeted = [
+            item for item in pending if str(item.get("round_id", "")).strip() == round_tag
+        ]
+        chosen = targeted[0] if targeted else pending[0]
+
+        chosen["execution_round"] = next_round
+        chosen["updated_at"] = int(time.time())
+        _record_contract_timeline_event(
+            chosen,
+            "bound_to_round",
+            {
+                "round": next_round,
+                "round_id": chosen.get("round_id"),
+            },
+        )
+        _save_json_file(MARKETPLACE_CONTRACTS_PATH, contracts)
+        refresh_marketplace_metrics()
+        return dict(chosen)
 
 
 def _normalize_modules(value: str) -> Set[str]:
@@ -1086,7 +1462,23 @@ def _authorized_join_admin(req: Request) -> bool:
     header_token = req.headers.get("X-Join-Admin-Token", "")
     auth = req.headers.get("Authorization", "")
     bearer = auth[7:] if auth.lower().startswith("bearer ") else ""
-    return JOIN_API_ADMIN_TOKEN in (header_token, bearer)
+    token_authorized = JOIN_API_ADMIN_TOKEN in (header_token, bearer)
+    if token_authorized:
+        return True
+
+    # Prevent header spoofing by requiring an explicit opt-in for header-only
+    # wallet authorization (safe default is disabled).
+    wallet_header_auth_enabled = (
+        str(os.getenv("ADMIN_WALLET_HEADER_AUTH_ENABLED", "false")).strip().lower()
+        in {"1", "true", "yes", "on"}
+    )
+    if not wallet_header_auth_enabled:
+        return False
+
+    wallet_address = str(req.headers.get("X-Admin-Wallet", "")).strip().lower()
+    allowlist_raw = str(os.getenv("ADMIN_WALLET_ALLOWLIST", "")).strip().lower()
+    allowlist = {item.strip() for item in allowlist_raw.split(",") if item.strip()}
+    return bool(wallet_address and wallet_address in allowlist)
 
 
 def _next_join_node_id(registrations: List[Dict[str, Any]]) -> int:
@@ -1101,6 +1493,132 @@ def _next_join_node_id(registrations: List[Dict[str, Any]]) -> int:
     while candidate in used_ids:
         candidate += 1
     return candidate
+
+
+def _mint_join_invite(
+    participant_name: str,
+    max_uses: int,
+    expires_in_hours: int,
+    source: str = "manual",
+    request_id: str = "",
+) -> Dict[str, Any]:
+    invite_code = secrets.token_urlsafe(24)
+    invite_hash = secrets.token_hex(8) + "-" + secrets.token_hex(8)
+    now = int(time.time())
+    expires_at = now + max(1, expires_in_hours) * 3600
+
+    invite = {
+        "invite_id": invite_hash,
+        "invite_code": invite_code,
+        "participant_name": participant_name,
+        "max_uses": max(1, max_uses),
+        "used": 0,
+        "created_at": now,
+        "expires_at": expires_at,
+        "revoked": False,
+        "source": source,
+    }
+    if request_id:
+        invite["request_id"] = request_id
+    return invite
+
+
+def _attestation_reputation_score(entry: Dict[str, Any]) -> float:
+    status = str(entry.get("attestation_status", "pending")).strip().lower()
+    status_weight = {
+        "verified": 1.0,
+        "pending": 0.6,
+        "unverified": 0.2,
+    }.get(status, 0.2)
+    capacity_score = max(0.0, min(10.0, float(entry.get("capacity_score", 0.0) or 0.0)))
+    capacity_norm = capacity_score / 10.0
+    proof_present = 1.0 if str(entry.get("proof_digest", "")).strip() else 0.0
+    reputation = (0.6 * status_weight) + (0.3 * capacity_norm) + (0.1 * proof_present)
+    return round(reputation, 6)
+
+
+def _build_network_expansion_snapshot() -> Dict[str, Any]:
+    now_ts = int(time.time())
+    invites = _load_json_file(JOIN_INVITES_PATH, [])
+    registrations = _load_json_file(JOIN_REGISTRATIONS_PATH, [])
+    invite_requests = _load_json_file(JOIN_INVITE_REQUESTS_PATH, [])
+    attestations = _list_marketplace_documents(COMPUTE_ATTESTATIONS_PATH)
+
+    if not isinstance(invites, list):
+        invites = []
+    if not isinstance(registrations, list):
+        registrations = []
+    if not isinstance(invite_requests, list):
+        invite_requests = []
+
+    active_registrations = [
+        item
+        for item in registrations
+        if isinstance(item, dict)
+        and str(item.get("status", "active")).strip().lower() == "active"
+    ]
+    open_invites = [
+        item
+        for item in invites
+        if isinstance(item, dict)
+        and not bool(item.get("revoked", False))
+        and int(item.get("expires_at", 0) or 0) >= now_ts
+        and int(item.get("used", 0) or 0) < int(item.get("max_uses", 1) or 1)
+    ]
+
+    verified_attestations = [
+        item
+        for item in attestations
+        if str(item.get("attestation_status", "")).strip().lower() == "verified"
+    ]
+    pending_attestations = [
+        item
+        for item in attestations
+        if str(item.get("attestation_status", "")).strip().lower() == "pending"
+    ]
+    unverified_attestations = [
+        item
+        for item in attestations
+        if str(item.get("attestation_status", "")).strip().lower()
+        not in {"verified", "pending"}
+    ]
+
+    by_compute_type: Dict[str, int] = defaultdict(int)
+    for item in attestations:
+        compute_type = str(item.get("compute_type", "unknown")).strip().lower() or "unknown"
+        item["reputation_score"] = _attestation_reputation_score(item)
+        by_compute_type[compute_type] += 1
+
+    pending_invite_requests = [
+        item
+        for item in invite_requests
+        if isinstance(item, dict)
+        and str(item.get("status", "pending")).strip().lower() == "pending"
+    ]
+
+    verified_ratio = (
+        float(len(verified_attestations)) / float(len(attestations))
+        if attestations
+        else 0.0
+    )
+
+    return {
+        "active_nodes": len(active_registrations),
+        "total_registrations": len(registrations),
+        "open_invites": len(open_invites),
+        "pending_invite_requests": len(pending_invite_requests),
+        "total_attestations": len(attestations),
+        "verified_attestations": len(verified_attestations),
+        "pending_attestations": len(pending_attestations),
+        "unverified_attestations": len(unverified_attestations),
+        "verified_ratio": round(verified_ratio, 6),
+        "compute_types": dict(by_compute_type),
+        "recent_attestations": sorted(
+            attestations,
+            key=lambda item: int(item.get("created_at", 0)),
+            reverse=True,
+        )[:8],
+    }
 
 
 def persist_round_snapshot(
@@ -1289,6 +1807,7 @@ def execute_manual_fl_round(reason: str = "manual") -> Dict[str, Any]:
 
     strategy.round_num += 1
     current_round = int(strategy.round_num)
+    marketplace_contract = _resolve_marketplace_contract_for_round(current_round)
 
     prev_acc = _latest_accuracy()
     prev_loss = _latest_loss()
@@ -1342,9 +1861,17 @@ def execute_manual_fl_round(reason: str = "manual") -> Dict[str, Any]:
 
     persist_round_snapshot(current_round, next_acc, next_loss, active_nodes)
     publish_tpm_attestation_events(active_nodes)
-    publish_tokenomics_event(
-        build_tokenomics_payload(current_round, next_acc, next_loss, active_nodes)
+    tokenomics_payload = build_tokenomics_payload(
+        current_round, next_acc, next_loss, active_nodes
     )
+    if marketplace_contract:
+        tokenomics_payload["marketplace_round_spend"] = float(
+            marketplace_contract.get("agreed_price_per_round_total", 0.0) or 0.0
+        )
+        tokenomics_payload["marketplace_offer_count"] = float(
+            marketplace_contract.get("offer_count", 0) or 0
+        )
+    publish_tokenomics_event(tokenomics_payload)
 
     # Effects decay over time so repeated training rounds recover naturally.
     simulation_effects["accuracy_penalty_pct"] = max(
@@ -1368,8 +1895,41 @@ def execute_manual_fl_round(reason: str = "manual") -> Dict[str, Any]:
             "active_nodes": active_nodes,
             "llm_policy_valid_updates": valid_updates,
             "llm_policy_rejected_updates": rejected_updates,
+            "marketplace_contract_id": (
+                marketplace_contract.get("contract_id") if marketplace_contract else None
+            ),
+            "marketplace_offer_count": (
+                int(marketplace_contract.get("offer_count", 0))
+                if marketplace_contract
+                else 0
+            ),
+            "marketplace_round_spend": (
+                float(
+                    marketplace_contract.get("agreed_price_per_round_total", 0.0)
+                    or 0.0
+                )
+                if marketplace_contract
+                else 0.0
+            ),
         },
     )
+    if marketplace_contract:
+        emit_ops_event(
+            kind="marketplace",
+            message=(
+                f"Applied marketplace contract {marketplace_contract.get('contract_id')} to round {current_round}"
+            ),
+            severity="info",
+            data={
+                "contract_id": marketplace_contract.get("contract_id"),
+                "round": current_round,
+                "offer_count": int(marketplace_contract.get("offer_count", 0) or 0),
+                "agreed_price_per_round_total": float(
+                    marketplace_contract.get("agreed_price_per_round_total", 0.0)
+                    or 0.0
+                ),
+            },
+        )
     return {
         "status": "accepted",
         "message": f"FL round executed via {reason}",
@@ -1378,6 +1938,7 @@ def execute_manual_fl_round(reason: str = "manual") -> Dict[str, Any]:
         "current_loss": round(next_loss, 4),
         "llm_policy_valid_updates": valid_updates,
         "llm_policy_rejected_updates": rejected_updates,
+        "marketplace_contract": marketplace_contract,
     }
 
 
@@ -1742,6 +2303,32 @@ def training_status():
     if end_round is not None:
         remaining_rounds = max(0, int(end_round) - current_round)
 
+    marketplace_contract = None
+    with marketplace_lock:
+        contracts = _list_marketplace_documents(MARKETPLACE_CONTRACTS_PATH)
+        pending = [
+            item
+            for item in contracts
+            if str(item.get("payout_status", "pending")).lower() == "pending"
+            and str(item.get("escrow_status", "locked_local")).lower()
+            == "locked_local"
+        ]
+        if pending:
+            pending = sorted(
+                pending,
+                key=lambda item: int(item.get("created_at", 0)),
+                reverse=True,
+            )
+            top = pending[0]
+            marketplace_contract = {
+                "contract_id": top.get("contract_id"),
+                "round_id": top.get("round_id"),
+                "offer_count": int(top.get("offer_count", 0) or 0),
+                "agreed_price_per_round_total": float(
+                    top.get("agreed_price_per_round_total", 0.0) or 0.0
+                ),
+            }
+
     return (
         jsonify(
             {
@@ -1760,6 +2347,7 @@ def training_status():
                     "bandwidth_kb": round(18.0 + (acc * 0.08), 2),
                     "compression_ratio": round(max(2.1, 4.9 - (loss * 0.5)), 2),
                 },
+                "marketplace_pending_contract": marketplace_contract,
             }
         ),
         200,
@@ -2016,6 +2604,27 @@ def metrics_summary():
     )
     mem = _read_meminfo()
     cxl_utilization = round(min(1.0, max(0.0, mem["used_percent"] / 100.0)), 4)
+    marketplace_snapshot = refresh_marketplace_metrics()
+    disputes = _list_marketplace_documents(MARKETPLACE_DISPUTES_PATH)
+    governance_actions = _list_marketplace_documents(GOVERNANCE_ACTION_LOG_PATH)
+    proposals = _list_marketplace_documents(GOVERNANCE_PROPOSALS_PATH)
+    network_expansion_snapshot = _build_network_expansion_snapshot()
+    governance_snapshot = {
+        "disputes_total": len(disputes),
+        "disputes_open": len(
+            [item for item in disputes if str(item.get("status", "")).lower() in {"open", "under_review"}]
+        ),
+        "governance_actions_total": len(governance_actions),
+        "proposals_total": len(proposals),
+        "proposals_open": len(
+            [item for item in proposals if str(item.get("status", "")).lower() == "open"]
+        ),
+        "recent_actions": sorted(
+            governance_actions,
+            key=lambda item: int(item.get("ts", 0)),
+            reverse=True,
+        )[:5],
+    }
 
     response_payload = {
         "federated_learning": {
@@ -2040,6 +2649,9 @@ def metrics_summary():
         "total_stake": total_stake,
         "cxl_utilization": cxl_utilization,
         "last_audit_accuracy": current_accuracy,
+        "marketplace": marketplace_snapshot,
+        "governance": governance_snapshot,
+        "network_expansion": network_expansion_snapshot,
     }
 
     return jsonify(response_payload)
@@ -2084,6 +2696,1180 @@ def join_policy_view():
     return jsonify(policy)
 
 
+@app.route("/marketplace/offers", methods=["POST"])
+def create_marketplace_offer():
+    """Create a local data-sharing offer for upcoming FL rounds."""
+    payload = request.get_json(silent=True) or {}
+    seller_node_id = str(payload.get("seller_node_id", "")).strip()
+    dataset_fingerprint = str(payload.get("dataset_fingerprint", "")).strip()
+
+    if not seller_node_id:
+        return _marketplace_error(
+            "seller_node_id_required",
+            "seller_node_id is required",
+            400,
+        )
+    if not dataset_fingerprint:
+        return _marketplace_error(
+            "dataset_fingerprint_required",
+            "dataset_fingerprint is required",
+            400,
+        )
+
+    try:
+        price_per_round = max(0.0, float(payload.get("price_per_round", 0.0) or 0.0))
+    except (TypeError, ValueError):
+        return _marketplace_error(
+            "invalid_price_per_round",
+            "price_per_round must be a number",
+            400,
+        )
+
+    try:
+        min_rounds = max(1, int(payload.get("min_rounds", 1) or 1))
+    except (TypeError, ValueError):
+        return _marketplace_error(
+            "invalid_min_rounds",
+            "min_rounds must be an integer",
+            400,
+        )
+
+    try:
+        sample_count = max(0, int(payload.get("sample_count", 0) or 0))
+    except (TypeError, ValueError):
+        return _marketplace_error(
+            "invalid_sample_count",
+            "sample_count must be an integer",
+            400,
+        )
+
+    try:
+        quality_score = max(0.0, min(1.0, float(payload.get("quality_score", 0.5) or 0.5)))
+    except (TypeError, ValueError):
+        return _marketplace_error(
+            "invalid_quality_score",
+            "quality_score must be numeric",
+            400,
+        )
+
+    try:
+        expires_at = int(payload.get("expires_at", 0) or 0)
+    except (TypeError, ValueError):
+        return _marketplace_error(
+            "invalid_expires_at",
+            "expires_at must be an integer",
+            400,
+        )
+
+    now_ts = int(time.time())
+    offer = {
+        "offer_id": f"offer-{secrets.token_hex(8)}",
+        "seller_node_id": seller_node_id,
+        "dataset_fingerprint": dataset_fingerprint,
+        "title": str(payload.get("title", "Untitled Offer")).strip() or "Untitled Offer",
+        "description": str(payload.get("description", "")).strip(),
+        "modality": str(payload.get("modality", "tabular")).strip() or "tabular",
+        "label_schema": str(payload.get("label_schema", "unknown")).strip() or "unknown",
+        "sample_count": sample_count,
+        "quality_score": quality_score,
+        "privacy_profile": str(payload.get("privacy_profile", "dp-ready")).strip() or "dp-ready",
+        "allowed_tasks": payload.get("allowed_tasks")
+        if isinstance(payload.get("allowed_tasks"), list)
+        else [],
+        "attestation_status": str(payload.get("attestation_status", "unknown")).strip()
+        or "unknown",
+        "price_per_round": price_per_round,
+        "min_rounds": min_rounds,
+        "expires_at": expires_at,
+        "status": _normalize_marketplace_status(payload.get("status", "active")),
+        "created_at": now_ts,
+        "updated_at": now_ts,
+    }
+
+    with marketplace_lock:
+        offers = _list_marketplace_documents(MARKETPLACE_OFFERS_PATH)
+        offers.append(offer)
+        _save_json_file(MARKETPLACE_OFFERS_PATH, offers)
+        refresh_marketplace_metrics()
+
+    marketplace_offers_total.inc()
+    ops_control_actions_total.labels(action="marketplace_offer_create").inc()
+    emit_ops_event(
+        kind="marketplace",
+        message="Marketplace offer created",
+        severity="success",
+        data={
+            "offer_id": offer["offer_id"],
+            "seller_node_id": offer["seller_node_id"],
+            "price_per_round": offer["price_per_round"],
+            "quality_score": offer["quality_score"],
+        },
+    )
+
+    return jsonify(offer), 201
+
+
+@app.route("/marketplace/offers", methods=["GET"])
+def list_marketplace_offers():
+    """List local marketplace offers with optional filtering."""
+    status_filter = str(request.args.get("status", "")).strip().lower()
+    seller_filter = str(request.args.get("seller_node_id", "")).strip()
+    limit_raw = request.args.get("limit", "100")
+
+    try:
+        limit = max(1, min(500, int(limit_raw)))
+    except (TypeError, ValueError):
+        limit = 100
+
+    offers = _list_marketplace_documents(MARKETPLACE_OFFERS_PATH)
+    if status_filter:
+        offers = [
+            offer
+            for offer in offers
+            if str(offer.get("status", "")).lower() == status_filter
+        ]
+    if seller_filter:
+        offers = [
+            offer
+            for offer in offers
+            if str(offer.get("seller_node_id", "")).strip() == seller_filter
+        ]
+
+    offers = sorted(offers, key=lambda item: int(item.get("created_at", 0)), reverse=True)
+    offers = offers[:limit]
+    return jsonify({"count": len(offers), "offers": offers})
+
+
+@app.route("/marketplace/offers/<offer_id>", methods=["PATCH"])
+def update_marketplace_offer(offer_id: str):
+    """Update mutable fields on an existing local marketplace offer."""
+    payload = request.get_json(silent=True) or {}
+    allowed_fields = {
+        "title",
+        "description",
+        "modality",
+        "label_schema",
+        "sample_count",
+        "quality_score",
+        "privacy_profile",
+        "allowed_tasks",
+        "attestation_status",
+        "price_per_round",
+        "min_rounds",
+        "expires_at",
+        "status",
+    }
+
+    with marketplace_lock:
+        offers = _list_marketplace_documents(MARKETPLACE_OFFERS_PATH)
+        target = next((item for item in offers if item.get("offer_id") == offer_id), None)
+        if target is None:
+            return _marketplace_error("offer_not_found", "offer not found", 404)
+
+        for key in allowed_fields:
+            if key not in payload:
+                continue
+            value = payload.get(key)
+            if key == "status":
+                target[key] = _normalize_marketplace_status(value)
+            elif key in {"price_per_round", "quality_score"}:
+                try:
+                    target[key] = max(0.0, float(value))
+                except (TypeError, ValueError):
+                    return _marketplace_error(
+                        f"invalid_{key}",
+                        f"{key} must be numeric",
+                        400,
+                    )
+            elif key in {"sample_count", "min_rounds", "expires_at"}:
+                try:
+                    cast_value = int(value)
+                except (TypeError, ValueError):
+                    return _marketplace_error(
+                        f"invalid_{key}",
+                        f"{key} must be an integer",
+                        400,
+                    )
+                if key in {"sample_count", "min_rounds"}:
+                    cast_value = max(0, cast_value)
+                target[key] = cast_value
+            elif key == "allowed_tasks":
+                if value is None:
+                    target[key] = []
+                elif isinstance(value, list):
+                    target[key] = [str(task).strip() for task in value if str(task).strip()]
+                else:
+                    return _marketplace_error(
+                        "invalid_allowed_tasks",
+                        "allowed_tasks must be a list",
+                        400,
+                    )
+            else:
+                target[key] = str(value).strip() if value is not None else ""
+
+        target["updated_at"] = int(time.time())
+        _save_json_file(MARKETPLACE_OFFERS_PATH, offers)
+        refresh_marketplace_metrics()
+
+    ops_control_actions_total.labels(action="marketplace_offer_update").inc()
+    emit_ops_event(
+        kind="marketplace",
+        message="Marketplace offer updated",
+        severity="info",
+        data={
+            "offer_id": offer_id,
+            "status": target.get("status"),
+            "updated_at": target.get("updated_at"),
+        },
+    )
+
+    return jsonify(target)
+
+
+@app.route("/marketplace/round_intents", methods=["POST"])
+def create_marketplace_round_intent():
+    """Create a round demand signal for matching local data offers."""
+    payload = request.get_json(silent=True) or {}
+    model_owner_id = str(payload.get("model_owner_id", "")).strip()
+    task_type = str(payload.get("task_type", "")).strip()
+
+    if not model_owner_id:
+        return _marketplace_error(
+            "model_owner_id_required",
+            "model_owner_id is required",
+            400,
+        )
+    if not task_type:
+        return _marketplace_error("task_type_required", "task_type is required", 400)
+
+    try:
+        budget_total = max(0.0, float(payload.get("budget_total", 0.0) or 0.0))
+    except (TypeError, ValueError):
+        return _marketplace_error(
+            "invalid_budget_total",
+            "budget_total must be a number",
+            400,
+        )
+
+    try:
+        min_quality_score = max(
+            0.0,
+            min(1.0, float(payload.get("min_quality_score", 0.0) or 0.0)),
+        )
+    except (TypeError, ValueError):
+        return _marketplace_error(
+            "invalid_min_quality_score",
+            "min_quality_score must be numeric",
+            400,
+        )
+
+    required_modalities = payload.get("required_modalities")
+    if required_modalities is None:
+        required_modalities = []
+    if not isinstance(required_modalities, list):
+        return _marketplace_error(
+            "invalid_required_modalities",
+            "required_modalities must be a list",
+            400,
+        )
+
+    now_ts = int(time.time())
+    try:
+        deadline_ts = int(payload.get("deadline_ts", now_ts + 3600) or (now_ts + 3600))
+    except (TypeError, ValueError):
+        return _marketplace_error(
+            "invalid_deadline_ts",
+            "deadline_ts must be an integer",
+            400,
+        )
+
+    intent = {
+        "round_intent_id": f"intent-{secrets.token_hex(8)}",
+        "round_id": str(payload.get("round_id", "")).strip()
+        or f"round-{now_ts}",
+        "model_owner_id": model_owner_id,
+        "task_type": task_type,
+        "required_modalities": [
+            str(mod).strip() for mod in required_modalities if str(mod).strip()
+        ],
+        "min_quality_score": min_quality_score,
+        "budget_total": budget_total,
+        "deadline_ts": deadline_ts,
+        "status": "open",
+        "created_at": now_ts,
+    }
+
+    with marketplace_lock:
+        intents = _list_marketplace_documents(MARKETPLACE_ROUND_INTENTS_PATH)
+        intents.append(intent)
+        _save_json_file(MARKETPLACE_ROUND_INTENTS_PATH, intents)
+        refresh_marketplace_metrics()
+
+    ops_control_actions_total.labels(action="marketplace_intent_create").inc()
+    emit_ops_event(
+        kind="marketplace",
+        message="Marketplace round intent created",
+        severity="success",
+        data={
+            "round_intent_id": intent["round_intent_id"],
+            "round_id": intent["round_id"],
+            "task_type": intent["task_type"],
+            "budget_total": intent["budget_total"],
+        },
+    )
+
+    return jsonify(intent), 201
+
+
+@app.route("/marketplace/round_intents", methods=["GET"])
+def list_marketplace_round_intents():
+    """List local round intents with optional status and owner filters."""
+    status_filter = str(request.args.get("status", "")).strip().lower()
+    owner_filter = str(request.args.get("model_owner_id", "")).strip()
+    limit_raw = request.args.get("limit", "100")
+
+    try:
+        limit = max(1, min(500, int(limit_raw)))
+    except (TypeError, ValueError):
+        limit = 100
+
+    intents = _list_marketplace_documents(MARKETPLACE_ROUND_INTENTS_PATH)
+    if status_filter:
+        intents = [
+            item
+            for item in intents
+            if str(item.get("status", "")).strip().lower() == status_filter
+        ]
+    if owner_filter:
+        intents = [
+            item
+            for item in intents
+            if str(item.get("model_owner_id", "")).strip() == owner_filter
+        ]
+
+    intents = sorted(
+        intents,
+        key=lambda item: int(item.get("created_at", 0)),
+        reverse=True,
+    )
+    intents = intents[:limit]
+    return jsonify({"count": len(intents), "round_intents": intents})
+
+
+@app.route("/marketplace/round_intents/<round_intent_id>", methods=["PATCH"])
+def update_marketplace_round_intent(round_intent_id: str):
+    """Update mutable fields on an existing round intent."""
+    payload = request.get_json(silent=True) or {}
+    allowed_status = {"open", "matched", "cancelled", "closed"}
+    allowed_transitions = {
+        "open": {"open", "matched", "cancelled", "closed"},
+        "matched": {"matched", "closed"},
+        "cancelled": {"cancelled"},
+        "closed": {"closed"},
+    }
+
+    with marketplace_lock:
+        intents = _list_marketplace_documents(MARKETPLACE_ROUND_INTENTS_PATH)
+        target = next(
+            (item for item in intents if item.get("round_intent_id") == round_intent_id),
+            None,
+        )
+        if target is None:
+            return _marketplace_error(
+                "round_intent_not_found",
+                "round intent not found",
+                404,
+            )
+
+        if "status" in payload:
+            current_status = str(target.get("status", "open")).strip().lower()
+            next_status = str(payload.get("status", "")).strip().lower()
+            if next_status not in allowed_status:
+                return _marketplace_error(
+                    "invalid_status",
+                    "status must be one of open, matched, cancelled, closed",
+                    400,
+                )
+            if next_status not in allowed_transitions.get(current_status, {current_status}):
+                return _marketplace_error(
+                    "invalid_status_transition",
+                    f"cannot transition intent from {current_status} to {next_status}",
+                    409,
+                    {
+                        "current_status": current_status,
+                        "next_status": next_status,
+                    },
+                )
+            target["status"] = next_status
+
+        if "budget_total" in payload:
+            try:
+                target["budget_total"] = max(0.0, float(payload.get("budget_total") or 0.0))
+            except (TypeError, ValueError):
+                return _marketplace_error(
+                    "invalid_budget_total",
+                    "budget_total must be numeric",
+                    400,
+                )
+
+        if "min_quality_score" in payload:
+            try:
+                target["min_quality_score"] = max(
+                    0.0,
+                    min(1.0, float(payload.get("min_quality_score") or 0.0)),
+                )
+            except (TypeError, ValueError):
+                return _marketplace_error(
+                    "invalid_min_quality_score",
+                    "min_quality_score must be numeric",
+                    400,
+                )
+
+        if "deadline_ts" in payload:
+            try:
+                target["deadline_ts"] = int(payload.get("deadline_ts") or 0)
+            except (TypeError, ValueError):
+                return _marketplace_error(
+                    "invalid_deadline_ts",
+                    "deadline_ts must be an integer",
+                    400,
+                )
+
+        target["updated_at"] = int(time.time())
+        _save_json_file(MARKETPLACE_ROUND_INTENTS_PATH, intents)
+        refresh_marketplace_metrics()
+
+    ops_control_actions_total.labels(action="marketplace_intent_update").inc()
+    emit_ops_event(
+        kind="marketplace",
+        message="Marketplace round intent updated",
+        severity="info",
+        data={
+            "round_intent_id": round_intent_id,
+            "status": target.get("status"),
+            "updated_at": target.get("updated_at"),
+        },
+    )
+    return jsonify(target)
+
+
+@app.route("/marketplace/match", methods=["POST"])
+def create_marketplace_match_contract():
+    """Create a local match contract by selecting compatible offers for an intent."""
+    payload = request.get_json(silent=True) or {}
+    round_intent_id = str(payload.get("round_intent_id", "")).strip()
+    if not round_intent_id:
+        return _marketplace_error(
+            "round_intent_id_required",
+            "round_intent_id is required",
+            400,
+        )
+
+    try:
+        max_offers = max(1, min(25, int(payload.get("max_offers", 3) or 3)))
+    except (TypeError, ValueError):
+        return _marketplace_error(
+            "invalid_max_offers",
+            "max_offers must be an integer",
+            400,
+        )
+
+    match_start = time.time()
+    now_ts = int(match_start)
+    with marketplace_lock:
+        intents = _list_marketplace_documents(MARKETPLACE_ROUND_INTENTS_PATH)
+        offers = _list_marketplace_documents(MARKETPLACE_OFFERS_PATH)
+        contracts = _list_marketplace_documents(MARKETPLACE_CONTRACTS_PATH)
+
+        intent = next(
+            (item for item in intents if item.get("round_intent_id") == round_intent_id),
+            None,
+        )
+        if intent is None:
+            return _marketplace_error(
+                "round_intent_not_found",
+                "round intent not found",
+                404,
+            )
+        if str(intent.get("status", "open")) != "open":
+            return _marketplace_error(
+                "round_intent_not_open",
+                "round intent must be open before matching",
+                409,
+                {"status": intent.get("status")},
+            )
+
+        simulation = _simulate_marketplace_selection(intent, offers, max_offers, now_ts)
+        selected_offers = simulation["selected_offers"]
+        running_cost = float(simulation["agreed_price_per_round_total"])
+
+        if not selected_offers:
+            return _marketplace_error(
+                "no_compatible_offers_found",
+                "no offers satisfied policy, quality, modality, and budget constraints",
+                422,
+                simulation["selection_diagnostics"],
+            )
+
+        contract = {
+            "contract_id": f"contract-{secrets.token_hex(8)}",
+            "round_intent_id": round_intent_id,
+            "round_id": intent.get("round_id"),
+            "model_owner_id": intent.get("model_owner_id"),
+            "selected_offers": selected_offers,
+            "offer_count": len(selected_offers),
+            "agreed_price_per_round_total": round(running_cost, 6),
+            "escrow_status": "locked_local",
+            "payout_status": "pending",
+            "proof_requirements": {
+                "require_attestation": True,
+                "require_round_completion": True,
+            },
+            "selection_diagnostics": {
+                **simulation["selection_diagnostics"],
+            },
+            "created_at": now_ts,
+            "updated_at": now_ts,
+        }
+        _record_contract_timeline_event(
+            contract,
+            "contract_created",
+            {
+                "round_intent_id": round_intent_id,
+                "offer_count": len(selected_offers),
+                "agreed_price_per_round_total": round(running_cost, 6),
+            },
+        )
+
+        intent["status"] = "matched"
+        intent["updated_at"] = now_ts
+        contracts.append(contract)
+        _save_json_file(MARKETPLACE_ROUND_INTENTS_PATH, intents)
+        _save_json_file(MARKETPLACE_CONTRACTS_PATH, contracts)
+        snapshot = refresh_marketplace_metrics()
+
+    marketplace_matches_total.inc()
+    marketplace_match_latency_seconds.observe(max(0.0, time.time() - match_start))
+    ops_control_actions_total.labels(action="marketplace_match_create").inc()
+    emit_ops_event(
+        kind="marketplace",
+        message="Marketplace match contract created",
+        severity="success",
+        data={
+            "contract_id": contract["contract_id"],
+            "round_intent_id": round_intent_id,
+            "offer_count": contract["offer_count"],
+            "agreed_price_per_round_total": contract["agreed_price_per_round_total"],
+            "locked_escrow_total": snapshot.get("locked_escrow_total", 0.0),
+        },
+    )
+
+    return jsonify(contract), 201
+
+
+@app.route("/marketplace/escrow/release", methods=["POST"])
+def release_marketplace_escrow():
+    """Release local escrow for a matched contract after round completion."""
+    payload = request.get_json(silent=True) or {}
+    contract_id = str(payload.get("contract_id", "")).strip()
+    if not contract_id:
+        return _marketplace_error(
+            "contract_id_required",
+            "contract_id is required",
+            400,
+        )
+
+    with marketplace_lock:
+        contracts = _list_marketplace_documents(MARKETPLACE_CONTRACTS_PATH)
+        contract = next(
+            (item for item in contracts if item.get("contract_id") == contract_id), None
+        )
+        if contract is None:
+            return _marketplace_error("contract_not_found", "contract not found", 404)
+
+        already_released = str(contract.get("payout_status", "")).lower() == "released"
+        if already_released:
+            return _marketplace_error(
+                "contract_already_released",
+                "contract escrow already released",
+                409,
+                {
+                    "contract_id": contract_id,
+                    "payout_status": contract.get("payout_status"),
+                },
+            )
+
+        contract["escrow_status"] = "released_local"
+        contract["payout_status"] = "released"
+        contract["released_at"] = int(time.time())
+        contract["updated_at"] = int(time.time())
+        _record_contract_timeline_event(
+            contract,
+            "escrow_released",
+            {
+                "payout_amount": float(
+                    contract.get("agreed_price_per_round_total", 0.0) or 0.0
+                )
+            },
+        )
+        _save_json_file(MARKETPLACE_CONTRACTS_PATH, contracts)
+        snapshot = refresh_marketplace_metrics()
+
+    payout_amount = float(contract.get("agreed_price_per_round_total", 0.0) or 0.0)
+    if payout_amount > 0.0:
+        marketplace_payout_total.inc(payout_amount)
+    ops_control_actions_total.labels(action="marketplace_escrow_release").inc()
+    emit_ops_event(
+        kind="marketplace",
+        message="Marketplace escrow released",
+        severity="success",
+        data={
+            "contract_id": contract_id,
+            "payout_amount": payout_amount,
+            "locked_escrow_total": snapshot.get("locked_escrow_total", 0.0),
+            "released_payout_total": snapshot.get("released_payout_total", 0.0),
+        },
+    )
+
+    return jsonify(contract)
+
+
+@app.route("/marketplace/contracts", methods=["GET"])
+def list_marketplace_contracts():
+    """List local marketplace contracts with optional intent and status filters."""
+    intent_filter = str(request.args.get("round_intent_id", "")).strip()
+    status_filter = str(request.args.get("payout_status", "")).strip().lower()
+
+    contracts = _list_marketplace_documents(MARKETPLACE_CONTRACTS_PATH)
+    if intent_filter:
+        contracts = [
+            contract
+            for contract in contracts
+            if str(contract.get("round_intent_id", "")) == intent_filter
+        ]
+    if status_filter:
+        contracts = [
+            contract
+            for contract in contracts
+            if str(contract.get("payout_status", "")).lower() == status_filter
+        ]
+
+    contracts = sorted(
+        contracts,
+        key=lambda item: int(item.get("created_at", 0)),
+        reverse=True,
+    )
+    return jsonify({"count": len(contracts), "contracts": contracts})
+
+
+@app.route("/marketplace/disputes", methods=["POST"])
+def create_marketplace_dispute():
+    """Create a dispute record for a contract and track it in governance actions."""
+    payload = request.get_json(silent=True) or {}
+    contract_id = str(payload.get("contract_id", "")).strip()
+    reason = str(payload.get("reason", "")).strip()
+    reporter = str(payload.get("reporter", "community")).strip() or "community"
+
+    if not contract_id:
+        return _marketplace_error(
+            "contract_id_required",
+            "contract_id is required",
+            400,
+        )
+    if not reason:
+        return _marketplace_error(
+            "dispute_reason_required",
+            "reason is required",
+            400,
+        )
+
+    now_ts = int(time.time())
+    with marketplace_lock:
+        contracts = _list_marketplace_documents(MARKETPLACE_CONTRACTS_PATH)
+        contract = next(
+            (item for item in contracts if item.get("contract_id") == contract_id), None
+        )
+        if contract is None:
+            return _marketplace_error("contract_not_found", "contract not found", 404)
+
+        disputes = _list_marketplace_documents(MARKETPLACE_DISPUTES_PATH)
+        dispute = {
+            "dispute_id": f"dispute-{secrets.token_hex(8)}",
+            "contract_id": contract_id,
+            "round_intent_id": contract.get("round_intent_id"),
+            "reporter": reporter,
+            "reason": reason,
+            "evidence": payload.get("evidence") if isinstance(payload.get("evidence"), dict) else {},
+            "status": "open",
+            "created_at": now_ts,
+            "updated_at": now_ts,
+            "resolution": None,
+        }
+        disputes.append(dispute)
+        disputes = disputes[-500:]
+        _save_json_file(MARKETPLACE_DISPUTES_PATH, disputes)
+
+    governance_entry = _append_governance_action(
+        action_type="marketplace_dispute_created",
+        actor=reporter,
+        payload={
+            "dispute_id": dispute["dispute_id"],
+            "contract_id": contract_id,
+            "reason": reason,
+        },
+        source="dispute",
+    )
+
+    ops_control_actions_total.labels(action="marketplace_dispute_create").inc()
+    emit_ops_event(
+        kind="marketplace",
+        message="Marketplace dispute created",
+        severity="warning",
+        data={
+            "dispute_id": dispute["dispute_id"],
+            "contract_id": contract_id,
+            "reason": reason,
+            "governance_action_id": governance_entry["action_id"],
+        },
+    )
+    return jsonify(dispute), 201
+
+
+@app.route("/marketplace/disputes", methods=["GET"])
+def list_marketplace_disputes():
+    """List local disputes with optional status filter."""
+    status_filter = str(request.args.get("status", "")).strip().lower()
+    limit_raw = request.args.get("limit", "100")
+    try:
+        limit = max(1, min(500, int(limit_raw)))
+    except (TypeError, ValueError):
+        limit = 100
+
+    disputes = _list_marketplace_documents(MARKETPLACE_DISPUTES_PATH)
+    if status_filter:
+        disputes = [
+            item for item in disputes if str(item.get("status", "")).strip().lower() == status_filter
+        ]
+    disputes = sorted(disputes, key=lambda item: int(item.get("created_at", 0)), reverse=True)
+    disputes = disputes[:limit]
+    return jsonify({"count": len(disputes), "disputes": disputes})
+
+
+@app.route("/marketplace/disputes/<dispute_id>", methods=["PATCH"])
+def update_marketplace_dispute(dispute_id: str):
+    """Update dispute status and resolution details."""
+    payload = request.get_json(silent=True) or {}
+    next_status = str(payload.get("status", "")).strip().lower()
+    actor = str(payload.get("actor", "moderator")).strip() or "moderator"
+    allowed_status = {"open", "under_review", "resolved", "rejected"}
+    if next_status not in allowed_status:
+        return _marketplace_error(
+            "invalid_dispute_status",
+            "status must be one of open, under_review, resolved, rejected",
+            400,
+        )
+
+    with marketplace_lock:
+        disputes = _list_marketplace_documents(MARKETPLACE_DISPUTES_PATH)
+        dispute = next((item for item in disputes if item.get("dispute_id") == dispute_id), None)
+        if dispute is None:
+            return _marketplace_error("dispute_not_found", "dispute not found", 404)
+
+        dispute["status"] = next_status
+        dispute["updated_at"] = int(time.time())
+        if "resolution" in payload:
+            dispute["resolution"] = str(payload.get("resolution") or "").strip() or None
+        _save_json_file(MARKETPLACE_DISPUTES_PATH, disputes)
+
+    governance_entry = _append_governance_action(
+        action_type="marketplace_dispute_updated",
+        actor=actor,
+        payload={
+            "dispute_id": dispute_id,
+            "status": next_status,
+            "resolution": dispute.get("resolution"),
+        },
+        source="dispute",
+    )
+    ops_control_actions_total.labels(action="marketplace_dispute_update").inc()
+    emit_ops_event(
+        kind="marketplace",
+        message="Marketplace dispute updated",
+        severity="info",
+        data={
+            "dispute_id": dispute_id,
+            "status": next_status,
+            "governance_action_id": governance_entry["action_id"],
+        },
+    )
+    return jsonify(dispute)
+
+
+@app.route("/governance/actions", methods=["POST"])
+def create_governance_action():
+    """Create governance action log entries for proposals, reviews, and votes."""
+    payload = request.get_json(silent=True) or {}
+    action_type = str(payload.get("action_type", "")).strip()
+    actor = str(payload.get("actor", "community")).strip() or "community"
+    source = str(payload.get("source", "manual")).strip() or "manual"
+
+    if not action_type:
+        return _marketplace_error(
+            "action_type_required",
+            "action_type is required",
+            400,
+        )
+
+    action = _append_governance_action(
+        action_type=action_type,
+        actor=actor,
+        payload=payload.get("payload") if isinstance(payload.get("payload"), dict) else {},
+        source=source,
+    )
+    ops_control_actions_total.labels(action="governance_action_create").inc()
+    emit_ops_event(
+        kind="governance",
+        message="Governance action recorded",
+        severity="info",
+        data={
+            "action_id": action["action_id"],
+            "action_type": action["action_type"],
+            "actor": action["actor"],
+        },
+    )
+    return jsonify(action), 201
+
+
+@app.route("/governance/actions", methods=["GET"])
+def list_governance_actions():
+    """List governance actions with optional action_type filter."""
+    action_type_filter = str(request.args.get("action_type", "")).strip().lower()
+    limit_raw = request.args.get("limit", "100")
+    try:
+        limit = max(1, min(500, int(limit_raw)))
+    except (TypeError, ValueError):
+        limit = 100
+
+    items = _list_marketplace_documents(GOVERNANCE_ACTION_LOG_PATH)
+    if action_type_filter:
+        items = [
+            item for item in items if str(item.get("action_type", "")).strip().lower() == action_type_filter
+        ]
+    items = sorted(items, key=lambda item: int(item.get("ts", 0)), reverse=True)
+    items = items[:limit]
+    return jsonify({"count": len(items), "actions": items})
+
+
+@app.route("/marketplace/policy/preview", methods=["POST"])
+def preview_marketplace_policy():
+    """Simulate marketplace matching with policy overrides, without persisting contracts."""
+    payload = request.get_json(silent=True) or {}
+    round_intent_id = str(payload.get("round_intent_id", "")).strip()
+    max_offers = payload.get("max_offers", 3)
+    try:
+        max_offers = max(1, min(25, int(max_offers)))
+    except (TypeError, ValueError):
+        return _marketplace_error(
+            "invalid_max_offers",
+            "max_offers must be an integer",
+            400,
+        )
+
+    now_ts = int(time.time())
+    with marketplace_lock:
+        intents = _list_marketplace_documents(MARKETPLACE_ROUND_INTENTS_PATH)
+        offers = _list_marketplace_documents(MARKETPLACE_OFFERS_PATH)
+
+    intent = None
+    if round_intent_id:
+        intent = next(
+            (item for item in intents if item.get("round_intent_id") == round_intent_id),
+            None,
+        )
+        if intent is None:
+            return _marketplace_error(
+                "round_intent_not_found",
+                "round intent not found",
+                404,
+            )
+    else:
+        intent = payload.get("intent") if isinstance(payload.get("intent"), dict) else None
+
+    if not isinstance(intent, dict):
+        return _marketplace_error(
+            "intent_required",
+            "provide round_intent_id or intent object",
+            400,
+        )
+
+    preview_intent = dict(intent)
+    overrides = payload.get("policy_overrides") if isinstance(payload.get("policy_overrides"), dict) else {}
+    if "budget_total" in overrides:
+        try:
+            preview_intent["budget_total"] = max(0.0, float(overrides.get("budget_total") or 0.0))
+        except (TypeError, ValueError):
+            return _marketplace_error("invalid_budget_total", "budget_total must be numeric", 400)
+    if "min_quality_score" in overrides:
+        try:
+            preview_intent["min_quality_score"] = max(
+                0.0,
+                min(1.0, float(overrides.get("min_quality_score") or 0.0)),
+            )
+        except (TypeError, ValueError):
+            return _marketplace_error(
+                "invalid_min_quality_score",
+                "min_quality_score must be numeric",
+                400,
+            )
+    if "required_modalities" in overrides:
+        value = overrides.get("required_modalities")
+        if not isinstance(value, list):
+            return _marketplace_error(
+                "invalid_required_modalities",
+                "required_modalities must be a list",
+                400,
+            )
+        preview_intent["required_modalities"] = [
+            str(item).strip() for item in value if str(item).strip()
+        ]
+
+    simulation = _simulate_marketplace_selection(preview_intent, offers, max_offers, now_ts)
+    ops_control_actions_total.labels(action="marketplace_policy_preview").inc()
+    emit_ops_event(
+        kind="marketplace",
+        message="Marketplace policy preview executed",
+        severity="info",
+        data={
+            "round_intent_id": round_intent_id or "inline-intent",
+            "has_match": simulation["has_match"],
+            "selected_offers": len(simulation["selected_offers"]),
+        },
+    )
+    return jsonify(
+        {
+            "preview": simulation,
+            "intent": preview_intent,
+            "overrides": overrides,
+            "preview_ts": now_ts,
+        }
+    )
+
+
+@app.route("/governance/proposals", methods=["POST"])
+def create_governance_proposal():
+    """Create a governance proposal and open it for votes."""
+    payload = request.get_json(silent=True) or {}
+    title = str(payload.get("title", "")).strip()
+    proposal_type = str(payload.get("proposal_type", "")).strip()
+    created_by = str(payload.get("created_by", "community")).strip() or "community"
+    description = str(payload.get("description", "")).strip()
+
+    if not title:
+        return _marketplace_error("proposal_title_required", "title is required", 400)
+    if not proposal_type:
+        return _marketplace_error(
+            "proposal_type_required",
+            "proposal_type is required",
+            400,
+        )
+
+    now_ts = int(time.time())
+    proposal = {
+        "proposal_id": f"proposal-{secrets.token_hex(8)}",
+        "title": title,
+        "description": description,
+        "proposal_type": proposal_type,
+        "created_by": created_by,
+        "status": "open",
+        "created_at": now_ts,
+        "updated_at": now_ts,
+        "votes": [],
+        "tally": _compute_proposal_tally([]),
+        "close_threshold_yes_ratio": float(payload.get("close_threshold_yes_ratio", 0.67) or 0.67),
+    }
+    with marketplace_lock:
+        proposals = _list_marketplace_documents(GOVERNANCE_PROPOSALS_PATH)
+        proposals.append(proposal)
+        proposals = proposals[-500:]
+        _save_json_file(GOVERNANCE_PROPOSALS_PATH, proposals)
+
+    _append_governance_action(
+        action_type="governance_proposal_created",
+        actor=created_by,
+        payload={
+            "proposal_id": proposal["proposal_id"],
+            "proposal_type": proposal_type,
+        },
+        source="proposal",
+    )
+    ops_control_actions_total.labels(action="governance_proposal_create").inc()
+    emit_ops_event(
+        kind="governance",
+        message="Governance proposal created",
+        severity="info",
+        data={"proposal_id": proposal["proposal_id"], "proposal_type": proposal_type},
+    )
+    return jsonify(proposal), 201
+
+
+@app.route("/governance/proposals", methods=["GET"])
+def list_governance_proposals():
+    """List governance proposals with optional status and type filters."""
+    status_filter = str(request.args.get("status", "")).strip().lower()
+    type_filter = str(request.args.get("proposal_type", "")).strip().lower()
+    limit_raw = request.args.get("limit", "100")
+    try:
+        limit = max(1, min(500, int(limit_raw)))
+    except (TypeError, ValueError):
+        limit = 100
+
+    proposals = _list_marketplace_documents(GOVERNANCE_PROPOSALS_PATH)
+    if status_filter:
+        proposals = [
+            item for item in proposals if str(item.get("status", "")).strip().lower() == status_filter
+        ]
+    if type_filter:
+        proposals = [
+            item for item in proposals if str(item.get("proposal_type", "")).strip().lower() == type_filter
+        ]
+    proposals = sorted(proposals, key=lambda item: int(item.get("created_at", 0)), reverse=True)
+    proposals = proposals[:limit]
+    return jsonify({"count": len(proposals), "proposals": proposals})
+
+
+@app.route("/governance/proposals/<proposal_id>", methods=["GET"])
+def get_governance_proposal(proposal_id: str):
+    """Fetch one governance proposal including votes and tally."""
+    proposals = _list_marketplace_documents(GOVERNANCE_PROPOSALS_PATH)
+    proposal = next((item for item in proposals if item.get("proposal_id") == proposal_id), None)
+    if proposal is None:
+        return _marketplace_error("proposal_not_found", "proposal not found", 404)
+    return jsonify(proposal)
+
+
+@app.route("/governance/proposals/<proposal_id>", methods=["PATCH"])
+def update_governance_proposal(proposal_id: str):
+    """Update proposal status for moderation and workflow controls."""
+    payload = request.get_json(silent=True) or {}
+    actor = str(payload.get("actor", "moderator")).strip() or "moderator"
+    next_status = str(payload.get("status", "")).strip().lower()
+    allowed_status = {"draft", "open", "closed", "approved", "rejected"}
+    if next_status not in allowed_status:
+        return _marketplace_error(
+            "invalid_proposal_status",
+            "status must be one of draft, open, closed, approved, rejected",
+            400,
+        )
+
+    with marketplace_lock:
+        proposals = _list_marketplace_documents(GOVERNANCE_PROPOSALS_PATH)
+        proposal = next((item for item in proposals if item.get("proposal_id") == proposal_id), None)
+        if proposal is None:
+            return _marketplace_error("proposal_not_found", "proposal not found", 404)
+        proposal["status"] = next_status
+        proposal["updated_at"] = int(time.time())
+        _save_json_file(GOVERNANCE_PROPOSALS_PATH, proposals)
+
+    _append_governance_action(
+        action_type="governance_proposal_updated",
+        actor=actor,
+        payload={"proposal_id": proposal_id, "status": next_status},
+        source="proposal",
+    )
+    ops_control_actions_total.labels(action="governance_proposal_update").inc()
+    emit_ops_event(
+        kind="governance",
+        message="Governance proposal updated",
+        severity="info",
+        data={"proposal_id": proposal_id, "status": next_status},
+    )
+    return jsonify(proposal)
+
+
+@app.route("/governance/proposals/<proposal_id>/vote", methods=["POST"])
+def vote_governance_proposal(proposal_id: str):
+    """Cast or update a vote on an open proposal."""
+    payload = request.get_json(silent=True) or {}
+    voter = str(payload.get("voter", "")).strip()
+    decision = str(payload.get("decision", "")).strip().lower()
+    reason = str(payload.get("reason", "")).strip()
+    allowed_decisions = {"yes", "no", "abstain"}
+
+    if not voter:
+        return _marketplace_error("voter_required", "voter is required", 400)
+    if decision not in allowed_decisions:
+        return _marketplace_error(
+            "invalid_vote_decision",
+            "decision must be yes, no, or abstain",
+            400,
+        )
+
+    try:
+        weight = max(0.0, float(payload.get("weight", 1.0) or 1.0))
+    except (TypeError, ValueError):
+        return _marketplace_error("invalid_vote_weight", "weight must be numeric", 400)
+
+    with marketplace_lock:
+        proposals = _list_marketplace_documents(GOVERNANCE_PROPOSALS_PATH)
+        proposal = next((item for item in proposals if item.get("proposal_id") == proposal_id), None)
+        if proposal is None:
+            return _marketplace_error("proposal_not_found", "proposal not found", 404)
+        if str(proposal.get("status", "open")).lower() != "open":
+            return _marketplace_error(
+                "proposal_not_open",
+                "votes can only be cast on open proposals",
+                409,
+                {"status": proposal.get("status")},
+            )
+
+        votes = proposal.get("votes") if isinstance(proposal.get("votes"), list) else []
+        existing = next((item for item in votes if str(item.get("voter", "")) == voter), None)
+        now_ts = int(time.time())
+        if existing is None:
+            votes.append(
+                {
+                    "voter": voter,
+                    "decision": decision,
+                    "weight": weight,
+                    "reason": reason,
+                    "ts": now_ts,
+                }
+            )
+        else:
+            existing["decision"] = decision
+            existing["weight"] = weight
+            existing["reason"] = reason
+            existing["ts"] = now_ts
+
+        proposal["votes"] = votes
+        proposal["tally"] = _compute_proposal_tally(votes)
+        threshold = float(proposal.get("close_threshold_yes_ratio", 0.67) or 0.67)
+        if proposal["tally"]["total_weight"] > 0 and proposal["tally"]["yes_ratio"] >= threshold:
+            proposal["status"] = "approved"
+        proposal["updated_at"] = now_ts
+        _save_json_file(GOVERNANCE_PROPOSALS_PATH, proposals)
+
+    _append_governance_action(
+        action_type="governance_vote_cast",
+        actor=voter,
+        payload={
+            "proposal_id": proposal_id,
+            "decision": decision,
+            "weight": weight,
+            "status": proposal.get("status"),
+        },
+        source="vote",
+    )
+    ops_control_actions_total.labels(action="governance_vote_cast").inc()
+    emit_ops_event(
+        kind="governance",
+        message="Governance vote cast",
+        severity="info",
+        data={"proposal_id": proposal_id, "decision": decision, "voter": voter},
+    )
+    return jsonify(proposal)
+
+
 @app.route("/join/invite", methods=["POST"])
 def create_join_invite():
     """Admin-only endpoint that mints short-lived invite codes."""
@@ -2094,39 +3880,568 @@ def create_join_invite():
     participant_name = (
         str(payload.get("participant_name", "participant")).strip() or "participant"
     )
-    max_uses = int(payload.get("max_uses", 1))
-    expires_in_hours = int(payload.get("expires_in_hours", 24))
+    try:
+        max_uses = int(payload.get("max_uses", 1))
+        expires_in_hours = int(payload.get("expires_in_hours", 24))
+    except (TypeError, ValueError):
+        return _marketplace_error(
+            "invalid_invite_limits",
+            "max_uses and expires_in_hours must be integers",
+            400,
+        )
+    request_id = str(payload.get("request_id", "")).strip()
 
-    invite_code = secrets.token_urlsafe(24)
-    invite_hash = secrets.token_hex(8) + "-" + secrets.token_hex(8)
-    now = int(time.time())
-    expires_at = now + max(1, expires_in_hours) * 3600
+    invite = _mint_join_invite(
+        participant_name=participant_name,
+        max_uses=max_uses,
+        expires_in_hours=expires_in_hours,
+        source="admin",
+        request_id=request_id,
+    )
 
     with join_lock:
         invites = _load_json_file(JOIN_INVITES_PATH, [])
-        invites.append(
-            {
-                "invite_id": invite_hash,
-                "invite_code": invite_code,
-                "participant_name": participant_name,
-                "max_uses": max(1, max_uses),
-                "used": 0,
-                "created_at": now,
-                "expires_at": expires_at,
-                "revoked": False,
-            }
-        )
+        invites.append(invite)
         _save_json_file(JOIN_INVITES_PATH, invites)
+
+        if request_id:
+            requests = _load_json_file(JOIN_INVITE_REQUESTS_PATH, [])
+            for item in requests:
+                if str(item.get("request_id", "")) == request_id:
+                    item["status"] = "approved"
+                    item["approved_at"] = int(time.time())
+                    item["invite_id"] = invite["invite_id"]
+            _save_json_file(JOIN_INVITE_REQUESTS_PATH, requests)
 
     return jsonify(
         {
-            "invite_code": invite_code,
-            "invite_id": invite_hash,
+            "invite_code": invite["invite_code"],
+            "invite_id": invite["invite_id"],
             "participant_name": participant_name,
-            "expires_at": expires_at,
+            "expires_at": invite["expires_at"],
             "max_uses": max(1, max_uses),
         }
     )
+
+
+@app.route("/join/request_invite", methods=["POST"])
+def request_join_invite():
+    """Public endpoint to request an invite for joining the network."""
+    payload = request.get_json(silent=True) or {}
+    participant_name = str(payload.get("participant_name", "")).strip()
+    contact_email = str(payload.get("contact_email", "")).strip().lower()
+    compute_type = str(payload.get("compute_type", "")).strip().lower()
+    region = str(payload.get("region", "")).strip()
+    preferred_language = str(payload.get("preferred_language", "en")).strip().lower()
+    motivation = str(payload.get("motivation", "")).strip()
+
+    if not participant_name:
+        return _marketplace_error(
+            "participant_name_required",
+            "participant_name is required",
+            400,
+        )
+    if not contact_email or "@" not in contact_email:
+        return _marketplace_error(
+            "valid_contact_email_required",
+            "a valid contact_email is required",
+            400,
+        )
+    if not compute_type:
+        return _marketplace_error(
+            "compute_type_required",
+            "compute_type is required",
+            400,
+        )
+
+    request_entry = {
+        "request_id": f"join-req-{secrets.token_hex(8)}",
+        "participant_name": participant_name,
+        "contact_email": contact_email,
+        "compute_type": compute_type,
+        "region": region or "unspecified",
+        "preferred_language": preferred_language or "en",
+        "motivation": motivation,
+        "status": "pending",
+        "created_at": int(time.time()),
+        "approved_at": None,
+        "invite_id": None,
+    }
+
+    with join_lock:
+        requests = _load_json_file(JOIN_INVITE_REQUESTS_PATH, [])
+        if not isinstance(requests, list):
+            requests = []
+        requests.append(request_entry)
+        requests = requests[-2000:]
+        _save_json_file(JOIN_INVITE_REQUESTS_PATH, requests)
+
+    ops_control_actions_total.labels(action="join_invite_request_create").inc()
+    emit_ops_event(
+        kind="join",
+        message="Network invite requested",
+        severity="info",
+        data={
+            "request_id": request_entry["request_id"],
+            "compute_type": request_entry["compute_type"],
+            "region": request_entry["region"],
+        },
+    )
+    return jsonify(request_entry), 201
+
+
+@app.route("/join/invite_requests", methods=["GET"])
+def list_join_invite_requests():
+    """Admin-only endpoint listing invite requests."""
+    if not _authorized_join_admin(request):
+        return jsonify({"error": "unauthorized"}), 401
+
+    status_filter = str(request.args.get("status", "")).strip().lower()
+    query = str(request.args.get("q", "")).strip().lower()
+    sort_by = str(request.args.get("sort_by", "created_at")).strip().lower()
+    sort_dir = str(request.args.get("sort_dir", "desc")).strip().lower()
+    limit_raw = request.args.get("limit", "100")
+    offset_raw = request.args.get("offset", "0")
+    try:
+        limit = max(1, min(500, int(limit_raw)))
+    except (TypeError, ValueError):
+        limit = 100
+    try:
+        offset = max(0, int(offset_raw))
+    except (TypeError, ValueError):
+        offset = 0
+
+    requests = _load_json_file(JOIN_INVITE_REQUESTS_PATH, [])
+    if not isinstance(requests, list):
+        requests = []
+    requests = [item for item in requests if isinstance(item, dict)]
+    if status_filter:
+        requests = [
+            item
+            for item in requests
+            if str(item.get("status", "")).strip().lower() == status_filter
+        ]
+    if query:
+        requests = [
+            item
+            for item in requests
+            if query
+            in " ".join(
+                [
+                    str(item.get("participant_name", "")),
+                    str(item.get("contact_email", "")),
+                    str(item.get("compute_type", "")),
+                    str(item.get("region", "")),
+                    str(item.get("request_id", "")),
+                ]
+            ).lower()
+        ]
+
+    request_sort_fields = {
+        "created_at": lambda item: int(item.get("created_at", 0) or 0),
+        "participant_name": lambda item: str(item.get("participant_name", "")).lower(),
+        "contact_email": lambda item: str(item.get("contact_email", "")).lower(),
+        "compute_type": lambda item: str(item.get("compute_type", "")).lower(),
+        "region": lambda item: str(item.get("region", "")).lower(),
+        "status": lambda item: str(item.get("status", "")).lower(),
+    }
+    if sort_by not in request_sort_fields:
+        sort_by = "created_at"
+    if sort_dir not in {"asc", "desc"}:
+        sort_dir = "desc"
+
+    requests = sorted(
+        requests,
+        key=request_sort_fields[sort_by],
+        reverse=sort_dir == "desc",
+    )
+    total = len(requests)
+    paged = requests[offset : offset + limit]
+    return jsonify(
+        {
+            "count": len(paged),
+            "total": total,
+            "limit": limit,
+            "offset": offset,
+            "sort_by": sort_by,
+            "sort_dir": sort_dir,
+            "requests": paged,
+        }
+    )
+
+
+@app.route("/join/invite_requests/<request_id>/reject", methods=["POST"])
+def reject_join_invite_request(request_id: str):
+    """Admin-only endpoint to reject a pending invite request."""
+    if not _authorized_join_admin(request):
+        return jsonify({"error": "unauthorized"}), 401
+
+    payload = request.get_json(silent=True) or {}
+    reason = str(payload.get("reason", "")).strip()
+    with join_lock:
+        requests = _load_json_file(JOIN_INVITE_REQUESTS_PATH, [])
+        if not isinstance(requests, list):
+            requests = []
+        req_item = next(
+            (item for item in requests if str(item.get("request_id", "")) == request_id),
+            None,
+        )
+        if req_item is None:
+            return _marketplace_error("request_not_found", "request not found", 404)
+        if str(req_item.get("status", "pending")).lower() != "pending":
+            return _marketplace_error(
+                "request_not_pending",
+                "request has already been processed",
+                409,
+                {"status": req_item.get("status")},
+            )
+
+        req_item["status"] = "rejected"
+        req_item["rejected_at"] = int(time.time())
+        if reason:
+            req_item["rejection_reason"] = reason
+        _save_json_file(JOIN_INVITE_REQUESTS_PATH, requests)
+
+    ops_control_actions_total.labels(action="join_invite_request_reject").inc()
+    emit_ops_event(
+        kind="join",
+        message="Invite request rejected",
+        severity="warning",
+        data={"request_id": request_id, "reason": reason},
+    )
+    return jsonify(req_item)
+
+
+@app.route("/join/invite_requests/<request_id>/approve", methods=["POST"])
+def approve_join_invite_request(request_id: str):
+    """Admin-only endpoint that converts a request into an invite."""
+    if not _authorized_join_admin(request):
+        return jsonify({"error": "unauthorized"}), 401
+
+    payload = request.get_json(silent=True) or {}
+    try:
+        max_uses = int(payload.get("max_uses", 1))
+        expires_in_hours = int(payload.get("expires_in_hours", 24))
+    except (TypeError, ValueError):
+        return _marketplace_error(
+            "invalid_invite_limits",
+            "max_uses and expires_in_hours must be integers",
+            400,
+        )
+
+    with join_lock:
+        requests = _load_json_file(JOIN_INVITE_REQUESTS_PATH, [])
+        if not isinstance(requests, list):
+            requests = []
+        req_item = next(
+            (item for item in requests if str(item.get("request_id", "")) == request_id),
+            None,
+        )
+        if req_item is None:
+            return _marketplace_error("request_not_found", "request not found", 404)
+        if str(req_item.get("status", "pending")).lower() != "pending":
+            return _marketplace_error(
+                "request_not_pending",
+                "request has already been processed",
+                409,
+                {"status": req_item.get("status")},
+            )
+
+        invite = _mint_join_invite(
+            participant_name=str(req_item.get("participant_name", "participant")),
+            max_uses=max_uses,
+            expires_in_hours=expires_in_hours,
+            source="self_service_request",
+            request_id=request_id,
+        )
+
+        invites = _load_json_file(JOIN_INVITES_PATH, [])
+        if not isinstance(invites, list):
+            invites = []
+        invites.append(invite)
+        _save_json_file(JOIN_INVITES_PATH, invites)
+
+        req_item["status"] = "approved"
+        req_item["approved_at"] = int(time.time())
+        req_item["invite_id"] = invite["invite_id"]
+        _save_json_file(JOIN_INVITE_REQUESTS_PATH, requests)
+
+    ops_control_actions_total.labels(action="join_invite_request_approve").inc()
+    emit_ops_event(
+        kind="join",
+        message="Invite request approved",
+        severity="success",
+        data={
+            "request_id": request_id,
+            "invite_id": invite["invite_id"],
+        },
+    )
+    return jsonify({"request": req_item, "invite": invite})
+
+
+@app.route("/join/invites", methods=["GET"])
+def list_join_invites():
+    """Admin-only endpoint listing minted invites."""
+    if not _authorized_join_admin(request):
+        return jsonify({"error": "unauthorized"}), 401
+
+    include_revoked = str(request.args.get("include_revoked", "false")).lower() == "true"
+    participant_filter = str(request.args.get("participant_name", "")).strip().lower()
+    status_filter = str(request.args.get("status", "all")).strip().lower()
+    query = str(request.args.get("q", "")).strip().lower()
+    sort_by = str(request.args.get("sort_by", "created_at")).strip().lower()
+    sort_dir = str(request.args.get("sort_dir", "desc")).strip().lower()
+    limit_raw = request.args.get("limit", "100")
+    offset_raw = request.args.get("offset", "0")
+    try:
+        limit = max(1, min(500, int(limit_raw)))
+    except (TypeError, ValueError):
+        limit = 100
+    try:
+        offset = max(0, int(offset_raw))
+    except (TypeError, ValueError):
+        offset = 0
+
+    invites = _load_json_file(JOIN_INVITES_PATH, [])
+    if not isinstance(invites, list):
+        invites = []
+    invites = [item for item in invites if isinstance(item, dict)]
+
+    if not include_revoked:
+        invites = [item for item in invites if not bool(item.get("revoked", False))]
+    if status_filter == "active":
+        invites = [item for item in invites if not bool(item.get("revoked", False))]
+    elif status_filter == "revoked":
+        invites = [item for item in invites if bool(item.get("revoked", False))]
+    if participant_filter:
+        invites = [
+            item
+            for item in invites
+            if participant_filter in str(item.get("participant_name", "")).lower()
+        ]
+    if query:
+        invites = [
+            item
+            for item in invites
+            if query
+            in " ".join(
+                [
+                    str(item.get("participant_name", "")),
+                    str(item.get("invite_id", "")),
+                    str(item.get("source", "")),
+                ]
+            ).lower()
+        ]
+
+    invite_sort_fields = {
+        "created_at": lambda item: int(item.get("created_at", 0) or 0),
+        "participant_name": lambda item: str(item.get("participant_name", "")).lower(),
+        "used": lambda item: int(item.get("used", 0) or 0),
+        "max_uses": lambda item: int(item.get("max_uses", 0) or 0),
+        "status": lambda item: "revoked" if bool(item.get("revoked", False)) else "active",
+    }
+    if sort_by not in invite_sort_fields:
+        sort_by = "created_at"
+    if sort_dir not in {"asc", "desc"}:
+        sort_dir = "desc"
+
+    invites = sorted(
+        invites,
+        key=invite_sort_fields[sort_by],
+        reverse=sort_dir == "desc",
+    )
+    total = len(invites)
+    paged = invites[offset : offset + limit]
+    return jsonify(
+        {
+            "count": len(paged),
+            "total": total,
+            "limit": limit,
+            "offset": offset,
+            "sort_by": sort_by,
+            "sort_dir": sort_dir,
+            "invites": paged,
+        }
+    )
+
+
+@app.route("/join/invites/<invite_id>/revoke", methods=["POST"])
+def revoke_join_invite(invite_id: str):
+    """Admin-only endpoint revoking an invite code before it is used/exhausted."""
+    if not _authorized_join_admin(request):
+        return jsonify({"error": "unauthorized"}), 401
+
+    with join_lock:
+        invites = _load_json_file(JOIN_INVITES_PATH, [])
+        if not isinstance(invites, list):
+            invites = []
+        target = next((item for item in invites if str(item.get("invite_id", "")) == invite_id), None)
+        if target is None:
+            return _marketplace_error("invite_not_found", "invite not found", 404)
+        target["revoked"] = True
+        target["revoked_at"] = int(time.time())
+        _save_json_file(JOIN_INVITES_PATH, invites)
+
+    ops_control_actions_total.labels(action="join_invite_revoke").inc()
+    emit_ops_event(
+        kind="join",
+        message="Invite revoked",
+        severity="warning",
+        data={"invite_id": invite_id},
+    )
+    return jsonify(target)
+
+
+@app.route("/admin/auth/methods", methods=["GET"])
+def admin_auth_methods():
+    """Expose supported admin authentication methods for dashboard UX."""
+    allowlist_raw = str(os.getenv("ADMIN_WALLET_ALLOWLIST", "")).strip().lower()
+    allowlist = [item.strip() for item in allowlist_raw.split(",") if item.strip()]
+    wallet_header_auth_enabled = (
+        str(os.getenv("ADMIN_WALLET_HEADER_AUTH_ENABLED", "false")).strip().lower()
+        in {"1", "true", "yes", "on"}
+    )
+    return jsonify(
+        {
+            "token_admin_enabled": bool(JOIN_API_ADMIN_TOKEN),
+            "wallet_allowlist_enabled": len(allowlist) > 0,
+            "wallet_allowlist_count": len(allowlist),
+            "wallet_header_auth_enabled": wallet_header_auth_enabled,
+            "headers": {
+                "token": "X-Join-Admin-Token",
+                "wallet": "X-Admin-Wallet",
+            },
+        }
+    )
+
+
+@app.route("/attestations/share", methods=["POST"])
+def share_compute_attestation():
+    """Public endpoint to publish a local compute attestation for ecosystem discovery."""
+    payload = request.get_json(silent=True) or {}
+    participant_name = str(payload.get("participant_name", "")).strip()
+    node_name = str(payload.get("node_name", "")).strip()
+    compute_type = str(payload.get("compute_type", "")).strip().lower()
+    compute_capacity = str(payload.get("compute_capacity", "")).strip()
+    attestation_status = str(payload.get("attestation_status", "pending")).strip().lower()
+    region = str(payload.get("region", "")).strip()
+
+    if not participant_name:
+        return _marketplace_error(
+            "participant_name_required",
+            "participant_name is required",
+            400,
+        )
+    if not compute_type:
+        return _marketplace_error(
+            "compute_type_required",
+            "compute_type is required",
+            400,
+        )
+    if attestation_status not in {"verified", "pending", "unverified"}:
+        return _marketplace_error(
+            "invalid_attestation_status",
+            "attestation_status must be verified, pending, or unverified",
+            400,
+        )
+
+    try:
+        capacity_score = max(0.0, float(payload.get("capacity_score", 0.0) or 0.0))
+    except (TypeError, ValueError):
+        return _marketplace_error(
+            "invalid_capacity_score",
+            "capacity_score must be numeric",
+            400,
+        )
+
+    now_ts = int(time.time())
+    entry = {
+        "attestation_id": f"attestation-{secrets.token_hex(8)}",
+        "participant_name": participant_name,
+        "node_name": node_name or participant_name,
+        "compute_type": compute_type,
+        "compute_capacity": compute_capacity or "unspecified",
+        "capacity_score": capacity_score,
+        "attestation_status": attestation_status,
+        "region": region or "unspecified",
+        "proof_digest": str(payload.get("proof_digest", "")).strip(),
+        "notes": str(payload.get("notes", "")).strip(),
+        "created_at": now_ts,
+    }
+
+    with join_lock:
+        attestations = _list_marketplace_documents(COMPUTE_ATTESTATIONS_PATH)
+        attestations.append(entry)
+        attestations = attestations[-2000:]
+        _save_json_file(COMPUTE_ATTESTATIONS_PATH, attestations)
+
+    emit_ops_event(
+        kind="trust",
+        message="Compute attestation shared",
+        severity="info",
+        data={
+            "attestation_id": entry["attestation_id"],
+            "compute_type": entry["compute_type"],
+            "status": entry["attestation_status"],
+        },
+    )
+    return jsonify(entry), 201
+
+
+@app.route("/attestations/feed", methods=["GET"])
+def list_compute_attestations():
+    """Public feed of shared compute attestations for contributor discovery."""
+    status_filter = str(request.args.get("status", "")).strip().lower()
+    compute_type_filter = str(request.args.get("compute_type", "")).strip().lower()
+    sort_by = str(request.args.get("sort_by", "recent")).strip().lower()
+    limit_raw = request.args.get("limit", "100")
+    try:
+        limit = max(1, min(500, int(limit_raw)))
+    except (TypeError, ValueError):
+        limit = 100
+
+    attestations = _list_marketplace_documents(COMPUTE_ATTESTATIONS_PATH)
+    if status_filter:
+        attestations = [
+            item
+            for item in attestations
+            if str(item.get("attestation_status", "")).strip().lower() == status_filter
+        ]
+    if compute_type_filter:
+        attestations = [
+            item
+            for item in attestations
+            if str(item.get("compute_type", "")).strip().lower() == compute_type_filter
+        ]
+
+    for item in attestations:
+        item["reputation_score"] = _attestation_reputation_score(item)
+    if sort_by == "reputation":
+        attestations = sorted(
+            attestations,
+            key=lambda item: float(item.get("reputation_score", 0.0) or 0.0),
+            reverse=True,
+        )
+    elif sort_by == "capacity":
+        attestations = sorted(
+            attestations,
+            key=lambda item: float(item.get("capacity_score", 0.0) or 0.0),
+            reverse=True,
+        )
+    else:
+        attestations = sorted(
+            attestations,
+            key=lambda item: int(item.get("created_at", 0)),
+            reverse=True,
+        )
+    attestations = attestations[:limit]
+    return jsonify({"count": len(attestations), "attestations": attestations})
+
+
+@app.route("/network/expansion_summary", methods=["GET"])
+def network_expansion_summary():
+    """Public summary of contributor growth and trust posture."""
+    return jsonify(_build_network_expansion_snapshot()), 200
 
 
 @app.route("/join/register", methods=["POST"])
@@ -2208,8 +4523,78 @@ def list_join_registrations():
     """Admin-only endpoint listing currently registered participants."""
     if not _authorized_join_admin(request):
         return jsonify({"error": "unauthorized"}), 401
+
+    status_filter = str(request.args.get("status", "all")).strip().lower()
+    query = str(request.args.get("q", "")).strip().lower()
+    sort_by = str(request.args.get("sort_by", "registered_at")).strip().lower()
+    sort_dir = str(request.args.get("sort_dir", "desc")).strip().lower()
+    limit_raw = request.args.get("limit", "100")
+    offset_raw = request.args.get("offset", "0")
+    try:
+        limit = max(1, min(500, int(limit_raw)))
+    except (TypeError, ValueError):
+        limit = 100
+    try:
+        offset = max(0, int(offset_raw))
+    except (TypeError, ValueError):
+        offset = 0
+
     registrations = _load_json_file(JOIN_REGISTRATIONS_PATH, [])
-    return jsonify({"count": len(registrations), "registrations": registrations})
+    if not isinstance(registrations, list):
+        registrations = []
+    registrations = [item for item in registrations if isinstance(item, dict)]
+
+    if status_filter != "all":
+        registrations = [
+            item
+            for item in registrations
+            if str(item.get("status", "")).strip().lower() == status_filter
+        ]
+    if query:
+        registrations = [
+            item
+            for item in registrations
+            if query
+            in " ".join(
+                [
+                    str(item.get("participant_name", "")),
+                    str(item.get("node_name", "")),
+                    str(item.get("node_id", "")),
+                    str(item.get("invite_id", "")),
+                ]
+            ).lower()
+        ]
+
+    registration_sort_fields = {
+        "registered_at": lambda item: int(item.get("registered_at", 0) or 0),
+        "participant_name": lambda item: str(item.get("participant_name", "")).lower(),
+        "node_name": lambda item: str(item.get("node_name", "")).lower(),
+        "node_id": lambda item: int(item.get("node_id", 0) or 0),
+        "status": lambda item: str(item.get("status", "")).lower(),
+    }
+    if sort_by not in registration_sort_fields:
+        sort_by = "registered_at"
+    if sort_dir not in {"asc", "desc"}:
+        sort_dir = "desc"
+
+    registrations = sorted(
+        registrations,
+        key=registration_sort_fields[sort_by],
+        reverse=sort_dir == "desc",
+    )
+    total = len(registrations)
+    paged = registrations[offset : offset + limit]
+    return jsonify(
+        {
+            "count": len(paged),
+            "total": total,
+            "limit": limit,
+            "offset": offset,
+            "sort_by": sort_by,
+            "sort_dir": sort_dir,
+            "registrations": paged,
+        }
+    )
 
 
 @app.route("/join/revoke/<int:node_id>", methods=["POST"])
@@ -2225,6 +4610,17 @@ def revoke_join_participant(node_id: int):
             jsonify({"status": "error", "message": "node certificate not found"}),
             404,
         )
+
+    with join_lock:
+        registrations = _load_json_file(JOIN_REGISTRATIONS_PATH, [])
+        if not isinstance(registrations, list):
+            registrations = []
+        for item in registrations:
+            if int(item.get("node_id", 0) or 0) == int(node_id):
+                item["status"] = "revoked"
+                item["revoked_at"] = int(time.time())
+        _save_json_file(JOIN_REGISTRATIONS_PATH, registrations)
+
     return jsonify({"status": "ok", "node_id": node_id, "revoked": True})
 
 

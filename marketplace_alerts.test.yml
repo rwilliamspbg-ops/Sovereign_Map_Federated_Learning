@@ -1,0 +1,57 @@
+rule_files:
+  - marketplace_alerts.yml
+
+evaluation_interval: 1m
+
+tests:
+  - name: marketplace-escrow-stalled-fires
+    interval: 1m
+    input_series:
+      - series: 'sovereign_marketplace_escrow_locked'
+        values: '120+0x80'
+      - series: 'sovereign_marketplace_payout_total'
+        values: '0+0x80'
+    alert_rule_test:
+      - eval_time: 61m
+        alertname: MarketplaceEscrowStalled
+        exp_alerts:
+          - exp_labels:
+              severity: warning
+              service: marketplace
+              team: platform
+            exp_annotations:
+              summary: "Marketplace escrow appears stalled"
+              description: "Escrow is locked but no payout has been released for at least 30 minutes."
+              runbook_url: "https://github.com/rwilliamspbg-ops/Sovereign_Map_Federated_Learning/blob/main/docs/ALERT_RUNBOOKS.md#marketplaceescrowstalled"
+
+  - name: marketplace-escrow-high-watermark-fires
+    interval: 1m
+    input_series:
+      - series: 'sovereign_marketplace_escrow_locked'
+        values: '300+0x30'
+      - series: 'sovereign_marketplace_payout_total'
+        values: '0+1x30'
+    alert_rule_test:
+      - eval_time: 11m
+        alertname: MarketplaceEscrowHighWatermark
+        exp_alerts:
+          - exp_labels:
+              severity: warning
+              service: marketplace
+              team: platform
+            exp_annotations:
+              summary: "Marketplace escrow exceeds high-watermark"
+              description: "Locked escrow is above 250 units for 10 minutes and may need release triage."
+              runbook_url: "https://github.com/rwilliamspbg-ops/Sovereign_Map_Federated_Learning/blob/main/docs/ALERT_RUNBOOKS.md#marketplaceescrowhighwatermark"
+
+  - name: marketplace-escrow-stalled-does-not-fire-when-payout-moving
+    interval: 1m
+    input_series:
+      - series: 'sovereign_marketplace_escrow_locked'
+        values: '120+0x80'
+      - series: 'sovereign_marketplace_payout_total'
+        values: '0+1x80'
+    alert_rule_test:
+      - eval_time: 61m
+        alertname: MarketplaceEscrowStalled
+        exp_alerts: []

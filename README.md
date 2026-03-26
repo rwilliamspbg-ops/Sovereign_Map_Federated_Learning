@@ -21,6 +21,8 @@ Production-grade federated learning platform that combines Byzantine-resilient a
 [![Dashboards Upgrade](https://img.shields.io/badge/Grafana-STARRED%20Live%20Dashboards-f59e0b?style=flat-square&logo=grafana&logoColor=white)](grafana/provisioning/dashboards)
 [![PySyft Demo](https://img.shields.io/badge/PySyft-Mohawk%20PoC%20Ready-10b981?style=flat-square)](examples/pysyft-integration)
 [![Prometheus Ready](https://img.shields.io/badge/Prometheus-Scrape%20Ready-ef4444?style=flat-square&logo=prometheus&logoColor=white)](prometheus.yml)
+[![Open Ecosystem](https://img.shields.io/badge/Open%20Ecosystem-Sprint%203%20Local--First-0ea5e9?style=flat-square)](docs/OPEN_ECOSYSTEM_FIRST_10_MINUTES.md)
+[![Marketplace Alerts](https://img.shields.io/badge/Alerts-Marketplace%20Guardrails-f97316?style=flat-square)](marketplace_alerts.yml)
 
 ## Mobile Shield Update March 2026
 
@@ -79,6 +81,34 @@ Operator validation commands:
 
 - `make observability-smoke`
 - `python3 scripts/check_dashboard_queries.py`
+
+## Open Ecosystem Upgrade March 2026
+
+This upgrade package adds a local-first marketplace and governance workflow with production-facing observability guardrails.
+
+What is included:
+
+- Marketplace flows: offers, intents, matching, escrow release, dispute workflows, and governance proposals/voting.
+- Network expansion flows: attestation sharing, self-service invite requests, admin approval/rejection/revocation.
+- Dashboard and metrics integration: marketplace/governance snapshots in `/metrics_summary` and expanded HUD browser demo controls.
+- Prometheus additions: `marketplace_alerts.yml` with stall/high-watermark detection plus promtool tests in `marketplace_alerts.test.yml`.
+- API contract tests: local positive-path and negative-path coverage under `tests/scripts/python/test_marketplace_local_contracts.py` and `tests/scripts/python/test_marketplace_negative_paths.py`.
+
+Primary references:
+
+- First 10 minutes guide: [docs/OPEN_ECOSYSTEM_FIRST_10_MINUTES.md](docs/OPEN_ECOSYSTEM_FIRST_10_MINUTES.md)
+- Sprint 1 roadmap: [docs/OPEN_ECOSYSTEM_SPRINT1_ROADMAP.md](docs/OPEN_ECOSYSTEM_SPRINT1_ROADMAP.md)
+- Sprint 2 roadmap: [docs/OPEN_ECOSYSTEM_SPRINT2_ROADMAP.md](docs/OPEN_ECOSYSTEM_SPRINT2_ROADMAP.md)
+- API examples: [docs/api/http-examples.md](docs/api/http-examples.md)
+- Backend implementation: [sovereignmap_production_backend_v2.py](sovereignmap_production_backend_v2.py)
+- Grafana operations dashboard: [grafana/provisioning/dashboards/operations_overview.json](grafana/provisioning/dashboards/operations_overview.json)
+
+Validation commands:
+
+- `make observability-smoke`
+- `make alerts-test`
+- `python3 tests/scripts/python/test_marketplace_local_contracts.py`
+- `python3 tests/scripts/python/test_marketplace_negative_paths.py`
 
 ## Performance Tuning Knobs
 

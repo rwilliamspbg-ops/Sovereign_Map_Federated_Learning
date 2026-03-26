@@ -1,0 +1,30 @@
+groups:
+  - name: marketplace_alerts
+    interval: 15s
+    rules:
+      - record: sovereign_marketplace_payout_rate_5m
+        expr: rate(sovereign_marketplace_payout_total[5m])
+
+      - alert: MarketplaceEscrowStalled
+        expr: (sovereign_marketplace_escrow_locked > 0) and (increase(sovereign_marketplace_payout_total[30m]) == 0)
+        for: 30m
+        labels:
+          severity: warning
+          service: marketplace
+          team: platform
+        annotations:
+          summary: "Marketplace escrow appears stalled"
+          description: "Escrow is locked but no payout has been released for at least 30 minutes."
+          runbook_url: "https://github.com/rwilliamspbg-ops/Sovereign_Map_Federated_Learning/blob/main/docs/ALERT_RUNBOOKS.md#marketplaceescrowstalled"
+
+      - alert: MarketplaceEscrowHighWatermark
+        expr: sovereign_marketplace_escrow_locked > 250
+        for: 10m
+        labels:
+          severity: warning
+          service: marketplace
+          team: platform
+        annotations:
+          summary: "Marketplace escrow exceeds high-watermark"
+          description: "Locked escrow is above 250 units for 10 minutes and may need release triage."
+          runbook_url: "https://github.com/rwilliamspbg-ops/Sovereign_Map_Federated_Learning/blob/main/docs/ALERT_RUNBOOKS.md#marketplaceescrowhighwatermark"

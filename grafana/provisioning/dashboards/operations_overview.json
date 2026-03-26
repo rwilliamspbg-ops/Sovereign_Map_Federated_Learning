@@ -704,7 +704,7 @@
       "targets": [
         {
           "refId": "A",
-          "expr": "avg(tpm_node_trust_score) or vector(0)"
+          "expr": "avg(tpm_node_trust_score{node_id!=\"\"}) or max(((clamp_max(100 * (tpm_certificates_verified_total / clamp_min(tpm_certificates_total, 1)), 100) and (tpm_certificates_total > 0)) or (100 * tpm_ca_certificate_valid))) or vector(0)"
         }
       ],
       "fieldConfig": {
@@ -2112,22 +2112,22 @@
       "targets": [
         {
           "refId": "A",
-          "expr": "sum(increase(sovereignmap_fl_rounds_total[$window])) - sum(increase(sovereignmap_fl_rounds_total[$window] offset $window))",
+          "expr": "(sum(increase(sovereignmap_fl_rounds_total[$window])) or vector(0)) - (sum(increase(sovereignmap_fl_rounds_total[$window] offset $window)) or vector(0))",
           "legendFormat": "FL rounds delta"
         },
         {
           "refId": "B",
-          "expr": "sum(increase(fl_aggregation_path_total{impl=\"vectorized\"}[$window])) - sum(increase(fl_aggregation_path_total{impl=\"vectorized\"}[$window] offset $window))",
+          "expr": "(sum(increase(fl_aggregation_path_total{impl=\"vectorized\"}[$window])) or vector(0)) - (sum(increase(fl_aggregation_path_total{impl=\"vectorized\"}[$window] offset $window)) or vector(0))",
           "legendFormat": "Vectorized path delta"
         },
         {
           "refId": "C",
-          "expr": "sum(increase(mohawk_tpm_nonce_replay_rejections_total[$window])) - sum(increase(mohawk_tpm_nonce_replay_rejections_total[$window] offset $window))",
+          "expr": "(sum(increase(mohawk_tpm_nonce_replay_rejections_total[$window])) or vector(0)) - (sum(increase(mohawk_tpm_nonce_replay_rejections_total[$window] offset $window)) or vector(0))",
           "legendFormat": "Nonce replay delta"
         },
         {
           "refId": "D",
-          "expr": "sum(increase(mohawk_tpm_nonce_cleanup_removed_total[$window])) - sum(increase(mohawk_tpm_nonce_cleanup_removed_total[$window] offset $window))",
+          "expr": "(sum(increase(mohawk_tpm_nonce_cleanup_removed_total[$window])) or vector(0)) - (sum(increase(mohawk_tpm_nonce_cleanup_removed_total[$window] offset $window)) or vector(0))",
           "legendFormat": "Nonce cleanup delta"
         }
       ],

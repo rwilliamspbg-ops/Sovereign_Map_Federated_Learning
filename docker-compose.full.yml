@@ -4,10 +4,30 @@ services:
     build:
       context: .
       dockerfile: Dockerfile.frontend
+      args:
+        VITE_DEFAULT_VIEW: ${VITE_DEFAULT_VIEW:-hud}
     image: frontend:latest
     container_name: sovereign-frontend
     ports:
       - "${FRONTEND_HOST_PORT:-3000}:80"
+    environment:
+      - NODE_ENV=production
+    depends_on:
+      - backend
+    networks:
+      - sovereign-network
+    restart: always
+
+  frontend-admin:
+    build:
+      context: .
+      dockerfile: Dockerfile.frontend
+      args:
+        VITE_DEFAULT_VIEW: browser_demo
+    image: frontend-admin:latest
+    container_name: sovereign-frontend-admin
+    ports:
+      - "${FRONTEND_ADMIN_HOST_PORT:-3003}:80"
     environment:
       - NODE_ENV=production
     depends_on:

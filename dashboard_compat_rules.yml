@@ -94,10 +94,10 @@ groups:
         expr: tpm_ca_certificate_valid
 
       # per-node trust score: verified/total ratio when certs exist;
-      # "> -Inf" filters out NaN (0/0 case) so the "or" fallback to CA validity
-      # triggers correctly when no certificates have been issued yet.
+      # clamp/min guards keep this finite and in the expected 0-100 range,
+      # while fallback uses CA validity when no certificates are present.
       - record: tpm_node_trust_score
-        expr: (tpm_certificates_verified_total / tpm_certificates_total > -Inf) or tpm_ca_certificate_valid
+        expr: (clamp_max(100 * (tpm_certificates_verified_total / clamp_min(tpm_certificates_total, 1)), 100) and (tpm_certificates_total > 0)) or (100 * tpm_ca_certificate_valid)
 
       # message signing operations — proxy via total certificate issuances
       - record: tpm_messages_signed_total
