@@ -462,10 +462,6 @@ export class MonitoringOrchestrator {
 export {
   MetricsRegistry,
   PrometheusServer,
-  PrivacyMetricsCollector,
-  ConsensusMetricsCollector,
-  NetworkMetricsCollector,
-  SystemMetricsCollector,
 };
 
 export default MonitoringOrchestrator;

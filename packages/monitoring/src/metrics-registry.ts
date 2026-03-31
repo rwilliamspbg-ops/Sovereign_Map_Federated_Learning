@@ -17,6 +17,10 @@ export interface MetricPoint {
   labels: Record<string, string>;
 }
 
+interface SettableMetric {
+  set(value: number): void;
+}
+
 /**
  * Gauge metric (can go up and down)
  */
@@ -45,6 +49,10 @@ export class GaugeMetric {
  */
 export class CounterMetric {
   private value: number = 0;
+
+  set(value: number) {
+    this.value = value;
+  }
 
   inc(delta: number = 1) {
     this.value += delta;
@@ -141,6 +149,7 @@ export class PrivacyMetrics {
 
   // Noise injection
   noiseInjectedCount = new CounterMetric();
+  noiseInjectionFailures = new CounterMetric();
   noiseMagnitude = new HistogramMetric([0.01, 0.05, 0.1, 0.5, 1, 2, 5, 10]);
 
   // Mechanisms
@@ -168,6 +177,7 @@ export class ConsensusMetrics {
   byzantineNodesDetected = new CounterMetric();
   byzantineDetectionEvents = new CounterMetric();
   byzantineNodesList = new GaugeMetric(); // Count of detected nodes
+  byzantineDetectionConfidence = new HistogramMetric([0.1, 0.25, 0.5, 0.75, 0.9, 0.99]);
 
   // Consensus achievement
   consensusReached = new CounterMetric();
@@ -178,6 +188,7 @@ export class ConsensusMetrics {
   quorumSize = new GaugeMetric();
   nodesOnline = new GaugeMetric();
   nodesOffline = new GaugeMetric();
+  roundTimeouts = new CounterMetric();
 }
 
 /**
@@ -197,6 +208,11 @@ export class NetworkPartitionMetrics {
   // Current state
   currentPartitionSize = new GaugeMetric();
   partitionIsolatedNodes = new GaugeMetric();
+  recoveryStartTime = new GaugeMetric();
+  recoveryTimeCurrent = new GaugeMetric();
+  syncBytesTransferred = new GaugeMetric();
+  attestationValidationSuccessRate = new GaugeMetric();
+  syncDuration = new HistogramMetric([1, 5, 10, 20, 50, 100, 200]);
 
   // Attestation validation
   attestationValidations = new CounterMetric();
@@ -234,6 +250,149 @@ export class MetricsRegistry {
   consensus = new ConsensusMetrics();
   partition = new NetworkPartitionMetrics();
   system = new SystemMetrics();
+
+  recordGauge(name: string, value: number, _labels: Record<string, string> = {}): void {
+    const metric = this.getGaugeMetric(name);
+    if (metric) {
+      metric.set(value);
+    }
+  }
+
+  recordCounter(name: string, delta: number = 1, _labels: Record<string, string> = {}): void {
+    const metric = this.getCounterMetric(name);
+    if (metric) {
+      metric.inc(delta);
+    }
+  }
+
+  recordHistogram(name: string, value: number, _labels: Record<string, string> = {}): void {
+    const metric = this.getHistogramMetric(name);
+    if (metric) {
+      metric.observe(value);
+    }
+  }
+
+  private getGaugeMetric(name: string): SettableMetric | undefined {
+    switch (name) {
+      case "privacy_epsilon_remaining":
+        return this.privacy.epsilonRemaining;
+      case "privacy_delta_remaining":
+        return this.privacy.deltaRemaining;
+      case "privacy_overhead_percent":
+        return this.privacy.privacyOverheadPercent;
+      case "gpu_active_devices":
+        return this.gpu.activeGPUDevices;
+      case "gpu_utilization_percent":
+        return this.gpu.gpuUtilization;
+      case "gpu_memory_used_bytes":
+        return this.gpu.gpuMemoryUsed;
+      case "gpu_memory_total_bytes":
+        return this.gpu.gpuMemoryTotal;
+      case "gpu_temperature_celsius":
+        return this.gpu.gpuTemperature;
+      case "gpu_samples_per_second":
+        return this.gpu.noiseSamplesPerSecond;
+      case "consensus_participation_rate":
+        return this.consensus.participationRate;
+      case "consensus_nodes_online":
+        return this.consensus.nodesOnline;
+      case "consensus_nodes_offline":
+        return this.consensus.nodesOffline;
+      case "consensus_quorum_size":
+        return this.consensus.quorumSize;
+      case "byzantine_nodes_currently_detected":
+        return this.consensus.byzantineNodesList;
+      case "network_partition_isolated_nodes":
+        return this.partition.partitionIsolatedNodes;
+      case "network_partition_recovery_start_time":
+        return this.partition.recoveryStartTime;
+      case "network_sync_bytes_transferred":
+        return this.partition.syncBytesTransferred;
+      case "attestation_validation_success_rate":
+        return this.partition.attestationValidationSuccessRate;
+      case "system_memory_bytes":
+        return this.system.processMpemory;
+      case "system_memory_total_bytes":
+        return this.system.systemMemoryUsage;
+      case "system_cpu_usage_percent":
+        return this.system.cpuUsage;
+      case "consensus_rounds_completed":
+        return this.consensus.roundsCompleted;
+      case "network_partitions_detected_total":
+        return this.partition.partitionsDetected;
+      case "network_partition_recovery_seconds":
+        return this.partition.recoveryTimeCurrent;
+      default:
+        return undefined;
+    }
+  }
+
+  private getCounterMetric(name: string): CounterMetric | undefined {
+    switch (name) {
+      case "privacy_noise_injected_total":
+        return this.privacy.noiseInjectedCount;
+      case "privacy_gaussian_noise_count_total":
+        return this.privacy.gaussianNoiseCount;
+      case "privacy_laplace_noise_count_total":
+        return this.privacy.laplaceNoiseCount;
+      case "privacy_noise_injection_failures":
+        return this.privacy.noiseInjectionFailures;
+      case "gpu_detection_attempts":
+        return this.gpu.gpuDetectedCount;
+      case "gpu_detection_failures":
+        return this.gpu.gpuDetectionFailures;
+      case "gpu_cpu_fallback_total":
+        return this.gpu.fallbackToCPU;
+      case "consensus_rounds_completed":
+        return this.consensus.roundsCompleted;
+      case "consensus_failed":
+        return this.consensus.consensusFailed;
+      case "byzantine_nodes_detected_total":
+        return this.consensus.byzantineNodesDetected;
+      case "consensus_round_timeout_total":
+        return this.consensus.roundTimeouts;
+      case "network_partitions_detected_total":
+        return this.partition.partitionsDetected;
+      case "network_partition_recovery_attempts":
+        return this.partition.partitionRecoveryAttempts;
+      case "network_partition_recovery_success":
+        return this.partition.partitionRecoverySuccess;
+      case "network_partition_recovery_failure":
+        return this.partition.partitionRecoveryFailure;
+      case "attestation_validations_total":
+        return this.partition.attestationValidations;
+      case "attestation_validation_failures":
+        return this.partition.attestationValidationFailures;
+      case "system_restarts":
+        return this.system.restarts;
+      default:
+        return undefined;
+    }
+  }
+
+  private getHistogramMetric(name: string): HistogramMetric | undefined {
+    switch (name) {
+      case "privacy_noise_magnitude_distribution":
+      case "privacy_noise_magnitude":
+        return this.privacy.noiseMagnitude;
+      case "privacy_update_latency_seconds":
+        return this.privacy.updatePrivacyTime;
+      case "gpu_noise_latency_seconds":
+        return this.gpu.noiseGenerationLatency;
+      case "consensus_round_duration_seconds":
+        return this.consensus.roundDuration;
+      case "byzantine_detection_confidence":
+        return this.consensus.byzantineDetectionConfidence;
+      case "network_partition_recovery_seconds":
+        return this.partition.recoveryTime;
+      case "network_sync_duration_seconds":
+        return this.partition.syncDuration;
+      case "system_network_latency_seconds":
+        return this.system.networkLatency;
+      default:
+        return undefined;
+    }
+  }
 
   /**
    * Export all metrics in Prometheus text format
