@@ -21,10 +21,10 @@
     "eventemitter3": "^5.0.0"
   },
   "devDependencies": {
-    "@types/node": "^20.0.0",
-    "typescript": "^5.0.0",
-    "vitest": "^0.34.0",
-    "@vitest/coverage-v8": "^0.34.0"
+    "@types/node": "^25.5.0",
+    "typescript": "^6.0.2",
+    "vitest": "^4.1.2",
+    "@vitest/coverage-v8": "^4.1.2"
   },
   "keywords": [
     "sovereign-map",

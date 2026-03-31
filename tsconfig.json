@@ -3,6 +3,7 @@
     "target": "ESNext",
     "module": "ESNext",
     "moduleResolution": "node",
+    "ignoreDeprecations": "6.0",
     "strict": true,
     "skipLibCheck": true,
     "esModuleInterop": true,
@@ -16,6 +17,7 @@
     "isolatedModules": true,
     "allowJs": true,
     "checkJs": false,
+    "types": ["node"],
     "outDir": "dist",
     "rootDir": "."
   },
