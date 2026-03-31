@@ -17,7 +17,7 @@ module github.com/rwilliamspbg-ops/Sovereign_Map_Federated_Learning
 go 1.25.7
 
 require (
-	github.com/consensys/gnark-crypto v0.20.0
+	github.com/consensys/gnark-crypto v0.20.1
 	github.com/hashicorp/golang-lru/v2 v2.0.7
 	github.com/ipfs/go-ipfs-api v0.7.0
 	github.com/libp2p/go-libp2p v0.47.0
@@ -25,6 +25,7 @@ require (
 	github.com/multiformats/go-multiaddr v0.16.1
 	github.com/prometheus/client_golang v1.23.2
 	github.com/tetratelabs/wazero v1.11.0
+	go.yaml.in/yaml/v2 v2.4.2
 	gocv.io/x/gocv v0.43.0
 )
 
@@ -107,7 +108,6 @@ require (
 	go.uber.org/mock v0.5.2 // indirect
 	go.uber.org/multierr v1.11.0 // indirect
 	go.uber.org/zap v1.27.0 // indirect
-	go.yaml.in/yaml/v2 v2.4.2 // indirect
 	golang.org/x/crypto v0.48.0 // indirect
 	golang.org/x/exp v0.0.0-20250606033433-dcc06ee1d476 // indirect
 	golang.org/x/mod v0.33.0 // indirect
