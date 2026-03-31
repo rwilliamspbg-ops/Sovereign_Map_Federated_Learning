@@ -12,6 +12,10 @@ on:
 permissions:
   contents: read
 
+env:
+  NODE_VERSION: '22'
+  NPM_VERSION: '10.9.2'
+
 concurrency:
   group: reproducibility-${{ github.ref }}
   cancel-in-progress: true
@@ -41,6 +45,12 @@ jobs:
             frontend/package-lock.json
             packages/core/package-lock.json
             packages/privacy/package-lock.json
+
+      - name: Pin npm version
+        run: |
+          npm install -g npm@${NPM_VERSION}
+          echo "Node: $(node -v)"
+          echo "npm: $(npm -v)"
 
       - name: Validate reproducibility smoke profile
         run: make smoke

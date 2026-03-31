@@ -14,6 +14,10 @@ permissions:
   contents: read
   security-events: write
 
+env:
+  NODE_VERSION: '22'
+  NPM_VERSION: '10.9.2'
+
 jobs:
   analyze:
     name: Analyze Code
@@ -51,6 +55,13 @@ jobs:
       uses: actions/setup-node@53b83947a5a98c8d113130e565377fae1a50d02f
       with:
         node-version: '22'
+        
+    - name: Pin npm version
+      if: matrix.language == 'javascript-typescript'
+      run: |
+        npm install -g npm@${NPM_VERSION}
+        echo "Node: $(node -v)"
+        echo "npm: $(npm -v)"
         
     - name: Setup Python
       if: matrix.language == 'python'

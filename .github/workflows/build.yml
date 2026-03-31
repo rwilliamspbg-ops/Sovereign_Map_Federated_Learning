@@ -10,6 +10,10 @@ permissions:
   contents: read
   packages: write
 
+env:
+  NODE_VERSION: '22'
+  NPM_VERSION: '10.9.2'
+
 jobs:
   build:
     if: github.event_name != 'pull_request' || github.actor != 'dependabot[bot]'
@@ -29,6 +33,12 @@ jobs:
             packages/core/package-lock.json
             packages/privacy/package-lock.json
             frontend/package-lock.json
+
+      - name: Pin npm version
+        run: |
+          npm install -g npm@${NPM_VERSION}
+          echo "Node: $(node -v)"
+          echo "npm: $(npm -v)"
 
       - name: Install root and package dependencies
         run: npm ci
