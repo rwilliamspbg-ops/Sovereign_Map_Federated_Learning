@@ -14,6 +14,13 @@ This directory contains the active operator and integration documentation.
 - [Release Candidate Phase3D Secrets Runbook](RELEASE_CANDIDATE_PHASE3D_SECRETS_RUNBOOK.md)
 - [Compression Deployment](COMPRESSION_DEPLOYMENT.md)
 
+## Validation and CI
+
+- [Documentation Maintenance Runbook](DOCUMENTATION_MAINTENANCE.md)
+- [Test Environment Setup](../tests/docs/TEST_ENV_SETUP.md)
+- [Full Validation PR Gate Workflow](../.github/workflows/full-validation-pr-gate.yml)
+- [Full Validation Scheduled Deep Workflow](../.github/workflows/full-validation-scheduled-deep.yml)
+
 ## Roadmaps
 
 - [Open Ecosystem Sprint 1 Roadmap](OPEN_ECOSYSTEM_SPRINT1_ROADMAP.md)

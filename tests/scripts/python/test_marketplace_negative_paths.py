@@ -64,10 +64,16 @@ def run() -> int:
     with tempfile.TemporaryDirectory(prefix="marketplace-negative-") as tmp:
         _configure_temp_marketplace_state(Path(tmp))
         _ensure_strategy()
+        backend.JOIN_API_ADMIN_TOKEN = "test-suite-admin-token"
+        admin_headers = {"X-Join-Admin-Token": backend.JOIN_API_ADMIN_TOKEN}
 
         client = backend.app.test_client()
 
-        missing_intent_resp = client.post("/marketplace/match", json={"max_offers": 1})
+        missing_intent_resp = client.post(
+            "/marketplace/match",
+            json={"max_offers": 1},
+            headers=admin_headers,
+        )
         assert missing_intent_resp.status_code == 400
         assert missing_intent_resp.get_json().get("code") == "round_intent_id_required"
 
@@ -83,6 +89,7 @@ def run() -> int:
                 "price_per_round": 10,
                 "expires_at": int(time.time()) - 10,
             },
+            headers=admin_headers,
         )
         assert expired_offer_resp.status_code == 201
 
@@ -95,6 +102,7 @@ def run() -> int:
                 "min_quality_score": 0.8,
                 "budget_total": 20,
             },
+            headers=admin_headers,
         )
         assert intent_resp.status_code == 201
         intent_id = intent_resp.get_json()["round_intent_id"]
@@ -102,6 +110,7 @@ def run() -> int:
         no_match_resp = client.post(
             "/marketplace/match",
             json={"round_intent_id": intent_id, "max_offers": 2},
+            headers=admin_headers,
         )
         assert no_match_resp.status_code == 422
         no_match_payload = no_match_resp.get_json()
@@ -120,12 +129,14 @@ def run() -> int:
                 "allowed_tasks": ["classification"],
                 "price_per_round": 5,
             },
+            headers=admin_headers,
         )
         assert active_offer_resp.status_code == 201
 
         ok_match_resp = client.post(
             "/marketplace/match",
             json={"round_intent_id": intent_id, "max_offers": 2},
+            headers=admin_headers,
         )
         assert ok_match_resp.status_code == 201
         contract_id = ok_match_resp.get_json()["contract_id"]
@@ -133,6 +144,7 @@ def run() -> int:
         invalid_transition_resp = client.patch(
             f"/marketplace/round_intents/{intent_id}",
             json={"status": "cancelled"},
+            headers=admin_headers,
         )
         assert invalid_transition_resp.status_code == 409
         assert (
@@ -143,12 +155,14 @@ def run() -> int:
         first_release_resp = client.post(
             "/marketplace/escrow/release",
             json={"contract_id": contract_id},
+            headers=admin_headers,
         )
         assert first_release_resp.status_code == 200
 
         second_release_resp = client.post(
             "/marketplace/escrow/release",
             json={"contract_id": contract_id},
+            headers=admin_headers,
         )
         assert second_release_resp.status_code == 409
         assert second_release_resp.get_json().get("code") == "contract_already_released"
@@ -156,6 +170,7 @@ def run() -> int:
         bad_preview_resp = client.post(
             "/marketplace/policy/preview",
             json={"round_intent_id": intent_id, "max_offers": "abc"},
+            headers=admin_headers,
         )
         assert bad_preview_resp.status_code == 400
         assert bad_preview_resp.get_json().get("code") == "invalid_max_offers"
@@ -163,6 +178,7 @@ def run() -> int:
         missing_preview_intent_resp = client.post(
             "/marketplace/policy/preview",
             json={"round_intent_id": "intent-does-not-exist", "max_offers": 1},
+            headers=admin_headers,
         )
         assert missing_preview_intent_resp.status_code == 404
         assert (
@@ -173,6 +189,7 @@ def run() -> int:
         missing_title_proposal_resp = client.post(
             "/governance/proposals",
             json={"proposal_type": "policy_update", "created_by": "test-suite"},
+            headers=admin_headers,
         )
         assert missing_title_proposal_resp.status_code == 400
         assert (
@@ -187,6 +204,7 @@ def run() -> int:
                 "proposal_type": "operational",
                 "created_by": "test-suite",
             },
+            headers=admin_headers,
         )
         assert create_proposal_resp.status_code == 201
         proposal_id = create_proposal_resp.get_json()["proposal_id"]
@@ -194,6 +212,7 @@ def run() -> int:
         invalid_vote_resp = client.post(
             f"/governance/proposals/{proposal_id}/vote",
             json={"voter": "node-1", "decision": "maybe", "weight": 1.0},
+            headers=admin_headers,
         )
         assert invalid_vote_resp.status_code == 400
         assert invalid_vote_resp.get_json().get("code") == "invalid_vote_decision"
@@ -201,12 +220,14 @@ def run() -> int:
         close_proposal_resp = client.patch(
             f"/governance/proposals/{proposal_id}",
             json={"status": "closed", "actor": "moderator"},
+            headers=admin_headers,
         )
         assert close_proposal_resp.status_code == 200
 
         vote_closed_resp = client.post(
             f"/governance/proposals/{proposal_id}/vote",
             json={"voter": "node-1", "decision": "yes", "weight": 1.0},
+            headers=admin_headers,
         )
         assert vote_closed_resp.status_code == 409
         assert vote_closed_resp.get_json().get("code") == "proposal_not_open"

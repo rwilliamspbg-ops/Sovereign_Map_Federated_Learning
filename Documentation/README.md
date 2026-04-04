@@ -20,8 +20,16 @@ This folder centralizes repository documentation discovery.
 - [Project/TEST_FILE_RELOCATION_ADDENDUM_2026-03-15.md](Project/TEST_FILE_RELOCATION_ADDENDUM_2026-03-15.md)
 - [Performance/TPM_ATTESTATION_BOTTLENECK_ANALYSIS_2026-03-24.md](Performance/TPM_ATTESTATION_BOTTLENECK_ANALYSIS_2026-03-24.md)
 - [Security/API_AUTH_TOKEN_ROTATION_RUNBOOK.md](Security/API_AUTH_TOKEN_ROTATION_RUNBOOK.md)
+- [Security/CI_STATUS_AND_CLAIMS.md](Security/CI_STATUS_AND_CLAIMS.md)
 - [Deployment/PARTICIPANT_JOIN_LOCAL.md](Deployment/PARTICIPANT_JOIN_LOCAL.md)
 - [Deployment/WINDOWS_CLIENT_EXE.md](Deployment/WINDOWS_CLIENT_EXE.md)
+
+## Current Validation and Documentation Controls
+
+- [../docs/DOCUMENTATION_MAINTENANCE.md](../docs/DOCUMENTATION_MAINTENANCE.md)
+- [../tests/docs/TEST_ENV_SETUP.md](../tests/docs/TEST_ENV_SETUP.md)
+- [../.github/workflows/full-validation-pr-gate.yml](../.github/workflows/full-validation-pr-gate.yml)
+- [../.github/workflows/full-validation-scheduled-deep.yml](../.github/workflows/full-validation-scheduled-deep.yml)
 
 ## Topic Folders
 

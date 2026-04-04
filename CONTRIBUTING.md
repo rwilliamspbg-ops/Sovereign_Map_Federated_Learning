@@ -25,6 +25,7 @@ Use the repository PR template at `.github/pull_request_template.md` when openin
 - [ ] CI workflows pass on your branch
 - [ ] Security checks pass (including CodeQL)
 - [ ] Documentation is updated for any behavior/config changes
+- [ ] Documentation sync completed when workflows, tests, or security defaults changed
 - [ ] No secrets or credentials are committed
 
 ## Documentation Sync Requirements
@@ -59,8 +60,8 @@ The repository includes a Git-based reward scoring system to rank contributions.
 
 - Run `make contributors-rankings`
 - Outputs:
-	- `test-results/contributor-rankings/CONTRIBUTOR_RANKINGS.md`
-	- `test-results/contributor-rankings/contributor_rankings.json`
+  - `test-results/contributor-rankings/CONTRIBUTOR_RANKINGS.md`
+  - `test-results/contributor-rankings/contributor_rankings.json`
 
 Current points formula:
 

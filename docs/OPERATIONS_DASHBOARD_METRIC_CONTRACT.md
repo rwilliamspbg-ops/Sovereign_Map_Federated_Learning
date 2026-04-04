@@ -35,6 +35,10 @@ Static query compatibility:
 Live query smoke (requires local compose stack):
 - python3 scripts/check_operations_overview_live_queries.py
 
+Local warmup note:
+- Panels 64 and 68 depend on `tpm_node_attestation_latency_ms`, which is only populated after at least one attestation event has been ingested by `tpm-metrics`.
+- In a fresh local stack, seed the metric with `/event/attestation` calls or run the dashboard warmup flow before treating those panels as empty.
+
 ## Expected Prometheus Jobs
 
 For reliable lower-half panel population, these jobs should be up:

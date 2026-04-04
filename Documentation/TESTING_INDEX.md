@@ -1,5 +1,16 @@
 # TESTING Documentation Index
 
+## Current Validation Entry Points
+
+- [Root test setup and profiles](../tests/docs/TEST_ENV_SETUP.md)
+- [Validation runner](../tests/scripts/python/run_full_validation_suite.py)
+- [Trend SLO checker](../tests/scripts/ci/check_validation_trends.py)
+- [Validation diff summary writer](../tests/scripts/ci/write_validation_diff_summary.py)
+- [PR gate workflow](../.github/workflows/full-validation-pr-gate.yml)
+- [Scheduled deep workflow](../.github/workflows/full-validation-scheduled-deep.yml)
+
+Note: this file is a broad catalog and includes historical testing documents. Use the links above for current branch validation behavior.
+
 ## Files
 
 - [Documentation/Deployment/GENESIS_LAUNCH_CHECKLIST.md](/Documentation/Deployment/GENESIS_LAUNCH_CHECKLIST.md)

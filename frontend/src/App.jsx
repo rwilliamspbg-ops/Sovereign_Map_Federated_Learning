@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import HUD from './HUD';
 import BrowserFLDemo from './BrowserFLDemo';
 import './App.css';
@@ -54,6 +54,12 @@ const mergeOpsEvents = (existing, incoming, limit = 220) => {
   return merged.slice(-limit);
 };
 
+const ema = (previous, next, alpha = 0.35) => {
+  if (!Number.isFinite(next)) return previous;
+  if (!Number.isFinite(previous)) return next;
+  return (alpha * next) + ((1 - alpha) * previous);
+};
+
 function App() {
   const viewMode = resolveViewMode();
   const showBrowserDemo = viewMode === 'browser_demo' || viewMode === 'admin';
@@ -105,6 +111,14 @@ function App() {
   const [enclaveActionMessage, setEnclaveActionMessage] = useState('');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
+  const smoothingRef = useRef({
+    trainingAccuracy: null,
+    trainingLoss: null,
+    opsLatencyMs: null,
+    opsErrorRate: null,
+    opsIngressMbps: null,
+    opsSaturationPct: null
+  });
 
   if (showBrowserDemo) {
     return <BrowserFLDemo enableBackendMetrics />;
@@ -271,12 +285,58 @@ function App() {
         safeJson(toResponse(opsTrendsFetch), opsTrends || null)
       ]);
 
+      const nextTraining = { ...(trainingData || { status: 'idle', active: false, round: 0 }) };
+      if (nextTraining?.current_metrics) {
+        const nextAcc = Number(nextTraining.current_metrics.accuracy);
+        const nextLoss = Number(nextTraining.current_metrics.loss);
+        const smoothAcc = ema(smoothingRef.current.trainingAccuracy, nextAcc, 0.35);
+        const smoothLoss = ema(smoothingRef.current.trainingLoss, nextLoss, 0.30);
+        smoothingRef.current.trainingAccuracy = smoothAcc;
+        smoothingRef.current.trainingLoss = smoothLoss;
+
+        nextTraining.current_metrics = {
+          ...nextTraining.current_metrics,
+          accuracy: Number.isFinite(smoothAcc) ? Number(smoothAcc.toFixed(4)) : nextTraining.current_metrics.accuracy,
+          loss: Number.isFinite(smoothLoss) ? Number(smoothLoss.toFixed(4)) : nextTraining.current_metrics.loss
+        };
+      }
+
+      let nextOpsHealth = opsHealthData;
+      if (opsHealthData?.telemetry) {
+        const telemetry = { ...opsHealthData.telemetry };
+        const latency = Number(telemetry.api_latency_ms);
+        const errorRate = Number(telemetry.api_error_rate);
+        const ingress = Number(telemetry.ingress_mbps);
+        const saturation = Number(telemetry.global_saturation_pct);
+
+        const smoothLatency = ema(smoothingRef.current.opsLatencyMs, latency, 0.30);
+        const smoothErrorRate = ema(smoothingRef.current.opsErrorRate, errorRate, 0.35);
+        const smoothIngress = ema(smoothingRef.current.opsIngressMbps, ingress, 0.30);
+        const smoothSaturation = ema(smoothingRef.current.opsSaturationPct, saturation, 0.25);
+
+        smoothingRef.current.opsLatencyMs = smoothLatency;
+        smoothingRef.current.opsErrorRate = smoothErrorRate;
+        smoothingRef.current.opsIngressMbps = smoothIngress;
+        smoothingRef.current.opsSaturationPct = smoothSaturation;
+
+        nextOpsHealth = {
+          ...opsHealthData,
+          telemetry: {
+            ...telemetry,
+            api_latency_ms: Number.isFinite(smoothLatency) ? Math.round(smoothLatency) : telemetry.api_latency_ms,
+            api_error_rate: Number.isFinite(smoothErrorRate) ? Number(smoothErrorRate.toFixed(3)) : telemetry.api_error_rate,
+            ingress_mbps: Number.isFinite(smoothIngress) ? Math.round(smoothIngress) : telemetry.ingress_mbps,
+            global_saturation_pct: Number.isFinite(smoothSaturation) ? Math.round(smoothSaturation) : telemetry.global_saturation_pct
+          }
+        };
+      }
+
       setHudData(hud);
       setHealth(healthData);
       setMetricsSummary(metrics);
       setFounders(foundersData);
-      setTrainingStatus(trainingData || { status: 'idle', active: false, round: 0 });
-      setOpsHealth(opsHealthData);
+      setTrainingStatus(nextTraining);
+      setOpsHealth(nextOpsHealth);
       setOpsTrends(opsTrendsData);
 
       try {

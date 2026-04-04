@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import {
   LineChart,
   Line,
@@ -42,9 +42,28 @@ function envBool(name, fallback) {
   return fallback;
 }
 
+function envFloat(name, fallback) {
+  const raw = import.meta.env?.[name];
+  const parsed = Number(raw);
+  if (!Number.isFinite(parsed)) return fallback;
+  return parsed;
+}
+
+function ema(previous, next, alpha = 0.35) {
+  if (!Number.isFinite(next)) return previous;
+  if (!Number.isFinite(previous)) return next;
+  return (alpha * next) + ((1 - alpha) * previous);
+}
+
 const IMPACT_DEFAULT_COOLDOWN_SECONDS = envInt('VITE_IMPACT_COOLDOWN_DEFAULT_SECONDS', 0);
 const IMPACT_RISKY_COOLDOWN_SECONDS = envInt('VITE_IMPACT_COOLDOWN_RISKY_SECONDS', 3);
 const IMPACT_REQUIRE_TYPED_RISKY = envBool('VITE_IMPACT_REQUIRE_TYPED_RISKY', true);
+const UI_ACC_ALPHA = envFloat('VITE_UI_ACC_SMOOTHING_ALPHA', 0.35);
+const UI_LOSS_ALPHA = envFloat('VITE_UI_LOSS_SMOOTHING_ALPHA', 0.3);
+const UI_COMP_ALPHA = envFloat('VITE_UI_COMP_SMOOTHING_ALPHA', 0.35);
+const UI_LAT_ALPHA = envFloat('VITE_UI_LATENCY_SMOOTHING_ALPHA', 0.25);
+const UI_BW_ALPHA = envFloat('VITE_UI_BANDWIDTH_SMOOTHING_ALPHA', 0.25);
+const CHART_THROTTLE_MS = Math.max(50, envInt('VITE_CHART_THROTTLE_MS', 350));
 
 const NETWORK_HELPER_TEXT = {
   en: 'Share trusted compute, request an invite, and help the federated network grow safely.',
@@ -197,6 +216,68 @@ export default function BrowserFLDemo({ enableBackendMetrics = false, onMetricsU
   const [impactPreview, setImpactPreview] = useState(null);
   const [impactConfirmInput, setImpactConfirmInput] = useState('');
   const [impactCooldownRemaining, setImpactCooldownRemaining] = useState(0);
+  const smoothedRef = useRef({
+    accuracy: 0.51,
+    loss: 1.7,
+    compressionRatio: 4.0,
+    latencyMs: 0,
+    bandwidthKB: 0
+  });
+  const chartThrottleRef = useRef({
+    simulationLastEmit: 0,
+    simulationPending: null,
+    simulationTimer: null,
+    realLastEmit: 0,
+    realPending: null,
+    realTimer: null
+  });
+
+  const commitChartPoint = (mode, point) => {
+    const setSeries = mode === 'real' ? setRealHistory : setHistory;
+    setSeries((previous) => {
+      const merged = [...previous, point].slice(-MAX_POINTS);
+      onMetricsUpdate?.(merged);
+      return merged;
+    });
+  };
+
+  const flushChartPoint = (mode) => {
+    const pendingKey = mode === 'real' ? 'realPending' : 'simulationPending';
+    const lastEmitKey = mode === 'real' ? 'realLastEmit' : 'simulationLastEmit';
+    const timerKey = mode === 'real' ? 'realTimer' : 'simulationTimer';
+    const pendingPoint = chartThrottleRef.current[pendingKey];
+
+    chartThrottleRef.current[timerKey] = null;
+    if (!pendingPoint) {
+      return;
+    }
+
+    chartThrottleRef.current[pendingKey] = null;
+    chartThrottleRef.current[lastEmitKey] = Date.now();
+    commitChartPoint(mode, pendingPoint);
+  };
+
+  const pushChartPoint = (mode, point) => {
+    const pendingKey = mode === 'real' ? 'realPending' : 'simulationPending';
+    const lastEmitKey = mode === 'real' ? 'realLastEmit' : 'simulationLastEmit';
+    const timerKey = mode === 'real' ? 'realTimer' : 'simulationTimer';
+    const now = Date.now();
+    const elapsed = now - chartThrottleRef.current[lastEmitKey];
+
+    if (elapsed >= CHART_THROTTLE_MS && !chartThrottleRef.current[timerKey]) {
+      chartThrottleRef.current[lastEmitKey] = now;
+      commitChartPoint(mode, point);
+      return;
+    }
+
+    chartThrottleRef.current[pendingKey] = point;
+    if (!chartThrottleRef.current[timerKey]) {
+      const delay = Math.max(0, CHART_THROTTLE_MS - elapsed);
+      chartThrottleRef.current[timerKey] = setTimeout(() => {
+        flushChartPoint(mode);
+      }, delay);
+    }
+  };
 
   useEffect(() => {
     const detectWebGPU = async () => {
@@ -329,27 +410,42 @@ export default function BrowserFLDemo({ enableBackendMetrics = false, onMetricsU
 
         const status = await response.json();
         setPhase3dRound(status.current_round || 0);
-        setPhase3dTotal(status.total_rounds || phase3dTotal);
+        setPhase3dTotal((prev) => {
+          const total = Number(status.total_rounds);
+          return Number.isFinite(total) && total > 0 ? total : prev;
+        });
 
         if (status.current_metrics) {
           const metric = status.current_metrics;
-          setAccuracy(metric.accuracy ?? accuracy);
-          setLoss(metric.round_loss ?? loss);
-          setCompressionRatio(metric.compression_ratio ?? compressionRatio);
+          const nextAccRaw = Number(metric.accuracy);
+          const nextLossRaw = Number(metric.round_loss);
+          const nextCompRaw = Number(metric.compression_ratio);
 
-          setRealHistory((previous) => {
-            const point = {
-              round: status.current_round || previous.length + 1,
-              accuracy: Number((metric.accuracy ?? accuracy).toFixed(4)),
-              loss: Number((metric.round_loss ?? loss).toFixed(4)),
-              compressionRatio: Number((metric.compression_ratio ?? compressionRatio).toFixed(2)),
-              latencyMs,
-              bandwidthKB
-            };
-            const merged = [...previous, point].slice(-MAX_POINTS);
-            onMetricsUpdate?.(merged);
-            return merged;
-          });
+          const smoothedAccuracy = ema(smoothedRef.current.accuracy, nextAccRaw, UI_ACC_ALPHA);
+          const smoothedLoss = ema(smoothedRef.current.loss, nextLossRaw, UI_LOSS_ALPHA);
+          const smoothedCompression = ema(smoothedRef.current.compressionRatio, nextCompRaw, UI_COMP_ALPHA);
+
+          smoothedRef.current.accuracy = Number.isFinite(smoothedAccuracy) ? smoothedAccuracy : smoothedRef.current.accuracy;
+          smoothedRef.current.loss = Number.isFinite(smoothedLoss) ? smoothedLoss : smoothedRef.current.loss;
+          smoothedRef.current.compressionRatio = Number.isFinite(smoothedCompression) ? smoothedCompression : smoothedRef.current.compressionRatio;
+
+          setAccuracy(smoothedRef.current.accuracy);
+          setLoss(smoothedRef.current.loss);
+          setCompressionRatio(smoothedRef.current.compressionRatio);
+
+          const point = {
+            round: status.current_round || 0,
+            accuracy: Number(smoothedRef.current.accuracy.toFixed(4)),
+            loss: Number(smoothedRef.current.loss.toFixed(4)),
+            compressionRatio: Number(smoothedRef.current.compressionRatio.toFixed(2)),
+            latencyMs: Number.isFinite(smoothedRef.current.latencyMs)
+              ? Math.round(smoothedRef.current.latencyMs)
+              : latencyMs,
+            bandwidthKB: Number.isFinite(smoothedRef.current.bandwidthKB)
+              ? Number(smoothedRef.current.bandwidthKB.toFixed(1))
+              : bandwidthKB
+          };
+          pushChartPoint('real', point);
         }
 
         if (status.status === 'completed') {
@@ -368,10 +464,6 @@ export default function BrowserFLDemo({ enableBackendMetrics = false, onMetricsU
   }, [
     trainingMode,
     phase3dStatus,
-    phase3dTotal,
-    accuracy,
-    loss,
-    compressionRatio,
     latencyMs,
     bandwidthKB,
     onMetricsUpdate
@@ -416,26 +508,30 @@ export default function BrowserFLDemo({ enableBackendMetrics = false, onMetricsU
         const backendMultiplier = runtimeBackend === 'webgpu' ? 0.63 : 1;
         const nextLatency = Math.round((baseLatency + compressionCost) * backendMultiplier);
 
+        const smoothedLatency = ema(smoothedRef.current.latencyMs, nextLatency, UI_LAT_ALPHA);
+        const smoothedBandwidth = ema(smoothedRef.current.bandwidthKB, nextBandwidthKB, UI_BW_ALPHA);
+
+        smoothedRef.current.accuracy = nextAccuracy;
+        smoothedRef.current.loss = nextLoss;
+        smoothedRef.current.compressionRatio = nextCompressionRatio;
+        smoothedRef.current.latencyMs = Number.isFinite(smoothedLatency) ? smoothedLatency : nextLatency;
+        smoothedRef.current.bandwidthKB = Number.isFinite(smoothedBandwidth) ? smoothedBandwidth : nextBandwidthKB;
+
         setAccuracy(nextAccuracy);
         setLoss(nextLoss);
         setCompressionRatio(nextCompressionRatio);
-        setLatencyMs(nextLatency);
-        setBandwidthKB(nextBandwidthKB);
+        setLatencyMs(Math.round(smoothedRef.current.latencyMs));
+        setBandwidthKB(smoothedRef.current.bandwidthKB);
 
-        setHistory((previousHistory) => {
-          const point = {
-            round: nextRound,
-            accuracy: Number(nextAccuracy.toFixed(4)),
-            loss: Number(nextLoss.toFixed(4)),
-            latencyMs: nextLatency,
-            bandwidthKB: Number(nextBandwidthKB.toFixed(1)),
-            compressionRatio: Number(nextCompressionRatio.toFixed(2))
-          };
-
-          const merged = [...previousHistory, point].slice(-MAX_POINTS);
-          onMetricsUpdate?.(merged);
-          return merged;
-        });
+        const point = {
+          round: nextRound,
+          accuracy: Number(nextAccuracy.toFixed(4)),
+          loss: Number(nextLoss.toFixed(4)),
+          latencyMs: Math.round(smoothedRef.current.latencyMs),
+          bandwidthKB: Number(smoothedRef.current.bandwidthKB.toFixed(1)),
+          compressionRatio: Number(nextCompressionRatio.toFixed(2))
+        };
+        pushChartPoint('simulation', point);
 
         if (nextRound >= targetRounds) {
           setRunning(false);
@@ -488,8 +584,38 @@ export default function BrowserFLDemo({ enableBackendMetrics = false, onMetricsU
     setBandwidthKB(0);
     setHistory([]);
     setRealHistory([]);
+    smoothedRef.current = {
+      accuracy: 0.51,
+      loss: 1.7,
+      compressionRatio: 4.0,
+      latencyMs: 0,
+      bandwidthKB: 0
+    };
+    if (chartThrottleRef.current.simulationTimer) {
+      clearTimeout(chartThrottleRef.current.simulationTimer);
+    }
+    if (chartThrottleRef.current.realTimer) {
+      clearTimeout(chartThrottleRef.current.realTimer);
+    }
+    chartThrottleRef.current = {
+      simulationLastEmit: 0,
+      simulationPending: null,
+      simulationTimer: null,
+      realLastEmit: 0,
+      realPending: null,
+      realTimer: null
+    };
     onMetricsUpdate?.([]);
   };
+
+  useEffect(() => () => {
+    if (chartThrottleRef.current.simulationTimer) {
+      clearTimeout(chartThrottleRef.current.simulationTimer);
+    }
+    if (chartThrottleRef.current.realTimer) {
+      clearTimeout(chartThrottleRef.current.realTimer);
+    }
+  }, []);
 
   const startPhase3dTraining = async () => {
     try {

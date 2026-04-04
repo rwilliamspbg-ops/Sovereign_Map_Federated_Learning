@@ -30,6 +30,7 @@ Production-grade federated learning platform that combines Byzantine-resilient a
 [![FedAvg Benchmark Compare](https://github.com/rwilliamspbg-ops/Sovereign_Map_Federated_Learning/actions/workflows/fedavg-benchmark-compare.yml/badge.svg?branch=main)](https://github.com/rwilliamspbg-ops/Sovereign_Map_Federated_Learning/actions/workflows/fedavg-benchmark-compare.yml)
 [![API Spec Validation](https://github.com/rwilliamspbg-ops/Sovereign_Map_Federated_Learning/actions/workflows/api-spec-validation.yml/badge.svg?branch=main)](https://github.com/rwilliamspbg-ops/Sovereign_Map_Federated_Learning/actions/workflows/api-spec-validation.yml)
 [![API Docs Pages](https://github.com/rwilliamspbg-ops/Sovereign_Map_Federated_Learning/actions/workflows/api-docs-pages.yml/badge.svg?branch=main)](https://github.com/rwilliamspbg-ops/Sovereign_Map_Federated_Learning/actions/workflows/api-docs-pages.yml)
+[![Full Validation PR Gate](https://github.com/rwilliamspbg-ops/Sovereign_Map_Federated_Learning/actions/workflows/full-validation-pr-gate.yml/badge.svg?branch=main)](https://github.com/rwilliamspbg-ops/Sovereign_Map_Federated_Learning/actions/workflows/full-validation-pr-gate.yml)
 [![CodeQL Security Analysis](https://github.com/rwilliamspbg-ops/Sovereign_Map_Federated_Learning/actions/workflows/codeql-analysis.yml/badge.svg?branch=main)](https://github.com/rwilliamspbg-ops/Sovereign_Map_Federated_Learning/actions/workflows/codeql-analysis.yml)
 [![Security Supply Chain](https://github.com/rwilliamspbg-ops/Sovereign_Map_Federated_Learning/actions/workflows/security-supply-chain.yml/badge.svg?branch=main)](https://github.com/rwilliamspbg-ops/Sovereign_Map_Federated_Learning/actions/workflows/security-supply-chain.yml)
 [![License](https://img.shields.io/github/license/rwilliamspbg-ops/Sovereign_Map_Federated_Learning?style=flat-square)](LICENSE)
@@ -41,6 +42,8 @@ Production-grade federated learning platform that combines Byzantine-resilient a
 [![Marketplace Alerts](https://img.shields.io/badge/Alerts-Marketplace%20Guardrails-f97316?style=flat-square)](marketplace_alerts.yml)
 
 Documentation entrypoint: [docs/README.md](docs/README.md)
+
+> Canonical docs navigation: [docs/README.md](docs/README.md) for active operator guides and [Documentation/MASTER_DOCUMENTATION_INDEX.md](Documentation/MASTER_DOCUMENTATION_INDEX.md) for full repository documentation indexing.
 
 ## New Contributor Fast Path
 
@@ -76,6 +79,41 @@ Where to get contribution guidance:
 - Quick contribution opportunities: [README.md#help-wanted-quick-wins](README.md#help-wanted-quick-wins)
 - Runtime validation expectations: [README.md#contributor-first-steps](README.md#contributor-first-steps)
 - Operations dashboard metric contract: [docs/OPERATIONS_DASHBOARD_METRIC_CONTRACT.md](docs/OPERATIONS_DASHBOARD_METRIC_CONTRACT.md)
+
+## Validation and CI Upgrades April 2026
+
+The consolidated validation path now supports profile-based execution, trend SLO enforcement, artifact diff summaries, browser runtime cadence checks, and scheduled deep validation runs.
+
+What was added:
+
+- Required-style PR gate workflow: [.github/workflows/full-validation-pr-gate.yml](.github/workflows/full-validation-pr-gate.yml)
+- Scheduled deep workflow: [.github/workflows/full-validation-scheduled-deep.yml](.github/workflows/full-validation-scheduled-deep.yml)
+- Fast and deep suite profiles: [tests/scripts/python/run_full_validation_suite.py](tests/scripts/python/run_full_validation_suite.py)
+- Trend SLO checker: [tests/scripts/ci/check_validation_trends.py](tests/scripts/ci/check_validation_trends.py)
+- CI diff summary writer: [tests/scripts/ci/write_validation_diff_summary.py](tests/scripts/ci/write_validation_diff_summary.py)
+- Browser runtime E2E cadence check: [tests/scripts/python/test_browser_runtime_e2e.py](tests/scripts/python/test_browser_runtime_e2e.py)
+- Playwright runtime artifacts: [tests/e2e/runtime-cadence.spec.js](tests/e2e/runtime-cadence.spec.js), [tests/e2e/playwright.config.js](tests/e2e/playwright.config.js)
+
+Canonical commands:
+
+```bash
+npm run test:setup
+npm run test:full:fast
+npm run test:full:deep
+npm run test:trends
+npm run test:summary:diff
+```
+
+Validation artifacts:
+
+- `test-results/full-validation/full_validation_<timestamp>.json`
+- `test-results/full-validation/full_validation_<timestamp>.md`
+- `test-results/full-validation/history.jsonl`
+
+Documentation governance:
+
+- Documentation maintenance runbook: [docs/DOCUMENTATION_MAINTENANCE.md](docs/DOCUMENTATION_MAINTENANCE.md)
+- Test setup details and profile usage: [tests/docs/TEST_ENV_SETUP.md](tests/docs/TEST_ENV_SETUP.md)
 
 ## Mobile Shield Update March 2026
 

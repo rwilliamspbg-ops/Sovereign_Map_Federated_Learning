@@ -43,8 +43,10 @@
   },
   "editable": true,
   "fiscalYearStartMonth": 0,
+  "description": "Plain-language tokenomics and network health view for ops, developers, and users.",
   "graphTooltip": 1,
   "id": null,
+  "tags": ["tokenomics", "bridge", "validator", "ops-friendly"],
   "links": [
     {
       "title": "Operations",
@@ -76,7 +78,7 @@
     {
       "id": 100,
       "type": "row",
-      "title": "Executive Health Scores",
+      "title": "At a Glance",
       "gridPos": {
         "x": 0,
         "y": 0,
@@ -89,7 +91,7 @@
     {
       "id": 101,
       "type": "gauge",
-      "title": "Economic Growth Score",
+      "title": "Token Supply Health",
       "datasource": {
         "type": "prometheus",
         "uid": "prometheus"
@@ -151,7 +153,7 @@
     {
       "id": 102,
       "type": "gauge",
-      "title": "Bridge Health Score",
+      "title": "Bridge Safety",
       "datasource": {
         "type": "prometheus",
         "uid": "prometheus"
@@ -213,7 +215,7 @@
     {
       "id": 103,
       "type": "gauge",
-      "title": "Validator Health Score",
+      "title": "Validator Participation",
       "datasource": {
         "type": "prometheus",
         "uid": "prometheus"

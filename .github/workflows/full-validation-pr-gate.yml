@@ -1,0 +1,53 @@
+name: Full Validation PR Gate
+
+on:
+  pull_request:
+    branches: [ main ]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  validation-gate:
+    name: Fast Validation Gate
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd
+
+      - name: Set up Python
+        uses: actions/setup-python@a309ff8b426b58ec0e2a45f0f869d46889d02405
+        with:
+          python-version: '3.11'
+
+      - name: Set up Node.js
+        uses: actions/setup-node@53b83947a5a98c8d113130e565377fae1a50d02f
+        with:
+          node-version: '20'
+          cache: 'npm'
+
+      - name: Prepare test environment
+        run: npm run test:setup
+
+      - name: Run fast validation profile
+        run: npm run test:full:fast
+
+      - name: Enforce trend SLOs
+        env:
+          VALIDATION_MAX_DURATION_REGRESSION_PCT: '40'
+          VALIDATION_ENFORCE_CATEGORY_ZERO_FAIL: '1'
+        run: npm run test:trends
+
+      - name: Write diff summary
+        run: npm run test:summary:diff
+
+      - name: Upload full validation artifacts
+        if: always()
+        uses: actions/upload-artifact@bbbca2ddaa5d8feaa63e36b76fdaad77386f024f
+        with:
+          name: full-validation-pr-${{ github.run_id }}
+          path: test-results/full-validation
+          if-no-files-found: warn
+          retention-days: 14

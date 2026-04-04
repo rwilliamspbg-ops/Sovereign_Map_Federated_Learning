@@ -9,7 +9,12 @@ from threading import Thread, Lock
 import json
 from pathlib import Path
 from datetime import datetime
+from collections import defaultdict, deque
+import hmac
 import logging
+import os
+import ssl
+import time
 from phase3d_training import FederatedLearningTrainer, TrainingConfig
 
 # Configure logging
@@ -18,6 +23,108 @@ logger = logging.getLogger(__name__)
 
 app = Flask(__name__)
 CORS(app)
+app.config["MAX_CONTENT_LENGTH"] = int(
+    os.getenv("TRAINING_API_MAX_CONTENT_LENGTH_BYTES", str(1024 * 1024))
+)
+
+MUTATING_METHODS = {"POST", "PUT", "PATCH", "DELETE"}
+ADMIN_TOKEN = str(os.getenv("TRAINING_API_ADMIN_TOKEN", "")).strip()
+RATE_LIMIT_WINDOW_SECONDS = max(
+    1, int(os.getenv("TRAINING_API_RATE_LIMIT_WINDOW_SECONDS", "60"))
+)
+RATE_LIMIT_MAX_REQUESTS = max(
+    1, int(os.getenv("TRAINING_API_RATE_LIMIT_MAX_REQUESTS", "120"))
+)
+rate_limit_lock = Lock()
+rate_limit_bucket = defaultdict(deque)
+
+
+def _bool_env(name: str, default: bool = False) -> bool:
+    raw = os.getenv(name)
+    if raw is None:
+        return default
+    return str(raw).strip().lower() in {"1", "true", "yes", "on"}
+
+
+def _request_ip() -> str:
+    forwarded = str(request.headers.get("X-Forwarded-For", "")).strip()
+    if forwarded:
+        return forwarded.split(",")[0].strip()
+    return str(request.remote_addr or "unknown")
+
+
+def _is_secure_request() -> bool:
+    if request.is_secure:
+        return True
+    return str(request.headers.get("X-Forwarded-Proto", "")).strip().lower() == "https"
+
+
+def _is_local_request() -> bool:
+    return _request_ip() in {"127.0.0.1", "::1", "localhost"}
+
+
+def _authorized_admin_request() -> bool:
+    if not ADMIN_TOKEN:
+        return False
+    header_token = str(request.headers.get("X-Training-Admin-Token", "")).strip()
+    auth = str(request.headers.get("Authorization", "")).strip()
+    bearer = auth[7:].strip() if auth.lower().startswith("bearer ") else ""
+    return hmac.compare_digest(header_token, ADMIN_TOKEN) or hmac.compare_digest(
+        bearer, ADMIN_TOKEN
+    )
+
+
+def _check_rate_limit():
+    key = f"{_request_ip()}:{request.method}:{request.path}"
+    now = time.time()
+    with rate_limit_lock:
+        bucket = rate_limit_bucket[key]
+        while bucket and (now - bucket[0]) > RATE_LIMIT_WINDOW_SECONDS:
+            bucket.popleft()
+        if len(bucket) >= RATE_LIMIT_MAX_REQUESTS:
+            return (
+                jsonify(
+                    {
+                        "status": "error",
+                        "message": "rate limit exceeded",
+                        "retry_after_seconds": RATE_LIMIT_WINDOW_SECONDS,
+                    }
+                ),
+                429,
+            )
+        bucket.append(now)
+    return None
+
+
+@app.before_request
+def enforce_security_controls():
+    if request.method == "OPTIONS":
+        return None
+
+    rate_limit_response = _check_rate_limit()
+    if rate_limit_response is not None:
+        return rate_limit_response
+
+    enforce_https = _bool_env("TRAINING_API_ENFORCE_HTTPS", True)
+    allow_local_http = _bool_env("TRAINING_API_ALLOW_LOCAL_HTTP", True)
+    if enforce_https and not _is_secure_request():
+        if not (allow_local_http and _is_local_request()):
+            return (
+                jsonify(
+                    {
+                        "status": "error",
+                        "message": "HTTPS is required",
+                    }
+                ),
+                426,
+            )
+
+    if request.method in MUTATING_METHODS and not _authorized_admin_request():
+        public_paths = set()
+        if request.path not in public_paths:
+            return jsonify({"status": "error", "message": "unauthorized"}), 401
+
+    return None
 
 # Global state
 training_state = {
@@ -50,9 +157,13 @@ def training_config():
     """Get or create training configuration"""
     with training_state["lock"]:
         if request.method == "POST":
-            config_data = request.get_json() or {}
+            config_data = request.get_json(silent=True) or {}
+            if not isinstance(config_data, dict):
+                return jsonify({"status": "error", "message": "JSON object required"}), 400
             try:
                 config = TrainingConfig(**config_data)
+                if int(config.num_rounds) > 10000:
+                    return jsonify({"status": "error", "message": "num_rounds must be <= 10000"}), 400
                 training_state["config"] = config
                 return jsonify(
                     {
@@ -71,8 +182,8 @@ def training_config():
                         },
                     }
                 )
-            except Exception as e:
-                return jsonify({"status": "error", "message": str(e)}), 400
+            except Exception:
+                return jsonify({"status": "error", "message": "invalid training configuration"}), 400
 
         # GET: Return current config or defaults
         config = training_state.get("config", TrainingConfig())
@@ -105,11 +216,15 @@ def start_training():
             )
 
         # Get config from request or use defaults
-        config_data = request.get_json() or {}
+        config_data = request.get_json(silent=True) or {}
+        if not isinstance(config_data, dict):
+            return jsonify({"status": "error", "message": "JSON object required"}), 400
         try:
             config = TrainingConfig(**config_data)
-        except Exception as e:
-            return jsonify({"status": "error", "message": str(e)}), 400
+            if int(config.num_rounds) > 10000:
+                return jsonify({"status": "error", "message": "num_rounds must be <= 10000"}), 400
+        except Exception:
+            return jsonify({"status": "error", "message": "invalid training configuration"}), 400
 
         # Initialize trainer and state
         training_state["trainer"] = FederatedLearningTrainer(config)
@@ -314,13 +429,21 @@ def not_found(error):
 def server_error(error):
     """Handle 500 errors"""
     return (
-        jsonify(
-            {"status": "error", "message": "Internal server error", "error": str(error)}
-        ),
+        jsonify({"status": "error", "message": "Internal server error"}),
         500,
     )
 
 
 if __name__ == "__main__":
     logger.info("Starting Phase 3D training backend on http://localhost:5001")
-    app.run(host="0.0.0.0", port=5001, debug=False)
+    tls_cert = str(os.getenv("TRAINING_TLS_CERT_FILE", "")).strip()
+    tls_key = str(os.getenv("TRAINING_TLS_KEY_FILE", "")).strip()
+    ssl_context = None
+    if tls_cert and tls_key:
+        context = ssl.SSLContext(ssl.PROTOCOL_TLS_SERVER)
+        context.minimum_version = ssl.TLSVersion.TLSv1_3
+        context.load_cert_chain(certfile=tls_cert, keyfile=tls_key)
+        ssl_context = context
+        logger.info("Training API TLS enabled with TLS 1.3 minimum")
+
+    app.run(host="0.0.0.0", port=5001, debug=False, ssl_context=ssl_context)

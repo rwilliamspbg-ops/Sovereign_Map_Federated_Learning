@@ -7,6 +7,8 @@ import json
 import logging
 import time
 import hashlib
+import hmac
+import os
 from functools import wraps
 from typing import Dict, Any, Callable, Optional
 from datetime import datetime
@@ -16,6 +18,18 @@ from tpm_cert_manager import TPMCertificateManager, NodeAuthenticator
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
+
+
+def _admin_authorized() -> bool:
+    expected = str(os.getenv("TRUST_ADMIN_TOKEN", "")).strip()
+    if not expected:
+        return False
+    header_token = str(request.headers.get("X-Trust-Admin-Token", "")).strip()
+    auth = str(request.headers.get("Authorization", "")).strip()
+    bearer = auth[7:].strip() if auth.lower().startswith("bearer ") else ""
+    return hmac.compare_digest(header_token, expected) or hmac.compare_digest(
+        bearer, expected
+    )
 
 
 class SecureNodeCommunication:
@@ -223,6 +237,8 @@ def create_secure_app_middleware(app, node_id: int, num_nodes: int = 10):
     @app.route("/trust/verify/<int:peer_node_id>", methods=["POST"])
     def verify_peer(peer_node_id):
         """Manually verify a peer node's certificate."""
+        if not _admin_authorized():
+            return jsonify({"error": "unauthorized"}), 401
         verified = comm.cert_manager.verify_node_certificate(peer_node_id)
         return jsonify(
             {
@@ -235,6 +251,8 @@ def create_secure_app_middleware(app, node_id: int, num_nodes: int = 10):
     @app.route("/trust/revoke/<int:peer_node_id>", methods=["POST"])
     def revoke_peer_cert(peer_node_id):
         """Revoke a peer node's certificate (admin only)."""
+        if not _admin_authorized():
+            return jsonify({"error": "unauthorized"}), 401
         revoked = comm.cert_manager.revoke_node_certificate(peer_node_id)
         return jsonify(
             {

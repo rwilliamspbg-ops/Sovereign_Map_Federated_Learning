@@ -69,8 +69,10 @@
   },
   "editable": true,
   "fiscalYearStartMonth": 0,
+  "description": "Plain-language operations view for people who need to know if the system is healthy, fast, and behaving normally.",
   "graphTooltip": 1,
   "id": null,
+  "tags": ["operations", "health", "training", "ops-friendly"],
   "links": [
     {
       "title": "Operations",
@@ -102,7 +104,7 @@
     {
       "id": 1,
       "type": "row",
-      "title": "Executive Health Scores",
+      "title": "At a Glance",
       "gridPos": {
         "x": 0,
         "y": 0,
@@ -115,7 +117,7 @@
     {
       "id": 2,
       "type": "gauge",
-      "title": "Service Availability Score",
+      "title": "Overall Service Health",
       "datasource": {
         "type": "prometheus",
         "uid": "prometheus"
@@ -177,7 +179,7 @@
     {
       "id": 3,
       "type": "gauge",
-      "title": "API p95 Latency",
+      "title": "User Request Latency (p95)",
       "datasource": {
         "type": "prometheus",
         "uid": "prometheus"
@@ -239,7 +241,7 @@
     {
       "id": 4,
       "type": "gauge",
-      "title": "Model Accuracy",
+      "title": "Training Accuracy",
       "datasource": {
         "type": "prometheus",
         "uid": "prometheus"

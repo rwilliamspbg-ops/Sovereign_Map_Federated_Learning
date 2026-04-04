@@ -2,8 +2,18 @@
 
 This index catalogs all documentation-like files in the repository and groups them by category and location.
 
+Current-branch canonical references:
+
+- [Root README](../README.md)
+- [docs index](../docs/README.md)
+- [Documentation hub](README.md)
+- [Documentation maintenance runbook](../docs/DOCUMENTATION_MAINTENANCE.md)
+- [Test environment and validation profiles](../tests/docs/TEST_ENV_SETUP.md)
+- [Full Validation PR gate workflow](../.github/workflows/full-validation-pr-gate.yml)
+- [Full Validation scheduled deep workflow](../.github/workflows/full-validation-scheduled-deep.yml)
+
 - Total indexed files: 269
-- Indexed on: 2026-03-13 23:39 UTC
+- Indexed on: 2026-04-04 00:00 UTC
 
 ## Category Index
 

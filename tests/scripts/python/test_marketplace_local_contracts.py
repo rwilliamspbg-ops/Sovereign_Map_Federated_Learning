@@ -63,6 +63,8 @@ def run() -> int:
         tmpdir = Path(tmp)
         _configure_temp_marketplace_state(tmpdir)
         _ensure_strategy()
+        backend.JOIN_API_ADMIN_TOKEN = "test-suite-admin-token"
+        admin_headers = {"X-Join-Admin-Token": backend.JOIN_API_ADMIN_TOKEN}
 
         client = backend.app.test_client()
 
@@ -79,6 +81,7 @@ def run() -> int:
                 "min_rounds": 1,
                 "attestation_status": "verified",
             },
+            headers=admin_headers,
         )
         assert offer_resp.status_code == 201, offer_resp.get_data(as_text=True)
         offer = offer_resp.get_json()
@@ -93,6 +96,7 @@ def run() -> int:
                 "min_quality_score": 0.7,
                 "budget_total": 30.0,
             },
+            headers=admin_headers,
         )
         assert intent_resp.status_code == 201, intent_resp.get_data(as_text=True)
         intent = intent_resp.get_json()
@@ -106,6 +110,7 @@ def run() -> int:
         match_resp = client.post(
             "/marketplace/match",
             json={"round_intent_id": intent_id, "max_offers": 2},
+            headers=admin_headers,
         )
         assert match_resp.status_code == 201, match_resp.get_data(as_text=True)
         contract = match_resp.get_json()
@@ -115,7 +120,7 @@ def run() -> int:
         assert "score_breakdown" in contract["selected_offers"][0]
         assert "selection_diagnostics" in contract
 
-        trigger_resp = client.post("/trigger_fl")
+        trigger_resp = client.post("/trigger_fl", headers=admin_headers)
         assert trigger_resp.status_code in (202, 503)
         trigger_payload = trigger_resp.get_json()
         if trigger_payload.get("status") == "accepted":
@@ -124,6 +129,7 @@ def run() -> int:
         release_resp = client.post(
             "/marketplace/escrow/release",
             json={"contract_id": contract_id},
+            headers=admin_headers,
         )
         assert release_resp.status_code == 200
         released = release_resp.get_json()
@@ -136,6 +142,7 @@ def run() -> int:
                 "reporter": "test-suite",
                 "reason": "quality concerns",
             },
+            headers=admin_headers,
         )
         assert dispute_resp.status_code == 201
         dispute = dispute_resp.get_json()
@@ -144,6 +151,7 @@ def run() -> int:
         dispute_update_resp = client.patch(
             f"/marketplace/disputes/{dispute['dispute_id']}",
             json={"status": "under_review", "actor": "moderator"},
+            headers=admin_headers,
         )
         assert dispute_update_resp.status_code == 200
 
@@ -155,6 +163,7 @@ def run() -> int:
                 "source": "tests",
                 "payload": {"contract_id": contract_id},
             },
+            headers=admin_headers,
         )
         assert gov_resp.status_code == 201
 
@@ -172,6 +181,7 @@ def run() -> int:
                     "min_quality_score": 0.75,
                 },
             },
+            headers=admin_headers,
         )
         assert preview_resp.status_code == 200, preview_resp.get_data(as_text=True)
         preview_payload = preview_resp.get_json()
@@ -186,6 +196,7 @@ def run() -> int:
                 "description": "Require stronger quality floor for matches",
                 "created_by": "test-suite",
             },
+            headers=admin_headers,
         )
         assert proposal_resp.status_code == 201, proposal_resp.get_data(as_text=True)
         proposal = proposal_resp.get_json()
@@ -199,6 +210,7 @@ def run() -> int:
                 "weight": 2.0,
                 "reason": "supports policy hardening",
             },
+            headers=admin_headers,
         )
         assert vote_resp.status_code == 200, vote_resp.get_data(as_text=True)
         voted = vote_resp.get_json()
@@ -256,8 +268,6 @@ def run() -> int:
         )
         invite_request = invite_request_resp.get_json()
         assert invite_request["status"] == "pending"
-
-        admin_headers = {"X-Join-Admin-Token": backend.JOIN_API_ADMIN_TOKEN}
 
         auth_methods_resp = client.get("/admin/auth/methods")
         assert auth_methods_resp.status_code == 200

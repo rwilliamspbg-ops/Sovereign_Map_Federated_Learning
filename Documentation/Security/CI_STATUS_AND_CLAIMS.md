@@ -7,11 +7,11 @@ This document defines what can be claimed from automation results and what still
 Latest local command results on this branch:
 
 - `make lint` surfaced `golangci-lint` typecheck failures caused by missing modules:
-	- `github.com/tetratelabs/wazero`
-	- `github.com/tetratelabs/wazero/api`
+  - `github.com/tetratelabs/wazero`
+  - `github.com/tetratelabs/wazero/api`
 - `go test ./...` failed due to:
-	- Missing modules (`wazero`, `wazero/api`, `github.com/stretchr/testify/assert`)
-	- Test/API drift in `internal/batch`, `internal/island`, `internal/p2p`, and `internal/tpm`
+  - Missing modules (`wazero`, `wazero/api`, `github.com/stretchr/testify/assert`)
+  - Test/API drift in `internal/batch`, `internal/island`, `internal/p2p`, and `internal/tpm`
 
 Claim constraint from this snapshot:
 
@@ -21,6 +21,7 @@ Claim constraint from this snapshot:
 ## Workflow Badges (main branch)
 
 [![Build and Test](https://github.com/rwilliamspbg-ops/Sovereign_Map_Federated_Learning/actions/workflows/build.yml/badge.svg?branch=main)](https://github.com/rwilliamspbg-ops/Sovereign_Map_Federated_Learning/actions/workflows/build.yml)
+[![Full Validation PR Gate](https://github.com/rwilliamspbg-ops/Sovereign_Map_Federated_Learning/actions/workflows/full-validation-pr-gate.yml/badge.svg?branch=main)](https://github.com/rwilliamspbg-ops/Sovereign_Map_Federated_Learning/actions/workflows/full-validation-pr-gate.yml)
 [![CodeQL Security Analysis](https://github.com/rwilliamspbg-ops/Sovereign_Map_Federated_Learning/actions/workflows/codeql-analysis.yml/badge.svg?branch=main)](https://github.com/rwilliamspbg-ops/Sovereign_Map_Federated_Learning/actions/workflows/codeql-analysis.yml)
 [![Lint Code Base](https://github.com/rwilliamspbg-ops/Sovereign_Map_Federated_Learning/actions/workflows/lint.yml/badge.svg?branch=main)](https://github.com/rwilliamspbg-ops/Sovereign_Map_Federated_Learning/actions/workflows/lint.yml)
 [![SGP-001 Audit Sync](https://github.com/rwilliamspbg-ops/Sovereign_Map_Federated_Learning/actions/workflows/audit-check.yml/badge.svg?branch=main)](https://github.com/rwilliamspbg-ops/Sovereign_Map_Federated_Learning/actions/workflows/audit-check.yml)
@@ -38,6 +39,7 @@ Claim constraint from this snapshot:
 
 - Code builds and workflow jobs complete for the tracked branch/commit.
 - Unit/integration suites wired into CI pass.
+- Full validation gate checks capability, security, and performance profiles for pull requests.
 - Static analysis/lint/security gates configured in workflows pass.
 - TPM emulation tests pass in CI via `swtpm`/`tpm2-tools`.
 - NPU fallback logic tests pass (selection/fallback behavior, not accelerator throughput).

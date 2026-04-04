@@ -18,14 +18,17 @@ Features:
 import json
 import base64
 import hashlib
+import hmac
 import logging
 import math
 import os
 import platform
 import random
+import re
 import secrets
 import shutil
 import socket
+import ssl
 import threading
 import time
 import urllib.error
@@ -343,14 +346,132 @@ class ByzantineRobustFedAvg(FedAvg):
 
 app = Flask(__name__)
 metrics = PrometheusMetrics(app, group_by="endpoint")
+app.config["MAX_CONTENT_LENGTH"] = int(
+    os.getenv("API_MAX_CONTENT_LENGTH_BYTES", str(1024 * 1024))
+)
+
+_MUTATING_METHODS = {"POST", "PUT", "PATCH", "DELETE"}
+_RATE_LIMIT_WINDOW_SECONDS = max(
+    1, int(os.getenv("API_RATE_LIMIT_WINDOW_SECONDS", "60"))
+)
+_RATE_LIMIT_MAX_REQUESTS = max(
+    1, int(os.getenv("API_RATE_LIMIT_MAX_REQUESTS", "120"))
+)
+_MUTATION_RATE_LIMIT_MAX_REQUESTS = max(
+    1, int(os.getenv("API_MUTATION_RATE_LIMIT_MAX_REQUESTS", "30"))
+)
+_ROLE_PATTERN = re.compile(r"^[a-zA-Z0-9_-]{2,32}$")
+_CHAT_QUERY_PATTERN = re.compile(r"^[a-zA-Z0-9\s.,?!:'\"()_\-/]{1,512}$")
+_rate_limit_lock = threading.Lock()
+_rate_limit_bucket: Dict[str, deque] = defaultdict(deque)
 
 
 @app.after_request
 def add_cors_headers(response):
-    response.headers["Access-Control-Allow-Origin"] = "*"
-    response.headers["Access-Control-Allow-Headers"] = "Content-Type,Authorization"
-    response.headers["Access-Control-Allow-Methods"] = "GET,POST,OPTIONS"
+    allowed_origin = str(os.getenv("API_CORS_ALLOW_ORIGIN", "*")).strip() or "*"
+    response.headers["Access-Control-Allow-Origin"] = allowed_origin
+    response.headers["Access-Control-Allow-Headers"] = (
+        "Content-Type,Authorization,X-Join-Admin-Token,X-Admin-Wallet"
+    )
+    response.headers["Access-Control-Allow-Methods"] = "GET,POST,PUT,PATCH,DELETE,OPTIONS"
     return response
+
+
+def _bool_env(name: str, default: bool = False) -> bool:
+    raw = os.getenv(name)
+    if raw is None:
+        return default
+    return str(raw).strip().lower() in {"1", "true", "yes", "on"}
+
+
+def _request_ip(req: Request) -> str:
+    forwarded = str(req.headers.get("X-Forwarded-For", "")).strip()
+    if forwarded:
+        return forwarded.split(",")[0].strip()
+    return str(req.remote_addr or "unknown")
+
+
+def _is_local_request(req: Request) -> bool:
+    ip = _request_ip(req)
+    return ip in {"127.0.0.1", "::1", "localhost"}
+
+
+def _is_request_secure(req: Request) -> bool:
+    if req.is_secure:
+        return True
+    forwarded_proto = str(req.headers.get("X-Forwarded-Proto", "")).strip().lower()
+    return forwarded_proto == "https"
+
+
+def _token_matches(candidate: str, expected: str) -> bool:
+    if not candidate or not expected:
+        return False
+    return hmac.compare_digest(candidate, expected)
+
+
+def _enforce_rate_limit(req: Request) -> Optional[Response]:
+    path = str(req.path)
+    if path in {"/health", "/status", "/ops/health"}:
+        return None
+
+    ip = _request_ip(req)
+    now = time.time()
+    max_requests = _MUTATION_RATE_LIMIT_MAX_REQUESTS
+    if req.method not in _MUTATING_METHODS:
+        max_requests = _RATE_LIMIT_MAX_REQUESTS
+
+    bucket_key = f"{ip}:{req.method}:{path}"
+    with _rate_limit_lock:
+        bucket = _rate_limit_bucket[bucket_key]
+        while bucket and (now - bucket[0]) > _RATE_LIMIT_WINDOW_SECONDS:
+            bucket.popleft()
+        if len(bucket) >= max_requests:
+            return jsonify(
+                {
+                    "error": "rate_limit_exceeded",
+                    "message": "Too many requests",
+                    "retry_after_seconds": _RATE_LIMIT_WINDOW_SECONDS,
+                }
+            ), 429
+        bucket.append(now)
+    return None
+
+
+@app.before_request
+def _security_guardrails():
+    if request.method == "OPTIONS":
+        return None
+
+    rate_limit_response = _enforce_rate_limit(request)
+    if rate_limit_response is not None:
+        return rate_limit_response
+
+    enforce_https = _bool_env("SECURITY_ENFORCE_HTTPS", True)
+    allow_local_http = _bool_env("SECURITY_ALLOW_LOCAL_HTTP", True)
+    if enforce_https and not _is_request_secure(request):
+        if not (allow_local_http and _is_local_request(request)):
+            return (
+                jsonify(
+                    {
+                        "error": "https_required",
+                        "message": "HTTPS is required for this endpoint",
+                    }
+                ),
+                426,
+            )
+
+    if request.method in _MUTATING_METHODS:
+        # Public write endpoints that intentionally allow unauthenticated input.
+        public_write_paths = {
+            "/join/request_invite",
+            "/join/register",
+            "/mobile/verify_gradient",
+            "/attestations/share",
+        }
+        if request.path not in public_write_paths and not _authorized_join_admin(request):
+            return jsonify({"error": "unauthorized"}), 401
+
+    return None
 
 
 # Prometheus metrics
@@ -455,6 +576,16 @@ simulation_effects = {
     "accuracy_penalty_pct": 0.0,
     "loss_multiplier": 1.0,
 }
+smoothed_metrics = {
+    "accuracy": None,
+    "loss": None,
+}
+
+
+def _ema(previous: Optional[float], current: float, alpha: float = 0.3) -> float:
+    if previous is None:
+        return float(current)
+    return (alpha * float(current)) + ((1.0 - alpha) * float(previous))
 
 
 def refresh_marketplace_metrics() -> Dict[str, float]:
@@ -498,10 +629,10 @@ ops_trends = {
 }
 MODEL_REGISTRY_PATH = os.getenv("MODEL_REGISTRY_PATH", "./data/model_registry.jsonl")
 TPM_METRICS_ENDPOINT = os.getenv(
-    "TPM_METRICS_ENDPOINT", "http://tpm-metrics:9091/event/attestation"
+    "TPM_METRICS_ENDPOINT", "https://tpm-metrics:9091/event/attestation"
 )
 TOKENOMICS_METRICS_ENDPOINT = os.getenv(
-    "TOKENOMICS_METRICS_ENDPOINT", "http://tokenomics-metrics:9105/event/tokenomics"
+    "TOKENOMICS_METRICS_ENDPOINT", "https://tokenomics-metrics:9105/event/tokenomics"
 )
 LLM_ADAPTER_POLICY_PATH = os.getenv(
     "LLM_ADAPTER_POLICY_PATH", "/app/config/llm_adapter_policy.json"
@@ -540,7 +671,10 @@ VERIFICATION_POLICY_STATE_PATH = os.getenv(
 VERIFICATION_POLICY_HISTORY_PATH = os.getenv(
     "VERIFICATION_POLICY_HISTORY_PATH", "/app/data/verification_policy_history.json"
 )
-JOIN_API_ADMIN_TOKEN = os.getenv("JOIN_API_ADMIN_TOKEN", "local-dev-admin-token")
+JOIN_API_ADMIN_TOKEN = str(os.getenv("JOIN_API_ADMIN_TOKEN", "")).strip()
+ALLOW_INSECURE_DEV_ADMIN_TOKEN = _bool_env(
+    "ALLOW_INSECURE_DEV_ADMIN_TOKEN", False
+)
 CERT_DIR = os.getenv("CERT_DIR", "/app/data/certs")
 PUBLIC_AGGREGATOR_HOST = os.getenv("PUBLIC_AGGREGATOR_HOST", "localhost")
 PUBLIC_AGGREGATOR_PORT = int(os.getenv("PUBLIC_AGGREGATOR_PORT", "8080"))
@@ -1468,12 +1602,22 @@ def _record_ops_trend(
 
 
 def _authorized_join_admin(req: Request) -> bool:
-    header_token = req.headers.get("X-Join-Admin-Token", "")
-    auth = req.headers.get("Authorization", "")
-    bearer = auth[7:] if auth.lower().startswith("bearer ") else ""
-    token_authorized = JOIN_API_ADMIN_TOKEN in (header_token, bearer)
-    if token_authorized:
-        return True
+    header_token = str(req.headers.get("X-Join-Admin-Token", "")).strip()
+    auth = str(req.headers.get("Authorization", "")).strip()
+    bearer = auth[7:].strip() if auth.lower().startswith("bearer ") else ""
+
+    expected_token = JOIN_API_ADMIN_TOKEN
+    if expected_token:
+        weak_default = expected_token == "local-dev-admin-token"
+        if weak_default and not ALLOW_INSECURE_DEV_ADMIN_TOKEN:
+            logger.warning(
+                "Weak admin token refused; set JOIN_API_ADMIN_TOKEN to a strong value"
+            )
+        else:
+            if _token_matches(header_token, expected_token) or _token_matches(
+                bearer, expected_token
+            ):
+                return True
 
     # Prevent header spoofing by requiring an explicit opt-in for header-only
     # wallet authorization (safe default is disabled).
@@ -1651,11 +1795,21 @@ def persist_round_snapshot(
 
 def publish_tpm_attestation_events(results_count: int):
     """Publish TPM attestation success events for active FL participants."""
-    for idx in range(results_count):
+    allow_insecure_endpoint = _bool_env("ALLOW_INSECURE_METRICS_ENDPOINTS", False)
+    if not allow_insecure_endpoint and not TPM_METRICS_ENDPOINT.startswith("https://"):
+        return
+
+    event_limit = max(1, int(os.getenv("TPM_EVENT_SAMPLE_LIMIT", "20")))
+    timeout_seconds = float(os.getenv("TPM_EVENT_TIMEOUT_SECONDS", "0.2"))
+    sampled_count = min(results_count, event_limit)
+
+    for idx in range(sampled_count):
         payload = {
             "node_id": idx + 1,
             "success": True,
             "latency_ms": 25 + random.uniform(0, 15),
+            "sampled": sampled_count,
+            "participants": int(results_count),
         }
         try:
             req = urllib.request.Request(
@@ -1664,7 +1818,7 @@ def publish_tpm_attestation_events(results_count: int):
                 headers={"Content-Type": "application/json"},
                 method="POST",
             )
-            urllib.request.urlopen(req, timeout=1.0)
+            urllib.request.urlopen(req, timeout=timeout_seconds)
         except (urllib.error.URLError, TimeoutError, ValueError):
             continue
 
@@ -1765,14 +1919,21 @@ def build_tokenomics_payload(
 
 
 def publish_tokenomics_event(payload: Dict[str, float]):
+    allow_insecure_endpoint = _bool_env("ALLOW_INSECURE_METRICS_ENDPOINTS", False)
+    if not allow_insecure_endpoint and not TOKENOMICS_METRICS_ENDPOINT.startswith(
+        "https://"
+    ):
+        return
+
     try:
+        timeout_seconds = float(os.getenv("TOKENOMICS_EVENT_TIMEOUT_SECONDS", "0.35"))
         req = urllib.request.Request(
             TOKENOMICS_METRICS_ENDPOINT,
             data=json.dumps(payload).encode("utf-8"),
             headers={"Content-Type": "application/json"},
             method="POST",
         )
-        urllib.request.urlopen(req, timeout=1.5)
+        urllib.request.urlopen(req, timeout=timeout_seconds)
     except (urllib.error.URLError, TimeoutError, ValueError):
         return
 
@@ -1796,12 +1957,18 @@ def publish_live_tokenomics_snapshot():
 
 
 def _latest_accuracy() -> float:
+    smoothed = smoothed_metrics.get("accuracy")
+    if smoothed is not None:
+        return float(smoothed)
     if strategy is None or not strategy.convergence_history["accuracies"]:
         return 65.0
     return float(strategy.convergence_history["accuracies"][-1])
 
 
 def _latest_loss() -> float:
+    smoothed = smoothed_metrics.get("loss")
+    if smoothed is not None:
+        return float(smoothed)
     if strategy is None or not strategy.convergence_history["losses"]:
         return 3.5
     return float(strategy.convergence_history["losses"][-1])
@@ -1822,15 +1989,37 @@ def execute_manual_fl_round(reason: str = "manual") -> Dict[str, Any]:
     prev_acc = _latest_accuracy()
     prev_loss = _latest_loss()
 
-    improvement = max(0.02, (100.0 - prev_acc) * 0.045)
-    drift = random.uniform(-0.25, 0.55)
+    improvement = max(0.02, (100.0 - prev_acc) * 0.04)
+    drift = random.uniform(-0.08, 0.18)
     penalty = float(simulation_effects.get("accuracy_penalty_pct", 0.0))
-    next_acc = max(0.0, min(99.9, prev_acc + improvement + drift - penalty))
+    raw_acc = max(0.0, min(99.9, prev_acc + improvement + drift - penalty))
+    next_acc = max(
+        0.0,
+        min(
+            99.9,
+            _ema(
+                smoothed_metrics.get("accuracy"),
+                raw_acc,
+                alpha=float(os.getenv("FL_ACC_SMOOTHING_ALPHA", "0.35")),
+            ),
+        ),
+    )
 
     base_loss = max(0.08, prev_loss * 0.92)
-    loss_jitter = random.uniform(-0.05, 0.08)
+    loss_jitter = random.uniform(-0.02, 0.03)
     loss_multiplier = max(0.6, float(simulation_effects.get("loss_multiplier", 1.0)))
-    next_loss = max(0.05, (base_loss + loss_jitter) * loss_multiplier)
+    raw_loss = max(0.05, (base_loss + loss_jitter) * loss_multiplier)
+    next_loss = max(
+        0.05,
+        _ema(
+            smoothed_metrics.get("loss"),
+            raw_loss,
+            alpha=float(os.getenv("FL_LOSS_SMOOTHING_ALPHA", "0.30")),
+        ),
+    )
+
+    smoothed_metrics["accuracy"] = float(next_acc)
+    smoothed_metrics["loss"] = float(next_loss)
 
     active_nodes = max(1, int(active_nodes_gauge._value.get()) or 1)
     active_nodes += max(0, simulation_counters.get("networkPartitions", 0) // 3)
@@ -1870,7 +2059,11 @@ def execute_manual_fl_round(reason: str = "manual") -> Dict[str, Any]:
     active_nodes_gauge.set(active_nodes)
 
     persist_round_snapshot(current_round, next_acc, next_loss, active_nodes)
-    publish_tpm_attestation_events(active_nodes)
+    threading.Thread(
+        target=publish_tpm_attestation_events,
+        args=(active_nodes,),
+        daemon=True,
+    ).start()
     tokenomics_payload = build_tokenomics_payload(
         current_round, next_acc, next_loss, active_nodes
     )
@@ -2000,8 +2193,21 @@ def run_tokenomics_publisher():
 
 @app.route("/chat", methods=["POST"])
 def chat_query():
-    data = request.json or {}
-    query = data.get("query", "").lower()
+    data = request.get_json(silent=True) or {}
+    query_raw = str(data.get("query", "")).strip()
+    if not query_raw:
+        return jsonify({"status": "error", "message": "query is required"}), 400
+    if len(query_raw) > 512 or not _CHAT_QUERY_PATTERN.match(query_raw):
+        return (
+            jsonify(
+                {
+                    "status": "error",
+                    "message": "query contains invalid characters or is too long",
+                }
+            ),
+            400,
+        )
+    query = query_raw.lower()
 
     # Simple simulated LLM responses for HUD actions
     if "status" in query or "health" in query:
@@ -2049,7 +2255,10 @@ def ops_health():
 
 @app.route("/ops/trends", methods=["GET"])
 def ops_trends_view():
-    limit = int(request.args.get("limit", 120))
+    try:
+        limit = int(request.args.get("limit", 120))
+    except (TypeError, ValueError):
+        limit = 120
     if limit <= 0:
         limit = 120
     limit = min(limit, OPS_TREND_WINDOW)
@@ -2114,8 +2323,11 @@ def ops_events_stream():
 
 @app.route("/verification_policy", methods=["POST"])
 def update_verification_policy():
-    data = request.json or {}
-    actor_role = request.headers.get("X-API-Role", "admin")
+    data = request.get_json(silent=True) or {}
+    if not isinstance(data, dict):
+        return jsonify({"error": "invalid_payload", "message": "JSON object required"}), 400
+    actor_role_raw = str(request.headers.get("X-API-Role", "admin")).strip().lower()
+    actor_role = actor_role_raw if _ROLE_PATTERN.match(actor_role_raw) else "admin"
     new_policy = _normalize_verification_policy(data)
 
     with verification_policy_lock:
@@ -2180,6 +2392,19 @@ def update_verification_policy():
 @app.route("/mobile/verify_gradient", methods=["POST"])
 def verify_mobile_gradient():
     payload = request.get_json(silent=True) or {}
+    if not isinstance(payload, dict):
+        return (
+            jsonify({"status": "error", "accepted": False, "reason": "invalid_payload"}),
+            400,
+        )
+
+    payload_b64 = str(payload.get("gradient_payload_b64", ""))
+    if len(payload_b64) > 2_000_000:
+        return (
+            jsonify({"status": "error", "accepted": False, "reason": "payload_too_large"}),
+            413,
+        )
+
     accepted, reason, details = verify_mobile_signed_gradient(payload)
     result = "accepted" if accepted else "rejected"
     mobile_gradient_verify_total.labels(result=result, reason=reason).inc()
@@ -2212,11 +2437,24 @@ def verify_mobile_gradient():
 def start_training():
     global training_thread
     payload = request.get_json(silent=True) or {}
+    if not isinstance(payload, dict):
+        return jsonify({"status": "error", "message": "JSON object required"}), 400
     requested_rounds_raw = payload.get("rounds", 0)
     try:
         requested_rounds = int(requested_rounds_raw)
     except (TypeError, ValueError):
         requested_rounds = 0
+
+    if requested_rounds > 10000:
+        return (
+            jsonify(
+                {
+                    "status": "error",
+                    "message": "rounds must be <= 10000",
+                }
+            ),
+            400,
+        )
 
     if requested_rounds < 0:
         requested_rounds = 0
@@ -4798,7 +5036,17 @@ def run_flower_server():
 def run_flask_metrics():
     """Run Flask metrics API on port 8000."""
     logger.info("Starting Flask metrics API on port 8000...")
-    app.run(host="0.0.0.0", port=8000, debug=False)
+    tls_cert = str(os.getenv("TLS_CERT_FILE", "")).strip()
+    tls_key = str(os.getenv("TLS_KEY_FILE", "")).strip()
+    ssl_context = None
+    if tls_cert and tls_key:
+        context = ssl.SSLContext(ssl.PROTOCOL_TLS_SERVER)
+        context.minimum_version = ssl.TLSVersion.TLSv1_3
+        context.load_cert_chain(certfile=tls_cert, keyfile=tls_key)
+        ssl_context = context
+        logger.info("TLS enabled for metrics API with TLS 1.3 minimum")
+
+    app.run(host="0.0.0.0", port=8000, debug=False, ssl_context=ssl_context)
 
 
 if __name__ == "__main__":

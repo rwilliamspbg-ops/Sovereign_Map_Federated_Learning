@@ -1,0 +1,65 @@
+name: Docs Quality
+
+on:
+  pull_request:
+    paths:
+      - "README.md"
+      - "docs/README.md"
+      - "Documentation/README.md"
+      - "docs/DOCUMENTATION_MAINTENANCE.md"
+      - "scripts/check_markdown_links_subset.py"
+      - ".github/workflows/docs-quality.yml"
+  push:
+    branches: [main]
+    paths:
+      - "README.md"
+      - "docs/README.md"
+      - "Documentation/README.md"
+      - "docs/DOCUMENTATION_MAINTENANCE.md"
+      - "scripts/check_markdown_links_subset.py"
+      - ".github/workflows/docs-quality.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  markdown-lint-and-links:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd
+
+      - name: Setup Node
+        uses: actions/setup-node@53b83947a5a98c8d113130e565377fae1a50d02f
+        with:
+          node-version: "20"
+
+      - name: Setup Python
+        uses: actions/setup-python@a309ff8b426b58ec0e2a45f0f869d46889d02405
+        with:
+          python-version: "3.12"
+
+      - name: Markdown lint (targeted files)
+        run: |
+          cat > /tmp/markdownlint-docs-quality.json <<'EOF'
+          {
+            "default": true,
+            "MD013": false
+          }
+          EOF
+          npx --yes markdownlint-cli2 \
+            --config /tmp/markdownlint-docs-quality.json \
+            README.md \
+            docs/README.md \
+            Documentation/README.md \
+            docs/DOCUMENTATION_MAINTENANCE.md
+
+      - name: Local markdown link check (targeted files)
+        run: |
+          python scripts/check_markdown_links_subset.py \
+            README.md \
+            docs/README.md \
+            Documentation/README.md \
+            docs/DOCUMENTATION_MAINTENANCE.md
