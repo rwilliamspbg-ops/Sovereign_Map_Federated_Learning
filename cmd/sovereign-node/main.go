@@ -2,6 +2,7 @@ package main
 
 import (
 	"context"
+	"crypto/fips140"
 	"encoding/json"
 	"errors"
 	"flag"
@@ -15,6 +16,11 @@ import (
 	"github.com/rwilliamspbg-ops/Sovereign_Map_Federated_Learning/internal/chainruntime"
 	meshruntime "github.com/rwilliamspbg-ops/Sovereign_Map_Federated_Learning/node/network"
 	"github.com/rwilliamspbg-ops/Sovereign_Map_Federated_Learning/node/networking"
+)
+
+var (
+	fipsMode     = "optional"
+	buildProfile = "dev"
 )
 
 type bootstrapNode struct {
@@ -35,6 +41,13 @@ type networkConfig struct {
 }
 
 func main() {
+	if !fips140.Enabled() {
+		fmt.Fprintln(os.Stderr, "FIPS runtime check failed: crypto/fips140 is not enabled (build with CGO_ENABLED=1 GOFIPS140=latest -tags=requirefips)")
+		os.Exit(1)
+	}
+
+	fmt.Fprintf(os.Stderr, "security profile: build=%s fips_mode=%s fips_enabled=%t\n", buildProfile, fipsMode, fips140.Enabled())
+
 	if len(os.Args) < 2 {
 		fmt.Println("usage: sovereign-node <start|join>")
 		os.Exit(1)

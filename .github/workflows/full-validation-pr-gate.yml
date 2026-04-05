@@ -28,6 +28,22 @@ jobs:
           node-version: '20'
           cache: 'npm'
 
+      - name: Set up Go
+        uses: actions/setup-go@v5
+        with:
+          go-version-file: go.mod
+
+      - name: Build backend in FIPS-required mode
+        run: |
+          mkdir -p bin
+          CGO_ENABLED=1 GOFIPS140=latest go build -tags=requirefips -ldflags "-X main.fipsMode=required -X main.buildProfile=prod" -o bin/sovereign_backend ./cmd/sovereign-node
+
+      - name: Verify backend build metadata
+        run: |
+          mkdir -p test-results/full-validation
+          go version -m bin/sovereign_backend | tee test-results/full-validation/fips-buildinfo.txt
+          go version -m bin/sovereign_backend | grep -E "GOFIPS140=latest|-tags=requirefips|CGO_ENABLED=1"
+
       - name: Prepare test environment
         run: npm run test:setup
 
