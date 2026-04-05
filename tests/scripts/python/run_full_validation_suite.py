@@ -163,7 +163,9 @@ def run_check(name: str, category: str, command: str, timeout: int) -> CheckResu
         passed = proc.returncode == 0
         return_code = proc.returncode
     except subprocess.TimeoutExpired as exc:
-        _safe_write_text(output_file, (exc.stdout or "") + "\n" + (exc.stderr or "") + "\n[TIMEOUT]")
+        _safe_write_text(
+            output_file, (exc.stdout or "") + "\n" + (exc.stderr or "") + "\n[TIMEOUT]"
+        )
         passed = False
         return_code = 124
 
@@ -179,14 +181,12 @@ def run_check(name: str, category: str, command: str, timeout: int) -> CheckResu
     )
 
 
-
 def aggregate_by_category(results: List[CheckResult]) -> Dict[str, Dict[str, int]]:
     grouped: Dict[str, Dict[str, int]] = {}
     for row in results:
         grouped.setdefault(row.category, {"passed": 0, "failed": 0})
         grouped[row.category]["passed" if row.passed else "failed"] += 1
     return grouped
-
 
 
 def load_last_history_record() -> Optional[Dict[str, object]]:
@@ -205,11 +205,12 @@ def load_last_history_record() -> Optional[Dict[str, object]]:
     return None
 
 
-
 def append_history_record(payload: Dict[str, object]) -> None:
     HISTORY_FILE.parent.mkdir(parents=True, exist_ok=True)
     summary = payload.get("summary", {})
-    duration = sum(float(item.get("duration_seconds", 0.0)) for item in payload.get("results", []))
+    duration = sum(
+        float(item.get("duration_seconds", 0.0)) for item in payload.get("results", [])
+    )
     record = {
         "timestamp_utc": payload.get("timestamp_utc"),
         "total": int(summary.get("total", 0)),
@@ -222,8 +223,9 @@ def append_history_record(payload: Dict[str, object]) -> None:
         handle.write(json.dumps(record) + "\n")
 
 
-
-def build_markdown(results: List[CheckResult], previous: Optional[Dict[str, object]]) -> str:
+def build_markdown(
+    results: List[CheckResult], previous: Optional[Dict[str, object]]
+) -> str:
     total = len(results)
     passed = sum(1 for r in results if r.passed)
     failed = total - passed
@@ -253,23 +255,29 @@ def build_markdown(results: List[CheckResult], previous: Optional[Dict[str, obje
         lines.append(f"- Failed delta: {failed - prev_failed:+d}")
         lines.append(f"- Duration delta (s): {round(duration - prev_duration, 2):+}")
 
-    lines.extend([
-        "",
-        "## By Category",
-        "",
-    ])
+    lines.extend(
+        [
+            "",
+            "## By Category",
+            "",
+        ]
+    )
 
     for category in sorted(by_category.keys()):
         stats = by_category[category]
-        lines.append(f"- {category}: {stats['passed']} passed / {stats['failed']} failed")
+        lines.append(
+            f"- {category}: {stats['passed']} passed / {stats['failed']} failed"
+        )
 
-    lines.extend([
-        "",
-        "## Detailed Results",
-        "",
-        "| Check | Category | Status | Exit | Duration (s) | Log |",
-        "|------|----------|--------|------|--------------|-----|",
-    ])
+    lines.extend(
+        [
+            "",
+            "## Detailed Results",
+            "",
+            "| Check | Category | Status | Exit | Duration (s) | Log |",
+            "|------|----------|--------|------|--------------|-----|",
+        ]
+    )
 
     for row in results:
         status = "PASS" if row.passed else "FAIL"
@@ -277,18 +285,19 @@ def build_markdown(results: List[CheckResult], previous: Optional[Dict[str, obje
             f"| {row.name} | {row.category} | {status} | {row.return_code} | {row.duration_seconds} | {row.output_file} |"
         )
 
-    lines.extend([
-        "",
-        "## Immediate Gaps To Close",
-        "",
-        "1. Fix any failed checks shown above and re-run this suite.",
-        "2. Keep live HTTP E2E, fuzz, and performance budgets required in CI.",
-        "3. Track history.jsonl trends and investigate pass-rate or duration regressions.",
-        "4. Add chaos/soak runs on schedule for long-horizon reliability.",
-    ])
+    lines.extend(
+        [
+            "",
+            "## Immediate Gaps To Close",
+            "",
+            "1. Fix any failed checks shown above and re-run this suite.",
+            "2. Keep live HTTP E2E, fuzz, and performance budgets required in CI.",
+            "3. Track history.jsonl trends and investigate pass-rate or duration regressions.",
+            "4. Add chaos/soak runs on schedule for long-horizon reliability.",
+        ]
+    )
 
     return "\n".join(lines) + "\n"
-
 
 
 def parse_args() -> argparse.Namespace:

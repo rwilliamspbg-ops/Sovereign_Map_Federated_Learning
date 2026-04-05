@@ -8,7 +8,9 @@ import subprocess
 import sys
 
 
-def run_command(command: list[str], env: dict[str, str], timeout: int) -> subprocess.CompletedProcess[str]:
+def run_command(
+    command: list[str], env: dict[str, str], timeout: int
+) -> subprocess.CompletedProcess[str]:
     return subprocess.run(
         command,
         text=True,
