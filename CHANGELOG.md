@@ -4,7 +4,7 @@ All notable changes to Sovereign Map SDK packages are documented here.
 
 ## [0.2.0] - TBD (In Development)
 
-This is the first stable release of the Sovereign Map SDK with complete API contracts and comprehensive test coverage.
+This is the first stable release of the Sovereign Map SDK with published API contracts and broad test coverage.
 
 ### Added
 - **FedAvg benchmark compare CI and report artifact**: Added `.github/workflows/fedavg-benchmark-compare.yml` and `scripts/benchmark_fedavg_compare.sh` to generate and upload base-vs-current benchmark comparison markdown.
@@ -20,7 +20,7 @@ This is the first stable release of the Sovereign Map SDK with complete API cont
 - **Testing Infrastructure**: Coverage gates enforced in CI with per-package thresholds (all packages meeting or exceeding 91% line coverage)
 - **API Stability Guardrails**: Route-to-spec coverage validator script and API validation GitHub Actions workflow
 - **Hosted API Docs**: GitHub Pages deployment workflow for static Swagger UI with multi-spec selector (`/api/swagger-ui.html` when Pages is enabled)
-- **Security Hardening**: GitHub Actions SHA pinning across all workflows; SLSA L2 provenance attestation; CodeQL and supply chain scanning
+- **Security Hardening**: GitHub Actions SHA pinning across all workflows; SLSA-aligned provenance recording/reporting workflow; CodeQL and supply chain scanning
 - **PySyft Integration Demo**: Added a runnable PySyft x Mohawk proof-of-concept package under `examples/pysyft-integration` with script, notebook, compose profile, and operator runbook
 
 ### Fixed
@@ -30,7 +30,7 @@ This is the first stable release of the Sovereign Map SDK with complete API cont
 
 ### Improved
 - **Test Quality**: Added branch-coverage tests for error paths, fallback handlers, metrics collection, and Byzantine fault scenarios
-- **Workflow Reliability**: All required CI checks green; no blockers on publish workflows; deterministic builds reproducible locally
+- **Workflow Reliability**: Required CI checks are configured and currently passing on main; publish workflows have no known blockers; deterministic builds are reproducible locally
 - **Grafana Dashboard UX**: Consolidated to canonical provisioned dashboards, normalized live refresh defaults, and labeled STARRED easy-read dashboards for operators
 
 ### Changed

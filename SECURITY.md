@@ -10,7 +10,7 @@ The Sovereign Map SDK implements multiple layers of security:
 2. **Supply-Chain Transparency** — Software Bill of Materials (SBOM) for all releases
 3. **Dependency Security** — Automated vulnerability scanning
 4. **Code Security** — Static analysis with CodeQL
-5. **Provenance** — SLSA Build Level 2 compliance with attestation
+5. **Provenance** — SLSA-aligned provenance artifacts and reporting
 
 ## Reporting Security Vulnerabilities
 
@@ -104,11 +104,11 @@ If a vulnerability qualifies for a CVE:
 - All direct dependencies are explicitly listed in package.json
 - Versions are pinned in package-lock.json
 - Updates are tested before merging
-- npm audit is run in CI/CD on every push
+- npm audit is run in CI/CD on scheduled scans and on matching push/PR events
 
 **Transitive Dependencies**:
 - Automatically inherited from direct dependency trees
-- Scanned weekly via npm audit
+- Scanned on scheduled daily npm audit runs
 - Reported in Software Bill of Materials (SBOM)
 - Updated when security patches are released upstream
 
@@ -127,7 +127,7 @@ If a vulnerability qualifies for a CVE:
 ### Scanning & Monitoring
 
 **Automated Scans**:
-- npm audit runs on every push and PR
+- npm audit runs on scheduled daily scans and on push/PR events that match security workflow path filters
 - Vulnerabilities are checked with audit-level=moderate
 - Critical/high severity failures block merge
 - Schedule: Daily scans at 2 AM UTC
@@ -152,7 +152,7 @@ If a vulnerability qualifies for a CVE:
 - Artifacts are hashed with SHA-256
 
 **Attestation**:
-- SLSA Build Level 2 compliance
+- SLSA-aligned provenance records
 - In-toto provenance format
 - Supply-chain provenance recorded
 - Verifiable build environment
@@ -163,11 +163,11 @@ If a vulnerability qualifies for a CVE:
 - npm dist-tags prevent confusion (latest, next, stable)
 - npm signing via NPM_TOKEN (environment-based)
 
-## SLSA Framework Compliance
+## SLSA Framework Alignment
 
-### Current Level: L2 (Hosted Build Service)
+### Current Posture: L2-aligned controls (Hosted Build Service)
 
-The SDK meets SLSA Build Level 2 requirements:
+The SDK implements controls associated with SLSA Build L2 and records provenance artifacts in CI:
 
 | Requirement | Status | Evidence |
 |-------------|--------|----------|
