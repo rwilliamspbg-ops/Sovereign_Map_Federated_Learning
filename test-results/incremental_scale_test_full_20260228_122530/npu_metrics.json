@@ -1,7 +1,0 @@
-{
-    "npu_enabled":  true,
-    "status":  "completed",
-    "test_name":  "incremental_scale_test_full_20260228_122530",
-    "speedup":  3.2,
-    "gpu_util":  82
-}

@@ -1,5 +1,0 @@
-target_round_reached=1
-samples=9
-final_round=200
-final_accuracy=99.5
-final_loss=0.1

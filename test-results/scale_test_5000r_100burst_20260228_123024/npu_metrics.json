@@ -1,7 +1,0 @@
-{
-    "npu_enabled":  true,
-    "status":  "completed",
-    "test_name":  "scale_test_5000r_100burst_20260228_123024",
-    "speedup":  3.8,
-    "gpu_util":  78
-}
