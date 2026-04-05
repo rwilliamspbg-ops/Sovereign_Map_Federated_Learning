@@ -138,6 +138,7 @@ def run_check(name: str, category: str, command: str, timeout: int) -> CheckResu
         .replace("-", "_")
     )
     output_file = OUT_DIR / f"{STAMP}_{safe_name}.log"
+    output_file.parent.mkdir(parents=True, exist_ok=True)
 
     try:
         proc = subprocess.run(
@@ -203,6 +204,7 @@ def load_last_history_record() -> Optional[Dict[str, object]]:
 
 
 def append_history_record(payload: Dict[str, object]) -> None:
+    HISTORY_FILE.parent.mkdir(parents=True, exist_ok=True)
     summary = payload.get("summary", {})
     duration = sum(float(item.get("duration_seconds", 0.0)) for item in payload.get("results", []))
     record = {
@@ -325,6 +327,7 @@ def main() -> int:
     }
 
     previous = load_last_history_record()
+    JSON_OUT.parent.mkdir(parents=True, exist_ok=True)
     JSON_OUT.write_text(json.dumps(payload, indent=2), encoding="utf-8")
     MD_OUT.write_text(build_markdown(results, previous), encoding="utf-8")
     append_history_record(payload)
