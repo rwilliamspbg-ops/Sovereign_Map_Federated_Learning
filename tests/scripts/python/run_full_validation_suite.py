@@ -128,6 +128,15 @@ CHECKS_BY_PROFILE = {
 }
 
 
+def _safe_write_text(path: Path, content: str) -> None:
+    """Write text and recover if a concurrent cleanup removed the parent dir."""
+    try:
+        path.write_text(content, encoding="utf-8")
+    except FileNotFoundError:
+        path.parent.mkdir(parents=True, exist_ok=True)
+        path.write_text(content, encoding="utf-8")
+
+
 def run_check(name: str, category: str, command: str, timeout: int) -> CheckResult:
     started = datetime.now(timezone.utc)
     safe_name = (
@@ -150,17 +159,11 @@ def run_check(name: str, category: str, command: str, timeout: int) -> CheckResu
             timeout=timeout,
             env={**os.environ, "PYTHONUNBUFFERED": "1"},
         )
-        output_file.write_text(
-            (proc.stdout or "") + "\n" + (proc.stderr or ""),
-            encoding="utf-8",
-        )
+        _safe_write_text(output_file, (proc.stdout or "") + "\n" + (proc.stderr or ""))
         passed = proc.returncode == 0
         return_code = proc.returncode
     except subprocess.TimeoutExpired as exc:
-        output_file.write_text(
-            (exc.stdout or "") + "\n" + (exc.stderr or "") + "\n[TIMEOUT]",
-            encoding="utf-8",
-        )
+        _safe_write_text(output_file, (exc.stdout or "") + "\n" + (exc.stderr or "") + "\n[TIMEOUT]")
         passed = False
         return_code = 124
 
