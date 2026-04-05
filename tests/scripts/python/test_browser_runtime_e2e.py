@@ -32,6 +32,17 @@ def main() -> int:
         "VITE_CHART_THROTTLE_MS": os.getenv("VITE_CHART_THROTTLE_MS", "1000"),
     }
 
+    # Ensure playwright test runner dependency exists for the local config import.
+    deps = run_command(
+        ["npm", "install", "--no-save", "@playwright/test@1.52.0"],
+        env=env,
+        timeout=600,
+    )
+    sys.stdout.write(deps.stdout)
+    sys.stderr.write(deps.stderr)
+    if deps.returncode != 0:
+        return deps.returncode
+
     install = run_command(
         ["npx", "--yes", "playwright@1.52.0", "install", "chromium"],
         env=env,

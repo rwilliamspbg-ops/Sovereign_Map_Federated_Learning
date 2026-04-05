@@ -120,10 +120,6 @@ function App() {
     opsSaturationPct: null
   });
 
-  if (showBrowserDemo) {
-    return <BrowserFLDemo enableBackendMetrics />;
-  }
-
   const avgFlDuration = Number(metricsSummary?.avg_fl_duration);
   const totalStake = Number(metricsSummary?.total_stake);
   const cxlUtilization = Number(metricsSummary?.cxl_utilization);
@@ -542,6 +538,10 @@ function App() {
       setPolicyMessage('Verification policy update failed: backend unreachable');
     }
   };
+
+  if (showBrowserDemo) {
+    return <BrowserFLDemo enableBackendMetrics />;
+  }
 
   return (
     <div className="hud-container">

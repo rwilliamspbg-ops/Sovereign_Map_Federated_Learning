@@ -1,4 +1,7 @@
+const path = require('path');
 const { defineConfig } = require('@playwright/test');
+
+const repoRoot = path.resolve(__dirname, '../..');
 
 module.exports = defineConfig({
   testDir: '.',
@@ -12,6 +15,7 @@ module.exports = defineConfig({
   },
   webServer: {
     command: 'npm --prefix frontend run dev -- --host 127.0.0.1 --port 4173',
+    cwd: repoRoot,
     port: 4173,
     reuseExistingServer: !process.env.CI,
     timeout: 120_000,
