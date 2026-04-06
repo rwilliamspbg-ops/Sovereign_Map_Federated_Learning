@@ -26,11 +26,28 @@ test('chart updates are render-throttled at runtime', async ({ page }) => {
 
   await page.context().route('**/*', async (route) => {
     const requestUrl = new URL(route.request().url());
-    const matchedPath = Object.keys(apiFixtures).find(
-      (path) => requestUrl.pathname === path
-    );
+    const matchedPath = Object.keys(apiFixtures).find((path) => {
+      const apiPath = `/api${path}`;
+      return (
+        requestUrl.pathname === path ||
+        requestUrl.pathname.endsWith(path) ||
+        requestUrl.pathname === apiPath ||
+        requestUrl.pathname.endsWith(apiPath)
+      );
+    });
 
-    if (!matchedPath) {
+    if (matchedPath) {
+      await route.fulfill({
+        status: 200,
+        contentType: 'application/json',
+        body: JSON.stringify(apiFixtures[matchedPath]),
+      });
+      return;
+    }
+
+    const requestType = route.request().resourceType();
+    const isApiLike = requestType === 'fetch' || requestType === 'xhr';
+    if (!isApiLike) {
       await route.continue();
       return;
     }
@@ -38,7 +55,7 @@ test('chart updates are render-throttled at runtime', async ({ page }) => {
     await route.fulfill({
       status: 200,
       contentType: 'application/json',
-      body: JSON.stringify(apiFixtures[matchedPath]),
+      body: JSON.stringify({}),
     });
   });
 
