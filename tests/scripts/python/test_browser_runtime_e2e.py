@@ -48,7 +48,7 @@ def main() -> int:
         return deps.returncode
 
     install = run_command(
-        ["npx", "--yes", "playwright@1.52.0", "install", "chromium"],
+        ["npx", "playwright", "install", "chromium"],
         env=env,
         timeout=900,
     )
@@ -62,8 +62,7 @@ def main() -> int:
         test = run_command(
             [
                 "npx",
-                "--yes",
-                "playwright@1.52.0",
+                "playwright",
                 "test",
                 "tests/e2e/runtime-cadence.spec.js",
                 "--config",
