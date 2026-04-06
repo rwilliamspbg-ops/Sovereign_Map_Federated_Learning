@@ -17,16 +17,16 @@ if str(REPO_ROOT) not in sys.path:
 
 import sovereignmap_production_backend_v2 as backend
 
-
 MAX_ROUND_DRIFT_MS = 80.0
 MAX_TELEMETRY_OVERHEAD_MS = 40.0
 MIN_CHART_THROTTLE_MS = 200
 
 
-
 def _seed_temp_state(tmpdir: Path) -> None:
     backend.MARKETPLACE_OFFERS_PATH = str(tmpdir / "marketplace_offers.json")
-    backend.MARKETPLACE_ROUND_INTENTS_PATH = str(tmpdir / "marketplace_round_intents.json")
+    backend.MARKETPLACE_ROUND_INTENTS_PATH = str(
+        tmpdir / "marketplace_round_intents.json"
+    )
     backend.MARKETPLACE_CONTRACTS_PATH = str(tmpdir / "marketplace_contracts.json")
     backend.MARKETPLACE_DISPUTES_PATH = str(tmpdir / "marketplace_disputes.json")
     backend.GOVERNANCE_ACTION_LOG_PATH = str(tmpdir / "governance_actions.json")
@@ -51,8 +51,9 @@ def _seed_temp_state(tmpdir: Path) -> None:
         Path(target).write_text("[]", encoding="utf-8")
 
 
-
-def _benchmark_rounds(rounds: int, with_telemetry: bool, warmup_rounds: int = 5) -> list[float]:
+def _benchmark_rounds(
+    rounds: int, with_telemetry: bool, warmup_rounds: int = 5
+) -> list[float]:
     durations_ms = []
 
     if with_telemetry:
@@ -81,7 +82,6 @@ def _benchmark_rounds(rounds: int, with_telemetry: bool, warmup_rounds: int = 5)
     return durations_ms
 
 
-
 def _extract_chart_throttle_ms() -> int:
     path = REPO_ROOT / "frontend" / "src" / "BrowserFLDemo.jsx"
     source = path.read_text(encoding="utf-8")
@@ -100,7 +100,6 @@ def _extract_chart_throttle_ms() -> int:
     if not digits:
         raise AssertionError("Unable to parse chart throttle default")
     return int(digits)
-
 
 
 def run() -> int:
@@ -127,19 +126,21 @@ def run() -> int:
         p10 = sorted_with[max(0, int(len(sorted_with) * 0.10) - 1)]
         p90 = sorted_with[min(len(sorted_with) - 1, int(len(sorted_with) * 0.90))]
         drift_ms = p90 - p10
-        avg_overhead_ms = statistics.mean(with_telemetry) - statistics.mean(no_telemetry)
+        avg_overhead_ms = statistics.mean(with_telemetry) - statistics.mean(
+            no_telemetry
+        )
 
-        assert drift_ms <= MAX_ROUND_DRIFT_MS, (
-            f"round drift budget exceeded: {drift_ms:.2f}ms > {MAX_ROUND_DRIFT_MS:.2f}ms"
-        )
-        assert avg_overhead_ms <= MAX_TELEMETRY_OVERHEAD_MS, (
-            f"telemetry overhead budget exceeded: {avg_overhead_ms:.2f}ms > {MAX_TELEMETRY_OVERHEAD_MS:.2f}ms"
-        )
+        assert (
+            drift_ms <= MAX_ROUND_DRIFT_MS
+        ), f"round drift budget exceeded: {drift_ms:.2f}ms > {MAX_ROUND_DRIFT_MS:.2f}ms"
+        assert (
+            avg_overhead_ms <= MAX_TELEMETRY_OVERHEAD_MS
+        ), f"telemetry overhead budget exceeded: {avg_overhead_ms:.2f}ms > {MAX_TELEMETRY_OVERHEAD_MS:.2f}ms"
 
         chart_throttle_ms = _extract_chart_throttle_ms()
-        assert chart_throttle_ms >= MIN_CHART_THROTTLE_MS, (
-            f"chart throttle too low: {chart_throttle_ms}ms < {MIN_CHART_THROTTLE_MS}ms"
-        )
+        assert (
+            chart_throttle_ms >= MIN_CHART_THROTTLE_MS
+        ), f"chart throttle too low: {chart_throttle_ms}ms < {MIN_CHART_THROTTLE_MS}ms"
 
         print(
             json.dumps(
