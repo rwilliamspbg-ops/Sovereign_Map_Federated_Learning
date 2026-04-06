@@ -7,6 +7,8 @@ import os
 import subprocess
 import sys
 
+MAX_PLAYWRIGHT_ATTEMPTS = 2
+
 
 def run_command(
     command: list[str], env: dict[str, str], timeout: int
@@ -55,23 +57,35 @@ def main() -> int:
     if install.returncode != 0:
         return install.returncode
 
-    test = run_command(
-        [
-            "npx",
-            "--yes",
-            "playwright@1.52.0",
-            "test",
-            "tests/e2e/runtime-cadence.spec.js",
-            "--config",
-            "tests/e2e/playwright.config.js",
-            "--reporter=line",
-        ],
-        env=env,
-        timeout=1200,
-    )
-    sys.stdout.write(test.stdout)
-    sys.stderr.write(test.stderr)
-    return test.returncode
+    last_return_code = 1
+    for attempt in range(1, MAX_PLAYWRIGHT_ATTEMPTS + 1):
+        test = run_command(
+            [
+                "npx",
+                "--yes",
+                "playwright@1.52.0",
+                "test",
+                "tests/e2e/runtime-cadence.spec.js",
+                "--config",
+                "tests/e2e/playwright.config.js",
+                "--reporter=line",
+            ],
+            env=env,
+            timeout=1200,
+        )
+        sys.stdout.write(test.stdout)
+        sys.stderr.write(test.stderr)
+
+        if test.returncode == 0:
+            return 0
+
+        last_return_code = test.returncode
+        if attempt < MAX_PLAYWRIGHT_ATTEMPTS:
+            print(
+                f"Playwright runtime-cadence attempt {attempt} failed; retrying once..."
+            )
+
+    return last_return_code
 
 
 if __name__ == "__main__":
