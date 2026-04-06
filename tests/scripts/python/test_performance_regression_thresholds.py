@@ -52,7 +52,7 @@ def _seed_temp_state(tmpdir: Path) -> None:
 
 
 
-def _benchmark_rounds(rounds: int, with_telemetry: bool) -> list[float]:
+def _benchmark_rounds(rounds: int, with_telemetry: bool, warmup_rounds: int = 5) -> list[float]:
     durations_ms = []
 
     if with_telemetry:
@@ -65,6 +65,10 @@ def _benchmark_rounds(rounds: int, with_telemetry: bool) -> list[float]:
         backend.publish_tokenomics_event = lambda _payload: None
 
     try:
+        # Warm-up rounds absorb one-time startup noise in constrained CI containers.
+        for _ in range(warmup_rounds):
+            backend.execute_manual_fl_round(reason="perf_budget_probe")
+
         for _ in range(rounds):
             start = time.perf_counter()
             backend.execute_manual_fl_round(reason="perf_budget_probe")
