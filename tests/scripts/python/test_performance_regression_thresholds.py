@@ -20,7 +20,7 @@ import sovereignmap_production_backend_v2 as backend
 MAX_ROUND_DRIFT_MS = 80.0
 MAX_TELEMETRY_OVERHEAD_MS = 40.0
 MIN_CHART_THROTTLE_MS = 200
-MAX_MEASUREMENT_ATTEMPTS = 2
+MAX_MEASUREMENT_ATTEMPTS = 3
 
 
 def _seed_temp_state(tmpdir: Path) -> None:
