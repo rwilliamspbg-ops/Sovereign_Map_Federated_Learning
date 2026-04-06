@@ -1,5 +1,7 @@
 const { test, expect } = require('@playwright/test');
 
+test.use({ serviceWorkers: 'block' });
+
 test('chart updates are render-throttled at runtime', async ({ page }) => {
   const apiFixtures = {
     '/metrics_summary': {},
@@ -22,7 +24,7 @@ test('chart updates are render-throttled at runtime', async ({ page }) => {
     '/trust_snapshot': {},
   };
 
-  await page.route('**/*', async (route) => {
+  await page.context().route('**/*', async (route) => {
     const requestUrl = new URL(route.request().url());
     const matchedPath = Object.keys(apiFixtures).find(
       (path) => requestUrl.pathname === path
