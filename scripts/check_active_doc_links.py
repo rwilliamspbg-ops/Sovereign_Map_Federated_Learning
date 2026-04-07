@@ -26,6 +26,20 @@ SKIP_DIRS = {"archive", "node_modules", ".git"}
 LINK_RE = re.compile(r"\[[^\]]+\]\(([^)]+)\)")
 
 
+def is_generated_test_results_link(target: str) -> bool:
+    """Return True when link ultimately points into test-results/.
+
+    Accepts forms such as:
+    - /test-results/...
+    - test-results/...
+    - ../test-results/...
+    - ../../test-results/...
+    """
+
+    parts = [part for part in target.split("/") if part not in {"", ".", ".."}]
+    return bool(parts) and parts[0] == "test-results"
+
+
 def iter_markdown_files() -> list[Path]:
     files: list[Path] = []
     for root in TARGET_ROOTS:
@@ -69,6 +83,11 @@ def main() -> int:
                 clean_target = raw_target.split("#", 1)[0].split("?", 1)[0].strip()
                 clean_target = unquote(clean_target)
                 if not clean_target:
+                    continue
+
+                if is_generated_test_results_link(clean_target):
+                    # test-results links are runtime-generated artifacts and
+                    # are not guaranteed to be committed in git.
                     continue
 
                 if clean_target.startswith("/"):
