@@ -20,6 +20,9 @@ This directory contains the active operator and integration documentation.
 - [Test Environment Setup](../tests/docs/TEST_ENV_SETUP.md)
 - [Full Validation PR Gate Workflow](../.github/workflows/full-validation-pr-gate.yml)
 - [Full Validation Scheduled Deep Workflow](../.github/workflows/full-validation-scheduled-deep.yml)
+- [Observability CI Workflow](../.github/workflows/observability-ci.yml)
+- [Windows Client EXE Build Workflow](../.github/workflows/windows-client-exe.yml)
+- [macOS Client Smoke Workflow](../.github/workflows/macos-client-smoke.yml)
 
 ## Roadmaps
 

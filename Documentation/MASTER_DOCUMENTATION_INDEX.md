@@ -11,9 +11,12 @@ Current-branch canonical references:
 - [Test environment and validation profiles](../tests/docs/TEST_ENV_SETUP.md)
 - [Full Validation PR gate workflow](../.github/workflows/full-validation-pr-gate.yml)
 - [Full Validation scheduled deep workflow](../.github/workflows/full-validation-scheduled-deep.yml)
+- [Observability CI workflow](../.github/workflows/observability-ci.yml)
+- [Windows Client EXE Build workflow](../.github/workflows/windows-client-exe.yml)
+- [macOS Client Smoke workflow](../.github/workflows/macos-client-smoke.yml)
 
 - Total indexed files: 269
-- Indexed on: 2026-04-04 00:00 UTC
+- Indexed on: 2026-04-07 00:00 UTC
 
 ## Category Index
 

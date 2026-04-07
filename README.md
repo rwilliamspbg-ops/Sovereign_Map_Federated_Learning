@@ -26,6 +26,8 @@ Production-grade federated learning platform that combines Byzantine-resilient a
 
 [![Release](https://img.shields.io/github/v/release/rwilliamspbg-ops/Sovereign_Map_Federated_Learning?display_name=tag&style=flat-square&logo=github)](https://github.com/rwilliamspbg-ops/Sovereign_Map_Federated_Learning/releases)
 [![Build and Test](https://github.com/rwilliamspbg-ops/Sovereign_Map_Federated_Learning/actions/workflows/build.yml/badge.svg?branch=main)](https://github.com/rwilliamspbg-ops/Sovereign_Map_Federated_Learning/actions/workflows/build.yml)
+[![Windows Client EXE Build](https://github.com/rwilliamspbg-ops/Sovereign_Map_Federated_Learning/actions/workflows/windows-client-exe.yml/badge.svg?branch=main)](https://github.com/rwilliamspbg-ops/Sovereign_Map_Federated_Learning/actions/workflows/windows-client-exe.yml)
+[![macOS Client Smoke](https://github.com/rwilliamspbg-ops/Sovereign_Map_Federated_Learning/actions/workflows/macos-client-smoke.yml/badge.svg?branch=main)](https://github.com/rwilliamspbg-ops/Sovereign_Map_Federated_Learning/actions/workflows/macos-client-smoke.yml)
 [![Observability CI](https://github.com/rwilliamspbg-ops/Sovereign_Map_Federated_Learning/actions/workflows/observability-ci.yml/badge.svg?branch=main)](https://github.com/rwilliamspbg-ops/Sovereign_Map_Federated_Learning/actions/workflows/observability-ci.yml)
 [![FedAvg Benchmark Compare](https://github.com/rwilliamspbg-ops/Sovereign_Map_Federated_Learning/actions/workflows/fedavg-benchmark-compare.yml/badge.svg?branch=main)](https://github.com/rwilliamspbg-ops/Sovereign_Map_Federated_Learning/actions/workflows/fedavg-benchmark-compare.yml)
 [![API Spec Validation](https://github.com/rwilliamspbg-ops/Sovereign_Map_Federated_Learning/actions/workflows/api-spec-validation.yml/badge.svg?branch=main)](https://github.com/rwilliamspbg-ops/Sovereign_Map_Federated_Learning/actions/workflows/api-spec-validation.yml)
@@ -44,6 +46,22 @@ Production-grade federated learning platform that combines Byzantine-resilient a
 Documentation entrypoint: [docs/README.md](docs/README.md)
 
 > Canonical docs navigation: [docs/README.md](docs/README.md) for active operator guides and [Documentation/MASTER_DOCUMENTATION_INDEX.md](Documentation/MASTER_DOCUMENTATION_INDEX.md) for full repository documentation indexing.
+
+## Current State Snapshot (April 2026)
+
+- Cross-platform CI coverage is active on `main`.
+- Linux lanes: `Build and Test`, `Lint Code Base`, `Reproducibility Check`, `Observability CI`
+- Windows lane: `Windows Client EXE Build`
+- macOS lane: `macOS Client Smoke`
+- Observability CI now runs on push, pull request, scheduled drift checks, and release events (`published`, `prereleased`).
+- Current contributor baseline validation commands:
+- `npm run test:ci`
+- `make observability-smoke`
+- `make alerts-test`
+- `~/.local/bin/black --check .`
+- `~/.local/bin/flake8 . --count --select=E9,F63,F7,F82 --show-source --statistics`
+
+For current roadmap status and remaining open items, see [Documentation/Performance/OPS_OPTIMIZATION_ROADMAP_2026-03-24.md](Documentation/Performance/OPS_OPTIMIZATION_ROADMAP_2026-03-24.md) and [Documentation/Project/ROADMAP.md](Documentation/Project/ROADMAP.md).
 
 ## New Contributor Fast Path
 

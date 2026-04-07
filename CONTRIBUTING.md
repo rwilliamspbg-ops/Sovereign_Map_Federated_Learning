@@ -23,6 +23,7 @@ Before opening or merging a PR, confirm all items below:
 Use the repository PR template at `.github/pull_request_template.md` when opening PRs.
 
 - [ ] CI workflows pass on your branch
+- [ ] Cross-platform lanes are green for relevant changes (`Build and Test`, `Windows Client EXE Build`, `macOS Client Smoke`)
 - [ ] Security checks pass (including CodeQL)
 - [ ] Documentation is updated for any behavior/config changes
 - [ ] Documentation sync completed when workflows, tests, or security defaults changed
@@ -97,4 +98,7 @@ At minimum, require these checks:
 - `Reproducibility Check / Clone Reproducibility`
 - `Workflow Action Pin Check / Enforce SHA-Pinned Actions`
 - `Governance Check / Governance Integrity`
-- Your primary build/test workflow checks
+- `Build and Test / build`
+- `Windows Client EXE Build / Build Windows Client EXE`
+- `macOS Client Smoke / macOS Client Smoke`
+- `Observability CI / Validate Dashboard Queries`

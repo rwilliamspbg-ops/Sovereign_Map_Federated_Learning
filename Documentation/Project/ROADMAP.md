@@ -60,6 +60,12 @@ This roadmap tracks execution priorities for the current `v1.2.0` platform basel
 - Root npm build/test workflow paths corrected to build both SDK packages (`privacy`, `core`) in CI.
 - SDK publish and reproducibility workflows aligned to lockfile-driven npm installs.
 
+## Completed in Post-v1.2.0 Reliability Sweep (2026-04)
+- Observability CI extended with scheduled drift checks and release-event validation (`published`, `prereleased`).
+- Added macOS client smoke workflow for cross-platform client confidence.
+- Windows client EXE lane and macOS client smoke lane both validated green on `main` during cross-platform closure.
+- Contributor baseline checks re-validated and documented (`npm run test:ci`, Python formatting/lint gates, targeted monitoring tests).
+
 ## Next Milestones
 
 ### Milestone 1: API and Security Confidence
