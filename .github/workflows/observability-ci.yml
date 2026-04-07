@@ -1,6 +1,12 @@
 name: Observability CI
 
 on:
+  workflow_dispatch:
+  release:
+    types: [published, prereleased]
+  schedule:
+    # Periodic drift guard for dashboards, queries, and alert semantics.
+    - cron: "17 */6 * * *"
   push:
     branches: [main]
   pull_request:

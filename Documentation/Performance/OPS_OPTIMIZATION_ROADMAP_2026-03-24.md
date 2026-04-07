@@ -60,13 +60,13 @@ Acceptance criteria:
 
 ## Phase 4 (Week 4): Reliability and Governance Hardening
 
-Status: Planned.
+Status: In progress (2026-04-07).
 
 Planned outcomes:
 
-- Add pre-release synthetic query smoke tests for all starred dashboards.
+- Add pre-release synthetic query smoke tests for all starred dashboards. ✅ Completed (2026-04-07)
 - Expand incident evidence artifacts and retention policy alignment.
-- Add periodic dashboard/query drift checks to CI.
+- Add periodic dashboard/query drift checks to CI. ✅ Completed (2026-04-07)
 
 Acceptance criteria:
 
@@ -82,3 +82,5 @@ Acceptance criteria:
 - Added recording-rule groundwork for expensive TPM/operator dashboard queries.
 - Added CI guard workflow for incident bundle tooling.
 - Added roadmap and execution checkpoints in this document.
+- Enabled periodic observability drift checks by adding scheduled and manual triggers to `.github/workflows/observability-ci.yml`.
+- Enabled release-triggered observability CI checks (`published`, `prereleased`) to enforce pre-release dashboard/query smoke validation.
