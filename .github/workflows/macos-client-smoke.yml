@@ -1,0 +1,53 @@
+name: macOS Client Smoke
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [main]
+    paths:
+      - src/client.py
+      - requirements.txt
+      - .github/workflows/macos-client-smoke.yml
+  pull_request:
+    branches: [main]
+    paths:
+      - src/client.py
+      - requirements.txt
+      - .github/workflows/macos-client-smoke.yml
+
+permissions:
+  contents: read
+
+jobs:
+  macos-client-smoke:
+    name: macOS Client Smoke
+    if: github.event_name != 'pull_request' || github.actor != 'dependabot[bot]'
+    runs-on: macos-latest
+    timeout-minutes: 30
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd
+
+      - name: Set up Python 3.11
+        uses: actions/setup-python@a309ff8b426b58ec0e2a45f0f869d46889d02405
+        with:
+          python-version: '3.11'
+
+      - name: Install minimal client deps
+        run: |
+          python -m pip install --upgrade pip
+          python -m pip install -r requirements.txt
+
+      - name: Compile client module
+        run: python -m py_compile src/client.py
+
+      - name: Import smoke test
+        run: |
+          python - <<'PY'
+          import importlib.util
+          spec = importlib.util.spec_from_file_location('client', 'src/client.py')
+          module = importlib.util.module_from_spec(spec)
+          spec.loader.exec_module(module)
+          print('macOS client import smoke passed')
+          PY
