@@ -13,7 +13,9 @@ OUT_DIR = REPO_ROOT / "test-results" / "full-validation"
 
 
 def load_json_artifacts() -> list[tuple[Path, dict[str, Any]]]:
-    artifacts = sorted(OUT_DIR.glob("full_validation_*.json"), key=lambda p: p.stat().st_mtime)
+    artifacts = sorted(
+        OUT_DIR.glob("full_validation_*.json"), key=lambda p: p.stat().st_mtime
+    )
     result: list[tuple[Path, dict[str, Any]]] = []
     for path in artifacts:
         try:
@@ -49,10 +51,12 @@ def render_diff(previous: dict[str, Any], current: dict[str, Any]) -> list[str]:
     all_categories = sorted(set(prev_categories.keys()) | set(curr_categories.keys()))
     if all_categories:
         lines.extend(["", "### Category Deltas", ""])
-        lines.extend([
-            "| Category | Prev Failed | Curr Failed | Delta |",
-            "|---|---:|---:|---:|",
-        ])
+        lines.extend(
+            [
+                "| Category | Prev Failed | Curr Failed | Delta |",
+                "|---|---:|---:|---:|",
+            ]
+        )
         for category in all_categories:
             prev_failed_cat = int(prev_categories.get(category, {}).get("failed", 0))
             curr_failed_cat = int(curr_categories.get(category, {}).get("failed", 0))

@@ -87,7 +87,9 @@ def validate_equal(loop_out: list[np.ndarray], vec_out: list[np.ndarray]) -> Non
         raise RuntimeError("aggregation output layer count mismatch")
     for idx, (a, b) in enumerate(zip(loop_out, vec_out)):
         if not np.allclose(a, b, rtol=1e-5, atol=1e-6):
-            raise RuntimeError(f"layer {idx} mismatch between loop and vectorized output")
+            raise RuntimeError(
+                f"layer {idx} mismatch between loop and vectorized output"
+            )
 
 
 def run_bench(client_counts: list[int], runs: int, seed: int) -> list[BenchResult]:

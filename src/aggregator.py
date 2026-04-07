@@ -66,9 +66,7 @@ class MultiKrumStrategy(fl.server.strategy.Strategy):
     def _parse_aggregation_mode(self) -> str:
         mode = os.getenv("FL_AGGREGATION_MODE", "auto").strip().lower()
         if mode not in {"auto", "loop", "vectorized"}:
-            logger.warning(
-                "Invalid FL_AGGREGATION_MODE=%s, defaulting to auto", mode
-            )
+            logger.warning("Invalid FL_AGGREGATION_MODE=%s, defaulting to auto", mode)
             return "auto"
         return mode
 
@@ -182,15 +180,21 @@ class MultiKrumStrategy(fl.server.strategy.Strategy):
 
         return True
 
-    def _estimate_vectorized_peak_bytes(self, weights_list: List[List[np.ndarray]]) -> int:
+    def _estimate_vectorized_peak_bytes(
+        self, weights_list: List[List[np.ndarray]]
+    ) -> int:
         client_count = len(weights_list)
         peak = 0
         for layer in weights_list[0]:
-            layer_bytes = int(np.prod(layer.shape)) * layer.dtype.itemsize * client_count
+            layer_bytes = (
+                int(np.prod(layer.shape)) * layer.dtype.itemsize * client_count
+            )
             peak = max(peak, layer_bytes)
         return peak
 
-    def _aggregate_weights_loop(self, weights_list: List[List[np.ndarray]]) -> List[np.ndarray]:
+    def _aggregate_weights_loop(
+        self, weights_list: List[List[np.ndarray]]
+    ) -> List[np.ndarray]:
         n = len(weights_list)
         aggregated = []
         for layer_idx in range(len(weights_list[0])):
@@ -205,7 +209,9 @@ class MultiKrumStrategy(fl.server.strategy.Strategy):
     ) -> List[np.ndarray]:
         num_layers = len(weights_list[0])
         aggregated = [
-            np.stack([client[layer_idx] for client in weights_list], axis=0).mean(axis=0)
+            np.stack([client[layer_idx] for client in weights_list], axis=0).mean(
+                axis=0
+            )
             for layer_idx in range(num_layers)
         ]
         if len(aggregated) != num_layers:

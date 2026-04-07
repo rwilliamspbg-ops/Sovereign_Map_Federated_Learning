@@ -14,7 +14,6 @@ from pathlib import Path
 import urllib.error
 import urllib.request
 
-
 DEFAULT_TARGETS = {
     "backend_metrics": "http://localhost:8000/metrics",
     "backend_metrics_summary": "http://localhost:8000/metrics_summary",
@@ -45,7 +44,11 @@ def write_bundle(output_root: Path, timeout: float) -> Path:
 
     for key, url in DEFAULT_TARGETS.items():
         ok, body = fetch_text(url, timeout)
-        ext = "json" if key.startswith("prometheus_") or key.endswith("summary") else "prom"
+        ext = (
+            "json"
+            if key.startswith("prometheus_") or key.endswith("summary")
+            else "prom"
+        )
         out_file = bundle_dir / f"{key}.{ext}"
         out_file.write_text(body, encoding="utf-8")
         summary["targets"][key] = {

@@ -13,7 +13,9 @@ OUT_DIR = REPO_ROOT / "test-results" / "full-validation"
 
 
 def load_latest_json() -> dict[str, Any]:
-    candidates = sorted(OUT_DIR.glob("full_validation_*.json"), key=lambda p: p.stat().st_mtime)
+    candidates = sorted(
+        OUT_DIR.glob("full_validation_*.json"), key=lambda p: p.stat().st_mtime
+    )
     if not candidates:
         raise FileNotFoundError("No full_validation_*.json artifact found")
     return json.loads(candidates[-1].read_text(encoding="utf-8"))
@@ -60,8 +62,12 @@ def main() -> int:
         current_duration = float(current.get("duration_seconds", 0.0))
         previous_duration = float(previous.get("duration_seconds", 0.0))
         if previous_duration > 0:
-            regression_pct = ((current_duration - previous_duration) / previous_duration) * 100.0
-            max_regression_pct = float(os.getenv("VALIDATION_MAX_DURATION_REGRESSION_PCT", "35"))
+            regression_pct = (
+                (current_duration - previous_duration) / previous_duration
+            ) * 100.0
+            max_regression_pct = float(
+                os.getenv("VALIDATION_MAX_DURATION_REGRESSION_PCT", "35")
+            )
             print(
                 f"duration regression: {regression_pct:.2f}% (threshold {max_regression_pct:.2f}%)"
             )

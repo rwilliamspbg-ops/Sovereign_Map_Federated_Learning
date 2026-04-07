@@ -30,7 +30,9 @@ def _free_port() -> int:
 
 def _seed_state(tmpdir: Path, backend) -> None:
     backend.MARKETPLACE_OFFERS_PATH = str(tmpdir / "marketplace_offers.json")
-    backend.MARKETPLACE_ROUND_INTENTS_PATH = str(tmpdir / "marketplace_round_intents.json")
+    backend.MARKETPLACE_ROUND_INTENTS_PATH = str(
+        tmpdir / "marketplace_round_intents.json"
+    )
     backend.MARKETPLACE_CONTRACTS_PATH = str(tmpdir / "marketplace_contracts.json")
     backend.MARKETPLACE_DISPUTES_PATH = str(tmpdir / "marketplace_disputes.json")
     backend.GOVERNANCE_ACTION_LOG_PATH = str(tmpdir / "governance_actions.json")
@@ -56,7 +58,6 @@ def _seed_state(tmpdir: Path, backend) -> None:
         Path(target).write_text("[]", encoding="utf-8")
 
 
-
 def _run_server(port: int, token: str, tmp_dir: str) -> None:
     import sovereignmap_production_backend_v2 as backend
 
@@ -80,8 +81,9 @@ def _run_server(port: int, token: str, tmp_dir: str) -> None:
 
     _seed_state(Path(tmp_dir), backend)
 
-    backend.app.run(host="127.0.0.1", port=port, debug=False, threaded=True, use_reloader=False)
-
+    backend.app.run(
+        host="127.0.0.1", port=port, debug=False, threaded=True, use_reloader=False
+    )
 
 
 def _wait_ready(base_url: str, timeout_s: float = 8.0) -> bool:
@@ -98,7 +100,6 @@ def _wait_ready(base_url: str, timeout_s: float = 8.0) -> bool:
         except Exception:
             time.sleep(0.15)
     return False
-
 
 
 def run() -> int:
@@ -123,7 +124,9 @@ def run() -> int:
             # Use proxy-header HTTPS simulation to continue test traffic.
             secure_headers = {"X-Forwarded-Proto": "https"}
 
-            status_resp = requests.get(f"{base}/status", headers=secure_headers, timeout=2)
+            status_resp = requests.get(
+                f"{base}/status", headers=secure_headers, timeout=2
+            )
             assert status_resp.status_code == 200
 
             # Protected mutating endpoint blocks unauthenticated requests.
@@ -148,10 +151,20 @@ def run() -> int:
             assert auth_ok.status_code == 200
 
             # Rate limiting should trigger on third call with configured limit=2.
-            r1 = requests.get(f"{base}/ops/trends?limit=5", headers=secure_headers, timeout=2)
-            r2 = requests.get(f"{base}/ops/trends?limit=5", headers=secure_headers, timeout=2)
-            r3 = requests.get(f"{base}/ops/trends?limit=5", headers=secure_headers, timeout=2)
-            assert r1.status_code == 200 and r2.status_code == 200 and r3.status_code == 429
+            r1 = requests.get(
+                f"{base}/ops/trends?limit=5", headers=secure_headers, timeout=2
+            )
+            r2 = requests.get(
+                f"{base}/ops/trends?limit=5", headers=secure_headers, timeout=2
+            )
+            r3 = requests.get(
+                f"{base}/ops/trends?limit=5", headers=secure_headers, timeout=2
+            )
+            assert (
+                r1.status_code == 200
+                and r2.status_code == 200
+                and r3.status_code == 429
+            )
 
             # SSE endpoint should stream data lines when reachable.
             with requests.get(

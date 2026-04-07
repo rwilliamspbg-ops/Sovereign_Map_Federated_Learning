@@ -19,10 +19,11 @@ if str(REPO_ROOT) not in sys.path:
 import sovereignmap_production_backend_v2 as backend
 
 
-
 def _seed_state(tmpdir: Path) -> None:
     backend.MARKETPLACE_OFFERS_PATH = str(tmpdir / "marketplace_offers.json")
-    backend.MARKETPLACE_ROUND_INTENTS_PATH = str(tmpdir / "marketplace_round_intents.json")
+    backend.MARKETPLACE_ROUND_INTENTS_PATH = str(
+        tmpdir / "marketplace_round_intents.json"
+    )
     backend.MARKETPLACE_CONTRACTS_PATH = str(tmpdir / "marketplace_contracts.json")
     backend.MARKETPLACE_DISPUTES_PATH = str(tmpdir / "marketplace_disputes.json")
     backend.GOVERNANCE_ACTION_LOG_PATH = str(tmpdir / "governance_actions.json")
@@ -46,11 +47,9 @@ def _seed_state(tmpdir: Path) -> None:
         Path(target).write_text("[]", encoding="utf-8")
 
 
-
 def _rnd_token(length: int) -> str:
     alphabet = string.ascii_letters + string.digits + "-_:."
     return "".join(random.choice(alphabet) for _ in range(length))
-
 
 
 def run() -> int:

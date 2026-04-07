@@ -35,9 +35,7 @@ def estimate_epsilon_fallback(
     if noise_multiplier <= 0:
         return float("inf")
     return (
-        sample_rate
-        * math.sqrt(2.0 * steps * math.log(1.0 / delta))
-        / noise_multiplier
+        sample_rate * math.sqrt(2.0 * steps * math.log(1.0 / delta)) / noise_multiplier
     )
 
 
@@ -176,7 +174,9 @@ def main() -> None:
     args = parse_args()
 
     noise_values = parse_noise_values(args.noise_values)
-    steps_per_round = args.local_epochs * math.ceil(args.samples_per_node / args.batch_size)
+    steps_per_round = args.local_epochs * math.ceil(
+        args.samples_per_node / args.batch_size
+    )
     total_steps = args.rounds * steps_per_round
     sample_rate = args.batch_size / args.samples_per_node
 

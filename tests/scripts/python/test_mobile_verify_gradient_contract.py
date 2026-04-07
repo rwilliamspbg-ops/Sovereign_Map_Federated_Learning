@@ -10,7 +10,9 @@ if str(REPO_ROOT) not in sys.path:
     sys.path.insert(0, str(REPO_ROOT))
 
 
-def _canonical_payload(round_id: int, node_id: str, model_hash: str, gradient_chunk: bytes, ts_ms: int) -> bytes:
+def _canonical_payload(
+    round_id: int, node_id: str, model_hash: str, gradient_chunk: bytes, ts_ms: int
+) -> bytes:
     chunk_b64 = base64.b64encode(gradient_chunk).decode("ascii")
     canonical = (
         f"round={round_id}\n"
@@ -56,14 +58,18 @@ class MobileVerifyGradientContractTest(unittest.TestCase):
             "public_key_pem": vk.to_pem().decode("utf-8"),
             "gradient_payload_b64": base64.b64encode(canonical_bytes).decode("ascii"),
             "gradient_signature_b64": base64.b64encode(signature_der).decode("ascii"),
-            "attestation_payload_b64": base64.b64encode(b'{"secure_hardware":"test"}').decode("ascii"),
+            "attestation_payload_b64": base64.b64encode(
+                b'{"secure_hardware":"test"}'
+            ).decode("ascii"),
         }
 
     def test_accepts_valid_signed_payload(self):
         self.backend.os.environ["MOBILE_REQUIRE_ATTESTATION"] = "true"
 
         client = self.backend.app.test_client()
-        response = client.post("/mobile/verify_gradient", json=self._signed_request_payload())
+        response = client.post(
+            "/mobile/verify_gradient", json=self._signed_request_payload()
+        )
 
         self.assertEqual(response.status_code, 200)
         body = response.get_json()
@@ -76,7 +82,9 @@ class MobileVerifyGradientContractTest(unittest.TestCase):
         self.backend.os.environ["MOBILE_REQUIRE_ATTESTATION"] = "true"
 
         payload = self._signed_request_payload()
-        payload["gradient_signature_b64"] = base64.b64encode(b"broken-signature").decode("ascii")
+        payload["gradient_signature_b64"] = base64.b64encode(
+            b"broken-signature"
+        ).decode("ascii")
 
         client = self.backend.app.test_client()
         response = client.post("/mobile/verify_gradient", json=payload)

@@ -126,6 +126,7 @@ def enforce_security_controls():
 
     return None
 
+
 # Global state
 training_state = {
     "status": "idle",  # idle, training, completed, error
@@ -159,11 +160,22 @@ def training_config():
         if request.method == "POST":
             config_data = request.get_json(silent=True) or {}
             if not isinstance(config_data, dict):
-                return jsonify({"status": "error", "message": "JSON object required"}), 400
+                return (
+                    jsonify({"status": "error", "message": "JSON object required"}),
+                    400,
+                )
             try:
                 config = TrainingConfig(**config_data)
                 if int(config.num_rounds) > 10000:
-                    return jsonify({"status": "error", "message": "num_rounds must be <= 10000"}), 400
+                    return (
+                        jsonify(
+                            {
+                                "status": "error",
+                                "message": "num_rounds must be <= 10000",
+                            }
+                        ),
+                        400,
+                    )
                 training_state["config"] = config
                 return jsonify(
                     {
@@ -183,7 +195,12 @@ def training_config():
                     }
                 )
             except Exception:
-                return jsonify({"status": "error", "message": "invalid training configuration"}), 400
+                return (
+                    jsonify(
+                        {"status": "error", "message": "invalid training configuration"}
+                    ),
+                    400,
+                )
 
         # GET: Return current config or defaults
         config = training_state.get("config", TrainingConfig())
@@ -222,9 +239,19 @@ def start_training():
         try:
             config = TrainingConfig(**config_data)
             if int(config.num_rounds) > 10000:
-                return jsonify({"status": "error", "message": "num_rounds must be <= 10000"}), 400
+                return (
+                    jsonify(
+                        {"status": "error", "message": "num_rounds must be <= 10000"}
+                    ),
+                    400,
+                )
         except Exception:
-            return jsonify({"status": "error", "message": "invalid training configuration"}), 400
+            return (
+                jsonify(
+                    {"status": "error", "message": "invalid training configuration"}
+                ),
+                400,
+            )
 
         # Initialize trainer and state
         training_state["trainer"] = FederatedLearningTrainer(config)

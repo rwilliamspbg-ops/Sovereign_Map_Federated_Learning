@@ -17,7 +17,9 @@ import sovereignmap_production_backend_v2 as backend
 
 def _setup_temp_state(tmpdir: Path) -> None:
     backend.MARKETPLACE_OFFERS_PATH = str(tmpdir / "marketplace_offers.json")
-    backend.MARKETPLACE_ROUND_INTENTS_PATH = str(tmpdir / "marketplace_round_intents.json")
+    backend.MARKETPLACE_ROUND_INTENTS_PATH = str(
+        tmpdir / "marketplace_round_intents.json"
+    )
     backend.MARKETPLACE_CONTRACTS_PATH = str(tmpdir / "marketplace_contracts.json")
     backend.MARKETPLACE_DISPUTES_PATH = str(tmpdir / "marketplace_disputes.json")
     backend.GOVERNANCE_ACTION_LOG_PATH = str(tmpdir / "governance_actions.json")
@@ -43,7 +45,6 @@ def _setup_temp_state(tmpdir: Path) -> None:
         Path(target).write_text("[]", encoding="utf-8")
 
 
-
 def _ensure_strategy() -> None:
     if backend.strategy is None:
         backend.strategy = SimpleNamespace(
@@ -55,7 +56,6 @@ def _ensure_strategy() -> None:
                 "timestamps": [],
             },
         )
-
 
 
 def run() -> int:
@@ -113,7 +113,9 @@ def run() -> int:
         backend._rate_limit_bucket.clear()
         backend.os.environ["SECURITY_ENFORCE_HTTPS"] = "true"
         backend.os.environ["SECURITY_ALLOW_LOCAL_HTTP"] = "false"
-        https_required = client.get("/status", environ_base={"REMOTE_ADDR": "10.10.10.10"})
+        https_required = client.get(
+            "/status", environ_base={"REMOTE_ADDR": "10.10.10.10"}
+        )
         assert https_required.status_code == 426, https_required.get_data(as_text=True)
 
         print('{"status":"ok","security_controls":"validated"}')

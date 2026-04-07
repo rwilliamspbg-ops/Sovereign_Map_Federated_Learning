@@ -354,9 +354,7 @@ _MUTATING_METHODS = {"POST", "PUT", "PATCH", "DELETE"}
 _RATE_LIMIT_WINDOW_SECONDS = max(
     1, int(os.getenv("API_RATE_LIMIT_WINDOW_SECONDS", "60"))
 )
-_RATE_LIMIT_MAX_REQUESTS = max(
-    1, int(os.getenv("API_RATE_LIMIT_MAX_REQUESTS", "120"))
-)
+_RATE_LIMIT_MAX_REQUESTS = max(1, int(os.getenv("API_RATE_LIMIT_MAX_REQUESTS", "120")))
 _MUTATION_RATE_LIMIT_MAX_REQUESTS = max(
     1, int(os.getenv("API_MUTATION_RATE_LIMIT_MAX_REQUESTS", "30"))
 )
@@ -373,7 +371,9 @@ def add_cors_headers(response):
     response.headers["Access-Control-Allow-Headers"] = (
         "Content-Type,Authorization,X-Join-Admin-Token,X-Admin-Wallet"
     )
-    response.headers["Access-Control-Allow-Methods"] = "GET,POST,PUT,PATCH,DELETE,OPTIONS"
+    response.headers["Access-Control-Allow-Methods"] = (
+        "GET,POST,PUT,PATCH,DELETE,OPTIONS"
+    )
     return response
 
 
@@ -426,13 +426,16 @@ def _enforce_rate_limit(req: Request) -> Optional[Response]:
         while bucket and (now - bucket[0]) > _RATE_LIMIT_WINDOW_SECONDS:
             bucket.popleft()
         if len(bucket) >= max_requests:
-            return jsonify(
-                {
-                    "error": "rate_limit_exceeded",
-                    "message": "Too many requests",
-                    "retry_after_seconds": _RATE_LIMIT_WINDOW_SECONDS,
-                }
-            ), 429
+            return (
+                jsonify(
+                    {
+                        "error": "rate_limit_exceeded",
+                        "message": "Too many requests",
+                        "retry_after_seconds": _RATE_LIMIT_WINDOW_SECONDS,
+                    }
+                ),
+                429,
+            )
         bucket.append(now)
     return None
 
@@ -468,7 +471,9 @@ def _security_guardrails():
             "/mobile/verify_gradient",
             "/attestations/share",
         }
-        if request.path not in public_write_paths and not _authorized_join_admin(request):
+        if request.path not in public_write_paths and not _authorized_join_admin(
+            request
+        ):
             return jsonify({"error": "unauthorized"}), 401
 
     return None
@@ -672,9 +677,7 @@ VERIFICATION_POLICY_HISTORY_PATH = os.getenv(
     "VERIFICATION_POLICY_HISTORY_PATH", "/app/data/verification_policy_history.json"
 )
 JOIN_API_ADMIN_TOKEN = str(os.getenv("JOIN_API_ADMIN_TOKEN", "")).strip()
-ALLOW_INSECURE_DEV_ADMIN_TOKEN = _bool_env(
-    "ALLOW_INSECURE_DEV_ADMIN_TOKEN", False
-)
+ALLOW_INSECURE_DEV_ADMIN_TOKEN = _bool_env("ALLOW_INSECURE_DEV_ADMIN_TOKEN", False)
 CERT_DIR = os.getenv("CERT_DIR", "/app/data/certs")
 PUBLIC_AGGREGATOR_HOST = os.getenv("PUBLIC_AGGREGATOR_HOST", "localhost")
 PUBLIC_AGGREGATOR_PORT = int(os.getenv("PUBLIC_AGGREGATOR_PORT", "8080"))
@@ -2325,7 +2328,10 @@ def ops_events_stream():
 def update_verification_policy():
     data = request.get_json(silent=True) or {}
     if not isinstance(data, dict):
-        return jsonify({"error": "invalid_payload", "message": "JSON object required"}), 400
+        return (
+            jsonify({"error": "invalid_payload", "message": "JSON object required"}),
+            400,
+        )
     actor_role_raw = str(request.headers.get("X-API-Role", "admin")).strip().lower()
     actor_role = actor_role_raw if _ROLE_PATTERN.match(actor_role_raw) else "admin"
     new_policy = _normalize_verification_policy(data)
@@ -2394,14 +2400,18 @@ def verify_mobile_gradient():
     payload = request.get_json(silent=True) or {}
     if not isinstance(payload, dict):
         return (
-            jsonify({"status": "error", "accepted": False, "reason": "invalid_payload"}),
+            jsonify(
+                {"status": "error", "accepted": False, "reason": "invalid_payload"}
+            ),
             400,
         )
 
     payload_b64 = str(payload.get("gradient_payload_b64", ""))
     if len(payload_b64) > 2_000_000:
         return (
-            jsonify({"status": "error", "accepted": False, "reason": "payload_too_large"}),
+            jsonify(
+                {"status": "error", "accepted": False, "reason": "payload_too_large"}
+            ),
             413,
         )
 
