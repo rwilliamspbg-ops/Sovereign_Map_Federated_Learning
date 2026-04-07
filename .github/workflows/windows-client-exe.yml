@@ -1,4 +1,5 @@
 name: Windows Client EXE Build
+# Trigger note: maintain push-based execution path when dispatch permissions are restricted.
 
 on:
   workflow_dispatch:
