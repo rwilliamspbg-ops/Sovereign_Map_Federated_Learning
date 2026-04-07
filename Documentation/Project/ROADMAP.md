@@ -1,4 +1,4 @@
-<!-- markdownlint-disable MD005 MD007 MD022 MD032 -->
+<!-- markdownlint-disable MD005 MD007 MD013 MD022 MD032 -->
 
 # Sovereign Map Roadmap (2026)
 
@@ -8,7 +8,7 @@ This roadmap tracks execution priorities for the current `v1.2.0` platform basel
 ## Current Release Baseline
 - Version `v1.2.0` published on 2026-03-16.
 - Release notes: `docs/RELEASE_NOTES_v1.2.0.md`.
-- Current readiness summary: `Documentation/Project/RELEASE_READINESS_2026-03-16.md`.
+- Current readiness summary: `Documentation/Project/RELEASE_READINESS_2026-03-17.md`.
 
 ## Completed
 - P2P mesh runtime connected to libp2p default transports (TCP + QUIC).

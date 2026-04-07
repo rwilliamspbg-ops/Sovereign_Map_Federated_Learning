@@ -38,7 +38,7 @@ CI enforcement, and full repository verification.
 - Added new project docs:
   - `Documentation/Project/CAPABILITIES_SCHEMA_V1.md`
   - `Documentation/Project/RELEASE_READINESS_2026-03-15.md`
-  - `Documentation/Project/TEST_FILE_RELOCATION_ADDENDUM_2026-03-15.md`
+  - `Documentation/Archive/Project/2026-03/TEST_FILE_RELOCATION_ADDENDUM_2026-03-15.md`
 
 ## Release Decision
 

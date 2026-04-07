@@ -38,3 +38,4 @@ This directory contains the active operator and integration documentation.
 ## Notes
 
 - Historical and archived material lives under [docs/archive](archive).
+- Additional project-history archives live under [Documentation/Archive](../Documentation/Archive).
