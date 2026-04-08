@@ -16,8 +16,15 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
 # Copy requirements first (leverage layer caching)
 COPY requirements-backend.txt .
 
+# Make pip more resilient to transient package index/network hiccups in CI.
+ENV PIP_DISABLE_PIP_VERSION_CHECK=1 \
+    PIP_DEFAULT_TIMEOUT=120
+
 # Install Python dependencies with optimization flags
 RUN pip install --no-cache-dir --user --no-warn-script-location \
+    --retries 10 \
+    --timeout 120 \
+    --prefer-binary \
     --compile \
     -r requirements-backend.txt
 

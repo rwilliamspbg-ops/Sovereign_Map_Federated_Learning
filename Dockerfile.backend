@@ -13,8 +13,16 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
 # Copy requirements
 COPY requirements-backend.txt .
 
+# Make pip more resilient to transient package index/network hiccups in CI.
+ENV PIP_DISABLE_PIP_VERSION_CHECK=1 \
+    PIP_DEFAULT_TIMEOUT=120
+
 # Install Python dependencies
-RUN pip install --no-cache-dir -r requirements-backend.txt
+RUN pip install --no-cache-dir \
+    --retries 10 \
+    --timeout 120 \
+    --prefer-binary \
+    -r requirements-backend.txt
 
 # Copy application files
 COPY docs/archive/legacy/code/fl_metrics_translator.py ./fl_metrics_translator.py
