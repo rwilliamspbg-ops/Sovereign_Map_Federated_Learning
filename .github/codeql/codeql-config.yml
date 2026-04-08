@@ -1,9 +1,7 @@
 name: "Sovereign Map CodeQL Config"
 
-# Keep analysis focused on production paths and avoid incomplete mobile modules.
+# Keep analysis focused on production paths while avoiding generated/archive data.
 paths-ignore:
-  - mobile-apps/**
-  - go-mobile/**
   - archive/**
   - legacy/**
   - test-data/**
