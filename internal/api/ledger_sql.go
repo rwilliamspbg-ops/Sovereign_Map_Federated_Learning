@@ -229,11 +229,17 @@ func (l *SQLProofLedger) Entries() []LedgerEntry {
 
 func (l *SQLProofLedger) Len() int {
 	var total int
+	if l.cap > 0 {
+		if err := l.db.QueryRow(
+			`SELECT count(*) FROM (SELECT 1 FROM mohawk_ledger_entries LIMIT $1) AS limited_entries`,
+			l.cap,
+		).Scan(&total); err != nil {
+			return 0
+		}
+		return total
+	}
 	if err := l.db.QueryRow(`SELECT count(*) FROM mohawk_ledger_entries`).Scan(&total); err != nil {
 		return 0
-	}
-	if l.cap > 0 && total > l.cap {
-		return l.cap
 	}
 	return total
 }
