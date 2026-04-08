@@ -509,3 +509,4 @@ htmlcov/
 !**/.env.example
 !**/config.example.yml
 !**/terraform.tfvars.example
+/bin/
