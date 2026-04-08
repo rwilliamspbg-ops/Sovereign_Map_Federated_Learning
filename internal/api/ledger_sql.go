@@ -13,6 +13,8 @@ import (
 	"strconv"
 	"strings"
 	"time"
+
+	_ "github.com/lib/pq" // register "postgres" driver for database/sql
 )
 
 const defaultSQLDriver = "postgres"
