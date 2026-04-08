@@ -20,6 +20,7 @@ require (
 	github.com/consensys/gnark-crypto v0.20.1
 	github.com/hashicorp/golang-lru/v2 v2.0.7
 	github.com/ipfs/go-ipfs-api v0.7.0
+	github.com/lib/pq v1.10.9
 	github.com/libp2p/go-libp2p v0.47.0
 	github.com/libp2p/go-libp2p-pubsub v0.15.0
 	github.com/multiformats/go-multiaddr v0.16.1

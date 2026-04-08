@@ -64,7 +64,8 @@ type Handler struct {
 	island            *island.Manager
 	metrics           *monitoring.Collector
 	p2pNetwork        *p2p.Network
-	ledger            *ProofLedger
+	ledger            ProofLedgerStore
+	ledgerInitError   string
 	blockchain        *blockchain.BlockChain
 	consensusReader   ConsensusStatusReader
 	aggregationReader AggregationStatusReader
@@ -174,6 +175,10 @@ func extractRequestToken(r *http.Request) string {
 	return strings.TrimSpace(r.Header.Get("X-API-Token"))
 }
 
+func extractIdempotencyKey(r *http.Request) string {
+	return strings.TrimSpace(r.Header.Get("Idempotency-Key"))
+}
+
 func loadExpectedToken() (string, error) {
 	tokenFile := strings.TrimSpace(os.Getenv("MOHAWK_API_TOKEN_FILE"))
 	if tokenFile == "" {
@@ -263,13 +268,30 @@ func requirePolicyAuth(w http.ResponseWriter, r *http.Request) bool {
 
 // NewHandler creates a new API handler with integrated backends
 func NewHandler(detector *convergence.Detector, islandMgr *island.Manager, collector *monitoring.Collector, network *p2p.Network) *Handler {
+	ledgerStore, initErr := newLedgerStoreFromEnv()
 	return &Handler{
-		convergence: detector,
-		island:      islandMgr,
-		metrics:     collector,
-		p2pNetwork:  network,
-		ledger:      NewProofLedger(0),
+		convergence:     detector,
+		island:          islandMgr,
+		metrics:         collector,
+		p2pNetwork:      network,
+		ledger:          ledgerStore,
+		ledgerInitError: initErr,
 	}
+}
+
+func newLedgerStoreFromEnv() (ProofLedgerStore, string) {
+	backend := strings.ToLower(strings.TrimSpace(os.Getenv("MOHAWK_LEDGER_BACKEND")))
+	if backend == "" || backend == "inmemory" {
+		return NewProofLedger(0), ""
+	}
+	if backend == "cockroach" || backend == "postgres" || backend == "sql" {
+		ledger, err := NewSQLProofLedgerFromEnv(defaultLedgerCap)
+		if err == nil {
+			return ledger, ""
+		}
+		return NewProofLedger(0), err.Error()
+	}
+	return NewProofLedger(0), fmt.Sprintf("unsupported MOHAWK_LEDGER_BACKEND=%q; defaulted to inmemory", backend)
 }
 
 // SetBlockchain attaches an optional blockchain backend used by status endpoints.
@@ -287,7 +309,9 @@ func (h *Handler) SetConsensusReaders(consensusReader ConsensusStatusReader, agg
 func (h *Handler) RegisterRoutes(mux *http.ServeMux) {
 	// Legacy + current endpoints
 	mux.HandleFunc("/health", h.HealthCheck)
+	mux.HandleFunc("/readyz", h.ReadinessCheck)
 	mux.HandleFunc("/api/status", h.GetStatus)
+	mux.HandleFunc("/api/readiness", h.ReadinessCheck)
 	mux.HandleFunc("/api/metrics", h.GetMetrics)
 	mux.HandleFunc("/api/convergence", h.GetConvergence)
 	mux.HandleFunc("/api/convergence_status", h.GetConvergence)
@@ -300,6 +324,7 @@ func (h *Handler) RegisterRoutes(mux *http.ServeMux) {
 
 	// Versioned aliases
 	mux.HandleFunc("/api/v1/status", h.GetStatus)
+	mux.HandleFunc("/api/v1/readiness", h.ReadinessCheck)
 	mux.HandleFunc("/api/v1/metrics", h.GetMetrics)
 	mux.HandleFunc("/api/v1/convergence", h.GetConvergence)
 	mux.HandleFunc("/api/v1/island/status", h.GetIslandStatus)
@@ -316,6 +341,8 @@ func (h *Handler) RegisterRoutes(mux *http.ServeMux) {
 	mux.HandleFunc("/api/v1/capabilities", h.GetCapabilities)
 	mux.HandleFunc("/api/ledger", h.GetLedger)
 	mux.HandleFunc("/api/v1/ledger", h.GetLedger)
+	mux.HandleFunc("/api/ledger/reconcile", h.GetLedgerReconcile)
+	mux.HandleFunc("/api/v1/ledger/reconcile", h.GetLedgerReconcile)
 	mux.HandleFunc("/api/verification_policy", h.HandleVerificationPolicy)
 	mux.HandleFunc("/api/v1/verification_policy", h.HandleVerificationPolicy)
 }
@@ -325,14 +352,55 @@ func (h *Handler) HealthCheck(w http.ResponseWriter, r *http.Request) {
 	if !ensureGetMethod(w, r) {
 		return
 	}
+	ledgerReady, ledgerErr := h.ledger.Readiness()
+	status := "healthy"
+	if !ledgerReady || strings.TrimSpace(h.ledgerInitError) != "" {
+		status = "degraded"
+	}
 
-	response := map[string]string{
-		"status":  "healthy",
+	response := map[string]interface{}{
+		"status":  status,
 		"service": "sovereign-map-fl",
 		"time":    time.Now().UTC().Format(time.RFC3339),
+		"ledger": map[string]interface{}{
+			"ready":        ledgerReady,
+			"storage_mode": h.ledger.StorageMode(),
+			"init_error":   h.ledgerInitError,
+			"error":        ledgerErr,
+		},
 	}
 
 	writeJSON(w, response)
+}
+
+// ReadinessCheck returns deployment readiness, intended for orchestration probes.
+func (h *Handler) ReadinessCheck(w http.ResponseWriter, r *http.Request) {
+	if !ensureGetMethod(w, r) {
+		return
+	}
+
+	ledgerReady, ledgerErr := h.ledger.Readiness()
+	ready := ledgerReady && strings.TrimSpace(h.ledgerInitError) == ""
+	status := http.StatusOK
+	if !ready {
+		status = http.StatusServiceUnavailable
+	}
+
+	w.Header().Set("Cache-Control", "no-store")
+	w.Header().Set("X-API-Version", "v1")
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(status)
+	_ = json.NewEncoder(w).Encode(map[string]interface{}{
+		"ready":   ready,
+		"service": "sovereign-map-fl",
+		"time":    time.Now().UTC().Format(time.RFC3339),
+		"ledger": map[string]interface{}{
+			"ready":        ledgerReady,
+			"storage_mode": h.ledger.StorageMode(),
+			"init_error":   h.ledgerInitError,
+			"error":        ledgerErr,
+		},
+	})
 }
 
 // GetStatus returns overall system status
@@ -774,12 +842,16 @@ func (h *Handler) VerifyProof(w http.ResponseWriter, r *http.Request) {
 	observeProofVerification("snark", "groth16_bn254", ok, latencyDur)
 
 	role := strings.ToLower(strings.TrimSpace(r.Header.Get("X-API-Role")))
-	h.ledger.Record("snark_verify", proofBytes, role, ok, latency, verifyErr)
+	_, replay := h.ledger.RecordWithOptions("snark_verify", proofBytes, role, ok, latency, verifyErr, LedgerRecordOptions{
+		StreamID:       "proof.snark",
+		IdempotencyKey: extractIdempotencyKey(r),
+	})
 	observeLedgerEvent("snark_verify", h.ledger.Len())
 
 	response := map[string]interface{}{
 		"valid":      ok,
 		"latency_ms": latency,
+		"replay":     replay,
 	}
 	if verifyErr != nil {
 		response["error"] = verifyErr.Error()
@@ -830,7 +902,10 @@ func (h *Handler) VerifyHybridProof(w http.ResponseWriter, r *http.Request) {
 
 	combinedProof := append(snarkBytes, starkBytes...)
 	hyRole := strings.ToLower(strings.TrimSpace(r.Header.Get("X-API-Role")))
-	h.ledger.Record("hybrid_verify", combinedProof, hyRole, result.Accepted, latencyDur.Milliseconds(), verifyErr)
+	_, replay := h.ledger.RecordWithOptions("hybrid_verify", combinedProof, hyRole, result.Accepted, latencyDur.Milliseconds(), verifyErr, LedgerRecordOptions{
+		StreamID:       "proof.hybrid",
+		IdempotencyKey: extractIdempotencyKey(r),
+	})
 	observeProofVerification("hybrid", result.STARKBackend, result.Accepted, latencyDur)
 	observeLedgerEvent("hybrid_verify", h.ledger.Len())
 
@@ -840,6 +915,7 @@ func (h *Handler) VerifyHybridProof(w http.ResponseWriter, r *http.Request) {
 		"snark":    result.SNARKValid,
 		"stark":    result.STARKValid,
 		"backend":  result.STARKBackend,
+		"replay":   replay,
 	}
 	if verifyErr != nil {
 		response["error"] = verifyErr.Error()
@@ -859,9 +935,24 @@ func (h *Handler) GetLedger(w http.ResponseWriter, r *http.Request) {
 
 	entries := h.ledger.Entries()
 	writeJSON(w, map[string]interface{}{
-		"count":   len(entries),
-		"entries": entries,
+		"count":        len(entries),
+		"entries":      entries,
+		"checkpoints":  h.ledger.Checkpoints(),
+		"storage_mode": h.ledger.StorageMode(),
+		"init_error":   h.ledgerInitError,
 	})
+}
+
+// GetLedgerReconcile verifies sequence continuity and hash-chain integrity.
+func (h *Handler) GetLedgerReconcile(w http.ResponseWriter, r *http.Request) {
+	if !ensureGetMethod(w, r) {
+		return
+	}
+	if !requireProofAuth(w, r) {
+		return
+	}
+
+	writeJSON(w, h.ledger.Reconcile())
 }
 
 func (h *Handler) GetCapabilities(w http.ResponseWriter, r *http.Request) {
@@ -906,7 +997,9 @@ func (h *Handler) GetCapabilities(w http.ResponseWriter, r *http.Request) {
 			"base_paths": []string{"/api", "/api/v1"},
 			"open_endpoints": []string{
 				"GET /health",
+				"GET /readyz",
 				"GET /api/v1/status",
+				"GET /api/v1/readiness",
 				"GET /api/v1/consensus/status",
 				"GET /api/v1/capabilities",
 				"GET /api/v1/verification_policy",
@@ -916,6 +1009,7 @@ func (h *Handler) GetCapabilities(w http.ResponseWriter, r *http.Request) {
 				"POST /api/v1/proof/verify",
 				"POST /api/v1/proof/hybrid/verify",
 				"GET /api/v1/ledger",
+				"GET /api/v1/ledger/reconcile",
 				"POST /api/v1/verification_policy",
 			},
 			"proof_payload": map[string]interface{}{
@@ -930,7 +1024,7 @@ func (h *Handler) GetCapabilities(w http.ResponseWriter, r *http.Request) {
 			"auth": map[string]interface{}{
 				"default_mode":              "file-only",
 				"disable_values":            []string{"off", "disabled", "none"},
-				"token_headers":             []string{"Authorization: Bearer <token>", "X-API-Token: <token>"},
+				"token_headers":             []string{"Authorization: Bearer <token>", "X-API-Token: <token>", "Idempotency-Key: <key>"},
 				"role_header":               "X-API-Role",
 				"default_token_file":        "/run/secrets/mohawk_api_token",
 				"roles_enforced_by_default": true,
@@ -948,8 +1042,10 @@ func (h *Handler) GetCapabilities(w http.ResponseWriter, r *http.Request) {
 				"mohawk_ledger_entries",
 			},
 			"ledger_state": map[string]interface{}{
-				"entries":  h.ledger.Len(),
-				"capacity": h.ledger.cap,
+				"entries":      h.ledger.Len(),
+				"capacity":     h.ledger.Capacity(),
+				"storage_mode": h.ledger.StorageMode(),
+				"init_error":   h.ledgerInitError,
 			},
 		},
 	}
