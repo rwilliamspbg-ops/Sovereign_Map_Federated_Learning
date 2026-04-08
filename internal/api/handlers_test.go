@@ -663,8 +663,8 @@ func TestCockroachBackendFallbackMetadata(t *testing.T) {
 	if ledgerState["storage_mode"] != "cockroach-compatible-inmemory" {
 		t.Fatalf("storage_mode = %v, want cockroach-compatible-inmemory fallback", ledgerState["storage_mode"])
 	}
-	if ledgerState["init_error"] == "" {
-		t.Fatalf("init_error should be populated for fallback: %v", ledgerState)
+	if ledgerState["has_error"] != true {
+		t.Fatalf("has_error should be true for fallback: %v", ledgerState)
 	}
 }
 
