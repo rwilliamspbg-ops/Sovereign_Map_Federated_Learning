@@ -15,8 +15,8 @@ Current-branch canonical references:
 - [Windows Client EXE Build workflow](../.github/workflows/windows-client-exe.yml)
 - [macOS Client Smoke workflow](../.github/workflows/macos-client-smoke.yml)
 
-- Total indexed files: 269
-- Indexed on: 2026-04-07 00:00 UTC
+- Total indexed files: 271
+- Indexed on: 2026-04-08 00:00 UTC
 
 ## Category Index
 
@@ -168,7 +168,7 @@ Current-branch canonical references:
 - [NPU_PERFORMANCE_SCALING_COMPLETE.md](/Documentation/Performance/NPU_PERFORMANCE_SCALING_COMPLETE.md)
 - [RELEASE_NOTES_TPM_NPU_2026-03-03.md](/Documentation/Performance/RELEASE_NOTES_TPM_NPU_2026-03-03.md)
 
-### Security & Compliance (11)
+### Security & Compliance (13)
 
 - [.github/CODEQL.md](../.github/CODEQL.md)
 - [.github/SECURITY.md](../.github/SECURITY.md)
@@ -178,6 +178,8 @@ Current-branch canonical references:
 - [API_AUTH_TOKEN_ROTATION_RUNBOOK.md](/Documentation/Security/API_AUTH_TOKEN_ROTATION_RUNBOOK.md)
 - [DISABLE_DEFAULT_CODEQL.md](/Documentation/Security/DISABLE_DEFAULT_CODEQL.md)
 - [LINT_SECURITY_FIXES.md](/Documentation/Security/LINT_SECURITY_FIXES.md)
+- [QUANTUM_KEX_DRILL_RETENTION_POLICY.md](/Documentation/Security/QUANTUM_KEX_DRILL_RETENTION_POLICY.md)
+- [QUANTUM_KEX_ROTATION_DRILL_RUNBOOK.md](/Documentation/Security/QUANTUM_KEX_ROTATION_DRILL_RUNBOOK.md)
 - [SECURITY_AUDIT_2026-02-28.md](/Documentation/Security/SECURITY_AUDIT_2026-02-28.md)
 - [audit_results/20260219/2026-02-17_10M_Node_Success/SUMMARY.md](../audit_results/20260219/2026-02-17_10M_Node_Success/SUMMARY.md)
 - [audit_results/20260219/BFT_ATTACK_FEB_2026.md](../audit_results/20260219/BFT_ATTACK_FEB_2026.md)
