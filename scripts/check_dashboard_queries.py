@@ -19,7 +19,9 @@ ALLOWLIST_FILE = ROOT / "scripts" / "known_metrics_allowlist.txt"
 
 METRIC_RE = re.compile(r"\b([a-zA-Z_][a-zA-Z0-9_:]*)\b")
 LABEL_KEY_RE = re.compile(r"\b([a-zA-Z_][a-zA-Z0-9_]*)\s*(?:=~|!~|=|!=)")
-GROUP_LABELS_RE = re.compile(r"\b(?:by|without|on|ignoring|group_left|group_right)\s*\(([^)]*)\)")
+GROUP_LABELS_RE = re.compile(
+    r"\b(?:by|without|on|ignoring|group_left|group_right)\s*\(([^)]*)\)"
+)
 PROMQL_KEYWORDS = {
     "sum",
     "avg",
