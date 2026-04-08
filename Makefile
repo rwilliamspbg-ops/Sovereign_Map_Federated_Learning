@@ -181,21 +181,26 @@ smoke:
 	@PKGS=$$($(GO) list ./... | grep -Ev '(/node_modules/|/sensors/camera$$|/sensors/slam$$|/storage/map_tiles$$)'); \
 		$(GO) test -short $$PKGS
 	@set -e; \
-		retry_npm() { \
-			cmd="$$*"; \
-			for attempt in 1 2 3; do \
-				if eval "$$cmd"; then \
-					return 0; \
-				fi; \
-				echo "npm command failed (attempt $$attempt/3): $$cmd"; \
-			done; \
-			echo "npm command failed after retries: $$cmd"; \
-			exit 1; \
+		run_npm_ci() { \
+			prefix="$$1"; \
+			if [ -n "$$prefix" ]; then \
+				ci_cmd="npm --prefix $$prefix ci"; \
+				lockfix_cmd="npm --prefix $$prefix install --package-lock-only --no-audit --no-fund"; \
+			else \
+				ci_cmd="npm ci"; \
+				lockfix_cmd="npm install --package-lock-only --no-audit --no-fund"; \
+			fi; \
+			if eval "$$ci_cmd"; then \
+				return 0; \
+			fi; \
+			echo "npm ci failed; refreshing lockfile and retrying: $$ci_cmd"; \
+			eval "$$lockfix_cmd"; \
+			eval "$$ci_cmd"; \
 		}; \
-		retry_npm npm ci; \
-		retry_npm npm --prefix frontend ci; \
-		retry_npm npm --prefix packages/core ci; \
-		retry_npm npm --prefix packages/privacy ci
+		run_npm_ci ""; \
+		run_npm_ci "frontend"; \
+		run_npm_ci "packages/core"; \
+		run_npm_ci "packages/privacy"
 	@npm --prefix frontend run build
 	@docker compose -f $(FULL_COMPOSE_FILE) config >/dev/null
 	@echo "✅ Smoke checks passed"
