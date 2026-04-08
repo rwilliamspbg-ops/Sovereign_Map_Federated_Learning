@@ -45,6 +45,12 @@ updates:
     schedule:
       interval: "weekly"
     open-pull-requests-limit: 3
+    # Keep Dependabot focused on production Python manifests; archived/example
+    # manifests can contain legacy constraints that break updater runs.
+    exclude-paths:
+      - "docs/**"
+      - "examples/**"
+      - "packages/training/**"
     groups:
       pip-root-updates:
         patterns:
