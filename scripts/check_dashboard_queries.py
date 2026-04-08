@@ -18,6 +18,8 @@ RULES_FILE = ROOT / "dashboard_compat_rules.yml"
 ALLOWLIST_FILE = ROOT / "scripts" / "known_metrics_allowlist.txt"
 
 METRIC_RE = re.compile(r"\b([a-zA-Z_][a-zA-Z0-9_:]*)\b")
+LABEL_KEY_RE = re.compile(r"\b([a-zA-Z_][a-zA-Z0-9_]*)\s*(?:=~|!~|=|!=)")
+GROUP_LABELS_RE = re.compile(r"\b(?:by|without|on|ignoring|group_left|group_right)\s*\(([^)]*)\)")
 PROMQL_KEYWORDS = {
     "sum",
     "avg",
@@ -61,6 +63,12 @@ def load_recording_rules() -> set[str]:
 
 
 def extract_metrics(expr: str) -> set[str]:
+    label_keys = {m.group(1) for m in LABEL_KEY_RE.finditer(expr)}
+    for match in GROUP_LABELS_RE.finditer(expr):
+        for raw_label in match.group(1).split(","):
+            label = raw_label.strip()
+            if label:
+                label_keys.add(label)
     candidates = set()
     for token in METRIC_RE.findall(expr):
         if token in PROMQL_KEYWORDS:
@@ -70,6 +78,10 @@ def extract_metrics(expr: str) -> set[str]:
         if token in {"true", "false", "inf", "nan"}:
             continue
         if token.startswith("__"):
+            continue
+        # Label keys inside selectors (for example, metric{event_type="x"})
+        # are not metric names and should not be validated as metrics.
+        if token in label_keys:
             continue
         # Keep only metric-like identifiers.
         if "_" not in token and ":" not in token:

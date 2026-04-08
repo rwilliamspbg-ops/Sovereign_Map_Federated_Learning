@@ -138,7 +138,7 @@ func (l *SQLProofLedger) RecordWithOptions(eventType string, proofBytes []byte, 
 	proofHash := computeProofHash(proofBytes)
 	idempotencyKey := strings.TrimSpace(opts.IdempotencyKey)
 	if idempotencyKey == "" {
-		idempotencyKey = computeDeterministicID(streamID, proofHash, role, "")
+		idempotencyKey = computeImplicitIdempotencyKey(streamID, proofHash, role)
 	}
 
 	tx, err := l.db.Begin()

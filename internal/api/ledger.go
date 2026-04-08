@@ -9,11 +9,14 @@ import (
 	"strconv"
 	"strings"
 	"sync"
+	"sync/atomic"
 	"time"
 )
 
 const defaultLedgerCap = 1000
 const defaultCheckpointEvery = 100
+
+var implicitIdempotencyNonce uint64
 
 // ProofLedgerStore defines append-only ledger operations shared by in-memory and SQL backends.
 type ProofLedgerStore interface {
@@ -126,7 +129,7 @@ func (l *ProofLedger) RecordWithOptions(eventType string, proofBytes []byte, rol
 	}
 	idempotencyKey := strings.TrimSpace(opts.IdempotencyKey)
 	if idempotencyKey == "" {
-		idempotencyKey = computeDeterministicID(streamID, proofHash, role, "")
+		idempotencyKey = computeImplicitIdempotencyKey(streamID, proofHash, role)
 	}
 
 	l.mu.Lock()
@@ -298,4 +301,10 @@ func computeDeterministicID(streamID string, proofHash string, role string, idem
 	base := strings.Join([]string{streamID, proofHash, role, idempotencyKey}, "|")
 	h := sha256.Sum256([]byte(base))
 	return hex.EncodeToString(h[:])
+}
+
+func computeImplicitIdempotencyKey(streamID string, proofHash string, role string) string {
+	nonce := atomic.AddUint64(&implicitIdempotencyNonce, 1)
+	seed := strings.Join([]string{strconv.FormatInt(time.Now().UnixNano(), 10), strconv.FormatUint(nonce, 10)}, "-")
+	return computeDeterministicID(streamID, proofHash, role, seed)
 }
