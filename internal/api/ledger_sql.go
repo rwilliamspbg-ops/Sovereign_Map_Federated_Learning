@@ -201,11 +201,16 @@ func (l *SQLProofLedger) RecordWithOptions(eventType string, proofBytes []byte, 
 	return entry, false
 }
 
+// Entries returns ledger rows in ascending order. In SQL mode, l.cap limits only
+// how many rows are returned by this query; it does not prune or retain rows in
+// mohawk_ledger_entries. SQL retention must be managed externally (for example,
+// by a database TTL policy or cleanup job).
 func (l *SQLProofLedger) Entries() []LedgerEntry {
 	query := `SELECT id, entry_id, stream_id, seq_no, created_at, event_type, proof_hash, prev_hash, entry_hash, idempotency_key, role, accepted, latency_ms, error_text
 		FROM mohawk_ledger_entries ORDER BY id DESC`
 	args := []interface{}{}
 	if l.cap > 0 {
+		// cap is a read/query limit only; it does not enforce SQL row retention.
 		query += ` LIMIT $1`
 		args = append(args, l.cap)
 	}
