@@ -180,11 +180,23 @@ smoke:
 	@echo "🧪 Running reproducibility smoke checks..."
 	@PKGS=$$($(GO) list ./... | grep -Ev '(/node_modules/|/sensors/camera$$|/sensors/slam$$|/storage/map_tiles$$)'); \
 		$(GO) test -short $$PKGS
-	@npm ci
-	@npm --prefix frontend ci
+	@set -e; \
+		retry_npm() { \
+			cmd="$$*"; \
+			for attempt in 1 2 3; do \
+				if eval "$$cmd"; then \
+					return 0; \
+				fi; \
+				echo "npm command failed (attempt $$attempt/3): $$cmd"; \
+			done; \
+			echo "npm command failed after retries: $$cmd"; \
+			exit 1; \
+		}; \
+		retry_npm npm ci; \
+		retry_npm npm --prefix frontend ci; \
+		retry_npm npm --prefix packages/core ci; \
+		retry_npm npm --prefix packages/privacy ci
 	@npm --prefix frontend run build
-	@npm --prefix packages/core ci
-	@npm --prefix packages/privacy ci
 	@docker compose -f $(FULL_COMPOSE_FILE) config >/dev/null
 	@echo "✅ Smoke checks passed"
 
