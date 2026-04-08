@@ -358,6 +358,9 @@ func (h *Handler) HealthCheck(w http.ResponseWriter, r *http.Request) {
 		status = "degraded"
 	}
 
+	// Error details are omitted from this unauthenticated endpoint to avoid
+	// leaking internal connection strings or credentials. Full details are
+	// available on the auth-protected /api/v1/ledger endpoint.
 	response := map[string]interface{}{
 		"status":  status,
 		"service": "sovereign-map-fl",
@@ -365,8 +368,7 @@ func (h *Handler) HealthCheck(w http.ResponseWriter, r *http.Request) {
 		"ledger": map[string]interface{}{
 			"ready":        ledgerReady,
 			"storage_mode": h.ledger.StorageMode(),
-			"init_error":   h.ledgerInitError,
-			"error":        ledgerErr,
+			"has_error":    strings.TrimSpace(ledgerErr) != "" || strings.TrimSpace(h.ledgerInitError) != "",
 		},
 	}
 
@@ -390,6 +392,9 @@ func (h *Handler) ReadinessCheck(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("X-API-Version", "v1")
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(status)
+	// Error details are omitted from this unauthenticated endpoint to avoid
+	// leaking internal connection strings or credentials. Full details are
+	// available on the auth-protected /api/v1/ledger endpoint.
 	_ = json.NewEncoder(w).Encode(map[string]interface{}{
 		"ready":   ready,
 		"service": "sovereign-map-fl",
@@ -397,8 +402,7 @@ func (h *Handler) ReadinessCheck(w http.ResponseWriter, r *http.Request) {
 		"ledger": map[string]interface{}{
 			"ready":        ledgerReady,
 			"storage_mode": h.ledger.StorageMode(),
-			"init_error":   h.ledgerInitError,
-			"error":        ledgerErr,
+			"has_error":    strings.TrimSpace(ledgerErr) != "" || strings.TrimSpace(h.ledgerInitError) != "",
 		},
 	})
 }
@@ -1041,11 +1045,14 @@ func (h *Handler) GetCapabilities(w http.ResponseWriter, r *http.Request) {
 				"mohawk_ledger_events_total",
 				"mohawk_ledger_entries",
 			},
+			// Error details are omitted from this unauthenticated endpoint to avoid
+			// leaking internal connection strings or credentials. Full details are
+			// available on the auth-protected /api/v1/ledger endpoint.
 			"ledger_state": map[string]interface{}{
 				"entries":      h.ledger.Len(),
 				"capacity":     h.ledger.Capacity(),
 				"storage_mode": h.ledger.StorageMode(),
-				"init_error":   h.ledgerInitError,
+				"has_error":    strings.TrimSpace(h.ledgerInitError) != "",
 			},
 		},
 	}

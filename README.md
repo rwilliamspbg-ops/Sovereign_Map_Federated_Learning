@@ -63,6 +63,32 @@ Documentation entrypoint: [docs/README.md](docs/README.md)
 
 For current roadmap status and remaining open items, see [Documentation/Performance/OPS_OPTIMIZATION_ROADMAP_2026-03-24.md](Documentation/Performance/OPS_OPTIMIZATION_ROADMAP_2026-03-24.md) and [Documentation/Project/ROADMAP.md](Documentation/Project/ROADMAP.md).
 
+## Quantum KEX Rotation Drill (Genesis Testnet)
+
+The repository includes a public-facing Genesis Testnet drill to demonstrate post-quantum migration readiness with auditable artifacts.
+
+Run the drill:
+
+```bash
+make quantum-kex-rotation-drill
+```
+
+Or run directly with explicit endpoint/token inputs:
+
+```bash
+NODE_AGENT_BASE_URL=http://localhost:8082 \
+MOHAWK_API_TOKEN_FILE=/run/secrets/mohawk_api_token \
+bash scripts/quantum-kex-rotation-drill.sh
+```
+
+Operator runbook and disclosure guidance:
+
+- [Documentation/Security/QUANTUM_KEX_ROTATION_DRILL_RUNBOOK.md](Documentation/Security/QUANTUM_KEX_ROTATION_DRILL_RUNBOOK.md)
+
+Artifact output:
+
+- `artifacts/quantum-kex-rotation/<drill-id>/`
+
 ## New Contributor Fast Path
 
 If you just cloned the repo and want to run tests quickly, use this sequence.
