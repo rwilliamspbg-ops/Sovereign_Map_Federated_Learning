@@ -218,7 +218,12 @@ func (l *SQLProofLedger) Entries() []LedgerEntry {
 	if err != nil {
 		return []LedgerEntry{}
 	}
-	defer rows.Close()
+	defer func() {
+		if closeErr := rows.Close(); closeErr != nil {
+			// Preserve existing method contract (best-effort, empty-on-error behavior).
+			_ = closeErr
+		}
+	}()
 
 	entries := make([]LedgerEntry, 0)
 	for rows.Next() {
@@ -262,7 +267,12 @@ func (l *SQLProofLedger) Checkpoints() []LedgerCheckpoint {
 	if err != nil {
 		return []LedgerCheckpoint{}
 	}
-	defer rows.Close()
+	defer func() {
+		if closeErr := rows.Close(); closeErr != nil {
+			// Preserve existing method contract (best-effort, empty-on-error behavior).
+			_ = closeErr
+		}
+	}()
 
 	out := make([]LedgerCheckpoint, 0)
 	for rows.Next() {

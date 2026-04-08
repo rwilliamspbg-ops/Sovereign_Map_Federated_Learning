@@ -3,6 +3,7 @@
 package crypto
 
 import (
+	"bytes"
 	"crypto/ecdsa"
 	"crypto/elliptic"
 	"crypto/rand"
@@ -108,6 +109,46 @@ func TestRotateSessionKeyNoDeadlock(t *testing.T) {
 		}
 	case <-time.After(2 * time.Second):
 		t.Fatal("RotateSessionKey timed out -- possible deadlock")
+	}
+}
+
+func TestRotateSessionKeyReestablishesSharedSecret(t *testing.T) {
+	alice, _ := NewSecureChannel()
+	bob, _ := NewSecureChannel()
+	_ = alice.RegisterPeer("bob", bob.publicKey)
+
+	if _, err := alice.EncryptMessage("bob", []byte("baseline")); err != nil {
+		t.Fatalf("initial encrypt: %v", err)
+	}
+
+	alice.mu.RLock()
+	original := append([]byte(nil), alice.sessionKeys["bob"]...)
+	alice.mu.RUnlock()
+	if len(original) == 0 {
+		t.Fatal("expected non-empty pre-rotation session key")
+	}
+
+	// Simulate a bad cached key and verify rotation reconstructs the canonical key.
+	forged := bytes.Repeat([]byte{0x42}, len(original))
+	alice.mu.Lock()
+	alice.sessionKeys["bob"] = append([]byte(nil), forged...)
+	alice.mu.Unlock()
+
+	if err := alice.RotateSessionKey("bob"); err != nil {
+		t.Fatalf("RotateSessionKey: %v", err)
+	}
+
+	alice.mu.RLock()
+	after := append([]byte(nil), alice.sessionKeys["bob"]...)
+	alice.mu.RUnlock()
+	if len(after) == 0 {
+		t.Fatal("expected non-empty post-rotation session key")
+	}
+	if bytes.Equal(after, forged) {
+		t.Fatal("expected rotation to replace forged cached key")
+	}
+	if !bytes.Equal(after, original) {
+		t.Fatal("expected rotation to re-establish canonical shared secret")
 	}
 }
 

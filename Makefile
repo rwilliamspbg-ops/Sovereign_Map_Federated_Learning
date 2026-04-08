@@ -216,6 +216,10 @@ testnet-wallet-readiness:
 	@echo "🧪 Running testnet wallet readiness checks..."
 	@bash scripts/testnet-wallet-readiness.sh
 
+quantum-kex-rotation-drill:
+	@echo "🔐 Running Genesis Testnet Quantum KEX Rotation Drill..."
+	@bash scripts/quantum-kex-rotation-drill.sh
+
 # =============================================================================
 # Development Helpers
 # =============================================================================
@@ -281,5 +285,6 @@ help:
 	@echo "  make observability-live-smoke - Validate lower-half operations panel queries against live Prometheus"
 	@echo "  make compose-service-drift-check - Detect stale compose service names in scripts"
 	@echo "  make quickstart-verify - Run onboarding-safe baseline verification targets"
+	@echo "  make quantum-kex-rotation-drill - Run public Genesis Testnet KEX rotation evidence drill"
 	@echo "  make check   - Run all checks"
 	@echo ""
