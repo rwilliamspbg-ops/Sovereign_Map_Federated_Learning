@@ -368,7 +368,7 @@ func (h *Handler) HealthCheck(w http.ResponseWriter, r *http.Request) {
 		"ledger": map[string]interface{}{
 			"ready":        ledgerReady,
 			"storage_mode": h.ledger.StorageMode(),
-			"has_error":    ledgerErr != "" || strings.TrimSpace(h.ledgerInitError) != "",
+			"has_error":    strings.TrimSpace(ledgerErr) != "" || strings.TrimSpace(h.ledgerInitError) != "",
 		},
 	}
 
@@ -402,7 +402,7 @@ func (h *Handler) ReadinessCheck(w http.ResponseWriter, r *http.Request) {
 		"ledger": map[string]interface{}{
 			"ready":        ledgerReady,
 			"storage_mode": h.ledger.StorageMode(),
-			"has_error":    ledgerErr != "" || strings.TrimSpace(h.ledgerInitError) != "",
+			"has_error":    strings.TrimSpace(ledgerErr) != "" || strings.TrimSpace(h.ledgerInitError) != "",
 		},
 	})
 }
