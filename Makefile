@@ -224,6 +224,19 @@ quantum-kex-rotation-drill-strict:
 	@echo "🔐 Running Quantum KEX Rotation Drill (strict non-mock backend enforcement)..."
 	@ENFORCE_NON_MOCK_BACKEND=true bash scripts/quantum-kex-rotation-drill.sh
 
+quantum-kex-production-guardrail-check:
+	@echo "🛡️ Verifying production-mode drill blocks mock backends..."
+	@set +e; \
+		DRY_RUN_GUARDRAILS_ONLY=true DRILL_MODE=production ENFORCE_NON_MOCK_BACKEND=true FALLBACK_STARK_BACKEND=winterfell_mock bash scripts/quantum-kex-rotation-drill.sh >/tmp/quantum_guardrail_check.log 2>&1; \
+		STATUS=$$?; \
+		set -e; \
+		if [ $$STATUS -eq 0 ]; then \
+			echo "❌ guardrail failed: mock backend was not blocked"; \
+			cat /tmp/quantum_guardrail_check.log; \
+			exit 1; \
+		fi; \
+		echo "✅ guardrail check passed (production-mode mock backend blocked)"
+
 # =============================================================================
 # Development Helpers
 # =============================================================================
@@ -291,5 +304,6 @@ help:
 	@echo "  make quickstart-verify - Run onboarding-safe baseline verification targets"
 	@echo "  make quantum-kex-rotation-drill - Run public Genesis Testnet KEX rotation evidence drill"
 	@echo "  make quantum-kex-rotation-drill-strict - Run drill with enforced non-mock backend policy"
+	@echo "  make quantum-kex-production-guardrail-check - Assert production mode rejects mock backends"
 	@echo "  make check   - Run all checks"
 	@echo ""

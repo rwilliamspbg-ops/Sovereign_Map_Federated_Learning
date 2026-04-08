@@ -37,6 +37,7 @@ security-evidence/quantum-kex-rotation/<drill-id>/
 ## Audit Expectations
 - Every drill must include:
   - `drill-summary.json`
+  - `pqc-readiness-evidence.json`
   - `checksums.sha256`
   - `retention-policy.json`
   - `immutability-notice.txt`

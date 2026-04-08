@@ -79,6 +79,12 @@ Run with strict non-mock backend enforcement:
 make quantum-kex-rotation-drill-strict
 ```
 
+Verify production-mode guardrail policy in CI/local:
+
+```bash
+make quantum-kex-production-guardrail-check
+```
+
 Or run directly with explicit endpoint/token inputs:
 
 ```bash
@@ -99,6 +105,7 @@ Production posture note:
 
 - Testnet drills may use mock/simulated fallback backends for rehearsal.
 - Production PQC readiness claims require strict non-mock enforcement and `production_pqc_ready=true` in `drill-summary.json`.
+- `production_pqc_ready=true` requires Go and Python liboqs adapters to both report `available=true`.
 
 ## New Contributor Fast Path
 

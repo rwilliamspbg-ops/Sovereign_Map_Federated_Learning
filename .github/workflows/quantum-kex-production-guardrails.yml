@@ -1,0 +1,27 @@
+name: Quantum KEX Production Guardrails
+
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+
+jobs:
+  guardrails:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Go
+        uses: actions/setup-go@v5
+        with:
+          go-version-file: go.mod
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Verify production-mode mock backend is blocked
+        run: make quantum-kex-production-guardrail-check
