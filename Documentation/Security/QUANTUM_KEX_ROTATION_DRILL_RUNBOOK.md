@@ -118,7 +118,7 @@ Evidence bundle path: artifacts/quantum-kex-rotation/<drill-id>/
 - If reconciliation fails, stop public messaging and open incident triage before rerun.
 
 ## Retention and Compliance
-- Canonical policy: [Documentation/Security/QUANTUM_KEX_DRILL_RETENTION_POLICY.md](Documentation/Security/QUANTUM_KEX_DRILL_RETENTION_POLICY.md)
+- Canonical policy: [QUANTUM_KEX_DRILL_RETENTION_POLICY.md](QUANTUM_KEX_DRILL_RETENTION_POLICY.md)
 - Treat each bundle as immutable security evidence for at least 2555 days.
 - Validate `checksums.sha256` before and after archival transfer.
 

@@ -364,7 +364,7 @@ docker compose up -d
 docker network inspect sovereign-genesis
 
 # Restart networking
-docker compose -f docker-compose.full.yml -f docker-compose.full.yml restart
+docker compose -f docker-compose.full.yml restart
 
 # Check firewall rules
 sudo ufw status
@@ -468,18 +468,18 @@ docker stats --no-stream
 
 ```bash
 # Graceful shutdown (recommended)
-docker compose -f docker-compose.full.yml -f docker-compose.full.yml down --remove-orphans
+docker compose -f docker-compose.full.yml down --remove-orphans
 
 # Force shutdown (if unresponsive)
-docker compose -f docker-compose.full.yml -f docker-compose.full.yml kill
-docker compose -f docker-compose.full.yml -f docker-compose.full.yml rm -f
+docker compose -f docker-compose.full.yml kill
+docker compose -f docker-compose.full.yml rm -f
 ```
 
 ### Network Recovery
 
 ```bash
 # 1. Stop all services
-docker compose -f docker-compose.full.yml -f docker-compose.full.yml down --remove-orphans
+docker compose -f docker-compose.full.yml down --remove-orphans
 
 # 2. Clean Docker state
 docker system prune -af --volumes
@@ -492,7 +492,7 @@ docker system prune -af --volumes
 
 ```bash
 # 1. Stop services
-docker compose -f docker-compose.full.yml -f docker-compose.full.yml down --remove-orphans
+docker compose -f docker-compose.full.yml down --remove-orphans
 
 # 2. Remove corrupted volumes
 docker volume rm prometheus_data grafana_data
@@ -501,7 +501,7 @@ docker volume rm prometheus_data grafana_data
 tar xzf prometheus-backup-*.tar.gz -C /var/lib/docker/volumes/
 
 # 4. Restart services
-docker compose -f docker-compose.full.yml -f docker-compose.full.yml up -d
+docker compose -f docker-compose.full.yml up -d
 ```
 
 ### Contact & Support

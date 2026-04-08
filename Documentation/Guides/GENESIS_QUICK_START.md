@@ -36,7 +36,7 @@ ls genesis-launch.sh      # Must exist
 
 | Service | URL | Credentials |
 |---------|-----|-------------|
-| **Grafana** | http://localhost:3001 | admin / admin |
+| **Grafana** | http://localhost:3001 | admin / ${GRAFANA_PASSWORD or GRAFANA_ADMIN_PASSWORD} |
 | **Prometheus** | http://localhost:9090 | - |
 | **Backend API** | http://localhost:8000 | - |
 | **Alertmanager** | http://localhost:9093 | - |
@@ -107,10 +107,10 @@ docker ps | grep node-agent | wc -l
 docker compose -f docker-compose.full.yml up -d --scale node-agent=50
 
 # Stop everything
-docker compose -f docker-compose.full.yml -f docker-compose.full.yml down --remove-orphans
+docker compose -f docker-compose.full.yml down --remove-orphans
 
 # Restart
-docker compose -f docker-compose.full.yml -f docker-compose.full.yml restart
+docker compose -f docker-compose.full.yml restart
 ```
 
 ---
@@ -152,7 +152,7 @@ docker compose -f docker-compose.full.yml restart backend
 
 **Common Issues**: See Troubleshooting section in full guide
 
-**Emergency**: Stop all services with `docker compose -f docker-compose.full.yml -f docker-compose.full.yml down --remove-orphans`
+**Emergency**: Stop all services with `docker compose -f docker-compose.full.yml down --remove-orphans`
 
 ---
 
