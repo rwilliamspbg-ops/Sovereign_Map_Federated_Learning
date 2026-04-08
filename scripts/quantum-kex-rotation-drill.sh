@@ -11,6 +11,11 @@ MOHAWK_API_TOKEN="${MOHAWK_API_TOKEN:-}"
 MOHAWK_API_TOKEN_FILE="${MOHAWK_API_TOKEN_FILE:-/run/secrets/mohawk_api_token}"
 MOHAWK_API_ROLE="${MOHAWK_API_ROLE:-verifier}"
 MOHAWK_NEGATIVE_TEST_ROLE="${MOHAWK_NEGATIVE_TEST_ROLE:-observer}"
+DRILL_MODE="${DRILL_MODE:-testnet}"
+FALLBACK_STARK_BACKEND="${FALLBACK_STARK_BACKEND:-winterfell_mock}"
+ENFORCE_NON_MOCK_BACKEND="${ENFORCE_NON_MOCK_BACKEND:-false}"
+PQC_KEM_SUITE="${PQC_KEM_SUITE:-declared-hybrid-target:x25519+mlkem768}"
+PQC_SIGNATURE_SUITE="${PQC_SIGNATURE_SUITE:-declared-target:mldsa65}"
 DRILL_ID="${DRILL_ID:-kex-rotation-$(date -u +%Y%m%dT%H%M%SZ)}"
 ARTIFACT_ROOT="${ARTIFACT_ROOT:-${ARTIFACTS_BASE_DIR}/${DRILL_ID}}"
 DRILL_RETENTION_DAYS="${DRILL_RETENTION_DAYS:-2555}"
@@ -33,6 +38,19 @@ info() {
 
 require_cmd() {
 	command -v "$1" >/dev/null 2>&1 || die "missing required command: $1"
+}
+
+is_mock_backend() {
+	local backend_name
+	backend_name="$(echo "$1" | tr '[:upper:]' '[:lower:]')"
+	case "${backend_name}" in
+		*mock*|simulated_*|test_*)
+			return 0
+			;;
+		*)
+			return 1
+			;;
+	esac
 }
 
 expect_bool_true() {
@@ -118,10 +136,17 @@ fi
 API_TOKEN="$(resolve_api_token)"
 [[ -n "${API_TOKEN}" ]] || die "resolved API token is empty"
 
+if [[ "${DRILL_MODE}" == "production" ]]; then
+	ENFORCE_NON_MOCK_BACKEND=true
+fi
+
 START_TS="$(date -u +%Y-%m-%dT%H:%M:%SZ)"
 info "drill id: ${DRILL_ID}"
 info "artifact root: ${ARTIFACT_ROOT}"
 info "target node-agent: ${NODE_AGENT_BASE_URL}"
+info "drill mode: ${DRILL_MODE}"
+info "fallback stark backend: ${FALLBACK_STARK_BACKEND}"
+info "enforce non-mock backend: ${ENFORCE_NON_MOCK_BACKEND}"
 
 curl -fsS "${READINESS_URL}" >"${ARTIFACT_ROOT}/readiness_pre.json"
 READY_PRE="$(json_field "${ARTIFACT_ROOT}/readiness_pre.json" "ready")"
@@ -171,10 +196,11 @@ domain_sep = b"winterfell-v1:"
 transcript = b"winterfell-fallback-drill-transcript-v1-20260408-extended-window"
 root = hashlib.sha256(domain_sep + transcript).digest()
 stark_proof = root + transcript
+backend = "${FALLBACK_STARK_BACKEND}"
 payload = {
 	"mode": "any",
 	"encoding": "base64",
-	"stark_backend": "winterfell_mock",
+	"stark_backend": backend,
 	"snark_proof": base64.b64encode(b"invalid-snark-placeholder").decode("ascii"),
 	"stark_proof": base64.b64encode(stark_proof).decode("ascii"),
 }
@@ -186,6 +212,10 @@ curl_auth_json POST "${HYBRID_VERIFY_URL}" "${ARTIFACT_ROOT}/hybrid_verify_fallb
 FALLBACK_ACCEPTED="$(json_field "${ARTIFACT_ROOT}/hybrid_verify_fallback_backend.json" "accepted")"
 FALLBACK_BACKEND="$(json_field "${ARTIFACT_ROOT}/hybrid_verify_fallback_backend.json" "backend")"
 expect_bool_true "${FALLBACK_ACCEPTED}" "fallback backend rehearsal failed"
+
+if [[ "${ENFORCE_NON_MOCK_BACKEND}" == "true" ]] && is_mock_backend "${FALLBACK_BACKEND}"; then
+	die "non-mock backend enforcement enabled, but backend '${FALLBACK_BACKEND}' is mock/simulated"
+fi
 
 # Negative role-failure check proves policy enforcement (expects 401/403).
 NEGATIVE_STATUS="$(curl -sS -o "${ARTIFACT_ROOT}/role_failure_negative_response.txt" -w '%{http_code}' \
@@ -228,6 +258,24 @@ fi
 
 END_TS="$(date -u +%Y-%m-%dT%H:%M:%SZ)"
 DRILL_OUTCOME="pass"
+PQC_PRIMITIVES_WIRED=false
+PQC_PRODUCTION_READY=false
+if [[ "${ENFORCE_NON_MOCK_BACKEND}" == "true" ]] && ! is_mock_backend "${FALLBACK_BACKEND}"; then
+	PQC_PRODUCTION_READY=true
+fi
+
+cat >"${ARTIFACT_ROOT}/pqc-readiness-evidence.json" <<EOF
+{
+	"drill_mode": "${DRILL_MODE}",
+	"pqc_kem_suite": "${PQC_KEM_SUITE}",
+	"pqc_signature_suite": "${PQC_SIGNATURE_SUITE}",
+	"primitives_wired_in_runtime": ${PQC_PRIMITIVES_WIRED},
+	"fallback_backend": "${FALLBACK_BACKEND}",
+	"enforce_non_mock_backend": ${ENFORCE_NON_MOCK_BACKEND},
+	"production_pqc_ready": ${PQC_PRODUCTION_READY},
+	"notes": "production_pqc_ready is true only when non-mock backend enforcement is enabled and the runtime backend is non-mock"
+}
+EOF
 
 cat >"${ARTIFACT_ROOT}/retention-policy.json" <<EOF
 {
@@ -279,6 +327,13 @@ cat >"${ARTIFACT_ROOT}/drill-summary.json" <<EOF
 	"backend": "${FALLBACK_BACKEND}",
 	"accepted": ${FALLBACK_ACCEPTED}
   },
+  "pqc_readiness": {
+	"drill_mode": "${DRILL_MODE}",
+	"pqc_kem_suite": "${PQC_KEM_SUITE}",
+	"pqc_signature_suite": "${PQC_SIGNATURE_SUITE}",
+	"primitives_wired_in_runtime": ${PQC_PRIMITIVES_WIRED},
+	"production_pqc_ready": ${PQC_PRODUCTION_READY}
+	},
   "negative_role_failure_test": {
 	"role": "${MOHAWK_NEGATIVE_TEST_ROLE}",
 	"status_code": ${NEGATIVE_STATUS},
@@ -300,6 +355,7 @@ cat >"${ARTIFACT_ROOT}/drill-summary.json" <<EOF
 	"crypto_rotation_test.log",
 	"hybrid_verify_post_rotation.json",
 	"hybrid_verify_fallback_backend.json",
+	"pqc-readiness-evidence.json",
 	"role_failure_negative_response.txt",
 	"role_failure_negative_test.json",
 	"ledger_post.json",
@@ -329,6 +385,11 @@ cat >"${ARTIFACT_ROOT}/drill-summary.md" <<EOF
 - Post-rotation hybrid verify accepted: ${POST_ACCEPTED}
 - Fallback backend rehearsal (${FALLBACK_BACKEND}) accepted: ${FALLBACK_ACCEPTED}
 - Negative role-failure status (${MOHAWK_NEGATIVE_TEST_ROLE}): ${NEGATIVE_STATUS}
+- Drill mode: ${DRILL_MODE}
+- Declared PQC KEM suite: ${PQC_KEM_SUITE}
+- Declared PQC signature suite: ${PQC_SIGNATURE_SUITE}
+- PQC primitives wired in runtime: ${PQC_PRIMITIVES_WIRED}
+- Production PQC ready: ${PQC_PRODUCTION_READY}
 - Ledger reconcile healthy after drill: ${RECONCILE_HEALTHY}
 - Ledger entry count before: ${LEDGER_PRE_COUNT}
 - Ledger entry count after: ${LEDGER_POST_COUNT}

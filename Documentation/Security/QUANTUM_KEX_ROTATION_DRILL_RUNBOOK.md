@@ -44,6 +44,15 @@ The drill demonstrates three things in one auditable sequence:
 make quantum-kex-rotation-drill
 ```
 
+### Strict production guardrail path
+
+```bash
+ENFORCE_NON_MOCK_BACKEND=true \
+FALLBACK_STARK_BACKEND=external_cmd \
+MOHAWK_STARK_VERIFY_CMD="/usr/local/bin/real-stark-verifier" \
+bash scripts/quantum-kex-rotation-drill.sh
+```
+
 ### Direct script path
 
 ```bash
@@ -88,6 +97,9 @@ Generated cross-run index files:
 - artifacts/quantum-kex-rotation/public-drill-index.json
 - artifacts/quantum-kex-rotation/public-drill-index.md
 
+PQC readiness evidence file:
+- pqc-readiness-evidence.json
+
 ## Success Criteria
 - Readiness pre-check is true.
 - Hybrid verification accepted both before and after rotation tests.
@@ -96,6 +108,7 @@ Generated cross-run index files:
 - Ledger reconciliation healthy after the drill.
 - Ledger entry count increases by at least 2 during the drill.
 - All artifact files present and readable.
+- For production-mode claims, `production_pqc_ready` must be `true` and non-mock backend enforcement must be enabled.
 
 ## Public Disclosure Template
 Use the generated drill summary values and publish a concise statement:
@@ -116,6 +129,7 @@ Evidence bundle path: artifacts/quantum-kex-rotation/<drill-id>/
 - This drill is non-destructive and uses existing verification endpoints.
 - If auth fails, recheck token source and X-API-Role permissions.
 - If reconciliation fails, stop public messaging and open incident triage before rerun.
+- `winterfell_mock` remains valid for testnet rehearsal only; production posture requires strict non-mock backend enforcement.
 
 ## Retention and Compliance
 - Canonical policy: [QUANTUM_KEX_DRILL_RETENTION_POLICY.md](QUANTUM_KEX_DRILL_RETENTION_POLICY.md)

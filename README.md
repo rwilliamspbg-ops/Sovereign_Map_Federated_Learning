@@ -73,6 +73,12 @@ Run the drill:
 make quantum-kex-rotation-drill
 ```
 
+Run with strict non-mock backend enforcement:
+
+```bash
+make quantum-kex-rotation-drill-strict
+```
+
 Or run directly with explicit endpoint/token inputs:
 
 ```bash
@@ -88,6 +94,11 @@ Operator runbook and disclosure guidance:
 Artifact output:
 
 - `artifacts/quantum-kex-rotation/<drill-id>/`
+
+Production posture note:
+
+- Testnet drills may use mock/simulated fallback backends for rehearsal.
+- Production PQC readiness claims require strict non-mock enforcement and `production_pqc_ready=true` in `drill-summary.json`.
 
 ## New Contributor Fast Path
 

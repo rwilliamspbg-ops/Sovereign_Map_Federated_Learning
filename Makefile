@@ -220,6 +220,10 @@ quantum-kex-rotation-drill:
 	@echo "🔐 Running Genesis Testnet Quantum KEX Rotation Drill..."
 	@bash scripts/quantum-kex-rotation-drill.sh
 
+quantum-kex-rotation-drill-strict:
+	@echo "🔐 Running Quantum KEX Rotation Drill (strict non-mock backend enforcement)..."
+	@ENFORCE_NON_MOCK_BACKEND=true bash scripts/quantum-kex-rotation-drill.sh
+
 # =============================================================================
 # Development Helpers
 # =============================================================================
@@ -286,5 +290,6 @@ help:
 	@echo "  make compose-service-drift-check - Detect stale compose service names in scripts"
 	@echo "  make quickstart-verify - Run onboarding-safe baseline verification targets"
 	@echo "  make quantum-kex-rotation-drill - Run public Genesis Testnet KEX rotation evidence drill"
+	@echo "  make quantum-kex-rotation-drill-strict - Run drill with enforced non-mock backend policy"
 	@echo "  make check   - Run all checks"
 	@echo ""
