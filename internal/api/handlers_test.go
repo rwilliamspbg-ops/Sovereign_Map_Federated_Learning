@@ -170,11 +170,11 @@ func TestCapabilitiesContractV1(t *testing.T) {
 		t.Fatalf("api.base_paths = %v, want %v", got, want)
 	}
 
-	if got, want := mustStringSlice(t, apiSection["open_endpoints"], "api.open_endpoints"), []string{"GET /health", "GET /api/v1/status", "GET /api/v1/consensus/status", "GET /api/v1/capabilities", "GET /api/v1/verification_policy", "GET /api/v1/trust_snapshot"}; !reflect.DeepEqual(got, want) {
+	if got, want := mustStringSlice(t, apiSection["open_endpoints"], "api.open_endpoints"), []string{"GET /health", "GET /readyz", "GET /api/v1/status", "GET /api/v1/readiness", "GET /api/v1/consensus/status", "GET /api/v1/capabilities", "GET /api/v1/verification_policy", "GET /api/v1/trust_snapshot"}; !reflect.DeepEqual(got, want) {
 		t.Fatalf("api.open_endpoints = %v, want %v", got, want)
 	}
 
-	if got, want := mustStringSlice(t, apiSection["auth_protected_endpoints"], "api.auth_protected_endpoints"), []string{"POST /api/v1/proof/verify", "POST /api/v1/proof/hybrid/verify", "GET /api/v1/ledger", "POST /api/v1/verification_policy"}; !reflect.DeepEqual(got, want) {
+	if got, want := mustStringSlice(t, apiSection["auth_protected_endpoints"], "api.auth_protected_endpoints"), []string{"POST /api/v1/proof/verify", "POST /api/v1/proof/hybrid/verify", "GET /api/v1/ledger", "GET /api/v1/ledger/reconcile", "POST /api/v1/verification_policy"}; !reflect.DeepEqual(got, want) {
 		t.Fatalf("api.auth_protected_endpoints = %v, want %v", got, want)
 	}
 
@@ -406,6 +406,28 @@ func TestProofLedgerRecord(t *testing.T) {
 	if entries[0].ProofHash == "" {
 		t.Error("ProofHash must not be empty")
 	}
+	if entries[0].EntryID == "" || entries[0].EntryHash == "" {
+		t.Fatal("entry hashes and deterministic IDs must be populated")
+	}
+}
+
+func TestProofLedgerIdempotentReplay(t *testing.T) {
+	l := NewProofLedger(10)
+	opts := LedgerRecordOptions{StreamID: "proof.snark", IdempotencyKey: "idem-1"}
+	first, replay := l.RecordWithOptions("snark_verify", []byte("proof"), "verifier", true, 1, nil, opts)
+	if replay {
+		t.Fatal("first write must not be replay")
+	}
+	second, replay := l.RecordWithOptions("snark_verify", []byte("proof"), "verifier", true, 1, nil, opts)
+	if !replay {
+		t.Fatal("second write with same idempotency key must be replay")
+	}
+	if l.Len() != 1 {
+		t.Fatalf("ledger len = %d, want 1", l.Len())
+	}
+	if first.EntryID != second.EntryID {
+		t.Fatalf("entry IDs differ for idempotent replay: %s vs %s", first.EntryID, second.EntryID)
+	}
 }
 
 func TestProofLedgerRingBuffer(t *testing.T) {
@@ -483,6 +505,17 @@ func TestProofLedgerConcurrentRecordRetention(t *testing.T) {
 	}
 }
 
+func TestProofLedgerReconcileHealthy(t *testing.T) {
+	l := NewProofLedger(10)
+	l.RecordWithOptions("snark_verify", []byte("proof-1"), "verifier", true, 1, nil, LedgerRecordOptions{StreamID: "proof.snark", IdempotencyKey: "k1"})
+	l.RecordWithOptions("snark_verify", []byte("proof-2"), "verifier", true, 1, nil, LedgerRecordOptions{StreamID: "proof.snark", IdempotencyKey: "k2"})
+
+	report := l.Reconcile()
+	if !report.Healthy {
+		t.Fatalf("expected healthy reconcile report, issues: %v", report.Issues)
+	}
+}
+
 func TestGetLedgerEndpoint(t *testing.T) {
 	configureProofAuthForTests(t)
 
@@ -516,6 +549,197 @@ func TestGetLedgerEndpoint(t *testing.T) {
 	count, ok := resp["count"].(float64)
 	if !ok || count < 1 {
 		t.Fatalf("expected count >= 1 in ledger response; got %v", resp)
+	}
+}
+
+func TestGetLedgerReconcileEndpoint(t *testing.T) {
+	configureProofAuthForTests(t)
+
+	h := NewHandler(nil, nil, nil, nil)
+	mux := http.NewServeMux()
+	h.RegisterRoutes(mux)
+
+	body := `{"encoding":"raw","proof":"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"}`
+	post := httptest.NewRequest(http.MethodPost, "/api/v1/proof/verify", strings.NewReader(body))
+	post.Header.Set("Content-Type", "application/json")
+	post.Header.Set("Authorization", "Bearer test-token")
+	post.Header.Set("X-API-Role", "verifier")
+	post.Header.Set("Idempotency-Key", "test-proof-1")
+	mux.ServeHTTP(httptest.NewRecorder(), post)
+
+	req := httptest.NewRequest(http.MethodGet, "/api/v1/ledger/reconcile", nil)
+	req.Header.Set("Authorization", "Bearer test-token")
+	req.Header.Set("X-API-Role", "verifier")
+	w := httptest.NewRecorder()
+	mux.ServeHTTP(w, req)
+
+	if w.Code != http.StatusOK {
+		t.Fatalf("status = %d, want 200", w.Code)
+	}
+
+	var resp map[string]interface{}
+	if err := json.Unmarshal(w.Body.Bytes(), &resp); err != nil {
+		t.Fatalf("json decode: %v", err)
+	}
+	healthy, ok := resp["healthy"].(bool)
+	if !ok || !healthy {
+		t.Fatalf("expected healthy=true, got %v", resp)
+	}
+}
+
+func TestVerifyProofIdempotentReplay(t *testing.T) {
+	configureProofAuthForTests(t)
+
+	h := NewHandler(nil, nil, nil, nil)
+	mux := http.NewServeMux()
+	h.RegisterRoutes(mux)
+
+	body := `{"encoding":"raw","proof":"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"}`
+
+	post1 := httptest.NewRequest(http.MethodPost, "/api/v1/proof/verify", strings.NewReader(body))
+	post1.Header.Set("Content-Type", "application/json")
+	post1.Header.Set("Authorization", "Bearer test-token")
+	post1.Header.Set("X-API-Role", "verifier")
+	post1.Header.Set("Idempotency-Key", "idem-proof-1")
+	w1 := httptest.NewRecorder()
+	mux.ServeHTTP(w1, post1)
+
+	post2 := httptest.NewRequest(http.MethodPost, "/api/v1/proof/verify", strings.NewReader(body))
+	post2.Header.Set("Content-Type", "application/json")
+	post2.Header.Set("Authorization", "Bearer test-token")
+	post2.Header.Set("X-API-Role", "verifier")
+	post2.Header.Set("Idempotency-Key", "idem-proof-1")
+	w2 := httptest.NewRecorder()
+	mux.ServeHTTP(w2, post2)
+
+	if w1.Code != http.StatusOK || w2.Code != http.StatusOK {
+		t.Fatalf("verify responses status mismatch: first=%d second=%d", w1.Code, w2.Code)
+	}
+
+	var first map[string]interface{}
+	if err := json.Unmarshal(w1.Body.Bytes(), &first); err != nil {
+		t.Fatalf("first decode: %v", err)
+	}
+	var second map[string]interface{}
+	if err := json.Unmarshal(w2.Body.Bytes(), &second); err != nil {
+		t.Fatalf("second decode: %v", err)
+	}
+	if first["replay"] != false {
+		t.Fatalf("first replay = %v, want false", first["replay"])
+	}
+	if second["replay"] != true {
+		t.Fatalf("second replay = %v, want true", second["replay"])
+	}
+}
+
+func TestCockroachBackendFallbackMetadata(t *testing.T) {
+	t.Setenv("MOHAWK_LEDGER_BACKEND", "cockroach")
+	t.Setenv("MOHAWK_LEDGER_SQL_DSN", "")
+
+	h := NewHandler(nil, nil, nil, nil)
+	mux := http.NewServeMux()
+	h.RegisterRoutes(mux)
+
+	req := httptest.NewRequest(http.MethodGet, "/api/v1/capabilities", nil)
+	w := httptest.NewRecorder()
+	mux.ServeHTTP(w, req)
+
+	if w.Code != http.StatusOK {
+		t.Fatalf("status = %d, want 200", w.Code)
+	}
+
+	var resp map[string]interface{}
+	if err := json.Unmarshal(w.Body.Bytes(), &resp); err != nil {
+		t.Fatalf("json decode: %v", err)
+	}
+	observability, ok := resp["observability"].(map[string]interface{})
+	if !ok {
+		t.Fatalf("observability missing: %v", resp)
+	}
+	ledgerState, ok := observability["ledger_state"].(map[string]interface{})
+	if !ok {
+		t.Fatalf("ledger_state missing: %v", observability)
+	}
+	if ledgerState["storage_mode"] != "cockroach-compatible-inmemory" {
+		t.Fatalf("storage_mode = %v, want cockroach-compatible-inmemory fallback", ledgerState["storage_mode"])
+	}
+	if ledgerState["init_error"] == "" {
+		t.Fatalf("init_error should be populated for fallback: %v", ledgerState)
+	}
+}
+
+func TestGetLedgerIncludesStorageMetadata(t *testing.T) {
+	configureProofAuthForTests(t)
+
+	h := NewHandler(nil, nil, nil, nil)
+	mux := http.NewServeMux()
+	h.RegisterRoutes(mux)
+
+	req := httptest.NewRequest(http.MethodGet, "/api/v1/ledger", nil)
+	req.Header.Set("Authorization", "Bearer test-token")
+	req.Header.Set("X-API-Role", "verifier")
+	w := httptest.NewRecorder()
+	mux.ServeHTTP(w, req)
+
+	if w.Code != http.StatusOK {
+		t.Fatalf("status = %d, want 200", w.Code)
+	}
+
+	var resp map[string]interface{}
+	if err := json.Unmarshal(w.Body.Bytes(), &resp); err != nil {
+		t.Fatalf("json decode: %v", err)
+	}
+	if resp["storage_mode"] == "" {
+		t.Fatalf("storage_mode must be present: %v", resp)
+	}
+}
+
+func TestReadinessEndpointHealthyWithInMemoryBackend(t *testing.T) {
+	t.Setenv("MOHAWK_LEDGER_BACKEND", "inmemory")
+
+	h := NewHandler(nil, nil, nil, nil)
+	mux := http.NewServeMux()
+	h.RegisterRoutes(mux)
+
+	req := httptest.NewRequest(http.MethodGet, "/api/v1/readiness", nil)
+	w := httptest.NewRecorder()
+	mux.ServeHTTP(w, req)
+
+	if w.Code != http.StatusOK {
+		t.Fatalf("status = %d, want 200", w.Code)
+	}
+
+	var resp map[string]interface{}
+	if err := json.Unmarshal(w.Body.Bytes(), &resp); err != nil {
+		t.Fatalf("json decode: %v", err)
+	}
+	if resp["ready"] != true {
+		t.Fatalf("ready = %v, want true", resp["ready"])
+	}
+}
+
+func TestReadinessEndpointDegradedOnSQLInitFailure(t *testing.T) {
+	t.Setenv("MOHAWK_LEDGER_BACKEND", "cockroach")
+	t.Setenv("MOHAWK_LEDGER_SQL_DSN", "")
+
+	h := NewHandler(nil, nil, nil, nil)
+	mux := http.NewServeMux()
+	h.RegisterRoutes(mux)
+
+	req := httptest.NewRequest(http.MethodGet, "/readyz", nil)
+	w := httptest.NewRecorder()
+	mux.ServeHTTP(w, req)
+
+	if w.Code != http.StatusServiceUnavailable {
+		t.Fatalf("status = %d, want 503", w.Code)
+	}
+
+	var resp map[string]interface{}
+	if err := json.Unmarshal(w.Body.Bytes(), &resp); err != nil {
+		t.Fatalf("json decode: %v", err)
+	}
+	if resp["ready"] != false {
+		t.Fatalf("ready = %v, want false", resp["ready"])
 	}
 }
 

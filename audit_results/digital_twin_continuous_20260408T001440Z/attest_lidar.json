@@ -1,0 +1,1 @@
+{"attestation_id":"attestation-45fadadfb96ed767","attestation_status":"verified","capacity_score":0.92,"compute_capacity":"32ch-lidar-stream","compute_type":"lidar","created_at":1775606614,"node_name":"Lidar Edge 1","notes":"3D point cloud contributor","participant_name":"lidar-node-1775606614","proof_digest":"sha256:lidar-1775606614","region":"zone-a"}

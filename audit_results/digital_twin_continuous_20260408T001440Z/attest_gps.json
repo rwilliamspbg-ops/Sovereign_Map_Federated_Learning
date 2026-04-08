@@ -1,0 +1,1 @@
+{"attestation_id":"attestation-964eaef3eeceeef9","attestation_status":"verified","capacity_score":0.88,"compute_capacity":"rtk-gps-10hz","compute_type":"gps","created_at":1775606614,"node_name":"GPS Edge 1","notes":"Geo-position stream contributor","participant_name":"gps-node-1775606614","proof_digest":"sha256:gps-1775606614","region":"zone-a"}

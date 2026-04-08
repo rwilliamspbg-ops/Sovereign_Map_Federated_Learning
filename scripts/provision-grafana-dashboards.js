@@ -73,6 +73,14 @@ const DASHBOARDS = {
     description: 'Real-time SLA status and breach alerts',
     panels: 6,
     rows: 2
+  },
+  audit: {
+    uid: 'sovereign-audit-gold-standard',
+    title: 'Sovereign Audit Gold Standard',
+    tags: ['audit', 'ledger', 'verification', 'trust', 'sovereign-map'],
+    description: 'Ledger integrity, verification quality, replay defense, and control-plane traceability',
+    panels: 13,
+    rows: 4
   }
 };
 
@@ -165,6 +173,16 @@ dashboard-metadata:
       description: Real-time SLA status across all 5 metrics
       refresh: 30s
       timeFrom: now-1h
+      timeTo: now
+
+  # Audit Dashboard
+  - name: Sovereign Audit Gold Standard
+    path: dashboard-audit.json
+    folder: Sovereign Map
+    properties:
+      description: Audit and ledger integrity posture with replay/control traceability
+      refresh: 10s
+      timeFrom: now-6h
       timeTo: now
 `;
 

@@ -1,0 +1,1 @@
+{"attestation_id":"attestation-ead454a1cf008fa9","attestation_status":"verified","capacity_score":0.9,"compute_capacity":"4k-frames-5fps","compute_type":"image","created_at":1775606614,"node_name":"Image Edge 1","notes":"Road scene frame contributor","participant_name":"image-node-1775606614","proof_digest":"sha256:image-1775606614","region":"zone-a"}
