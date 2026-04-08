@@ -502,7 +502,7 @@ jobs:
         if: steps.cdn_inputs.outputs.ready == 'true'
         run: |
           cd frontend
-          npm ci
+          bash ../scripts/npm-ci-safe.sh
           npm run build
 
       - name: Publish frontend assets

@@ -41,13 +41,13 @@ jobs:
           echo "npm: $(npm -v)"
 
       - name: Install root and package dependencies
-        run: npm ci
+        run: bash scripts/npm-ci-safe.sh
 
       - name: Build SDK packages
         run: npm run build:libs
 
       - name: Install frontend dependencies
-        run: npm --prefix frontend ci
+        run: bash scripts/npm-ci-safe.sh frontend
 
       - name: Build frontend
         run: npm --prefix frontend run build

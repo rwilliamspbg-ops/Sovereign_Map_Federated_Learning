@@ -59,7 +59,7 @@ jobs:
           echo "npm: $(npm -v)"
 
       - name: Install root dependencies
-        run: npm ci
+        run: bash scripts/npm-ci-safe.sh
 
       - name: Run npm audit
         id: audit
@@ -117,7 +117,7 @@ jobs:
           echo "npm: $(npm -v)"
 
       - name: Install dependencies
-        run: npm ci
+        run: bash scripts/npm-ci-safe.sh
 
       - name: Check for GPL/AGPL licenses (restricted)
         id: license
@@ -177,11 +177,11 @@ jobs:
 
       - name: Install dependencies for analysis
         run: |
-          npm ci
-          npm --prefix packages/privacy ci
-          npm --prefix packages/consensus ci
-          npm --prefix packages/island ci
-          npm --prefix packages/core ci
+          bash scripts/npm-ci-safe.sh
+          bash scripts/npm-ci-safe.sh packages/privacy
+          bash scripts/npm-ci-safe.sh packages/consensus
+          bash scripts/npm-ci-safe.sh packages/island
+          bash scripts/npm-ci-safe.sh packages/core
 
       - uses: github/codeql-action/init@c10b8064de6f491fea524254123dbe5e09572f13
         with:

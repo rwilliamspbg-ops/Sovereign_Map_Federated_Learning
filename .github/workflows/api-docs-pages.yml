@@ -75,7 +75,7 @@ jobs:
         if: steps.pages_check.outputs.enabled == 'true'
         working-directory: frontend
         run: |
-          npm ci
+          bash ../scripts/npm-ci-safe.sh
           npm run build
 
       - name: Prepare Pages artifact

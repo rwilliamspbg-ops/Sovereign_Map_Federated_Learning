@@ -36,7 +36,7 @@ jobs:
           npm install -g npm@${NPM_VERSION}
           echo "Node: $(node -v)"
           echo "npm: $(npm -v)"
-      - run: npm ci
+      - run: bash scripts/npm-ci-safe.sh
       - run: npm run build:libs
       - run: npm run test:ci
 
@@ -93,7 +93,7 @@ jobs:
           npm install -g npm@${NPM_VERSION}
           echo "Node: $(node -v)"
           echo "npm: $(npm -v)"
-      - run: npm ci
+      - run: bash scripts/npm-ci-safe.sh
         if: steps.npm_token.outputs.present == 'true'
       - run: npm run build:libs
         if: steps.npm_token.outputs.present == 'true'

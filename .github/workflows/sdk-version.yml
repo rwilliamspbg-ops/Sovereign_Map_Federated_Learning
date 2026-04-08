@@ -59,7 +59,7 @@ jobs:
             packages/privacy/package-lock.json
       
       - name: Install dependencies
-        run: npm ci
+        run: bash scripts/npm-ci-safe.sh
       
       - name: Run tests
         run: npm run test:ci
