@@ -383,7 +383,6 @@ benchmarks/
 # Jenkins
 build/
 .jenkins/
-artifacts/
 
 # Travis CI
 .travis/

@@ -1,0 +1,4 @@
+IMMUTABILITY REQUIRED
+- Move this evidence bundle to immutable storage within 24h.
+- Enable object lock / WORM retention for at least 2555 days.
+- Verify checksums.sha256 before and after transfer.
