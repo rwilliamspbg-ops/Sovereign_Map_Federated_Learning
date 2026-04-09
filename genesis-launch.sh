@@ -27,13 +27,19 @@ MIN_NODES="${MIN_NODES:-$DEFAULT_NODE_COUNT}"
 TARGET_NODES="${TARGET_NODES:-$MIN_NODES}"
 COMPOSE_FILE="docker-compose.full.yml"
 COMPOSE_ENV_FILE="${COMPOSE_ENV_FILE:-.env.full}"
+ACCELERATOR_POLICY="${ACCELERATOR_POLICY:-auto}"
+STRICT_ACCELERATOR="${STRICT_ACCELERATOR:-false}"
+COMPOSE_ACCELERATOR_PROFILE=""
+HOST_HAS_NPU=0
+HOST_HAS_GPU=0
 COMPOSE_ENV_ARGS=()
 if [ -n "$COMPOSE_ENV_FILE" ] && [ -f "$COMPOSE_ENV_FILE" ]; then
     COMPOSE_ENV_ARGS=(--env-file "$COMPOSE_ENV_FILE")
 fi
+COMPOSE_PROFILE_ARGS=()
 
 compose_cmd() {
-    docker compose "${COMPOSE_ENV_ARGS[@]}" -f "$COMPOSE_FILE" "$@"
+    docker compose "${COMPOSE_PROFILE_ARGS[@]}" "${COMPOSE_ENV_ARGS[@]}" -f "$COMPOSE_FILE" "$@"
 }
 
 get_profile_var() {
@@ -86,7 +92,91 @@ log_header() {
 }
 
 get_node_services() {
-    compose_cmd config --services | grep '^node-agent' || true
+    local pattern='^node-agent$'
+    if [ "$COMPOSE_ACCELERATOR_PROFILE" = "amd-gpu" ]; then
+        pattern='^node-agent-amd-gpu$'
+    elif [ "$COMPOSE_ACCELERATOR_PROFILE" = "npu" ]; then
+        pattern='^node-agent-npu$'
+    fi
+    compose_cmd config --services | grep -E "$pattern" || true
+}
+
+detect_accelerators() {
+    HOST_HAS_NPU=0
+    HOST_HAS_GPU=0
+
+    if [ -c /dev/npu0 ] || [ -d /dev/ascend ] || [ -d /usr/local/Ascend ]; then
+        HOST_HAS_NPU=1
+    fi
+
+    if [ -c /dev/kfd ] || [ -d /dev/dri ] || command -v nvidia-smi >/dev/null 2>&1 || command -v rocminfo >/dev/null 2>&1; then
+        HOST_HAS_GPU=1
+    fi
+}
+
+is_truthy() {
+    case "${1:-}" in
+        1|true|TRUE|yes|YES|y|Y|on|ON) return 0 ;;
+        *) return 1 ;;
+    esac
+}
+
+configure_accelerator_profile() {
+    local strict_requested=0
+    detect_accelerators
+
+    if is_truthy "$STRICT_ACCELERATOR"; then
+        strict_requested=1
+    fi
+
+    case "$ACCELERATOR_POLICY" in
+        auto)
+            if [ "$HOST_HAS_NPU" -eq 1 ]; then
+                COMPOSE_ACCELERATOR_PROFILE="npu"
+            elif [ "$HOST_HAS_GPU" -eq 1 ]; then
+                COMPOSE_ACCELERATOR_PROFILE="amd-gpu"
+            else
+                COMPOSE_ACCELERATOR_PROFILE=""
+            fi
+            ;;
+        npu)
+            COMPOSE_ACCELERATOR_PROFILE="npu"
+            if [ "$HOST_HAS_NPU" -ne 1 ] && [ "$strict_requested" -eq 1 ]; then
+                log_error "STRICT_ACCELERATOR enabled and ACCELERATOR_POLICY=npu, but no NPU device/runtime detected"
+                exit 1
+            fi
+            ;;
+        gpu)
+            COMPOSE_ACCELERATOR_PROFILE="amd-gpu"
+            if [ "$HOST_HAS_GPU" -ne 1 ] && [ "$strict_requested" -eq 1 ]; then
+                log_error "STRICT_ACCELERATOR enabled and ACCELERATOR_POLICY=gpu, but no GPU device/runtime detected"
+                exit 1
+            fi
+            ;;
+        cpu)
+            COMPOSE_ACCELERATOR_PROFILE=""
+            ;;
+        *)
+            log_error "Invalid ACCELERATOR_POLICY=$ACCELERATOR_POLICY (expected auto|npu|gpu|cpu)"
+            exit 1
+            ;;
+    esac
+
+    COMPOSE_PROFILE_ARGS=()
+    if [ -n "$COMPOSE_ACCELERATOR_PROFILE" ]; then
+        COMPOSE_PROFILE_ARGS=(--profile "$COMPOSE_ACCELERATOR_PROFILE")
+    fi
+
+    if [ "$strict_requested" -eq 1 ] && [ "$ACCELERATOR_POLICY" = "auto" ] && [ -z "$COMPOSE_ACCELERATOR_PROFILE" ]; then
+        log_error "STRICT_ACCELERATOR enabled and no accelerator detected for ACCELERATOR_POLICY=auto"
+        exit 1
+    fi
+
+    if [ -n "$COMPOSE_ACCELERATOR_PROFILE" ]; then
+        log_info "Accelerator profile selected: $COMPOSE_ACCELERATOR_PROFILE (policy=$ACCELERATOR_POLICY, strict=$STRICT_ACCELERATOR)"
+    else
+        log_info "Accelerator profile selected: cpu/default (policy=$ACCELERATOR_POLICY, strict=$STRICT_ACCELERATOR)"
+    fi
 }
 
 ##############################################################################
@@ -125,6 +215,9 @@ pre_launch_checks() {
         fi
     done
     log_success "All required files present"
+
+    configure_accelerator_profile
+    log_info "Accelerator visibility: NPU=$HOST_HAS_NPU GPU=$HOST_HAS_GPU"
     
     # Check available resources
     local total_ram="N/A"
@@ -373,9 +466,9 @@ display_dashboard() {
     echo -e "${YELLOW}🔧 MANAGEMENT COMMANDS:${NC}"
     echo ""
     echo -e "  View logs:         ${GREEN}docker compose logs -f${NC}"
-    echo -e "  Start node agents: ${GREEN}docker compose ${COMPOSE_ENV_ARGS[*]} -f $COMPOSE_FILE up -d node-agent-1 node-agent-2 node-agent-3${NC}"
-    echo -e "  Stop network:      ${GREEN}docker compose ${COMPOSE_ENV_ARGS[*]} -f $COMPOSE_FILE down --remove-orphans${NC}"
-    echo -e "  Restart services:  ${GREEN}docker compose ${COMPOSE_ENV_ARGS[*]} -f $COMPOSE_FILE restart${NC}"
+    echo -e "  Start node agents: ${GREEN}docker compose ${COMPOSE_PROFILE_ARGS[*]} ${COMPOSE_ENV_ARGS[*]} -f $COMPOSE_FILE up -d node-agent${NC}"
+    echo -e "  Stop network:      ${GREEN}docker compose ${COMPOSE_PROFILE_ARGS[*]} ${COMPOSE_ENV_ARGS[*]} -f $COMPOSE_FILE down --remove-orphans${NC}"
+    echo -e "  Restart services:  ${GREEN}docker compose ${COMPOSE_PROFILE_ARGS[*]} ${COMPOSE_ENV_ARGS[*]} -f $COMPOSE_FILE restart${NC}"
     echo ""
     echo -e "${BLUE}═══════════════════════════════════════════════════════════════${NC}"
     echo ""
