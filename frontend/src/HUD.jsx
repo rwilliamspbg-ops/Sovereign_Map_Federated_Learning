@@ -109,22 +109,49 @@ export default function HUD({
   const trustMode = trustStatus?.trust_mode || 'governed-verification';
   const confidencePct = Number(trustStatus?.fl_verification?.average_confidence_bps || 0) / 100;
   const memUsed = Number(opsHealth?.system?.memory?.used_percent || 0);
-  const apiLatencyMs = Number(health?.telemetry?.api_latency_ms || 0);
-  const apiErrorRatePct = Number(health?.telemetry?.api_error_rate || 0);
-  const ingressMbps = Number(health?.telemetry?.ingress_mbps || 0);
-  const trainingRound = Number(metricsSummary?.federated_learning?.current_round || trainingStatus?.round || 0);
-  const trainingLoss = Number(metricsSummary?.federated_learning?.current_loss || 0);
+  const firstFinite = (...values) => {
+    for (const value of values) {
+      const parsed = Number(value);
+      if (Number.isFinite(parsed)) {
+        return parsed;
+      }
+    }
+    return 0;
+  };
+  const latestTrendValue = (series) => {
+    if (!Array.isArray(series) || series.length === 0) {
+      return null;
+    }
+    const latest = series[series.length - 1];
+    if (latest && typeof latest === 'object') {
+      const parsed = Number(latest.value);
+      return Number.isFinite(parsed) ? parsed : null;
+    }
+    const parsed = Number(latest);
+    return Number.isFinite(parsed) ? parsed : null;
+  };
+  const trendLatency = latestTrendValue(opsTrends?.api_latency_ms);
+  const trendError = latestTrendValue(opsTrends?.api_error_rate_pct);
+  const trendIngress = latestTrendValue(opsTrends?.ingress_mbps);
+  const apiLatencyMs = firstFinite(health?.telemetry?.api_latency_ms, opsHealth?.telemetry?.api_latency_ms, trendLatency);
+  const apiErrorRatePct = firstFinite(health?.telemetry?.api_error_rate, opsHealth?.telemetry?.api_error_rate, trendError);
+  const ingressMbps = firstFinite(health?.telemetry?.ingress_mbps, opsHealth?.telemetry?.ingress_mbps, trendIngress);
+  const trainingRound = firstFinite(metricsSummary?.federated_learning?.current_round, trainingStatus?.round, opsHealth?.training?.round);
+  const trainingLoss = firstFinite(trainingStatus?.current_metrics?.loss, metricsSummary?.federated_learning?.current_loss);
   const targetRounds = Number(trainingStatus?.target_rounds || 0);
   const remainingRounds = Number(trainingStatus?.remaining_rounds);
-  const llmPolicyValid = Number(hudData?.simulation_counters?.llmPolicyValid || 0);
-  const llmPolicyRejected = Number(hudData?.simulation_counters?.llmPolicyRejected || 0);
+  const llmPolicyValid = firstFinite(hudData?.simulation_counters?.llmPolicyValid, opsHealth?.privacy_security?.llm_policy_valid);
+  const llmPolicyRejected = firstFinite(hudData?.simulation_counters?.llmPolicyRejected, opsHealth?.privacy_security?.llm_policy_rejected);
   const llmPolicyTotal = llmPolicyValid + llmPolicyRejected;
   const llmPassRatePct = llmPolicyTotal > 0 ? (llmPolicyValid / llmPolicyTotal) * 100 : 100;
   const registryCount = Array.isArray(founders) ? founders.length : 0;
   const verifiedRegistryCount = Array.isArray(founders) ? founders.filter((founder) => founder?.verified).length : 0;
-  const listedStake = Array.isArray(founders)
+  const listedStakeFromRegistry = Array.isArray(founders)
     ? founders.reduce((acc, founder) => acc + Number(founder?.stake || 0), 0)
     : 0;
+  const listedStake = listedStakeFromRegistry > 0
+    ? listedStakeFromRegistry
+    : firstFinite(metricsSummary?.total_stake, opsHealth?.governance_economics?.total_stake);
   const promReachable = Boolean(opsHealth?.dependencies?.prometheus?.reachable ?? opsHealth?.ports?.prometheus_9090);
   const apiPortUp = Boolean(opsHealth?.ports?.api_8000);
   const flPortUp = Boolean(opsHealth?.ports?.flower_8080);

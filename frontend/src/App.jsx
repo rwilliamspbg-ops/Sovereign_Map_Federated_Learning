@@ -121,8 +121,11 @@ function App() {
   });
 
   const avgFlDuration = Number(metricsSummary?.avg_fl_duration);
-  const totalStake = Number(metricsSummary?.total_stake);
-  const cxlUtilization = Number(metricsSummary?.cxl_utilization);
+  const totalStake = Number(metricsSummary?.total_stake ?? opsHealth?.governance_economics?.total_stake);
+  const cxlUtilization = Number(
+    metricsSummary?.cxl_utilization ??
+    ((Number(opsHealth?.tee_hardware?.cxl_utilization_pct) || 0) / 100)
+  );
 
   useEffect(() => {
     fetchData();
@@ -327,7 +330,22 @@ function App() {
         };
       }
 
-      setHudData(hud);
+      const mergedHudData = {
+        ...(hud || {}),
+        simulation_counters: {
+          ...(hud?.simulation_counters || {}),
+          llmPolicyValid:
+            Number(hud?.simulation_counters?.llmPolicyValid) ||
+            Number(opsHealthData?.privacy_security?.llm_policy_valid) ||
+            0,
+          llmPolicyRejected:
+            Number(hud?.simulation_counters?.llmPolicyRejected) ||
+            Number(opsHealthData?.privacy_security?.llm_policy_rejected) ||
+            0
+        }
+      };
+
+      setHudData(mergedHudData);
       setHealth(healthData);
       setMetricsSummary(metrics);
       setFounders(foundersData);

@@ -1312,6 +1312,11 @@ def build_ops_health_snapshot() -> Dict[str, Any]:
     hardware_fault_count = int(simulation_counters.get("hardwareFaults", 0))
     policy_valid = int(simulation_counters.get("llmPolicyValid", 0))
     policy_rejected = int(simulation_counters.get("llmPolicyRejected", 0))
+    loss = _latest_loss()
+    api_latency_ms = max(12, int(28 + (loss * 18)))
+    ingress_mbps = int(110 + (active_nodes * 2.8))
+    api_error_rate = round(min(2.0, 0.02 + (loss * 0.04)), 3)
+    global_saturation_pct = min(98, int(32 + (active_nodes * 0.4) + (loss * 6.0)))
 
     # Privacy and anomaly-trust posture metrics used by the operator HUD.
     try:
@@ -1540,6 +1545,14 @@ def build_ops_health_snapshot() -> Dict[str, Any]:
             "straggler_rate_pct": straggler_rate_pct,
             "attack_success_rate_pct": attack_success_rate_pct,
             "detection_precision_pct": detection_precision_pct,
+            "llm_policy_valid": policy_valid,
+            "llm_policy_rejected": policy_rejected,
+        },
+        "telemetry": {
+            "api_latency_ms": api_latency_ms,
+            "ingress_mbps": ingress_mbps,
+            "api_error_rate": api_error_rate,
+            "global_saturation_pct": global_saturation_pct,
         },
         "tee_hardware": {
             "epc_utilization_pct": epc_utilization_pct,
