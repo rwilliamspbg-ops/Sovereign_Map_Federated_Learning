@@ -24,6 +24,7 @@ import math
 import os
 import platform
 import random
+import ipaddress
 import re
 import secrets
 import shutil
@@ -393,7 +394,17 @@ def _request_ip(req: Request) -> str:
 
 def _is_local_request(req: Request) -> bool:
     ip = _request_ip(req)
-    return ip in {"127.0.0.1", "::1", "localhost"}
+    if ip in {"127.0.0.1", "::1", "localhost"}:
+        return True
+
+    try:
+        parsed = ipaddress.ip_address(ip)
+    except ValueError:
+        return False
+
+    # Allow RFC1918/link-local/loopback origins (e.g., Docker bridge peers)
+    # when SECURITY_ALLOW_LOCAL_HTTP is enabled.
+    return bool(parsed.is_private or parsed.is_link_local or parsed.is_loopback)
 
 
 def _is_request_secure(req: Request) -> bool:
