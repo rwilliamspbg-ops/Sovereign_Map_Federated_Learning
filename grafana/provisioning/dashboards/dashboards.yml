@@ -10,3 +10,13 @@ providers:
     updateIntervalSeconds: 10
     options:
       path: /etc/grafana/provisioning/dashboards
+
+  - name: 'Sovereign Genesis Dashboards'
+    orgId: 1
+    folder: 'Sovereign Genesis'
+    type: file
+    disableDeletion: false
+    editable: true
+    updateIntervalSeconds: 10
+    options:
+      path: /etc/grafana/dashboards
