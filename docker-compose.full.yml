@@ -55,6 +55,8 @@ services:
       - MIN_AVAILABLE_CLIENTS=${MIN_AVAILABLE_CLIENTS:-3}
       - ROUND_TIMEOUT_SECONDS=${ROUND_TIMEOUT_SECONDS:-600}
       - TPM_METRICS_ENDPOINT=${TPM_METRICS_ENDPOINT:-http://tpm-metrics:9091/event/attestation}
+      - TOKENOMICS_METRICS_ENDPOINT=${TOKENOMICS_METRICS_ENDPOINT:-http://tokenomics-metrics:9105/event/tokenomics}
+      - ALLOW_INSECURE_METRICS_ENDPOINTS=${ALLOW_INSECURE_METRICS_ENDPOINTS:-true}
       - LLM_ADAPTER_POLICY_PATH=${LLM_ADAPTER_POLICY_PATH:-/app/config/llm_adapter_policy.json}
       - JOIN_API_ADMIN_TOKEN=${JOIN_API_ADMIN_TOKEN:-local-dev-admin-token}
       - JOIN_INVITES_PATH=${JOIN_INVITES_PATH:-/app/data/join_invites.json}
