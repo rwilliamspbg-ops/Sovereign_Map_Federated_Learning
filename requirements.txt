@@ -1,5 +1,5 @@
 # Federated Learning
-flwr==1.28.0
+flwr==1.29.0
 flwr-datasets==0.6.0
 
 # Deep Learning
@@ -29,19 +29,19 @@ aiohttp==3.13.5
 
 # Google Gemini AI
 google-generativeai==0.8.6
-google-auth==2.49.1
+google-auth==2.49.2
 
 # Database & Caching
 redis==7.4.0
 
 # Monitoring & Metrics
-prometheus-client==0.24.1
+prometheus-client==0.25.0
 prometheus-flask-exporter==0.23.2
 
 # Utilities
 python-dotenv==1.2.2
 requests==2.33.1
-pydantic==2.12.5
+pydantic==2.13.0
 pydantic-settings==2.13.1
 
 # Development & Testing
