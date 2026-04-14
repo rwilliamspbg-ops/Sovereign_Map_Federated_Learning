@@ -125,7 +125,7 @@ jobs:
             type=raw,value=latest,enable={{is_default_branch}}
       
       - name: Build and push Docker image
-        uses: docker/build-push-action@d08e5c354a6adb9ed34480a06d141179aa583294
+        uses: docker/build-push-action@bcafcacb16a39f128d818304e6c9c0c18556b85f
         with:
           context: .
           file: ./Dockerfile
@@ -441,7 +441,7 @@ jobs:
 
       - name: Configure AWS Credentials
         if: steps.phase3d_inputs.outputs.ready == 'true'
-        uses: aws-actions/configure-aws-credentials@930440c6817aa426f625c392392d41129b016a7a
+        uses: aws-actions/configure-aws-credentials@5e19c1aa7acd2e02c5110eaf77eacd29039cca28
         with:
           role-to-assume: ${{ secrets.AWS_DEPLOY_ROLE_ARN }}
           aws-region: ${{ secrets.AWS_REGION }}
@@ -493,7 +493,7 @@ jobs:
 
       - name: Configure AWS Credentials
         if: steps.cdn_inputs.outputs.ready == 'true'
-        uses: aws-actions/configure-aws-credentials@930440c6817aa426f625c392392d41129b016a7a
+        uses: aws-actions/configure-aws-credentials@5e19c1aa7acd2e02c5110eaf77eacd29039cca28
         with:
           role-to-assume: ${{ secrets.AWS_DEPLOY_ROLE_ARN }}
           aws-region: ${{ secrets.AWS_REGION }}
