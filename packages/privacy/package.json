@@ -33,13 +33,13 @@
   "dependencies": {
     "@sovereignmap/compression": "^1.0.1",
     "eventemitter3": "^5.0.1",
-    "libsodium-wrappers": "^0.8.2",
+    "libsodium-wrappers": "^0.8.3",
     "ml-matrix": "^6.10.6"
   },
   "devDependencies": {
     "@types/libsodium-wrappers": "^0.8.2",
-    "@types/node": "^25.5.2",
-    "@vitest/coverage-v8": "^4.1.3",
+    "@types/node": "^25.6.0",
+    "@vitest/coverage-v8": "^4.1.4",
     "@webgpu/types": "^0.1.69",
     "typescript": "^6.0.2",
     "vitest": "^4.1.3"
