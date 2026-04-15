@@ -727,7 +727,9 @@ def _detect_hardware_class() -> str:
 
 
 def _resolve_provider_execution_policy(hardware_class: str) -> Dict[str, Any]:
-    policy = PROVIDER_EXECUTION_POLICIES.get(hardware_class, PROVIDER_EXECUTION_POLICIES["cpu"])
+    policy = PROVIDER_EXECUTION_POLICIES.get(
+        hardware_class, PROVIDER_EXECUTION_POLICIES["cpu"]
+    )
     return {
         "hardware_class": hardware_class,
         "provider": policy["provider"],
@@ -760,7 +762,9 @@ def _apply_runtime_profile(profile_name: str) -> Dict[str, Any]:
         runtime_profile_state["updated_at"] = int(time.time())
         # Keep training cadence aligned to profile unless overridden later by API call.
         training_state["tick_seconds"] = float(
-            profile["settings"].get("batch_cadence_s", training_state.get("tick_seconds", 5.0))
+            profile["settings"].get(
+                "batch_cadence_s", training_state.get("tick_seconds", 5.0)
+            )
         )
 
     _publish_runtime_profile_gauge()
@@ -1488,7 +1492,9 @@ def _classify_memory_pressure(
     used_percent: float,
 ) -> Tuple[str, int, str]:
     settings = runtime_profile_state.get("settings", {})
-    backpressure = settings.get("backpressure", {}) if isinstance(settings, dict) else {}
+    backpressure = (
+        settings.get("backpressure", {}) if isinstance(settings, dict) else {}
+    )
     warn_pct = float(backpressure.get("memory_warn_pct", 86.0))
     critical_pct = float(backpressure.get("memory_critical_pct", 93.0))
 
@@ -1505,7 +1511,9 @@ def memory_pressure_control_loop() -> None:
         snapshot = _read_meminfo()
         used_percent = float(snapshot.get("used_percent", 0.0) or 0.0)
         available_mb = float(snapshot.get("available_mb", 0.0) or 0.0)
-        level, backpressure_level, offload_mode = _classify_memory_pressure(used_percent)
+        level, backpressure_level, offload_mode = _classify_memory_pressure(
+            used_percent
+        )
 
         with runtime_state_lock:
             memory_pressure_state["used_percent"] = round(used_percent, 3)
@@ -1521,9 +1529,13 @@ def memory_pressure_control_loop() -> None:
             )
             if training_state.get("active", False):
                 if backpressure_level >= 2:
-                    training_state["tick_seconds"] = max(base_cadence, base_cadence * 2.0)
+                    training_state["tick_seconds"] = max(
+                        base_cadence, base_cadence * 2.0
+                    )
                 elif backpressure_level == 1:
-                    training_state["tick_seconds"] = max(base_cadence, base_cadence * 1.35)
+                    training_state["tick_seconds"] = max(
+                        base_cadence, base_cadence * 1.35
+                    )
                 else:
                     training_state["tick_seconds"] = base_cadence
 
@@ -3358,9 +3370,7 @@ def metrics_summary():
             "available_mb": memory_pressure_state.get("available_mb"),
             "level": memory_pressure_state.get("level"),
             "backpressure_level": memory_pressure_state.get("backpressure_level"),
-            "adaptive_offload_mode": memory_pressure_state.get(
-                "adaptive_offload_mode"
-            ),
+            "adaptive_offload_mode": memory_pressure_state.get("adaptive_offload_mode"),
             "updated_at": memory_pressure_state.get("updated_at"),
         },
     }

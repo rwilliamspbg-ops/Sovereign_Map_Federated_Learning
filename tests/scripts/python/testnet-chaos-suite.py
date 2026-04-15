@@ -196,7 +196,9 @@ def main():
     emit_progress(workflow="chaos_guard", phase="suite", state="started")
 
     steps = _env_int("CHAOS_STEPS", default=5, minimum=1)
-    restart_settle_s = _env_float("CHAOS_RESTART_SETTLE_SECONDS", default=8.0, minimum=0.5)
+    restart_settle_s = _env_float(
+        "CHAOS_RESTART_SETTLE_SECONDS", default=8.0, minimum=0.5
+    )
     progress_timeout_s = _env_float(
         "CHAOS_PROGRESS_TIMEOUT_SECONDS", default=45.0, minimum=2.0
     )
@@ -208,9 +210,7 @@ def main():
     use_container_quorum_fallback = (
         os.getenv("CHAOS_USE_CONTAINER_QUORUM_FALLBACK", "1") == "1"
     )
-    container_quorum_fn = (
-        running_node_quorum if use_container_quorum_fallback else None
-    )
+    container_quorum_fn = running_node_quorum if use_container_quorum_fallback else None
 
     before = prom_query("sovereignmap_fl_round")
     print(f"[chaos] round before={before}")
