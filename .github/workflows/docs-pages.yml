@@ -32,7 +32,7 @@ jobs:
         uses: actions/configure-pages@45bfe0192ca1faeb007ade9deae92b16b8254a0d # v6.0.0
 
       - name: Set up Python
-        uses: actions/setup-python@f677139b7d2e8ab862b9b28301ff9f4e1f2a4d4a # v5.6.0
+        uses: actions/setup-python@a309ff8b426b58ec0e2a45f0f869d46889d02405 # v5.6.0
         with:
           python-version: "3.12"
 
