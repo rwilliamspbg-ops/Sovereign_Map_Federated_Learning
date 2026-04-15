@@ -72,11 +72,11 @@ jobs:
                   action, rev = ref.rsplit('@', 1)
                   if not sha_re.fullmatch(rev):
                       continue
-                    parts = action.split('/')
-                    if len(parts) < 2:
+                parts = action.split('/')
+                if len(parts) < 2:
                       continue
-                    repo = '/'.join(parts[:2])
-                    refs.add((action, repo, rev, workflow.as_posix()))
+                repo = '/'.join(parts[:2])
+                refs.add((action, repo, rev, workflow.as_posix()))
 
           if not refs:
               print('No pinned action SHAs found to resolve.')
@@ -90,13 +90,13 @@ jobs:
               headers['Authorization'] = f'Bearer {token}'
 
           failures = []
-            for action, repo, rev, workflow in sorted(refs):
+          for action, repo, rev, workflow in sorted(refs):
               url = f'https://api.github.com/repos/{repo}/commits/{rev}'
               req = urllib.request.Request(url, headers=headers)
               try:
                   with urllib.request.urlopen(req, timeout=20) as resp:
                       if resp.status != 200:
-                    failures.append((workflow, action, rev, f'HTTP {resp.status}'))
+                          failures.append((workflow, action, rev, f'HTTP {resp.status}'))
               except urllib.error.HTTPError as exc:
                   failures.append((workflow, action, rev, f'HTTP {exc.code}'))
               except Exception as exc:
