@@ -4,18 +4,20 @@ on:
   pull_request:
     paths:
       - "README.md"
-      - "docs/README.md"
-      - "Documentation/README.md"
-      - "docs/DOCUMENTATION_MAINTENANCE.md"
+      - "CONTRIBUTING.md"
+      - "docs/**"
+      - "Documentation/**"
+      - ".markdownlint-docs.json"
       - "scripts/check_markdown_links_subset.py"
       - ".github/workflows/docs-quality.yml"
   push:
     branches: [main]
     paths:
       - "README.md"
-      - "docs/README.md"
-      - "Documentation/README.md"
-      - "docs/DOCUMENTATION_MAINTENANCE.md"
+      - "CONTRIBUTING.md"
+      - "docs/**"
+      - "Documentation/**"
+      - ".markdownlint-docs.json"
       - "scripts/check_markdown_links_subset.py"
       - ".github/workflows/docs-quality.yml"
   workflow_dispatch:
@@ -43,25 +45,23 @@ jobs:
 
       - name: Markdown lint (targeted files)
         run: |
-          cat > /tmp/markdownlint-docs-quality.json <<'EOF'
-          {
-            "default": true,
-            "MD013": false,
-            "MD007": false,
-            "MD033": false
-          }
-          EOF
           npx --yes markdownlint-cli2 \
-            --config /tmp/markdownlint-docs-quality.json \
+            --config .markdownlint-docs.json \
             README.md \
+            CONTRIBUTING.md \
             docs/README.md \
             Documentation/README.md \
-            docs/DOCUMENTATION_MAINTENANCE.md
+            docs/DOCUMENTATION_MAINTENANCE.md \
+            docs/index.md \
+            Documentation/Project/REPO_SETTINGS_ADMIN_RUNBOOK.md
 
       - name: Local markdown link check (targeted files)
         run: |
           python scripts/check_markdown_links_subset.py \
             README.md \
+            CONTRIBUTING.md \
             docs/README.md \
             Documentation/README.md \
-            docs/DOCUMENTATION_MAINTENANCE.md
+            docs/DOCUMENTATION_MAINTENANCE.md \
+            docs/index.md \
+            Documentation/Project/REPO_SETTINGS_ADMIN_RUNBOOK.md

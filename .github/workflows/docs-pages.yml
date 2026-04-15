@@ -6,6 +6,7 @@ on:
     paths:
       - "README.md"
       - "docs/**"
+      - "scripts/check_markdown_assets.py"
       - ".github/workflows/docs-pages.yml"
   workflow_dispatch:
 
@@ -38,6 +39,11 @@ jobs:
 
       - name: Install markdown renderer
         run: python -m pip install --upgrade pip markdown
+
+      - name: Validate docs image assets
+        run: |
+          mapfile -t markdown_files < <(find docs -type f -name '*.md' | sort)
+          python scripts/check_markdown_assets.py README.md "${markdown_files[@]}"
 
       - name: Build docs site
         run: |
@@ -115,6 +121,12 @@ jobs:
           (root / 'index.html').write_text(template, encoding='utf-8')
           (root / '.nojekyll').write_text('', encoding='utf-8')
           PY
+
+      - name: Pages build smoke test
+        run: |
+          test -f .pages-site/index.html
+          test -s .pages-site/index.html
+          echo "Pages build smoke test passed"
 
       - name: Upload Pages artifact
         uses: actions/upload-pages-artifact@fc324d3547104276b827a68afc52ff2a11cc49c9 # v5.0.0

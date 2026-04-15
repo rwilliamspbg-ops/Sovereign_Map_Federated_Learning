@@ -69,6 +69,8 @@ flowchart TB
         A --> O[Grafana + HUD]
 ```
 
+<!-- markdownlint-disable MD033 -->
+
 <p align="center">
     <img src="docs/screenshots/hud-operations-overview.png" alt="HUD operations overview" width="400" />
     <img src="docs/screenshots/grafana-operations-overview.png" alt="Grafana operations overview" width="400" />
@@ -98,6 +100,8 @@ flowchart TB
 
 </details>
 
+<!-- markdownlint-enable MD033 -->
+
 ## Community and Contribution
 
 The project is open to contributors who want to work on practical scale and verification problems.
@@ -108,6 +112,7 @@ The project is open to contributors who want to work on practical scale and veri
 - License: [LICENSE](LICENSE)
 - Roadmap: [Documentation/Project/ROADMAP.md](Documentation/Project/ROADMAP.md)
 - Research notes: [documentation/RESEARCH_FINDINGS.md](documentation/RESEARCH_FINDINGS.md)
+- Repo settings admin runbook: [Documentation/Project/REPO_SETTINGS_ADMIN_RUNBOOK.md](Documentation/Project/REPO_SETTINGS_ADMIN_RUNBOOK.md)
 
 Looking for help with:
 
@@ -381,10 +386,7 @@ The following environment variables are available for safe runtime tuning:
 - `RUNTIME_PROFILE=ultra_latency|balanced|throughput` (default `balanced`)
 - `MEMORY_PRESSURE_SAMPLE_SECONDS` (default `5.0`)
 - Runtime API endpoint: `GET/POST /runtime/profile`
-- `GET /metrics_summary` now includes:
-    - `runtime_profile`
-    - `provider_execution_policy`
-    - `memory_pressure`
+- `GET /metrics_summary` includes `runtime_profile`, `provider_execution_policy`, and `memory_pressure`
 
 Runtime profile quick commands:
 

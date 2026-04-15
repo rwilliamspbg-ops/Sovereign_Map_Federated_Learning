@@ -118,3 +118,17 @@ At minimum, require these checks:
 - `Windows Client EXE Build / Build Windows Client EXE`
 - `macOS Client Smoke / macOS Client Smoke`
 - `Observability CI / Validate Dashboard Queries`
+- `docs-markdownlint / markdownlint`
+- `Docs Quality / markdown-lint-and-links`
+- `Docs Pages / deploy`
+
+Branch protection alignment rule:
+
+- If a workflow or job name is renamed, update required checks in repository settings in the same change window. Stale required check names can block merges even when CI is healthy.
+
+## Repository Settings (Admin Only)
+
+Metadata updates for description, homepage, and topics require repository admin permissions. Use:
+
+- Runbook: `Documentation/Project/REPO_SETTINGS_ADMIN_RUNBOOK.md`
+- Fallback helper: `scripts/repo_settings_fallback.sh`

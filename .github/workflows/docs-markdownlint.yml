@@ -6,12 +6,18 @@ on:
       - "README.md"
       - "docs/**"
       - ".github/workflows/docs-markdownlint.yml"
+      - "CONTRIBUTING.md"
+      - "Documentation/**"
+      - ".markdownlint-docs.json"
   push:
     branches: [main]
     paths:
       - "README.md"
       - "docs/**"
       - ".github/workflows/docs-markdownlint.yml"
+      - "CONTRIBUTING.md"
+      - "Documentation/**"
+      - ".markdownlint-docs.json"
 
 jobs:
   markdownlint:
@@ -27,15 +33,13 @@ jobs:
 
       - name: Run markdownlint (targeted docs)
         run: |
-          cat > /tmp/markdownlint-docs.json <<'EOF'
-          {
-            "default": true,
-            "MD013": false,
-            "MD007": false,
-            "MD033": false
-          }
-          EOF
           npx --yes markdownlint-cli2 \
-            --config /tmp/markdownlint-docs.json \
+            --config .markdownlint-docs.json \
             README.md \
-            docs/ALERT_RUNBOOKS.md
+            CONTRIBUTING.md \
+            docs/ALERT_RUNBOOKS.md \
+            docs/index.md \
+            docs/README.md \
+            Documentation/README.md \
+            docs/DOCUMENTATION_MAINTENANCE.md \
+            Documentation/Project/REPO_SETTINGS_ADMIN_RUNBOOK.md

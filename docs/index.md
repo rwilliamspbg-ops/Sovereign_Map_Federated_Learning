@@ -26,9 +26,9 @@ make sandbox-up
 
 Then open:
 
-- HUD: http://localhost:3000
-- Grafana: http://localhost:3001
-- Prometheus: http://localhost:9090
+- HUD: [http://localhost:3000](http://localhost:3000)
+- Grafana: [http://localhost:3001](http://localhost:3001)
+- Prometheus: [http://localhost:9090](http://localhost:9090)
 
 Quick links:
 
@@ -38,6 +38,8 @@ Quick links:
 - Security: [SECURITY.md](https://github.com/rwilliamspbg-ops/Sovereign_Map_Federated_Learning/blob/main/SECURITY.md)
 
 ## Media Pack
+
+<!-- markdownlint-disable MD033 -->
 
 <p align="center">
   <img src="gifs/sandbox-up.gif" alt="make sandbox-up walkthrough" width="280" />
@@ -54,6 +56,8 @@ Quick links:
   <img src="screenshots/grafana-llm-overview.png" alt="Grafana LLM overview" width="360" />
   <img src="screenshots/grafana-tokenomics-overview.png" alt="Grafana tokenomics overview" width="360" />
 </p>
+
+<!-- markdownlint-enable MD033 -->
 
 ## Why It Matters
 
@@ -82,5 +86,5 @@ Looking for help with NPU ports, auditors for theorems, or Python SDK improvemen
 ## Launch Notes
 
 - Last validated: 2026-04-15
-- Public Discord: https://discord.gg/raBz79CJ
-- Repo source: https://github.com/rwilliamspbg-ops/Sovereign_Map_Federated_Learning
+- Public Discord: [https://discord.gg/raBz79CJ](https://discord.gg/raBz79CJ)
+- Repo source: [https://github.com/rwilliamspbg-ops/Sovereign_Map_Federated_Learning](https://github.com/rwilliamspbg-ops/Sovereign_Map_Federated_Learning)
