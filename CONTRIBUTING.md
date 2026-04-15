@@ -29,6 +29,21 @@ Use the repository PR template at `.github/pull_request_template.md` when openin
 - [ ] Documentation sync completed when workflows, tests, or security defaults changed
 - [ ] No secrets or credentials are committed
 
+## Pinned Lint and Validation Guardrails
+
+To avoid recurring CI failures and match GitHub Actions behavior locally, run these checks before pushing:
+
+- `make quickstart-verify`
+- `make lint-soft`
+- `make alerts-test`
+- `./.venv/bin/python -m black --check .`
+- `./.venv/bin/python tests/scripts/python/run_full_validation_suite.py --profile deep`
+
+Notes:
+
+- The `Lint Code Base` workflow enforces `PYTHON_BLACK`. Treat Black failures as merge-blocking.
+- The full validation suite now uses the invoking interpreter (`sys.executable`) for Python checks. Prefer running it from `./.venv/bin/python` to avoid dependency drift.
+
 ## Documentation Sync Requirements
 
 For changes that affect runtime APIs, auth, trust, or deployment defaults, documentation updates are mandatory in the same PR.
