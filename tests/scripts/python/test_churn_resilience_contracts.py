@@ -69,10 +69,18 @@ def _assert_backend_strategy_snapshot_restore() -> None:
 def _assert_chaos_cadence_gate_behaviors() -> None:
     chaos = _load_chaos_module()
 
-    def run_gate(round_series, active_series, baseline_round, quorum_threshold):
+    def run_gate(
+        round_series,
+        active_series,
+        baseline_round,
+        quorum_threshold,
+        container_series=None,
+    ):
         timeline = [0.0]
         round_iter = iter(round_series)
         active_iter = iter(active_series)
+        container_series = container_series or []
+        container_iter = iter(container_series)
 
         def query_fn(expr: str) -> float:
             if expr == "sovereignmap_fl_round":
@@ -87,12 +95,18 @@ def _assert_chaos_cadence_gate_behaviors() -> None:
         def sleep_fn(seconds: float) -> None:
             timeline[0] += float(seconds)
 
+        def container_quorum_fn() -> float:
+            if not container_series:
+                return 0.0
+            return float(next(container_iter, container_series[-1]))
+
         return chaos.wait_for_round_progress_or_quorum(
             baseline_round=baseline_round,
             quorum_threshold=quorum_threshold,
             timeout_s=1.0,
             poll_interval_s=0.1,
             query_fn=query_fn,
+            container_quorum_fn=container_quorum_fn,
             sleep_fn=sleep_fn,
             now_fn=now_fn,
         )
@@ -123,6 +137,16 @@ def _assert_chaos_cadence_gate_behaviors() -> None:
         quorum_threshold=1.0,
     )
     assert not ok
+
+    # Fallback quorum by running containers when Prometheus active nodes are stale.
+    ok, observed_round, observed_nodes = run_gate(
+        round_series=[5.0, 5.0, 5.0],
+        active_series=[0.0, 0.0, 0.0],
+        baseline_round=5.0,
+        quorum_threshold=2.0,
+        container_series=[0.0, 1.0, 2.0],
+    )
+    assert ok and observed_nodes >= 2.0
 
 
 def run() -> int:

@@ -37,3 +37,21 @@ groups:
     annotations:
       summary: "Network Partition >5m in {{ $labels.region }}"
       description: "A network partition block is persisting."
+
+  - alert: RuntimeMemoryPressureCritical
+    expr: sovereign_runtime_memory_pressure_level >= 2
+    for: 3m
+    labels:
+      severity: critical
+    annotations:
+      summary: "Runtime memory pressure is critical"
+      description: "Memory-pressure control loop has entered critical mode for more than 3 minutes."
+
+  - alert: RuntimeBackpressureSustained
+    expr: sovereign_runtime_backpressure_level >= 1
+    for: 10m
+    labels:
+      severity: warning
+    annotations:
+      summary: "Runtime backpressure sustained"
+      description: "Backpressure has remained active for over 10 minutes and may reduce FL throughput."

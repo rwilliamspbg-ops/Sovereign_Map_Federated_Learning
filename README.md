@@ -274,6 +274,24 @@ RESULTS_ROOT=artifacts/final-verification/$(date +%F) TARGET_NODES=10 STRICT_NPU
 
 The following environment variables are available for safe runtime tuning:
 
+- Runtime profile selection and memory-pressure control loop:
+- `RUNTIME_PROFILE=ultra_latency|balanced|throughput` (default `balanced`)
+- `MEMORY_PRESSURE_SAMPLE_SECONDS` (default `5.0`)
+- Runtime API endpoint: `GET/POST /runtime/profile`
+- `GET /metrics_summary` now includes:
+    - `runtime_profile`
+    - `provider_execution_policy`
+    - `memory_pressure`
+
+Runtime profile quick commands:
+
+```bash
+curl -fsS http://localhost:8000/runtime/profile | jq .
+curl -fsS -X POST http://localhost:8000/runtime/profile \
+    -H 'Content-Type: application/json' \
+    -d '{"profile":"throughput"}' | jq .
+```
+
 - FL aggregation path selection:
 - `FL_AGGREGATION_MODE=auto|loop|vectorized`
 - `FL_AGGREGATION_VECTORIZE_MIN_CLIENTS` (default `1000`)

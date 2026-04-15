@@ -203,6 +203,63 @@ paths:
               schema:
                 $ref: '#/components/schemas/TrainingStatusResponse'
 
+  /runtime/profile:
+    get:
+      tags: [Runtime]
+      summary: Get active runtime performance profile and provider policy
+      operationId: getRuntimeProfile
+      responses:
+        '200':
+          description: Runtime profile snapshot
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  active_profile:
+                    type: object
+                  available_profiles:
+                    type: array
+                    items:
+                      type: string
+                  provider_policy:
+                    type: object
+                  memory_pressure:
+                    type: object
+    post:
+      tags: [Runtime]
+      summary: Update active runtime performance profile
+      operationId: postRuntimeProfile
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [profile]
+              properties:
+                profile:
+                  type: string
+                  enum: [ultra_latency, balanced, throughput]
+      responses:
+        '200':
+          description: Runtime profile updated
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+                  active_profile:
+                    type: object
+        '400':
+          description: Invalid request body
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorStatusResponse'
+
   /simulate/{simulation_type}:
     post:
       tags: [Training]

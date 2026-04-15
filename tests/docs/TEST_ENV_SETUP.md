@@ -12,6 +12,8 @@ bash scripts/setup-test-environment.sh
 
 Some Linux environments enforce PEP 668 (externally-managed Python), which can block standard `pip install` writes. The setup script retries with `--break-system-packages` so local test execution remains deterministic.
 
+The full validation runner now executes all Python checks with the same interpreter used to launch the suite (`sys.executable`). This keeps dependency resolution consistent when using a virtual environment.
+
 ## What it installs
 
 - Frontend test dependencies via `npm --prefix frontend ci`
@@ -26,6 +28,9 @@ npm run test:full:deep
 # direct runner invocation
 python tests/scripts/python/run_full_validation_suite.py --profile fast
 python tests/scripts/python/run_full_validation_suite.py --profile deep
+
+# preferred explicit venv invocation
+./.venv/bin/python tests/scripts/python/run_full_validation_suite.py --profile deep
 ```
 
 ## Run trend and diff checks

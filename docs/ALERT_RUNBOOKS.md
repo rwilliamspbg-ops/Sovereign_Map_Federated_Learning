@@ -179,6 +179,23 @@ Inhibition semantics:
 - Inspect for stale contracts that remain pending after round completion and release in controlled batches.
 - If sustained, tighten intent budget limits or increase release cadence to keep escrow within policy bounds.
 
+## ChaosCadenceGateFailed (Validation Gate)
+
+- This validation failure indicates restart cadence advanced without recovering required active client quorum.
+- Confirm the latest chaos gate output in the evidence bundle:
+  - `chaos_guard_final.log`
+  - `chaos_guard_runtime.log`
+- Verify runtime health before rerun:
+  - backend health endpoint responds
+  - node-agent containers are running without crash loops
+  - Prometheus target scrape is healthy
+- Check quorum and cadence-related env values for the run:
+  - `CHAOS_MIN_CLIENT_QUORUM`
+  - `CHAOS_PROGRESS_TIMEOUT_SECONDS`
+  - `MIN_FIT_CLIENTS`
+  - `MIN_AVAILABLE_CLIENTS`
+- If failure persists with `active_nodes=0` at gate evaluation, classify as release blocker and attach backend/node-agent logs to incident report.
+
 ## Grafana Lower-Half Operations Panels Show No Data
 
 - Confirm Prometheus target health first:

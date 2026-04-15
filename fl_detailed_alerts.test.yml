@@ -77,3 +77,33 @@ tests:
       - eval_time: 8m
         alertname: HighPrivacyOverhead
         exp_alerts: []
+
+  - name: runtime-memory-pressure-critical-fires
+    interval: 1m
+    input_series:
+      - series: 'sovereign_runtime_memory_pressure_level'
+        values: '2+0x20'
+    alert_rule_test:
+      - eval_time: 4m
+        alertname: RuntimeMemoryPressureCritical
+        exp_alerts:
+          - exp_labels:
+              severity: critical
+            exp_annotations:
+              summary: "Runtime memory pressure is critical"
+              description: "Memory-pressure control loop has entered critical mode for more than 3 minutes."
+
+  - name: runtime-backpressure-sustained-fires
+    interval: 1m
+    input_series:
+      - series: 'sovereign_runtime_backpressure_level'
+        values: '1+0x20'
+    alert_rule_test:
+      - eval_time: 11m
+        alertname: RuntimeBackpressureSustained
+        exp_alerts:
+          - exp_labels:
+              severity: warning
+            exp_annotations:
+              summary: "Runtime backpressure sustained"
+              description: "Backpressure has remained active for over 10 minutes and may reduce FL throughput."

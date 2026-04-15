@@ -7,6 +7,7 @@ import json
 import os
 import argparse
 import subprocess
+import sys
 from dataclasses import asdict, dataclass
 from datetime import datetime, timezone
 from pathlib import Path
@@ -19,6 +20,7 @@ STAMP = datetime.now(timezone.utc).strftime("%Y%m%d_%H%M%S")
 JSON_OUT = OUT_DIR / f"full_validation_{STAMP}.json"
 MD_OUT = OUT_DIR / f"full_validation_{STAMP}.md"
 HISTORY_FILE = OUT_DIR / "history.jsonl"
+PYTHON_EXEC = sys.executable or "python"
 
 
 @dataclass
@@ -42,49 +44,49 @@ BASE_CHECKS = [
     {
         "name": "Python communication contracts",
         "category": "capabilities",
-        "command": "python tests/scripts/python/test_communication_contracts.py",
+        "command": f"{PYTHON_EXEC} tests/scripts/python/test_communication_contracts.py",
         "timeout": 180,
     },
     {
         "name": "Live backend HTTP E2E",
         "category": "capabilities",
-        "command": "python tests/scripts/python/test_backend_live_e2e.py",
+        "command": f"{PYTHON_EXEC} tests/scripts/python/test_backend_live_e2e.py",
         "timeout": 420,
     },
     {
         "name": "Mobile gradient signature contract",
         "category": "capabilities",
-        "command": "python tests/scripts/python/test_mobile_verify_gradient_contract.py",
+        "command": f"{PYTHON_EXEC} tests/scripts/python/test_mobile_verify_gradient_contract.py",
         "timeout": 240,
     },
     {
         "name": "Marketplace local contracts",
         "category": "functions",
-        "command": "python tests/scripts/python/test_marketplace_local_contracts.py",
+        "command": f"{PYTHON_EXEC} tests/scripts/python/test_marketplace_local_contracts.py",
         "timeout": 300,
     },
     {
         "name": "Marketplace negative-path contracts",
         "category": "functions",
-        "command": "python tests/scripts/python/test_marketplace_negative_paths.py",
+        "command": f"{PYTHON_EXEC} tests/scripts/python/test_marketplace_negative_paths.py",
         "timeout": 300,
     },
     {
         "name": "Backend security controls",
         "category": "security",
-        "command": "python tests/scripts/python/test_security_controls.py",
+        "command": f"{PYTHON_EXEC} tests/scripts/python/test_security_controls.py",
         "timeout": 240,
     },
     {
         "name": "Security fuzz controls",
         "category": "security",
-        "command": "python tests/scripts/python/test_security_fuzz_controls.py",
+        "command": f"{PYTHON_EXEC} tests/scripts/python/test_security_fuzz_controls.py",
         "timeout": 300,
     },
     {
         "name": "Performance regression thresholds",
         "category": "performance",
-        "command": "python tests/scripts/python/test_performance_regression_thresholds.py",
+        "command": f"{PYTHON_EXEC} tests/scripts/python/test_performance_regression_thresholds.py",
         "timeout": 300,
     },
     {
@@ -111,13 +113,13 @@ DEEP_ONLY_CHECKS = [
     {
         "name": "Browser runtime render cadence E2E",
         "category": "performance",
-        "command": "python tests/scripts/python/test_browser_runtime_e2e.py",
+        "command": f"{PYTHON_EXEC} tests/scripts/python/test_browser_runtime_e2e.py",
         "timeout": 1200,
     },
     {
         "name": "Scheduled chaos soak guard",
         "category": "performance",
-        "command": "python tests/scripts/python/test_soak_chaos_guard.py",
+        "command": f"{PYTHON_EXEC} tests/scripts/python/test_soak_chaos_guard.py",
         "timeout": 1200,
     },
 ]

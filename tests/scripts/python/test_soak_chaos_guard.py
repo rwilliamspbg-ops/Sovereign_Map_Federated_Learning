@@ -4,9 +4,11 @@
 from __future__ import annotations
 
 import os
+import json
 import shutil
 import subprocess
 import sys
+import time
 import urllib.error
 import urllib.request
 
@@ -18,6 +20,24 @@ def _is_strict() -> bool:
 def _skip_or_fail(reason: str) -> int:
     print('{"status":"skipped","reason":"%s"}' % reason)
     return 1 if _is_strict() else 0
+
+
+def _emit_progress(
+    phase: str,
+    state: str,
+    timeout_s: float = 0.0,
+    metadata: dict | None = None,
+) -> None:
+    payload = {
+        "workflow": "chaos_soak_guard",
+        "phase": phase,
+        "state": state,
+        "timeout_s": max(0.0, float(timeout_s)),
+        "ts": int(time.time()),
+    }
+    if metadata:
+        payload["metadata"] = metadata
+    print(json.dumps(payload, sort_keys=True))
 
 
 def _prometheus_available() -> bool:
@@ -57,6 +77,7 @@ def _running_node_agents() -> int:
 
 
 def main() -> int:
+    _emit_progress("suite", "started")
     if os.getenv("SOAK_CHAOS_ENABLED", "0") != "1":
         print('{"status":"skipped","reason":"SOAK_CHAOS_ENABLED!=1"}')
         return 0
@@ -78,6 +99,7 @@ def main() -> int:
     if not _prometheus_available():
         return _skip_or_fail("prometheus not reachable on localhost:9090")
 
+    _emit_progress("chaos_suite", "started", timeout_s=1200.0)
     run = subprocess.run(
         [sys.executable, "tests/scripts/python/testnet-chaos-suite.py"],
         text=True,
@@ -87,6 +109,11 @@ def main() -> int:
     )
     sys.stdout.write(run.stdout)
     sys.stderr.write(run.stderr)
+    _emit_progress(
+        "chaos_suite",
+        "completed" if run.returncode == 0 else "failed",
+        metadata={"returncode": run.returncode},
+    )
     return run.returncode
 
 

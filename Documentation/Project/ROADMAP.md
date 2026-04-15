@@ -65,6 +65,10 @@ This roadmap tracks execution priorities for the current `v1.2.0` platform basel
 - Added macOS client smoke workflow for cross-platform client confidence.
 - Windows client EXE lane and macOS client smoke lane both validated green on `main` during cross-platform closure.
 - Contributor baseline checks re-validated and documented (`npm run test:ci`, Python formatting/lint gates, targeted monitoring tests).
+- Runtime performance profile controls added (`ultra_latency`, `balanced`, `throughput`) with profile-aware cadence/retry/backpressure behavior.
+- Provider-aware execution policy publication added to runtime summaries (`hardware_class`, `provider`, optimizer flags, fallback order).
+- Memory-pressure adaptive control loop telemetry added with dedicated Prometheus alerts for critical pressure and sustained backpressure.
+- Deterministic workflow progress contracts added across training and chaos guard phases.
 
 ## Next Milestones
 

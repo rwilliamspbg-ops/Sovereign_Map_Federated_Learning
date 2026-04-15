@@ -597,6 +597,204 @@ smoothed_metrics = {
     "loss": None,
 }
 
+RUNTIME_PROFILE_PRESETS: Dict[str, Dict[str, Any]] = {
+    "ultra_latency": {
+        "batch_cadence_s": 1.0,
+        "precision_mode": "fp16",
+        "retry": {"max_attempts": 1, "backoff_s": 0.4},
+        "backpressure": {
+            "memory_warn_pct": 82.0,
+            "memory_critical_pct": 90.0,
+            "max_queue_depth": 64,
+        },
+    },
+    "balanced": {
+        "batch_cadence_s": 5.0,
+        "precision_mode": "tf32",
+        "retry": {"max_attempts": 2, "backoff_s": 0.8},
+        "backpressure": {
+            "memory_warn_pct": 86.0,
+            "memory_critical_pct": 93.0,
+            "max_queue_depth": 256,
+        },
+    },
+    "throughput": {
+        "batch_cadence_s": 8.0,
+        "precision_mode": "bf16",
+        "retry": {"max_attempts": 3, "backoff_s": 1.4},
+        "backpressure": {
+            "memory_warn_pct": 88.0,
+            "memory_critical_pct": 94.5,
+            "max_queue_depth": 512,
+        },
+    },
+}
+
+PROVIDER_EXECUTION_POLICIES: Dict[str, Dict[str, Any]] = {
+    "npu": {
+        "provider": "npu-runtime",
+        "optimizer_flags": ["graph_fusion", "int8_path", "static_shape_cache"],
+        "safe_fallback_order": ["cuda", "cpu"],
+    },
+    "gpu": {
+        "provider": "cuda",
+        "optimizer_flags": ["tf32", "cudnn_benchmark", "fused_kernels"],
+        "safe_fallback_order": ["cpu"],
+    },
+    "cpu": {
+        "provider": "cpu",
+        "optimizer_flags": ["ort_enable_all", "mem_pattern", "arena_allocator"],
+        "safe_fallback_order": [],
+    },
+}
+
+runtime_profile_state: Dict[str, Any] = {
+    "name": "balanced",
+    "settings": dict(RUNTIME_PROFILE_PRESETS["balanced"]),
+    "updated_at": int(time.time()),
+}
+
+provider_execution_policy_state: Dict[str, Any] = {
+    "hardware_class": "cpu",
+    "provider": "cpu",
+    "optimizer_flags": list(PROVIDER_EXECUTION_POLICIES["cpu"]["optimizer_flags"]),
+    "safe_fallback_order": list(
+        PROVIDER_EXECUTION_POLICIES["cpu"]["safe_fallback_order"]
+    ),
+    "updated_at": int(time.time()),
+}
+
+memory_pressure_state: Dict[str, Any] = {
+    "sample_interval_s": float(os.getenv("MEMORY_PRESSURE_SAMPLE_SECONDS", "5.0")),
+    "used_percent": 0.0,
+    "available_mb": 0.0,
+    "level": "normal",
+    "backpressure_level": 0,
+    "adaptive_offload_mode": "none",
+    "updated_at": int(time.time()),
+}
+
+runtime_state_lock = threading.Lock()
+
+# Runtime telemetry gauges for profile/policy visibility and alerting.
+runtime_memory_pressure_percent = Gauge(
+    "sovereign_runtime_memory_pressure_percent",
+    "Host memory pressure percent used by runtime control loops",
+)
+runtime_memory_pressure_level = Gauge(
+    "sovereign_runtime_memory_pressure_level",
+    "Memory pressure level (0=normal,1=warn,2=critical)",
+)
+runtime_backpressure_level = Gauge(
+    "sovereign_runtime_backpressure_level",
+    "Runtime backpressure level (0=normal,1=throttle,2=shed)",
+)
+runtime_profile_info = Gauge(
+    "sovereign_runtime_profile_info",
+    "Runtime profile and provider policy info",
+    ["profile", "precision_mode", "provider", "hardware_class"],
+)
+
+
+def _load_runtime_profile(name: str) -> Dict[str, Any]:
+    profile_name = str(name or "balanced").strip().lower()
+    preset = RUNTIME_PROFILE_PRESETS.get(profile_name)
+    if preset is None:
+        profile_name = "balanced"
+        preset = RUNTIME_PROFILE_PRESETS[profile_name]
+    return {"name": profile_name, "settings": dict(preset)}
+
+
+def _detect_hardware_class() -> str:
+    profile_path = os.getenv("AUTO_TUNER_OUTPUT", "/tmp/hardware_tuning.json")
+    try:
+        with open(profile_path, "r", encoding="utf-8") as f:
+            payload = json.load(f)
+        accelerator = (
+            str(payload.get("hardware", {}).get("accelerator", "")).strip().lower()
+        )
+        if "npu" in accelerator:
+            return "npu"
+        if any(token in accelerator for token in ["gpu", "cuda", "rocm"]):
+            return "gpu"
+    except Exception:
+        pass
+
+    machine = platform.machine().lower()
+    if any(token in machine for token in ["cuda", "nvidia"]):
+        return "gpu"
+    return "cpu"
+
+
+def _resolve_provider_execution_policy(hardware_class: str) -> Dict[str, Any]:
+    policy = PROVIDER_EXECUTION_POLICIES.get(hardware_class, PROVIDER_EXECUTION_POLICIES["cpu"])
+    return {
+        "hardware_class": hardware_class,
+        "provider": policy["provider"],
+        "optimizer_flags": list(policy["optimizer_flags"]),
+        "safe_fallback_order": list(policy["safe_fallback_order"]),
+        "updated_at": int(time.time()),
+    }
+
+
+def _publish_runtime_profile_gauge() -> None:
+    profile_name = str(runtime_profile_state.get("name", "balanced"))
+    precision_mode = str(
+        runtime_profile_state.get("settings", {}).get("precision_mode", "tf32")
+    )
+    provider = str(provider_execution_policy_state.get("provider", "cpu"))
+    hardware_class = str(provider_execution_policy_state.get("hardware_class", "cpu"))
+    runtime_profile_info.labels(
+        profile=profile_name,
+        precision_mode=precision_mode,
+        provider=provider,
+        hardware_class=hardware_class,
+    ).set(1)
+
+
+def _apply_runtime_profile(profile_name: str) -> Dict[str, Any]:
+    profile = _load_runtime_profile(profile_name)
+    with runtime_state_lock:
+        runtime_profile_state["name"] = profile["name"]
+        runtime_profile_state["settings"] = profile["settings"]
+        runtime_profile_state["updated_at"] = int(time.time())
+        # Keep training cadence aligned to profile unless overridden later by API call.
+        training_state["tick_seconds"] = float(
+            profile["settings"].get("batch_cadence_s", training_state.get("tick_seconds", 5.0))
+        )
+
+    _publish_runtime_profile_gauge()
+    return {
+        "name": runtime_profile_state["name"],
+        "settings": dict(runtime_profile_state["settings"]),
+        "updated_at": runtime_profile_state["updated_at"],
+    }
+
+
+def emit_workflow_progress(
+    workflow: str,
+    phase: str,
+    state: str,
+    timeout_seconds: float = 0.0,
+    metadata: Optional[Dict[str, Any]] = None,
+    severity: str = "info",
+) -> None:
+    payload = {
+        "workflow": str(workflow),
+        "phase": str(phase),
+        "state": str(state),
+        "timeout_seconds": max(0.0, float(timeout_seconds)),
+        "timestamp": int(time.time()),
+    }
+    if metadata:
+        payload["metadata"] = dict(metadata)
+    emit_ops_event(
+        kind="workflow_progress",
+        message=f"{workflow}:{phase}:{state}",
+        severity=severity,
+        data=payload,
+    )
+
 
 def _ema(previous: Optional[float], current: float, alpha: float = 0.3) -> float:
     if previous is None:
@@ -1284,6 +1482,77 @@ def _read_meminfo() -> Dict[str, float]:
         "used_mb": round(used_mb, 2),
         "used_percent": round(used_percent, 2),
     }
+
+
+def _classify_memory_pressure(
+    used_percent: float,
+) -> Tuple[str, int, str]:
+    settings = runtime_profile_state.get("settings", {})
+    backpressure = settings.get("backpressure", {}) if isinstance(settings, dict) else {}
+    warn_pct = float(backpressure.get("memory_warn_pct", 86.0))
+    critical_pct = float(backpressure.get("memory_critical_pct", 93.0))
+
+    if used_percent >= critical_pct:
+        return ("critical", 2, "full")
+    if used_percent >= warn_pct:
+        return ("warn", 1, "partial")
+    return ("normal", 0, "none")
+
+
+def memory_pressure_control_loop() -> None:
+    last_level = None
+    while True:
+        snapshot = _read_meminfo()
+        used_percent = float(snapshot.get("used_percent", 0.0) or 0.0)
+        available_mb = float(snapshot.get("available_mb", 0.0) or 0.0)
+        level, backpressure_level, offload_mode = _classify_memory_pressure(used_percent)
+
+        with runtime_state_lock:
+            memory_pressure_state["used_percent"] = round(used_percent, 3)
+            memory_pressure_state["available_mb"] = round(available_mb, 3)
+            memory_pressure_state["level"] = level
+            memory_pressure_state["backpressure_level"] = backpressure_level
+            memory_pressure_state["adaptive_offload_mode"] = offload_mode
+            memory_pressure_state["updated_at"] = int(time.time())
+
+            # Adaptive cadence keeps rounds deterministic while reducing pressure.
+            base_cadence = float(
+                runtime_profile_state.get("settings", {}).get("batch_cadence_s", 5.0)
+            )
+            if training_state.get("active", False):
+                if backpressure_level >= 2:
+                    training_state["tick_seconds"] = max(base_cadence, base_cadence * 2.0)
+                elif backpressure_level == 1:
+                    training_state["tick_seconds"] = max(base_cadence, base_cadence * 1.35)
+                else:
+                    training_state["tick_seconds"] = base_cadence
+
+            sample_interval = max(
+                1.0,
+                float(memory_pressure_state.get("sample_interval_s", 5.0) or 5.0),
+            )
+
+        runtime_memory_pressure_percent.set(used_percent)
+        runtime_memory_pressure_level.set(float(backpressure_level))
+        runtime_backpressure_level.set(float(backpressure_level))
+
+        if last_level != level:
+            severity = "warning" if level in {"warn", "critical"} else "info"
+            emit_workflow_progress(
+                workflow="runtime",
+                phase="memory_pressure",
+                state=level,
+                timeout_seconds=sample_interval,
+                metadata={
+                    "used_percent": round(used_percent, 3),
+                    "available_mb": round(available_mb, 3),
+                    "adaptive_offload_mode": offload_mode,
+                },
+                severity=severity,
+            )
+            last_level = level
+
+        time.sleep(sample_interval)
 
 
 def _probe_local_port(port: int) -> bool:
@@ -2002,7 +2271,21 @@ def _latest_loss() -> float:
 
 
 def execute_manual_fl_round(reason: str = "manual") -> Dict[str, Any]:
+    emit_workflow_progress(
+        workflow="federated_training",
+        phase="round_execution",
+        state="started",
+        timeout_seconds=float(training_state.get("tick_seconds", 5.0) or 5.0),
+        metadata={"reason": reason},
+    )
     if strategy is None:
+        emit_workflow_progress(
+            workflow="federated_training",
+            phase="round_execution",
+            state="failed",
+            metadata={"reason": reason, "error": "strategy_not_initialized"},
+            severity="error",
+        )
         return {
             "status": "error",
             "message": "FL strategy is not initialized yet",
@@ -2160,6 +2443,18 @@ def execute_manual_fl_round(reason: str = "manual") -> Dict[str, Any]:
                 ),
             },
         )
+    emit_workflow_progress(
+        workflow="federated_training",
+        phase="round_execution",
+        state="completed",
+        metadata={
+            "reason": reason,
+            "round": current_round,
+            "accuracy": round(next_acc, 3),
+            "loss": round(next_loss, 4),
+        },
+        severity="success",
+    )
     return {
         "status": "accepted",
         "message": f"FL round executed via {reason}",
@@ -2174,7 +2469,40 @@ def execute_manual_fl_round(reason: str = "manual") -> Dict[str, Any]:
 
 def _training_loop():
     while not training_stop_event.is_set():
-        execute_manual_fl_round(reason="hud_training_loop")
+        retry_cfg = runtime_profile_state.get("settings", {}).get("retry", {})
+        max_attempts = max(1, int(retry_cfg.get("max_attempts", 1) or 1))
+        backoff_s = max(0.1, float(retry_cfg.get("backoff_s", 0.5) or 0.5))
+        result: Dict[str, Any] = {}
+        for attempt in range(1, max_attempts + 1):
+            emit_workflow_progress(
+                workflow="federated_training",
+                phase="retry_window",
+                state="attempt",
+                timeout_seconds=backoff_s,
+                metadata={"attempt": attempt, "max_attempts": max_attempts},
+            )
+            result = execute_manual_fl_round(reason="hud_training_loop")
+            if result.get("status") == "accepted":
+                break
+            if attempt < max_attempts:
+                emit_workflow_progress(
+                    workflow="federated_training",
+                    phase="retry_window",
+                    state="backoff",
+                    timeout_seconds=backoff_s,
+                    metadata={"attempt": attempt},
+                    severity="warning",
+                )
+                training_stop_event.wait(backoff_s)
+
+        if result.get("status") != "accepted":
+            emit_workflow_progress(
+                workflow="federated_training",
+                phase="retry_window",
+                state="failed",
+                metadata={"result": result},
+                severity="error",
+            )
 
         reached_target = False
         target_rounds = 0
@@ -2197,6 +2525,13 @@ def _training_loop():
 
         if reached_target:
             training_stop_event.set()
+            emit_workflow_progress(
+                workflow="federated_training",
+                phase="training_loop",
+                state="completed",
+                metadata={"round": completed_round, "target_rounds": target_rounds},
+                severity="success",
+            )
             emit_ops_event(
                 kind="training",
                 message=f"Deterministic training completed at round {completed_round}",
@@ -2346,6 +2681,45 @@ def ops_events_stream():
                 ops_event_subscribers.discard(subscriber)
 
     return Response(stream_with_context(_stream()), mimetype="text/event-stream")
+
+
+@app.route("/runtime/profile", methods=["GET", "POST"])
+def runtime_profile_view():
+    if request.method == "GET":
+        with runtime_state_lock:
+            payload = {
+                "active_profile": dict(runtime_profile_state),
+                "available_profiles": sorted(list(RUNTIME_PROFILE_PRESETS.keys())),
+                "provider_policy": dict(provider_execution_policy_state),
+                "memory_pressure": dict(memory_pressure_state),
+            }
+        return jsonify(payload), 200
+
+    body = request.get_json(silent=True) or {}
+    if not isinstance(body, dict):
+        return jsonify({"status": "error", "message": "JSON object required"}), 400
+
+    profile_name = str(body.get("profile", "")).strip().lower()
+    if profile_name not in RUNTIME_PROFILE_PRESETS:
+        return (
+            jsonify(
+                {
+                    "status": "error",
+                    "message": "profile must be one of ultra_latency, balanced, throughput",
+                }
+            ),
+            400,
+        )
+
+    applied = _apply_runtime_profile(profile_name)
+    emit_workflow_progress(
+        workflow="runtime",
+        phase="profile_update",
+        state="completed",
+        metadata={"profile": applied.get("name")},
+        severity="success",
+    )
+    return jsonify({"status": "ok", "active_profile": applied}), 200
 
 
 @app.route("/verification_policy", methods=["POST"])
@@ -2526,6 +2900,14 @@ def start_training():
         training_thread = threading.Thread(target=_training_loop, daemon=True)
         training_thread.start()
 
+    emit_workflow_progress(
+        workflow="federated_training",
+        phase="training_loop",
+        state="started",
+        metadata={"target_rounds": requested_rounds},
+        severity="success",
+    )
+
     ops_control_actions_total.labels(action="training_start").inc()
     emit_ops_event(
         kind="training",
@@ -2569,6 +2951,13 @@ def stop_training():
         training_state["last_stopped_at"] = int(time.time())
         training_state["last_message"] = "HUD training loop stopped"
     ops_control_actions_total.labels(action="training_stop").inc()
+    emit_workflow_progress(
+        workflow="federated_training",
+        phase="training_loop",
+        state="stopped",
+        metadata={"round": int(strategy.round_num) if strategy else 0},
+        severity="warning",
+    )
     emit_ops_event(
         kind="training",
         message="Training loop stopped",
@@ -2633,6 +3022,9 @@ def training_status():
                     "compression_ratio": round(max(2.1, 4.9 - (loss * 0.5)), 2),
                 },
                 "marketplace_pending_contract": marketplace_contract,
+                "runtime_profile": dict(runtime_profile_state),
+                "provider_policy": dict(provider_execution_policy_state),
+                "memory_pressure": dict(memory_pressure_state),
             }
         ),
         200,
@@ -2945,6 +3337,32 @@ def metrics_summary():
         "marketplace": marketplace_snapshot,
         "governance": governance_snapshot,
         "network_expansion": network_expansion_snapshot,
+        "runtime_profile": {
+            "name": runtime_profile_state.get("name"),
+            "settings": runtime_profile_state.get("settings", {}),
+            "updated_at": runtime_profile_state.get("updated_at"),
+        },
+        "provider_execution_policy": {
+            "hardware_class": provider_execution_policy_state.get("hardware_class"),
+            "provider": provider_execution_policy_state.get("provider"),
+            "optimizer_flags": provider_execution_policy_state.get(
+                "optimizer_flags", []
+            ),
+            "safe_fallback_order": provider_execution_policy_state.get(
+                "safe_fallback_order", []
+            ),
+            "updated_at": provider_execution_policy_state.get("updated_at"),
+        },
+        "memory_pressure": {
+            "used_percent": memory_pressure_state.get("used_percent"),
+            "available_mb": memory_pressure_state.get("available_mb"),
+            "level": memory_pressure_state.get("level"),
+            "backpressure_level": memory_pressure_state.get("backpressure_level"),
+            "adaptive_offload_mode": memory_pressure_state.get(
+                "adaptive_offload_mode"
+            ),
+            "updated_at": memory_pressure_state.get("updated_at"),
+        },
     }
 
     return jsonify(response_payload)
@@ -5219,6 +5637,12 @@ if __name__ == "__main__":
     dao = MockDAO()
     load_llm_adapter_policy()
     load_verification_policy_state()
+    _apply_runtime_profile(os.getenv("RUNTIME_PROFILE", "balanced"))
+    hardware_class = _detect_hardware_class()
+    provider_execution_policy_state.update(
+        _resolve_provider_execution_policy(hardware_class)
+    )
+    _publish_runtime_profile_gauge()
 
     logger.info("Sovereign Maps Backend v1.0.0 - Starting dual-mode server")
     logger.info("- Flower aggregator: 0.0.0.0:8080")
@@ -5237,6 +5661,9 @@ if __name__ == "__main__":
 
     tokenomics_thread = threading.Thread(target=run_tokenomics_publisher, daemon=True)
     tokenomics_thread.start()
+
+    memory_thread = threading.Thread(target=memory_pressure_control_loop, daemon=True)
+    memory_thread.start()
 
     # Give Flask a moment to initialize before starting Flower.
     time.sleep(2)

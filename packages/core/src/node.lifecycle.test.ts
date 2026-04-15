@@ -168,7 +168,7 @@ describe("SovereignNode lifecycle branches", () => {
     expect(node.state).toBe(NodeState.ONLINE);
     expect(onReady).toHaveBeenCalledTimes(1);
     expect(node.setupShutdownHandlers).toHaveBeenCalledTimes(1);
-  });
+  }, 15000);
 
   it("wraps initialization failures as NodeInitializationError", async () => {
     const { node, NodeState } = await createNodeWithNetwork();

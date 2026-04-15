@@ -29,6 +29,23 @@
 - **Privacy Dashboard Data Source Cleanup:** Privacy-Utility Analysis now derives metrics from backend convergence payloads instead of browser-only simulator state.
 - **Observability CI Reliability:** Dashboard query validator allowlist updated to include consensus and aggregation metric names used by the operations dashboard.
 
+## April 15, 2026 Update - AV/Chaos Release Candidate Checkpoint
+
+- **Checkpoint Tag:** `RC-AV-CHAOS-2026-04-15` (operator validation checkpoint for AV ingestion/pose and chaos cadence guard)
+- **Evidence Bundle:** `test-results/release-evidence/20260415T160033Z`
+- **Validated Paths:**
+   - AV ingest contracts and SLAM pose contracts passed in local gate evidence.
+   - Runtime chaos suite progressed past preflight in latest rerun but failed cadence gate with insufficient active client quorum during restart.
+- **Known Runtime Gaps at Checkpoint:**
+   - Tile stage in default local runtime remains gated by OpenCV-tagged build path.
+   - Chaos cadence gate still fails under current local orchestration profile (`active_nodes=0` observed at gate failure point).
+
+### Immediate Follow-Up Backlog (Next 3 Work Items)
+
+1. **Real GPU Validation Lane (P0):** Execute hardware-backed GPU validation on dedicated runner and publish artifacted pass/fail report.
+2. **Replay Fixture Expansion (P0):** Add deterministic AV replay fixtures covering skewed timestamps, dropped frames, and stale pose windows.
+3. **CI Gate Hardening (P0):** Promote AV + chaos cadence checks to stricter merge gate with clearer failure classification (preflight vs cadence vs quorum).
+
 ### 🔥 Phase 3 Achieved Milestones (PR #62)
 - **Differential Privacy Compression:** 90% bandwidth reduction via Int8 Quantization & Gaussian Noise.
 - **Hardware Integration:** Android Camera2/ARCore LiDAR headers, WebGPU browser sensor pipeline (GPS+Camera).
