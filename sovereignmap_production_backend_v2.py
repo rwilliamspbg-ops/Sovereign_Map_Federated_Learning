@@ -5026,10 +5026,134 @@ def status():
 
 
 def run_flower_server():
-    """Run Flower aggregation server on port 8080."""
+    """Run Flower aggregation server on port 8080 with reconnect/backoff."""
     global strategy
 
     logger.info("Starting Flower aggregation server on port 8080...")
+
+    restart_max_attempts = int(os.getenv("FLOWER_RESTART_MAX_ATTEMPTS", "8"))
+    restart_backoff_base_seconds = float(
+        os.getenv("FLOWER_RESTART_BACKOFF_BASE_SECONDS", "2")
+    )
+    restart_backoff_max_seconds = float(
+        os.getenv("FLOWER_RESTART_BACKOFF_MAX_SECONDS", "30")
+    )
+
+    restart_attempt = 0
+    while True:
+        try:
+            _run_flower_server_once()
+            return
+        except KeyboardInterrupt:
+            raise
+        except Exception as exc:
+            if not _is_recoverable_flower_session_error(exc):
+                logger.exception("Flower server failed with non-recoverable error")
+                raise
+
+            restart_attempt += 1
+            if restart_max_attempts > 0 and restart_attempt > restart_max_attempts:
+                logger.exception(
+                    "Flower server recoverable-restart budget exhausted (%s attempts)",
+                    restart_max_attempts,
+                )
+                raise
+
+            delay_seconds = _compute_flower_restart_backoff(
+                restart_attempt,
+                restart_backoff_base_seconds,
+                restart_backoff_max_seconds,
+            )
+            logger.warning(
+                "Recoverable Flower session failure detected (%s). "
+                "Restart attempt %s in %.2fs",
+                exc,
+                restart_attempt,
+                delay_seconds,
+            )
+            try:
+                emit_ops_event(
+                    kind="training",
+                    message="Recoverable Flower session interruption detected; retrying",
+                    severity="warning",
+                    data={
+                        "restart_attempt": restart_attempt,
+                        "backoff_seconds": round(delay_seconds, 3),
+                        "error": str(exc),
+                    },
+                )
+            except Exception:
+                # Never let observability side effects block training recovery.
+                pass
+            time.sleep(delay_seconds)
+
+
+def _snapshot_strategy_state() -> Tuple[int, Dict[str, List[float]]]:
+    if strategy is None:
+        return 0, {"rounds": [], "accuracies": [], "losses": [], "timestamps": []}
+
+    round_num = int(getattr(strategy, "round_num", 0) or 0)
+    history = getattr(strategy, "convergence_history", None) or {}
+    return round_num, {
+        "rounds": list(history.get("rounds", [])),
+        "accuracies": list(history.get("accuracies", [])),
+        "losses": list(history.get("losses", [])),
+        "timestamps": list(history.get("timestamps", [])),
+    }
+
+
+def _build_strategy_with_snapshot(
+    round_num: int,
+    history: Dict[str, List[float]],
+    min_fit_clients: int,
+    min_available_clients: int,
+) -> ByzantineRobustFedAvg:
+    restored = ByzantineRobustFedAvg(
+        fraction_fit=1.0,
+        fraction_evaluate=0.0,
+        min_fit_clients=min_fit_clients,
+        min_evaluate_clients=0,
+        min_available_clients=min_available_clients,
+    )
+    restored.round_num = max(0, int(round_num))
+    restored.convergence_history = {
+        "rounds": list(history.get("rounds", [])),
+        "accuracies": list(history.get("accuracies", [])),
+        "losses": list(history.get("losses", [])),
+        "timestamps": list(history.get("timestamps", [])),
+    }
+    return restored
+
+
+def _is_recoverable_flower_session_error(exc: Exception) -> bool:
+    text = f"{exc.__class__.__name__}:{exc}".lower()
+    recoverable_signals = (
+        "grpcbridgeclosed",
+        "exception iterating responses",
+        "stream removed",
+        "connection reset",
+        "rst_stream",
+        "broken pipe",
+        "temporarily unavailable",
+    )
+    return any(signal in text for signal in recoverable_signals)
+
+
+def _compute_flower_restart_backoff(
+    attempt: int,
+    base_seconds: float,
+    max_seconds: float,
+) -> float:
+    bounded_attempt = max(1, int(attempt))
+    base = max(0.1, float(base_seconds))
+    max_delay = max(base, float(max_seconds))
+    exponential = min(max_delay, base * (2 ** (bounded_attempt - 1)))
+    jitter = random.uniform(0.0, min(1.0, exponential * 0.25))
+    return exponential + jitter
+
+
+def _run_flower_server_once() -> None:
+    global strategy
 
     min_fit_clients = int(os.getenv("MIN_FIT_CLIENTS", "1"))
     min_available_clients = int(
@@ -5046,13 +5170,20 @@ def run_flower_server():
     if requested_num_rounds <= 0:
         logger.info("FL config: continuous mode enabled (NUM_ROUNDS<=0)")
 
-    strategy = ByzantineRobustFedAvg(
-        fraction_fit=1.0,
-        fraction_evaluate=0.0,
-        min_fit_clients=min_fit_clients,
-        min_evaluate_clients=0,
-        min_available_clients=min_available_clients,
+    previous_round_num, previous_history = _snapshot_strategy_state()
+    strategy = _build_strategy_with_snapshot(
+        previous_round_num,
+        previous_history,
+        min_fit_clients,
+        min_available_clients,
     )
+
+    if previous_round_num > 0:
+        logger.warning(
+            "Restored strategy state after reconnect: round=%s history_points=%s",
+            previous_round_num,
+            len(previous_history.get("rounds", [])),
+        )
 
     config = ServerConfig(
         num_rounds=num_rounds,

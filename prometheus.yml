@@ -11,6 +11,7 @@ rule_files:
   - 'fl_slo_alerts.yml'
   - 'fl_detailed_alerts.yml'
   - 'marketplace_alerts.yml'
+  - 'av_ingestion_alerts.yml'
 
 scrape_configs:
   - job_name: 'prometheus'

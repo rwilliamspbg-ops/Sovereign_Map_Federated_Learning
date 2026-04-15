@@ -125,6 +125,22 @@ This roadmap tracks execution priorities for the current `v1.2.0` platform basel
   - browser telemetry is visible in HUD KPI/panel surfaces: met
   - observability dashboard query validation includes all referenced metrics: met
 
+### Milestone 9: AV-Ready v1.0 One-Pass Sprint
+- Status: planned
+- Execute a single-pass sprint to harden AV mapping runtime and validation gates.
+- Canonical sprint document:
+  - `docs/AV_READY_V1_ONE_PASS_SPRINT.md`
+- Primary outcomes:
+  - sensor contracts and ingestion validation
+  - time alignment and calibration enforcement
+  - fused pose output replacing fallback nominal path
+  - end-to-end map update and deterministic tile generation
+  - AV-specific observability and CI merge gate coverage
+- Exit criteria:
+  - one-pass definition of done in sprint document fully met
+  - CI AV lane required and green on main
+  - release-readiness summary updated with AV v1.0 evidence bundle
+
 ### Milestone 4: Scale and Readiness Gate
 - Status: completed (2026-03-17)
 - 10-node scale test executed on 4-core/15 GiB host; 10/10 agents confirmed running.

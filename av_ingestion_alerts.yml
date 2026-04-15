@@ -1,0 +1,25 @@
+groups:
+  - name: av_ingestion_alerts
+    interval: 15s
+    rules:
+      - alert: AVIngestionRejectSpike
+        expr: increase(av_ingestion_rejected_total[10m]) > 50
+        for: 5m
+        labels:
+          severity: warning
+          service: av-ingestion
+          team: platform
+        annotations:
+          summary: "AV ingestion reject spike detected"
+          description: "AV ingestion rejected more than 50 samples in 10 minutes."
+
+      - alert: AVIngestionStaleSignal
+        expr: time() - av_ingestion_last_update_timestamp_seconds > 120
+        for: 5m
+        labels:
+          severity: warning
+          service: av-ingestion
+          team: platform
+        annotations:
+          summary: "AV ingestion appears stale"
+          description: "No AV ingestion update for more than 2 minutes."

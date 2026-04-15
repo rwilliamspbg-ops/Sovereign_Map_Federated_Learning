@@ -12,6 +12,33 @@ import (
 	"time"
 )
 
+const droneTelemetryContractVersionV1 = "av-v1"
+
+const (
+	droneErrInvalidPayload      = "INVALID_PAYLOAD"
+	droneErrUnsupportedContract = "UNSUPPORTED_CONTRACT_VERSION"
+	droneErrMissingDroneID      = "MISSING_DRONE_ID"
+	droneErrFutureTimestamp     = "FUTURE_TIMESTAMP"
+	droneErrStaleTimestamp      = "STALE_TIMESTAMP"
+	droneErrInvalidLatitude     = "INVALID_LATITUDE"
+	droneErrInvalidLongitude    = "INVALID_LONGITUDE"
+	droneErrOutOfOrderSample    = "OUT_OF_ORDER_SAMPLE"
+	droneErrDuplicateSample     = "DUPLICATE_SAMPLE"
+	droneErrBufferFull          = "BUFFER_FULL"
+)
+
+type telemetryValidationError struct {
+	Code    string
+	Message string
+}
+
+func (e *telemetryValidationError) Error() string {
+	if e == nil {
+		return ""
+	}
+	return e.Message
+}
+
 // DroneProtocol identifies communication protocol.
 type DroneProtocol string
 
@@ -23,43 +50,50 @@ const (
 
 // TelemetryIngestConfig controls drone data ingestion.
 type TelemetryIngestConfig struct {
-	Protocol    DroneProtocol
-	ListenAddr  string
-	BufferSize  int
-	HeartbeatHz int
+	Protocol     DroneProtocol
+	ListenAddr   string
+	BufferSize   int
+	HeartbeatHz  int
+	MaxClockSkew time.Duration
+	MaxSampleAge time.Duration
 }
 
 // TelemetryIngestStats tracks ingested telemetry sample counts.
 type TelemetryIngestStats struct {
-	Samples       int
-	BytesReceived int64
-	LastUpdate    time.Time
-	ActiveDrones  int
+	Samples                 int
+	BytesReceived           int64
+	LastUpdate              time.Time
+	ActiveDrones            int
+	RejectedTotal           int64
+	RejectedByReason        map[string]int64
+	LastAcceptedUnixByDrone map[string]int64
 }
 
 // DroneTelemetry contains sensor readings from aerial vehicle.
 type DroneTelemetry struct {
-	DroneID        string    `json:"drone_id"`
-	Timestamp      time.Time `json:"timestamp"`
-	Latitude       float64   `json:"latitude"`
-	Longitude      float64   `json:"longitude"`
-	AltitudeMeters float64   `json:"altitude_meters"`
-	HeadingDegrees float64   `json:"heading_degrees"`
-	GroundSpeedMS  float64   `json:"ground_speed_ms"`
-	BatteryPercent float64   `json:"battery_percent"`
-	FlightMode     string    `json:"flight_mode"`
-	ImageData      []byte    `json:"image_data,omitempty"`
-	LidarPoints    []float64 `json:"lidar_points,omitempty"`
+	ContractVersion string    `json:"contract_version,omitempty"`
+	DroneID         string    `json:"drone_id"`
+	Timestamp       time.Time `json:"timestamp"`
+	Latitude        float64   `json:"latitude"`
+	Longitude       float64   `json:"longitude"`
+	AltitudeMeters  float64   `json:"altitude_meters"`
+	HeadingDegrees  float64   `json:"heading_degrees"`
+	GroundSpeedMS   float64   `json:"ground_speed_ms"`
+	BatteryPercent  float64   `json:"battery_percent"`
+	FlightMode      string    `json:"flight_mode"`
+	ImageData       []byte    `json:"image_data,omitempty"`
+	LidarPoints     []float64 `json:"lidar_points,omitempty"`
 }
 
 // TelemetryIngest manages drone telemetry data streams.
 type TelemetryIngest struct {
-	mu        sync.RWMutex
-	config    TelemetryIngestConfig
-	conn      net.PacketConn
-	stats     TelemetryIngestStats
-	drones    map[string]time.Time
-	telemetry chan DroneTelemetry
+	mu           sync.RWMutex
+	config       TelemetryIngestConfig
+	conn         net.PacketConn
+	stats        TelemetryIngestStats
+	drones       map[string]time.Time
+	lastAccepted map[string]time.Time
+	telemetry    chan DroneTelemetry
 }
 
 // NewTelemetryIngest creates drone ingestion service.
@@ -76,10 +110,21 @@ func NewTelemetryIngest(cfg TelemetryIngestConfig) (*TelemetryIngest, error) {
 	if cfg.Protocol == "" {
 		cfg.Protocol = ProtocolJSON
 	}
+	if cfg.MaxClockSkew == 0 {
+		cfg.MaxClockSkew = 5 * time.Second
+	}
+	if cfg.MaxSampleAge == 0 {
+		cfg.MaxSampleAge = 30 * time.Second
+	}
 
 	return &TelemetryIngest{
-		config:    cfg,
-		drones:    make(map[string]time.Time),
+		config:       cfg,
+		drones:       make(map[string]time.Time),
+		lastAccepted: make(map[string]time.Time),
+		stats: TelemetryIngestStats{
+			RejectedByReason:        make(map[string]int64),
+			LastAcceptedUnixByDrone: make(map[string]int64),
+		},
 		telemetry: make(chan DroneTelemetry, cfg.BufferSize),
 	}, nil
 }
@@ -151,6 +196,9 @@ func (ti *TelemetryIngest) processJSON(data []byte) error {
 	if err := json.Unmarshal(data, &telem); err != nil {
 		return fmt.Errorf("unmarshal json: %w", err)
 	}
+	if err := ti.normalizeAndValidateJSONTelemetry(&telem); err != nil {
+		return err
+	}
 
 	return ti.enqueueTelemetry(telem, int64(len(data)))
 }
@@ -164,10 +212,25 @@ func (ti *TelemetryIngest) enqueueTelemetry(telem DroneTelemetry, bytes int64) e
 	}
 
 	ti.mu.Lock()
+	if lastTs, ok := ti.lastAccepted[telem.DroneID]; ok {
+		if telem.Timestamp.Equal(lastTs) {
+			ti.recordRejectLocked(droneErrDuplicateSample)
+			ti.mu.Unlock()
+			return &telemetryValidationError{Code: droneErrDuplicateSample, Message: "duplicate telemetry sample"}
+		}
+		if telem.Timestamp.Before(lastTs) {
+			ti.recordRejectLocked(droneErrOutOfOrderSample)
+			ti.mu.Unlock()
+			return &telemetryValidationError{Code: droneErrOutOfOrderSample, Message: "out-of-order telemetry sample"}
+		}
+	}
+
 	ti.stats.Samples++
 	ti.stats.BytesReceived += bytes
 	ti.stats.LastUpdate = time.Now()
 	ti.drones[telem.DroneID] = time.Now()
+	ti.lastAccepted[telem.DroneID] = telem.Timestamp
+	ti.stats.LastAcceptedUnixByDrone[telem.DroneID] = telem.Timestamp.Unix()
 	ti.stats.ActiveDrones = len(ti.drones)
 	ti.mu.Unlock()
 
@@ -175,7 +238,10 @@ func (ti *TelemetryIngest) enqueueTelemetry(telem DroneTelemetry, bytes int64) e
 	case ti.telemetry <- telem:
 		return nil
 	default:
-		return fmt.Errorf("telemetry buffer full")
+		ti.mu.Lock()
+		ti.recordRejectLocked(droneErrBufferFull)
+		ti.mu.Unlock()
+		return &telemetryValidationError{Code: droneErrBufferFull, Message: "telemetry buffer full"}
 	}
 }
 
@@ -239,8 +305,9 @@ func (ti *TelemetryIngest) processMAVLink(data []byte) error {
 
 func parseMAVLinkTelemetry(msgID int, sysID uint8, payload []byte) (DroneTelemetry, bool) {
 	t := DroneTelemetry{
-		DroneID:   fmt.Sprintf("sys-%d", sysID),
-		Timestamp: time.Now().UTC(),
+		ContractVersion: droneTelemetryContractVersionV1,
+		DroneID:         fmt.Sprintf("sys-%d", sysID),
+		Timestamp:       time.Now().UTC(),
 	}
 
 	switch msgID {
@@ -340,7 +407,22 @@ func (ti *TelemetryIngest) NextTelemetry(ctx context.Context) (DroneTelemetry, e
 func (ti *TelemetryIngest) Stats() TelemetryIngestStats {
 	ti.mu.RLock()
 	defer ti.mu.RUnlock()
-	return ti.stats
+	out := TelemetryIngestStats{
+		Samples:                 ti.stats.Samples,
+		BytesReceived:           ti.stats.BytesReceived,
+		LastUpdate:              ti.stats.LastUpdate,
+		ActiveDrones:            ti.stats.ActiveDrones,
+		RejectedTotal:           ti.stats.RejectedTotal,
+		RejectedByReason:        make(map[string]int64, len(ti.stats.RejectedByReason)),
+		LastAcceptedUnixByDrone: make(map[string]int64, len(ti.stats.LastAcceptedUnixByDrone)),
+	}
+	for k, v := range ti.stats.RejectedByReason {
+		out.RejectedByReason[k] = v
+	}
+	for k, v := range ti.stats.LastAcceptedUnixByDrone {
+		out.LastAcceptedUnixByDrone[k] = v
+	}
+	return out
 }
 
 // GetActiveDrones returns list of drones that recently sent telemetry.
@@ -364,4 +446,41 @@ func (ti *TelemetryIngest) Shutdown(ctx context.Context) error {
 	}
 	close(ti.telemetry)
 	return nil
+}
+
+func (ti *TelemetryIngest) normalizeAndValidateJSONTelemetry(telem *DroneTelemetry) error {
+	if telem == nil {
+		return &telemetryValidationError{Code: droneErrInvalidPayload, Message: "telemetry payload is required"}
+	}
+	if telem.ContractVersion != droneTelemetryContractVersionV1 {
+		return &telemetryValidationError{Code: droneErrUnsupportedContract, Message: fmt.Sprintf("unsupported contract_version: expected %s", droneTelemetryContractVersionV1)}
+	}
+	if telem.DroneID == "" {
+		return &telemetryValidationError{Code: droneErrMissingDroneID, Message: "drone_id is required"}
+	}
+
+	now := time.Now().UTC()
+	if telem.Timestamp.IsZero() {
+		telem.Timestamp = now
+	}
+	if telem.Timestamp.After(now.Add(ti.config.MaxClockSkew)) {
+		return &telemetryValidationError{Code: droneErrFutureTimestamp, Message: "timestamp too far in future"}
+	}
+	if telem.Timestamp.Before(now.Add(-ti.config.MaxSampleAge)) {
+		return &telemetryValidationError{Code: droneErrStaleTimestamp, Message: "timestamp too old"}
+	}
+
+	if telem.Latitude < -90 || telem.Latitude > 90 {
+		return &telemetryValidationError{Code: droneErrInvalidLatitude, Message: "latitude out of range"}
+	}
+	if telem.Longitude < -180 || telem.Longitude > 180 {
+		return &telemetryValidationError{Code: droneErrInvalidLongitude, Message: "longitude out of range"}
+	}
+
+	return nil
+}
+
+func (ti *TelemetryIngest) recordRejectLocked(reason string) {
+	ti.stats.RejectedTotal++
+	ti.stats.RejectedByReason[reason]++
 }

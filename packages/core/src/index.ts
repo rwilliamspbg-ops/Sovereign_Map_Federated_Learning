@@ -46,6 +46,7 @@ export type {
   PrivacyStatus,
   IslandStatus,
 } from "./types.js";
+export { AV_SENSOR_CONTRACT_VERSION } from "./types.js";
 
 // Error exports
 export {

@@ -52,7 +52,11 @@
     "compression:build": "npm --prefix packages/compression run build",
     "compression:test": "npm --prefix packages/compression run test:ci",
     "compression:benchmark": "npm --prefix packages/compression run test:benchmark",
-    "api:validate": "node scripts/validate-api-coverage.js"
+    "api:validate": "node scripts/validate-api-coverage.js",
+    "go:toolchain:check": "bash scripts/go-toolchain-sanity.sh",
+    "go:test:targeted:av": "bash scripts/go-with-aligned-toolchain.sh test -count=1 ./sensors/drone ./sensors/mobile ./sensors/slam",
+    "core:test:targeted:changed": "npm --prefix packages/core run test:targeted -- src/contract-version.test.ts src/index.test.ts",
+    "test:targeted:changed": "npm run go:toolchain:check && npm run go:test:targeted:av && npm run core:test:targeted:changed"
   },
   "compilerOptions": {
     "target": "ESNext",

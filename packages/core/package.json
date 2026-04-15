@@ -40,6 +40,7 @@
     "build": "tsc && npm run wasm:copy",
     "dev": "tsc --watch",
     "test": "vitest run",
+    "test:targeted": "vitest run",
     "test:watch": "vitest",
     "test:ci": "vitest run --coverage",
     "lint": "eslint src --ext .ts",

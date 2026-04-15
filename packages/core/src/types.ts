@@ -4,6 +4,8 @@
 
 import { NodeState } from "./node.js";
 
+export const AV_SENSOR_CONTRACT_VERSION = "av-v1";
+
 // Geographic types
 export interface Coordinates {
   lat: number;
@@ -33,6 +35,7 @@ export interface PrivacyStatus {
 
 // Map update types
 export interface MapUpdate {
+  contractVersion?: typeof AV_SENSOR_CONTRACT_VERSION;
   location: Coordinates;
   pointCloud?: Uint8Array;
   imagery?: Uint8Array;

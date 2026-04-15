@@ -33,16 +33,19 @@ jobs:
         with:
           go-version-file: go.mod
 
+      - name: Run AV ingestion contract tests
+        run: bash scripts/go-with-aligned-toolchain.sh test -v ./sensors/mobile ./sensors/drone
+
       - name: Build backend in FIPS-required mode
         run: |
           mkdir -p bin
-          CGO_ENABLED=1 GOFIPS140=latest go build -tags=requirefips -ldflags "-X main.fipsMode=required -X main.buildProfile=prod" -o bin/sovereign_backend ./cmd/sovereign-node
+          CGO_ENABLED=1 GOFIPS140=latest bash scripts/go-with-aligned-toolchain.sh build -tags=requirefips -ldflags "-X main.fipsMode=required -X main.buildProfile=prod" -o bin/sovereign_backend ./cmd/sovereign-node
 
       - name: Verify backend build metadata
         run: |
           mkdir -p test-results/full-validation
-          go version -m bin/sovereign_backend | tee test-results/full-validation/fips-buildinfo.txt
-          go version -m bin/sovereign_backend | grep -E "GOFIPS140=latest|-tags=requirefips|CGO_ENABLED=1"
+          bash scripts/go-with-aligned-toolchain.sh version -m bin/sovereign_backend | tee test-results/full-validation/fips-buildinfo.txt
+          bash scripts/go-with-aligned-toolchain.sh version -m bin/sovereign_backend | grep -E "GOFIPS140=latest|-tags=requirefips|CGO_ENABLED=1"
 
       - name: Prepare test environment
         run: npm run test:setup

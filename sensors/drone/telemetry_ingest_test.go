@@ -2,7 +2,9 @@ package drone
 
 import (
 	"encoding/binary"
+	"encoding/json"
 	"testing"
+	"time"
 )
 
 func TestProcessMAVLinkGlobalPositionInt(t *testing.T) {
@@ -50,5 +52,141 @@ func TestProcessMAVLinkGlobalPositionInt(t *testing.T) {
 	}
 	if telem.GroundSpeedMS < 4.9 || telem.GroundSpeedMS > 5.1 {
 		t.Fatalf("expected groundspeed around 5.0 m/s, got %f", telem.GroundSpeedMS)
+	}
+}
+
+func TestProcessJSONAcceptsValidContractPayload(t *testing.T) {
+	ti, err := NewTelemetryIngest(TelemetryIngestConfig{Protocol: ProtocolJSON})
+	if err != nil {
+		t.Fatalf("new ingest: %v", err)
+	}
+
+	payload := DroneTelemetry{
+		ContractVersion: droneTelemetryContractVersionV1,
+		DroneID:         "drone-01",
+		Timestamp:       time.Now().UTC(),
+		Latitude:        37.4219,
+		Longitude:       -122.0840,
+		AltitudeMeters:  25,
+	}
+	raw, _ := json.Marshal(payload)
+
+	if err := ti.processJSON(raw); err != nil {
+		t.Fatalf("process json: %v", err)
+	}
+}
+
+func TestProcessJSONRejectsInvalidContractVersion(t *testing.T) {
+	ti, err := NewTelemetryIngest(TelemetryIngestConfig{Protocol: ProtocolJSON})
+	if err != nil {
+		t.Fatalf("new ingest: %v", err)
+	}
+
+	payload := DroneTelemetry{
+		ContractVersion: "legacy-v0",
+		DroneID:         "drone-01",
+		Timestamp:       time.Now().UTC(),
+		Latitude:        37.4219,
+		Longitude:       -122.0840,
+	}
+	raw, _ := json.Marshal(payload)
+
+	if err := ti.processJSON(raw); err == nil {
+		t.Fatalf("expected invalid contract version error")
+	}
+}
+
+func TestProcessJSONRejectsStaleTimestamp(t *testing.T) {
+	ti, err := NewTelemetryIngest(TelemetryIngestConfig{Protocol: ProtocolJSON, MaxSampleAge: 5 * time.Second})
+	if err != nil {
+		t.Fatalf("new ingest: %v", err)
+	}
+
+	payload := DroneTelemetry{
+		ContractVersion: droneTelemetryContractVersionV1,
+		DroneID:         "drone-01",
+		Timestamp:       time.Now().UTC().Add(-1 * time.Minute),
+		Latitude:        37.4219,
+		Longitude:       -122.0840,
+	}
+	raw, _ := json.Marshal(payload)
+
+	if err := ti.processJSON(raw); err == nil {
+		t.Fatalf("expected stale timestamp error")
+	}
+}
+
+func TestProcessJSONRejectsFutureTimestamp(t *testing.T) {
+	ti, err := NewTelemetryIngest(TelemetryIngestConfig{Protocol: ProtocolJSON, MaxClockSkew: 1 * time.Second})
+	if err != nil {
+		t.Fatalf("new ingest: %v", err)
+	}
+
+	payload := DroneTelemetry{
+		ContractVersion: droneTelemetryContractVersionV1,
+		DroneID:         "drone-01",
+		Timestamp:       time.Now().UTC().Add(10 * time.Second),
+		Latitude:        37.4219,
+		Longitude:       -122.0840,
+	}
+	raw, _ := json.Marshal(payload)
+
+	if err := ti.processJSON(raw); err == nil {
+		t.Fatalf("expected future timestamp error")
+	}
+}
+
+func TestProcessJSONRejectsInvalidCoordinates(t *testing.T) {
+	ti, err := NewTelemetryIngest(TelemetryIngestConfig{Protocol: ProtocolJSON})
+	if err != nil {
+		t.Fatalf("new ingest: %v", err)
+	}
+
+	payload := DroneTelemetry{
+		ContractVersion: droneTelemetryContractVersionV1,
+		DroneID:         "drone-01",
+		Timestamp:       time.Now().UTC(),
+		Latitude:        99.99,
+		Longitude:       -222,
+	}
+	raw, _ := json.Marshal(payload)
+
+	if err := ti.processJSON(raw); err == nil {
+		t.Fatalf("expected invalid coordinate error")
+	}
+}
+
+func TestProcessJSONRejectsDuplicateAndOutOfOrderSamples(t *testing.T) {
+	ti, err := NewTelemetryIngest(TelemetryIngestConfig{Protocol: ProtocolJSON})
+	if err != nil {
+		t.Fatalf("new ingest: %v", err)
+	}
+
+	ts := time.Now().UTC()
+	payload := DroneTelemetry{
+		ContractVersion: droneTelemetryContractVersionV1,
+		DroneID:         "drone-01",
+		Timestamp:       ts,
+		Latitude:        37.4219,
+		Longitude:       -122.0840,
+	}
+	raw, _ := json.Marshal(payload)
+
+	if err := ti.processJSON(raw); err != nil {
+		t.Fatalf("expected first sample accepted: %v", err)
+	}
+	if err := ti.processJSON(raw); err == nil {
+		t.Fatalf("expected duplicate sample error")
+	}
+
+	payload.Timestamp = ts.Add(-1 * time.Second)
+	rawOlder, _ := json.Marshal(payload)
+	if err := ti.processJSON(rawOlder); err == nil {
+		t.Fatalf("expected out-of-order sample error")
+	}
+
+	stats := ti.Stats()
+	if stats.RejectedTotal < 2 {
+		t.Fatalf("expected at least 2 rejects, got %d", stats.RejectedTotal)
 	}
 }

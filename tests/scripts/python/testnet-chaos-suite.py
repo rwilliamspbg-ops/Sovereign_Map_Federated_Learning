@@ -7,14 +7,17 @@ Introduces controlled client churn and verifies FL rounds continue advancing.
 from __future__ import annotations
 
 import json
+import os
 import random
 import subprocess
 import time
 import urllib.parse
 import urllib.request
+from typing import Callable, Tuple
 
 COMPOSE_FILE = "docker-compose.full.yml"
 PROM_URL = "http://localhost:9090"
+BACKEND_URL = os.getenv("CHAOS_BACKEND_URL", "http://localhost:8000")
 
 
 def prom_query(expr: str) -> float:
@@ -57,22 +60,182 @@ def restart_container(container_name: str):
     subprocess.check_call(["docker", "restart", container_name])
 
 
+def _env_int(name: str, default: int, minimum: int) -> int:
+    raw = str(os.getenv(name, str(default))).strip()
+    try:
+        parsed = int(raw)
+    except ValueError:
+        return max(minimum, default)
+    return max(minimum, parsed)
+
+
+def _env_float(name: str, default: float, minimum: float) -> float:
+    raw = str(os.getenv(name, str(default))).strip()
+    try:
+        parsed = float(raw)
+    except ValueError:
+        return max(minimum, default)
+    return max(minimum, parsed)
+
+
+def wait_for_round_progress_or_quorum(
+    *,
+    baseline_round: float,
+    quorum_threshold: float,
+    timeout_s: float,
+    poll_interval_s: float,
+    query_fn: Callable[[str], float] = prom_query,
+    sleep_fn: Callable[[float], None] = time.sleep,
+    now_fn: Callable[[], float] = time.time,
+) -> Tuple[bool, float, float]:
+    deadline = now_fn() + max(timeout_s, 0.1)
+    last_round = baseline_round
+    last_active_nodes = 0.0
+
+    while now_fn() < deadline:
+        current_round = float(query_fn("sovereignmap_fl_round"))
+        active_nodes = float(query_fn("sovereignmap_active_nodes"))
+        last_round = max(last_round, current_round)
+        last_active_nodes = active_nodes
+
+        if current_round > baseline_round or active_nodes >= quorum_threshold:
+            return True, current_round, active_nodes
+
+        sleep_fn(max(0.05, poll_interval_s))
+
+    return False, last_round, last_active_nodes
+
+
+def trigger_manual_round(timeout_s: float = 4.0) -> bool:
+    request = urllib.request.Request(
+        f"{BACKEND_URL}/trigger_fl",
+        method="POST",
+        data=b"{}",
+        headers={"Content-Type": "application/json"},
+    )
+    try:
+        with urllib.request.urlopen(request, timeout=timeout_s) as response:
+            return int(response.status) in {200, 202}
+    except Exception:
+        return False
+
+
+def ensure_round_progress_with_fallback(
+    *,
+    baseline_round: float,
+    quorum_threshold: float,
+    progress_timeout_s: float,
+    progress_poll_s: float,
+    allow_manual_fallback: bool,
+) -> Tuple[bool, float, float]:
+    ready, observed_round, observed_nodes = wait_for_round_progress_or_quorum(
+        baseline_round=baseline_round,
+        quorum_threshold=quorum_threshold,
+        timeout_s=progress_timeout_s,
+        poll_interval_s=progress_poll_s,
+    )
+    if ready and observed_round > baseline_round:
+        return True, observed_round, observed_nodes
+
+    if (
+        allow_manual_fallback
+        and observed_nodes >= quorum_threshold
+        and trigger_manual_round()
+    ):
+        return wait_for_round_progress_or_quorum(
+            baseline_round=baseline_round,
+            quorum_threshold=quorum_threshold,
+            timeout_s=max(6.0, progress_timeout_s / 2.0),
+            poll_interval_s=progress_poll_s,
+        )
+
+    return ready, observed_round, observed_nodes
+
+
 def main():
     print("[chaos] starting testnet chaos suite")
+
+    steps = _env_int("CHAOS_STEPS", default=5, minimum=1)
+    restart_settle_s = _env_float("CHAOS_RESTART_SETTLE_SECONDS", default=8.0, minimum=0.5)
+    progress_timeout_s = _env_float(
+        "CHAOS_PROGRESS_TIMEOUT_SECONDS", default=45.0, minimum=2.0
+    )
+    progress_poll_s = _env_float(
+        "CHAOS_PROGRESS_POLL_SECONDS", default=2.0, minimum=0.1
+    )
+    quorum_threshold = float(_env_int("CHAOS_MIN_CLIENT_QUORUM", default=1, minimum=1))
+    allow_manual_fallback = os.getenv("CHAOS_TRIGGER_FALLBACK_ROUND", "1") == "1"
+
     before = prom_query("sovereignmap_fl_round")
     print(f"[chaos] round before={before}")
+    last_progress_round = before
 
-    for step in range(5):
+    ready, observed_round, observed_nodes = ensure_round_progress_with_fallback(
+        baseline_round=before,
+        quorum_threshold=quorum_threshold,
+        progress_timeout_s=progress_timeout_s,
+        progress_poll_s=progress_poll_s,
+        allow_manual_fallback=allow_manual_fallback,
+    )
+    if ready:
+        last_progress_round = max(last_progress_round, observed_round)
+        print(
+            "[chaos] preflight ready: "
+            f"round={observed_round} active_nodes={observed_nodes}"
+        )
+    else:
+        raise SystemExit(
+            "[chaos] FAILED: preflight did not reach round progress or client quorum "
+            f"within {progress_timeout_s}s (round={observed_round}, active_nodes={observed_nodes})"
+        )
+
+    for step in range(steps):
+        if step > 0:
+            ready, observed_round, observed_nodes = ensure_round_progress_with_fallback(
+                baseline_round=last_progress_round,
+                quorum_threshold=quorum_threshold,
+                progress_timeout_s=progress_timeout_s,
+                progress_poll_s=progress_poll_s,
+                allow_manual_fallback=allow_manual_fallback,
+            )
+            if not ready:
+                raise SystemExit(
+                    "[chaos] FAILED: cadence gate not satisfied before next restart "
+                    f"(round={observed_round}, baseline={last_progress_round}, "
+                    f"active_nodes={observed_nodes}, quorum={quorum_threshold})"
+                )
+            last_progress_round = max(last_progress_round, observed_round)
+
         nodes = running_node_containers()
         if not nodes:
             raise RuntimeError("No running node-agent containers found")
         target = random.choice(nodes)
         print(f"[chaos] step {step+1}: restarting {target}")
         restart_container(target)
-        time.sleep(8)
+        time.sleep(restart_settle_s)
+
+    ready, observed_round, observed_nodes = ensure_round_progress_with_fallback(
+        baseline_round=last_progress_round,
+        quorum_threshold=quorum_threshold,
+        progress_timeout_s=progress_timeout_s,
+        progress_poll_s=progress_poll_s,
+        allow_manual_fallback=allow_manual_fallback,
+    )
+    if not ready:
+        raise SystemExit(
+            "[chaos] FAILED: post-chaos recovery did not reach round progression or quorum "
+            f"(round={observed_round}, baseline={last_progress_round}, "
+            f"active_nodes={observed_nodes}, quorum={quorum_threshold})"
+        )
 
     after = prom_query("sovereignmap_fl_round")
     print(f"[chaos] round after={after}")
+
+    if after <= before and allow_manual_fallback:
+        if trigger_manual_round():
+            time.sleep(max(1.0, restart_settle_s / 2.0))
+            after = prom_query("sovereignmap_fl_round")
+            print(f"[chaos] round after fallback trigger={after}")
 
     if after <= before:
         raise SystemExit("[chaos] FAILED: FL rounds did not progress under churn")

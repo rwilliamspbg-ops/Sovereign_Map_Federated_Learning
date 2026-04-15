@@ -64,14 +64,22 @@ def main() -> int:
     if shutil.which("docker") is None:
         return _skip_or_fail("docker not available")
 
-    if _running_node_agents() == 0:
+    running_agents = _running_node_agents()
+    required_quorum = max(1, int(os.getenv("CHAOS_MIN_CLIENT_QUORUM", "1")))
+
+    if running_agents == 0:
         return _skip_or_fail("no running node-agent containers")
+
+    if running_agents < required_quorum:
+        return _skip_or_fail(
+            f"insufficient node-agent quorum ({running_agents}<{required_quorum})"
+        )
 
     if not _prometheus_available():
         return _skip_or_fail("prometheus not reachable on localhost:9090")
 
     run = subprocess.run(
-        ["python", "tests/scripts/python/testnet-chaos-suite.py"],
+        [sys.executable, "tests/scripts/python/testnet-chaos-suite.py"],
         text=True,
         capture_output=True,
         timeout=1200,

@@ -28,6 +28,7 @@ This directory contains the active operator and integration documentation.
 
 - [Open Ecosystem Sprint 1 Roadmap](OPEN_ECOSYSTEM_SPRINT1_ROADMAP.md)
 - [Open Ecosystem Sprint 2 Roadmap](OPEN_ECOSYSTEM_SPRINT2_ROADMAP.md)
+- [AV-Ready v1.0 One-Pass Sprint Plan](AV_READY_V1_ONE_PASS_SPRINT.md)
 
 ## Performance and Hardware
 

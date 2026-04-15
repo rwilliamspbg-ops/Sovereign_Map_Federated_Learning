@@ -3,7 +3,7 @@
 
 .PHONY: all build test clean deploy logs help \
 	smoke testnet-wallet-readiness \
-	stack-start stack-verify stack-down screenshots-check go-env observability-smoke observability-live-smoke compose-service-drift-check quickstart-verify alerts-test benchmark-fedavg-compare
+	stack-start stack-verify stack-down screenshots-check go-env go-toolchain-check observability-smoke observability-live-smoke compose-service-drift-check quickstart-verify alerts-test benchmark-fedavg-compare
 
 COMPOSE ?= docker compose
 FULL_COMPOSE_FILE ?= docker-compose.full.yml
@@ -269,6 +269,9 @@ go-env:
 	@$(GO) version
 	@$(GO) env GOROOT GOTOOLCHAIN GOMODCACHE GOCACHE
 
+go-toolchain-check:
+	@bash scripts/go-toolchain-sanity.sh
+
 proto:
 	@echo "📝 Generating protobuf files..."
 	protoc --go_out=. --go-grpc_out=. pkg/proto/*.proto
@@ -315,6 +318,7 @@ help:
 	@echo "  make lint    - Run linters"
 	@echo "  make lint-soft - Run linters without failing target"
 	@echo "  make go-env  - Print effective Go toolchain settings"
+	@echo "  make go-toolchain-check - Validate Go driver/compiler/linker version alignment"
 	@echo "  make observability-smoke - Validate dashboard queries and JSON syntax"
 	@echo "  make observability-live-smoke - Validate lower-half operations panel queries against live Prometheus"
 	@echo "  make compose-service-drift-check - Detect stale compose service names in scripts"
