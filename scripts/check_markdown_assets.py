@@ -97,7 +97,9 @@ def main() -> int:
             print(f"- {rel_file}:{line_no} :: {target} -> {resolved}")
         return 1
 
-    print(f"OK: checked {checked} markdown files with no broken local image references.")
+    print(
+        f"OK: checked {checked} markdown files with no broken local image references."
+    )
     return 0
 
 
