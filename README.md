@@ -2,25 +2,128 @@
 
 # Sovereign Map Federated Learning
 
-Production-grade federated learning platform that combines Byzantine-resilient aggregation, trust verification, governance policy controls, tokenomics telemetry, and full-stack observability.
+> **Sovereign Mohawk Proto: A formally verified federated learning runtime that scales to 10 million nodes with Byzantine resilience and quantum-resistant security - while keeping data private on the edge.**
 
+Federated learning breaks down at massive scale when trust has to be assumed, communication becomes the bottleneck, and a single coordinator becomes a failure domain. Sovereign Mohawk Proto addresses that by using hierarchical aggregation, inline verification, TPM-backed sovereignty, and a post-quantum migration path so edge data stays private while the system remains auditable. The result is a control plane that can be inspected, verified, and scaled instead of just hoped for.
+
+[![Build and Test](https://github.com/rwilliamspbg-ops/Sovereign_Map_Federated_Learning/actions/workflows/build.yml/badge.svg?branch=main)](https://github.com/rwilliamspbg-ops/Sovereign_Map_Federated_Learning/actions/workflows/build.yml)
+[![Go Version](https://img.shields.io/github/go-mod/go-version/rwilliamspbg-ops/Sovereign_Map_Federated_Learning?style=flat-square)](https://go.dev/)
+[![License](https://img.shields.io/github/license/rwilliamspbg-ops/Sovereign_Map_Federated_Learning?style=flat-square)](LICENSE)
+[![Stars](https://img.shields.io/github/stars/rwilliamspbg-ops/Sovereign_Map_Federated_Learning?style=flat-square)](https://github.com/rwilliamspbg-ops/Sovereign_Map_Federated_Learning/stargazers)
+[![Forks](https://img.shields.io/github/forks/rwilliamspbg-ops/Sovereign_Map_Federated_Learning?style=flat-square)](https://github.com/rwilliamspbg-ops/Sovereign_Map_Federated_Learning/network/members)
+[![Last validated](https://img.shields.io/badge/Last%20validated-2026--04--15-2ea043)](Documentation/README.md)
+[![BFT Safety](https://img.shields.io/badge/BFT%20Safety-validated%202026--04--15-2ea043)](results/README.md)
+[![Proof Verify](https://img.shields.io/badge/Proof%20Verify-validated%202026--04--15-2ea043)](results/README.md)
+[![PQC Transport KEX](https://img.shields.io/badge/PQC%20Transport-x25519--mlkem768--hybrid-6f42c1)](README.md#quantum-kex-rotation-drill-genesis-testnet)
+[![TPM Attestation Mode](https://img.shields.io/badge/TPM%20Identity-XMSS%20Enforced-6f42c1)](README.md#technical-brief)
 [![Discord](https://img.shields.io/badge/Discord-Join%20Community-5865F2?style=flat-square&logo=discord&logoColor=white)](https://discord.gg/raBz79CJ)
-![Go Version](https://img.shields.io/github/go-mod/go-version/rwilliamspbg-ops/Sovereign-Mohawk-Proto)
-![Python SDK v2](https://img.shields.io/badge/SDK-2.0.1.Alpha-blue?logo=python)
-![Python Support](https://img.shields.io/badge/Python-3.8%2B-blue?logo=python)
-![Protocol Stage](https://img.shields.io/badge/Protocol-Go--Live%20Formalization%20Complete-2ea043)
-![Go-Live Gate](https://img.shields.io/badge/Go--Live%20Gate-PASS%20(8%2F8%20Attestations)-2ea043)
-![BFT Safety](https://img.shields.io/badge/BFT%20Resilience-55.5%25-green)
-![Proof Verify Mean](https://img.shields.io/badge/Proof%20Verify-10.55ms-success)
-![Gradient Compression Mean](https://img.shields.io/badge/Compression-0.996ms-informational)
-![Chaos Recovery SLO](https://img.shields.io/badge/Chaos%20Recovery-SLO%20Enforced-critical)
-![PQC Transport KEX](https://img.shields.io/badge/PQC%20Transport-x25519--mlkem768--hybrid-6f42c1)
-![TPM Attestation Mode](https://img.shields.io/badge/TPM%20Identity-XMSS%20Enforced-6f42c1)
-![PQC Migration Cutover](https://img.shields.io/badge/Migration-Crypto%20After%20Epoch%20Enabled-2ea043)
-![Host Preflight Policy](https://img.shields.io/badge/Host%20Preflight-Strict%20By%20Default-d73a49)
-![Genesis Testnet](https://img.shields.io/badge/Testnet-global--testnet-orange)
-![WASM Hot Reload](https://img.shields.io/badge/WASM-Hot%20Reload-blueviolet)
-![Tokenomics Dashboard](https://img.shields.io/badge/Grafana-Tokenomics%20Live-F46800?logo=grafana&logoColor=white)
+
+## Why It Matters
+
+Traditional federated learning can look simple in a lab and fail badly in the field: trust assumptions accumulate at the coordinator, bandwidth becomes the limiting factor, and one weak service can stall the whole training loop. This runtime shifts that model to hierarchical aggregation with inline zk-proof verification, TPM-backed node sovereignty, and a post-quantum migration plan so each round is harder to fake and easier to audit. It is meant for fleets where privacy, scale, and verifiability are all required at the same time.
+
+## What You Get in 60 Seconds
+
+- One command boots the full stack and its observability surfaces.
+- A small local node set exercises aggregation, policy checks, and proof verification.
+- The runtime exposes the same health path operators use in production-style demos.
+
+## Try It Now
+
+Fastest path:
+
+```bash
+make sandbox-up
+```
+
+Then open:
+
+- HUD: `http://localhost:3000`
+- Grafana: `http://localhost:3001`
+- Prometheus: `http://localhost:9090`
+
+Other low-friction entry points:
+
+- Verify the running stack: `make stack-verify`
+- Browser-friendly notebook demo: [examples/pysyft-integration/pysyft_mohawk_poc.ipynb](examples/pysyft-integration/pysyft_mohawk_poc.ipynb)
+- Notebook-backed integration PoC: [examples/pysyft-integration/README.md](examples/pysyft-integration/README.md)
+- Public landing page source: [docs/index.md](docs/index.md)
+
+## Visual Snapshot
+
+```mermaid
+flowchart TB
+        subgraph Edge[Trusted Edge]
+        C1["Node 1<br/>TPM + PQC"]
+        C2["Node 2<br/>TPM + PQC"]
+        C3["Node 3<br/>TPM + PQC"]
+        end
+
+        C1 --> H[Hierarchical Aggregation]
+        C2 --> H
+        C3 --> H
+
+        H --> ZK[zk-Proof Verification]
+        ZK --> G[Governance + Policy Gate]
+        G --> A[Auditable Coordinator]
+        A --> O[Grafana + HUD]
+```
+
+<p align="center">
+    <img src="docs/screenshots/hud-operations-overview.png" alt="HUD operations overview" width="400" />
+    <img src="docs/screenshots/grafana-operations-overview.png" alt="Grafana operations overview" width="400" />
+</p>
+
+<p align="center">
+    <img src="docs/screenshots/grafana-llm-overview.png" alt="Grafana LLM overview" width="400" />
+    <img src="docs/screenshots/grafana-tokenomics-overview.png" alt="Grafana tokenomics overview" width="400" />
+</p>
+
+## How It Compares
+
+| Capability | Sovereign Mohawk Proto | NVIDIA FLARE | PySyft |
+| --- | --- | --- | --- |
+| Scale posture | Hierarchical aggregation designed for very large edge fleets | Enterprise FL orchestration with coordinator-centric flows | Privacy-preserving workflows with policy-based data access |
+| Trust model | TPM-backed sovereignty, inline verification, and auditable control paths | Policy and orchestration focused; trust is usually externalized to deployment | Strong privacy controls; verification depends on the integration pattern |
+| Verification | zk-proof oriented round verification and auditable checkpoints | Typically relies on platform controls and deployment discipline | Privacy-first, but not a native zk-verification stack |
+| Edge privacy | Data stays on the edge; only verified updates move upstream | Supports distributed training, but privacy depends on your deployment | Built to support private data workflows and datasite-style control |
+| PQC path | Explicit post-quantum migration track | Not a default project-level emphasis | Not a default project-level emphasis |
+
+<details>
+<summary>Advanced Theorems and Proof Notes</summary>
+
+- The deeper formalization and runtime assumptions are tracked in the technical brief and roadmap sections below.
+- The published verification numbers in the badges are project metrics, not universal guarantees.
+- For the broader research context, see [Documentation/README.md](Documentation/README.md) and [Documentation/Project/ROADMAP.md](Documentation/Project/ROADMAP.md).
+
+</details>
+
+## Community and Contribution
+
+The project is open to contributors who want to work on practical scale and verification problems.
+
+- Good first issues: [CONTRIBUTING.md](CONTRIBUTING.md)
+- Code of conduct: [CODE_OF_CONDUCT.md](CODE_OF_CONDUCT.md)
+- Security policy: [SECURITY.md](SECURITY.md)
+- License: [LICENSE](LICENSE)
+- Roadmap: [Documentation/Project/ROADMAP.md](Documentation/Project/ROADMAP.md)
+- Research notes: [documentation/RESEARCH_FINDINGS.md](documentation/RESEARCH_FINDINGS.md)
+
+Looking for help with:
+
+- NPU and accelerator ports.
+- Auditors for theorems and verification claims.
+- Python SDK improvements and notebook ergonomics.
+- Better GIFs/screenshots for the full-stack walkthrough.
+
+## Next Milestones
+
+- Full 10M-node hardware-backed validation run.
+- More accelerator ports across CPU, GPU, and NPU backends.
+- Cleaner browser-first demo flow and more polished release media.
+- Continued PQC migration and proof-verification hardening.
+
+Repository landing page source: [docs/index.md](docs/index.md)
 
 ## Live Project Pulse
 

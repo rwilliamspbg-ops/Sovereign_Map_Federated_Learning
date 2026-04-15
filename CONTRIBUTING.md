@@ -8,6 +8,7 @@ After cloning, run the onboarding-safe baseline checks:
 
 - `make help`
 - `make quickstart-verify`
+- Code of conduct: [CODE_OF_CONDUCT.md](CODE_OF_CONDUCT.md)
 
 If you want starter tasks, browse labels:
 

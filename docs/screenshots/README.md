@@ -43,4 +43,5 @@ Use this checklist for every release or major observability/UI PR.
 
 - `hud-first-round.gif`: click "Run Global FL Epoch" and show round metrics increment.
 - `ops-alert-remediation.gif`: click degraded banner links and show remediation panes.
+- GIF pack source and landing-page assets: [../gifs/README.md](../gifs/README.md)
 

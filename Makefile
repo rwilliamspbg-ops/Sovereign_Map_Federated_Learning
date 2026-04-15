@@ -3,7 +3,7 @@
 
 .PHONY: all build test clean deploy logs help \
 	smoke testnet-wallet-readiness \
-	stack-start stack-verify stack-down screenshots-check go-env go-toolchain-check observability-smoke observability-live-smoke compose-service-drift-check quickstart-verify alerts-test benchmark-fedavg-compare
+	stack-start stack-verify stack-down sandbox-up sandbox-down screenshots-check go-env go-toolchain-check observability-smoke observability-live-smoke compose-service-drift-check quickstart-verify alerts-test benchmark-fedavg-compare
 
 COMPOSE ?= docker compose
 FULL_COMPOSE_FILE ?= docker-compose.full.yml
@@ -99,6 +99,13 @@ stack-verify:
 stack-down:
 	@echo "🛑 Stopping full compose stack..."
 	@$(COMPOSE) -f $(FULL_COMPOSE_FILE) down --remove-orphans
+
+sandbox-up:
+	@$(MAKE) stack-start
+	@$(MAKE) stack-verify
+
+sandbox-down:
+	@$(MAKE) stack-down
 
 screenshots-check:
 	@echo "🖼️ Verifying required release screenshots..."
@@ -303,6 +310,8 @@ help:
 	@echo "  make stack-start     - Start full compose stack with node-agent scale"
 	@echo "  make stack-verify    - Verify key API health endpoints"
 	@echo "  make stack-down      - Stop full compose stack"
+	@echo "  make sandbox-up      - Start and verify the full demo stack"
+	@echo "  make sandbox-down    - Stop the full demo stack"
 	@echo "  make screenshots-check - Ensure required README screenshots exist"
 	@echo ""
 	@echo "Deploy:"

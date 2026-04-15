@@ -1,0 +1,126 @@
+name: Docs Pages
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - "README.md"
+      - "docs/**"
+      - ".github/workflows/docs-pages.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: "docs-pages"
+  cancel-in-progress: false
+
+jobs:
+  deploy:
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+
+      - name: Configure Pages
+        uses: actions/configure-pages@45bfe0192ca1faeb007ade9deae92b16b8254a0d # v6.0.0
+
+      - name: Set up Python
+        uses: actions/setup-python@f677139b7d2e8ab862b9b28301ff9f4e1f2a4d4a # v5.6.0
+        with:
+          python-version: "3.12"
+
+      - name: Install markdown renderer
+        run: python -m pip install --upgrade pip markdown
+
+      - name: Build docs site
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+          import shutil
+          import markdown
+
+          root = Path('.pages-site')
+          shutil.rmtree(root, ignore_errors=True)
+          root.mkdir(parents=True, exist_ok=True)
+
+          docs = Path('docs')
+          for folder in ('screenshots', 'gifs'):
+              source = docs / folder
+              if source.exists():
+                  shutil.copytree(source, root / folder)
+
+          content = (docs / 'index.md').read_text(encoding='utf-8')
+          body = markdown.markdown(
+              content,
+              extensions=['tables', 'fenced_code', 'sane_lists', 'attr_list']
+          )
+
+          template = f'''<!doctype html>
+          <html lang="en">
+          <head>
+            <meta charset="utf-8" />
+            <meta name="viewport" content="width=device-width, initial-scale=1" />
+            <meta name="color-scheme" content="dark light" />
+            <title>Sovereign Mohawk Proto</title>
+            <style>
+              :root {{
+                --bg: #07111f;
+                --panel: #0d1b2a;
+                --panel-2: #10263d;
+                --text: #ecf4ff;
+                --muted: #a7bdd6;
+                --accent: #6ee7b7;
+                --accent-2: #60a5fa;
+                --border: rgba(255,255,255,.12);
+                --shadow: 0 20px 60px rgba(0,0,0,.35);
+                --max: 1100px;
+              }}
+              * {{ box-sizing: border-box; }}
+              body {{ margin: 0; font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, Segoe UI, sans-serif; background: radial-gradient(circle at top, #10233e 0, var(--bg) 55%); color: var(--text); line-height: 1.55; }}
+              a {{ color: #93c5fd; text-decoration: none; }}
+              a:hover {{ text-decoration: underline; }}
+              .wrap {{ max-width: var(--max); margin: 0 auto; padding: 40px 20px 72px; }}
+              .hero {{ padding: 28px; background: linear-gradient(180deg, rgba(255,255,255,.08), rgba(255,255,255,.03)); border: 1px solid var(--border); border-radius: 28px; box-shadow: var(--shadow); }}
+              .hero h1 {{ margin-top: 0; font-size: clamp(2.4rem, 6vw, 4.8rem); line-height: .95; letter-spacing: -0.04em; }}
+              .hero .lede {{ font-size: clamp(1.05rem, 2vw, 1.18rem); color: var(--muted); max-width: 70ch; }}
+              .badges {{ display: flex; flex-wrap: wrap; gap: 10px; margin: 18px 0 8px; }}
+              .badges img {{ height: 28px; }}
+              .grid {{ display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 18px; margin-top: 22px; }}
+              .card {{ background: rgba(8,15,28,.66); border: 1px solid var(--border); border-radius: 22px; padding: 18px; box-shadow: var(--shadow); }}
+              .card h2, .card h3 {{ margin-top: 0; }}
+              .gallery {{ display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 14px; }}
+              .gallery img {{ width: 100%; height: auto; border-radius: 16px; border: 1px solid var(--border); background: #000; }}
+              table {{ width: 100%; border-collapse: collapse; overflow: hidden; border-radius: 16px; }}
+              th, td {{ border: 1px solid var(--border); padding: 12px 14px; text-align: left; vertical-align: top; }}
+              th {{ background: rgba(96,165,250,.16); }}
+              details {{ background: rgba(255,255,255,.03); border: 1px solid var(--border); border-radius: 18px; padding: 14px 16px; }}
+              footer {{ margin-top: 36px; color: var(--muted); font-size: .95rem; }}
+              code, pre {{ background: rgba(255,255,255,.06); border-radius: 10px; }}
+            </style>
+          </head>
+          <body>
+            <main class="wrap">
+              {body}
+            </main>
+          </body>
+          </html>'''
+
+          (root / 'index.html').write_text(template, encoding='utf-8')
+          (root / '.nojekyll').write_text('', encoding='utf-8')
+          PY
+
+      - name: Upload Pages artifact
+        uses: actions/upload-pages-artifact@fc324d3547104276b827a68afc52ff2a11cc49c9 # v5.0.0
+        with:
+          path: .pages-site
+
+      - name: Deploy to GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@cd2ce8fcbc39b97be8ca5fce6e763baed58fa128 # v5.0.0
