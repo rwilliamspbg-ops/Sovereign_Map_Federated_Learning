@@ -930,9 +930,7 @@ if not SWARM_AUDIT_SIGNING_KEY:
         "Set SWARM_AUDIT_SIGNING_KEY to a stable secret for production use."
     )
     SWARM_AUDIT_SIGNING_KEY = secrets.token_hex(32)
-SWARM_COMMAND_NONCE_CACHE_MAX = max(
-    200, SWARM_COMMAND_RATE_LIMIT_PER_MIN * 10
-)
+SWARM_COMMAND_NONCE_CACHE_MAX = max(200, SWARM_COMMAND_RATE_LIMIT_PER_MIN * 10)
 swarm_command_log: deque = deque(maxlen=SWARM_COMMAND_LOG_MAX)
 swarm_audit_log: deque = deque(maxlen=SWARM_COMMAND_LOG_MAX)
 swarm_command_nonce_cache: Dict[str, Dict[str, Any]] = {}
