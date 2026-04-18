@@ -4,6 +4,20 @@
 
 Make the system easier to use, easier to trust, and easier to drive with AI-assisted interactions by reducing manual setup, exposing structured recommendations, and keeping advanced controls available but not dominant.
 
+## Progress Update
+
+Implemented so far:
+
+1. Shared AI interaction summary endpoint for HUD and C2.
+2. Natural-language command bar and structured recommendation cards in the main HUD.
+3. Quick-action routing and summary previews in C2.
+
+Remaining follow-up work:
+
+1. Add explicit approve/edit/reject/undo loops for AI-suggested actions.
+2. Expand model-routing heuristics beyond the current summary/planner split.
+3. Persist user interaction history so operators can review prior AI decisions.
+
 ## Product Principles
 
 1. Minimize the number of user decisions required for the common path.

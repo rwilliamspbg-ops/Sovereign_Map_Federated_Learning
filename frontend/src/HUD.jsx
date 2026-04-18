@@ -150,10 +150,92 @@ const computeSensorQualityMatrix = (opsHealth, trustStatus) => {
   return sources;
 };
 
+const classifyAssistantPrompt = (prompt, requestedRounds = 10) => {
+  const normalized = String(prompt || '').trim().toLowerCase();
+  const roundMatch = normalized.match(/(\d{1,3})\s*(round|rounds|epoch|epochs)/);
+  const parsedRounds = roundMatch ? Math.max(1, Math.min(200, Number(roundMatch[1]))) : requestedRounds;
+
+  if (!normalized) {
+    return {
+      kind: 'assistant_query',
+      label: 'Ask the assistant',
+      detail: 'Type a mission request to get a structured suggestion.',
+      confidence: 0.4,
+      requiresConfirmation: false,
+      rounds: parsedRounds,
+    };
+  }
+
+  if (normalized.includes('stop') || normalized.includes('pause')) {
+    return {
+      kind: 'stop_training',
+      label: 'Stop training loop',
+      detail: 'Pause the current training cycle and capture the latest state.',
+      confidence: 0.92,
+      requiresConfirmation: true,
+      rounds: parsedRounds,
+    };
+  }
+
+  if (normalized.includes('enclave') || normalized.includes('tee')) {
+    return {
+      kind: 'create_enclave',
+      label: 'Provision TEE enclave',
+      detail: 'Request a trusted execution enclave for secure handling.',
+      confidence: 0.9,
+      requiresConfirmation: true,
+      rounds: parsedRounds,
+    };
+  }
+
+  if (normalized.includes('train')) {
+    return {
+      kind: 'start_training',
+      label: `Start training (${parsedRounds} rounds)`,
+      detail: 'Launch the deterministic training loop with the requested round count.',
+      confidence: 0.86,
+      requiresConfirmation: true,
+      rounds: parsedRounds,
+    };
+  }
+
+  if (normalized.includes('epoch') || normalized.includes('round') || normalized.includes('global fl')) {
+    return {
+      kind: 'trigger_fl_round',
+      label: 'Run global FL epoch',
+      detail: 'Advance one federated learning round and refresh the dashboard.',
+      confidence: 0.84,
+      requiresConfirmation: true,
+      rounds: parsedRounds,
+    };
+  }
+
+  if (normalized.includes('sensor') || normalized.includes('quality') || normalized.includes('twin') || normalized.includes('planner')) {
+    return {
+      kind: 'assistant_query',
+      label: 'Review context with assistant',
+      detail: 'Ask the assistant to summarize sensors, twin lag, and planner state.',
+      confidence: 0.78,
+      requiresConfirmation: false,
+      rounds: parsedRounds,
+    };
+  }
+
+  return {
+    kind: 'assistant_query',
+    label: 'Ask the assistant',
+    detail: 'Use the assistant to interpret the request and suggest the next step.',
+    confidence: 0.68,
+    requiresConfirmation: false,
+    rounds: parsedRounds,
+  };
+};
+
 export default function HUD({
   hudData,
   health,
   metricsSummary,
+  interactionSummary,
   trustStatus,
   policyHistory,
   founders,
@@ -187,6 +269,9 @@ export default function HUD({
 }) {
   const [compactMode, setCompactMode] = useState(false);
   const [isMobile, setIsMobile] = useState(false);
+  const [assistantPrompt, setAssistantPrompt] = useState('');
+  const [assistantMode, setAssistantMode] = useState('simple');
+  const [assistantFeedback, setAssistantFeedback] = useState('');
   const [collapsedClusters, setCollapsedClusters] = useState({
     api: false,
     llm: false,
@@ -247,7 +332,6 @@ export default function HUD({
     }
   };
 
-  const recentOpsEvents = (opsEvents || []).slice(-8).reverse();
   const recentPolicies = (policyHistory || []).slice(-4).reverse();
   const founderList = Array.isArray(founders) ? founders.slice(0, 6) : [];
   const healthStatus = opsHealth?.status || 'unknown';
@@ -382,6 +466,27 @@ export default function HUD({
     coveragePct: autonomyKpis.coveragePct,
   });
   const sensorQualityMatrix = computeSensorQualityMatrix(opsHealth, trustStatus);
+  const interactionRecommendations = Array.isArray(interactionSummary?.recommendations) && interactionSummary.recommendations.length > 0
+    ? interactionSummary.recommendations
+    : recommendedCorrections.map((item) => ({
+        action: item.action,
+        label: item.action.replaceAll('_', ' '),
+        reason: item.reason,
+        confidence: item.confidence,
+        risk: item.confidence > 0.8 ? 0.2 : 0.35,
+        expected_gain: item.missionGain,
+        blocked_reason: null,
+        requires_confirmation: true,
+      }));
+  const interactionQuickActions = Array.isArray(interactionSummary?.quick_actions) && interactionSummary.quick_actions.length > 0
+    ? interactionSummary.quick_actions
+    : [
+        { id: 'default-summary', label: 'Ask for twin summary', prompt: 'summarize the digital twin status and top risks', kind: 'assistant_query', model_route: 'summary', requires_confirmation: false },
+        { id: 'default-plan', label: 'Review planner insights', prompt: 'show the safest corrective action', kind: 'assistant_query', model_route: 'planner', requires_confirmation: false },
+      ];
+  const interactionPreview = classifyAssistantPrompt(assistantPrompt, requestedRounds);
+  const interactionContext = interactionSummary?.context || {};
+  const interactionModelRoute = interactionSummary?.model_route || 'planner';
 
   useEffect(() => {
     const append = (series, value) => {
@@ -453,6 +558,73 @@ export default function HUD({
   };
 
   const endpointClass = (isUp) => (isUp ? 'endpoint-up' : 'endpoint-down');
+
+  const runQuickAction = async (action) => {
+    if (!action) {
+      return;
+    }
+
+    if (action.kind === 'assistant_query') {
+      const prompt = action.prompt || action.label;
+      setAssistantPrompt(prompt);
+      if (setVoiceQuery) {
+        setVoiceQuery(prompt);
+      }
+      if (onSubmitVoiceQuery) {
+        await onSubmitVoiceQuery(prompt);
+      }
+      setAssistantFeedback(`Queued assistant review: ${prompt}`);
+      return;
+    }
+
+    if (action.command === 'start_training') {
+      const rounds = Number(action.parameters?.rounds || requestedRounds || 10);
+      await onStartTraining(rounds);
+      setAssistantFeedback(`Started training for ${rounds} rounds`);
+      return;
+    }
+
+    if (action.command === 'trigger_fl') {
+      await onTriggerFLRound();
+      setAssistantFeedback('Requested one global FL epoch');
+      return;
+    }
+
+    if (action.command === 'stop_training') {
+      await onStopTraining();
+      setAssistantFeedback('Requested training stop');
+      return;
+    }
+
+    if (action.command === 'create_enclave') {
+      await onCreateEnclave();
+      setAssistantFeedback('Requested TEE enclave provisioning');
+      return;
+    }
+
+    setAssistantFeedback(`Selected ${action.label || action.action || 'action'} for review`);
+  };
+
+  const submitAssistantPrompt = async () => {
+    const intent = classifyAssistantPrompt(assistantPrompt, requestedRounds);
+    await runQuickAction({
+      ...intent,
+      label: intent.label,
+      prompt: assistantPrompt,
+      kind: intent.kind === 'assistant_query' ? 'assistant_query' : 'control_action',
+      command:
+        intent.kind === 'start_training'
+          ? 'start_training'
+          : intent.kind === 'trigger_fl_round'
+            ? 'trigger_fl'
+            : intent.kind === 'stop_training'
+              ? 'stop_training'
+              : intent.kind === 'create_enclave'
+                ? 'create_enclave'
+                : null,
+      parameters: intent.kind === 'start_training' ? { rounds: intent.rounds } : {},
+    });
+  };
 
   return (
     <div className={`hud-ops-root ${compactMode ? 'density-compact' : ''}`}>
@@ -644,6 +816,106 @@ export default function HUD({
           </article>
         </div>
         <div className="notice-box">Planner state: {plannerSafety.reason}</div>
+      </section>
+
+      <section className="ops-panel">
+        <h3>AI Interaction Console</h3>
+        <p className="panel-subtitle">One-step mission requests, structured suggestions, and approval-ready quick actions.</p>
+        <label className="input-row">
+          Ask the assistant
+          <input
+            type="text"
+            value={assistantPrompt}
+            onChange={(event) => setAssistantPrompt(event.target.value)}
+            placeholder="e.g. reroute the high-risk corridor or start training for 10 rounds"
+          />
+        </label>
+        <div className="round-presets" role="group" aria-label="Suggested prompts">
+          {(interactionSummary?.intent_examples || ['run a global FL epoch', 'show planner insights', 'inspect sensor quality']).slice(0, 4).map((example) => (
+            <button
+              key={example}
+              type="button"
+              className="preset-btn"
+              onClick={() => {
+                setAssistantPrompt(example);
+                setAssistantFeedback(`Loaded prompt: ${example}`);
+              }}
+            >
+              {example}
+            </button>
+          ))}
+        </div>
+        <div className="button-stack" style={{ marginTop: '0.85rem' }}>
+          <button className="btn cmd-epoch" type="button" onClick={submitAssistantPrompt} disabled={loading || !assistantPrompt.trim()}>
+            Review / Execute Request
+          </button>
+          <button
+            className="btn cmd-start"
+            type="button"
+            onClick={() => setAssistantMode((value) => (value === 'simple' ? 'expert' : 'simple'))}
+          >
+            {assistantMode === 'simple' ? 'Show Expert Details' : 'Hide Expert Details'}
+          </button>
+        </div>
+        <div className="domain-cluster-grid">
+          <article className="domain-cluster">
+            <h4>Preview</h4>
+            <div className="notice-box">
+              <strong>{interactionPreview.label}</strong>
+              <div>{interactionPreview.detail}</div>
+              <div>
+                confidence {fixedOrFallback(interactionPreview.confidence * 100, 1, '%')} | confirmation {interactionPreview.requiresConfirmation ? 'required' : 'optional'}
+              </div>
+            </div>
+            <div className="audit-row">
+              <span>Model Route</span>
+              <span>{interactionModelRoute}</span>
+            </div>
+            <div className="audit-row">
+              <span>Context State</span>
+              <span>{interactionContext.safety_state || 'unknown'}</span>
+            </div>
+          </article>
+          <article className="domain-cluster">
+            <h4>Structured Recommendations</h4>
+            {interactionRecommendations.map((item) => (
+              <div className="notice-box" key={item.action}>
+                <strong>{item.label || item.action}</strong>
+                <div>{item.reason}</div>
+                <div>
+                  confidence {fixedOrFallback(item.confidence * 100, 1, '%')} | risk {fixedOrFallback((item.risk || 0) * 100, 1, '%')} | gain {fixedOrFallback((item.expected_gain || 0) * 100, 1, '%')}
+                </div>
+                <button
+                  className="btn cmd-epoch"
+                  type="button"
+                  onClick={() => runQuickAction({ action: item.action, label: item.label || item.action, kind: 'assistant_query', prompt: item.reason })}
+                >
+                  Review recommendation
+                </button>
+              </div>
+            ))}
+          </article>
+          <article className="domain-cluster">
+            <h4>Quick Actions</h4>
+            {interactionQuickActions.map((item) => (
+              <div className="audit-row" key={item.id || item.label}>
+                <button
+                  className="btn"
+                  type="button"
+                  onClick={() => runQuickAction(item)}
+                  disabled={loading}
+                >
+                  {item.label}
+                </button>
+                <span>{item.model_route || item.command || item.kind}</span>
+              </div>
+            ))}
+          </article>
+        </div>
+        <div className="notice-box">{assistantFeedback || 'Ready for a one-sentence mission request.'}</div>
+        {assistantMode === 'expert' && (
+          <pre className="notice-box" style={{ whiteSpace: 'pre-wrap' }}>{JSON.stringify(interactionSummary || {}, null, 2)}</pre>
+        )}
       </section>
 
       {(healthStatus === 'degraded' || healthStatus === 'critical') && (

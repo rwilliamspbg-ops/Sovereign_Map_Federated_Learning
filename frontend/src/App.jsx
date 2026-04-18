@@ -69,6 +69,7 @@ function App() {
   const [hudData, setHudData] = useState(null);
   const [health, setHealth] = useState(null);
   const [metricsSummary, setMetricsSummary] = useState(null);
+  const [interactionSummary, setInteractionSummary] = useState(null);
   const [trustStatus, setTrustStatus] = useState(null);
   const [policyHistory, setPolicyHistory] = useState([]);
   const [founders, setFounders] = useState([]);
@@ -263,10 +264,11 @@ function App() {
   const fetchData = async () => {
     setLoading(true);
     try {
-      const [hudFetch, healthFetch, metricsFetch, foundersFetch, trainingFetch, opsHealthFetch, opsTrendsFetch] = await Promise.allSettled([
+      const [hudFetch, healthFetch, metricsFetch, interactionFetch, foundersFetch, trainingFetch, opsHealthFetch, opsTrendsFetch] = await Promise.allSettled([
         fetch(`${API_BASE}/hud_data`),
         fetch(`${API_BASE}/health`),
         fetch(`${API_BASE}/metrics_summary`),
+        fetch(`${API_BASE}/ai/interaction/summary`),
         fetch(`${API_BASE}/founders`),
         fetch(`${API_BASE}/training/status`),
         fetch(`${API_BASE}/ops/health`),
@@ -285,10 +287,11 @@ function App() {
         }
       };
 
-      const [hud, healthData, metrics, foundersData, trainingData, opsHealthData, opsTrendsData] = await Promise.all([
+      const [hud, healthData, metrics, interactionData, foundersData, trainingData, opsHealthData, opsTrendsData] = await Promise.all([
         safeJson(toResponse(hudFetch), hudData || {}),
         safeJson(toResponse(healthFetch), health || {}),
         safeJson(toResponse(metricsFetch), metricsSummary || {}),
+        safeJson(toResponse(interactionFetch), interactionSummary || {}),
         safeJson(toResponse(foundersFetch), founders || []),
         safeJson(toResponse(trainingFetch), { status: 'idle', active: false, round: 0 }),
         safeJson(toResponse(opsHealthFetch), opsHealth || null),
@@ -359,6 +362,7 @@ function App() {
       setHudData(mergedHudData);
       setHealth(healthData);
       setMetricsSummary(metrics);
+      setInteractionSummary(interactionData);
       setFounders(foundersData);
       setTrainingStatus(nextTraining);
       setOpsHealth(nextOpsHealth);
@@ -457,8 +461,9 @@ function App() {
     }
   };
 
-    const submitVoiceQuery = async () => {
-    if (!voiceQuery.trim()) {
+  const submitVoiceQuery = async (overrideQuery) => {
+    const query = String(overrideQuery ?? voiceQuery ?? '').trim();
+    if (!query) {
       return;
     }
 
@@ -466,7 +471,7 @@ function App() {
       const response = await fetch(`${API_BASE}/chat`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ query: voiceQuery })
+        body: JSON.stringify({ query })
       });
       if (response.ok) {
         const result = await response.json();
@@ -573,7 +578,7 @@ function App() {
   }
 
   if (showC2SwarmHUD) {
-    return <C2SwarmHUD apiBase={API_BASE} />;
+    return <C2SwarmHUD apiBase={API_BASE} interactionSummary={interactionSummary} />;
   }
 
   return (
@@ -597,6 +602,7 @@ function App() {
         hudData={hudData}
         health={health}
         metricsSummary={metricsSummary}
+        interactionSummary={interactionSummary}
         trustStatus={trustStatus}
         policyHistory={policyHistory}
         founders={founders}

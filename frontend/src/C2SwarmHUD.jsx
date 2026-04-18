@@ -133,7 +133,49 @@ const deriveOperatorAssistCards = (status, mapState, auditLog) => {
   return cards;
 };
 
-function C2SwarmHUD({ apiBase }) {
+const normalizeInteractionActions = (interactionSummary) => {
+  if (Array.isArray(interactionSummary?.quick_actions) && interactionSummary.quick_actions.length > 0) {
+    return interactionSummary.quick_actions;
+  }
+
+  return [
+    {
+      id: 'c2-ask-twin',
+      label: 'Ask for twin summary',
+      prompt: 'summarize the digital twin status and top risks',
+      kind: 'assistant_query',
+      model_route: 'summary',
+      requires_confirmation: false,
+    },
+    {
+      id: 'c2-run-epoch',
+      label: 'Run Global FL Epoch',
+      command: 'trigger_fl',
+      kind: 'control_action',
+      requires_confirmation: true,
+    },
+    {
+      id: 'c2-start-training',
+      label: 'Start 10-round training',
+      command: 'start_training',
+      parameters: { rounds: 10 },
+      kind: 'control_action',
+      requires_confirmation: true,
+    },
+  ];
+};
+
+const normalizeInteractionRecommendations = (interactionSummary, fallbackCount = 0) => {
+  if (Array.isArray(interactionSummary?.recommendations) && interactionSummary.recommendations.length > 0) {
+    return interactionSummary.recommendations;
+  }
+
+  return fallbackCount > 0
+    ? [{ action: 'observe_and_hold', label: 'Observe and hold', reason: 'no urgent recommendation available', confidence: 0.9, risk: 0.1, expected_gain: 0.42 }]
+    : [];
+};
+
+function C2SwarmHUD({ apiBase, interactionSummary }) {
   const [status, setStatus] = useState(null);
   const [mapState, setMapState] = useState(null);
   const [commandLog, setCommandLog] = useState([]);
@@ -154,6 +196,16 @@ function C2SwarmHUD({ apiBase }) {
     nonce: '',
     operatorRole: 'admin'
   });
+
+  const interactionQuickActions = useMemo(
+    () => normalizeInteractionActions(interactionSummary),
+    [interactionSummary]
+  );
+
+  const interactionRecommendations = useMemo(
+    () => normalizeInteractionRecommendations(interactionSummary, commandLog.length),
+    [interactionSummary, commandLog.length]
+  );
 
   const fetchSnapshot = useCallback(async () => {
     try {
@@ -258,6 +310,32 @@ function C2SwarmHUD({ apiBase }) {
 
   const updateForm = (field, value) => {
     setForm((current) => ({ ...current, [field]: value }));
+  };
+
+  const applyInteractionAction = (action) => {
+    if (!action) {
+      return;
+    }
+
+    if (action.kind === 'assistant_query') {
+      setSubmitMessage(`Assistant prompt loaded: ${action.prompt || action.label}`);
+      return;
+    }
+
+    if (action.command) {
+      setForm((current) => ({
+        ...current,
+        command: action.command,
+        targetScope: action.target_scope || current.targetScope,
+        targetIds: Array.isArray(action.target_ids) ? action.target_ids.join(',') : current.targetIds,
+        objective: action.objective || current.objective,
+        assignmentRole: action.parameters?.role || current.assignmentRole,
+        waypointLat: action.waypoint_lat != null ? String(action.waypoint_lat) : current.waypointLat,
+        waypointLng: action.waypoint_lng != null ? String(action.waypoint_lng) : current.waypointLng,
+        nonce: action.nonce || current.nonce,
+      }));
+      setSubmitMessage(`Loaded ${action.label || action.command} into the command form`);
+    }
   };
 
   const submitCommand = async (event) => {
@@ -568,7 +646,7 @@ function C2SwarmHUD({ apiBase }) {
       <section className="c2-log-panel">
         <div className="c2-panel-head">
           <h2>Autonomy Assist</h2>
-          <span>{operatorAssistCards.length} recommendation(s)</span>
+          <span>{interactionRecommendations.length} recommendation(s)</span>
         </div>
         <div className="c2-log-table" role="table" aria-label="operator-assist">
           <div className="c2-log-row c2-log-head" role="row">
@@ -585,6 +663,20 @@ function C2SwarmHUD({ apiBase }) {
             <span>{commandImpact.rejected}</span>
             <span>{commandImpact.coveragePct.toFixed(1)}%</span>
           </div>
+        </div>
+        <div className="c2-form-grid">
+          {interactionQuickActions.map((action) => (
+            <button
+              key={action.id || action.label}
+              type="button"
+              onClick={() => applyInteractionAction(action)}
+            >
+              {action.label}
+            </button>
+          ))}
+        </div>
+        <div className="c2-submit-message">
+          {(interactionSummary?.recommendations || interactionRecommendations).map((item) => `${item.label || item.action}: ${item.reason}`).join(' | ')}
         </div>
         <div className="c2-submit-message">
           {operatorAssistCards.map((card) => `${card.title}: ${card.detail}`).join(' | ')}

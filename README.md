@@ -27,6 +27,7 @@ Traditional federated learning can look simple in a lab and fail badly in the fi
 - One command boots the full stack and its observability surfaces.
 - A small local node set exercises aggregation, policy checks, and proof verification.
 - The runtime exposes the same health path operators use in production-style demos.
+- The primary HUD and C2 view share a structured AI interaction summary so common actions stay explainable and easy to trigger.
 
 ## Try It Now
 
