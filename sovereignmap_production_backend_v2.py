@@ -924,7 +924,15 @@ SWARM_AUDIT_LOG_PATH = os.getenv(
 )
 SWARM_AUDIT_SIGNING_KEY = str(os.getenv("SWARM_AUDIT_SIGNING_KEY", "")).strip()
 if not SWARM_AUDIT_SIGNING_KEY:
+    logging.warning(
+        "SWARM_AUDIT_SIGNING_KEY is not set; generating an ephemeral key. "
+        "Audit-chain signatures will not be verifiable across process restarts. "
+        "Set SWARM_AUDIT_SIGNING_KEY to a stable secret for production use."
+    )
     SWARM_AUDIT_SIGNING_KEY = secrets.token_hex(32)
+SWARM_COMMAND_NONCE_CACHE_MAX = max(
+    200, SWARM_COMMAND_RATE_LIMIT_PER_MIN * 10
+)
 swarm_command_log: deque = deque(maxlen=SWARM_COMMAND_LOG_MAX)
 swarm_audit_log: deque = deque(maxlen=SWARM_COMMAND_LOG_MAX)
 swarm_command_nonce_cache: Dict[str, Dict[str, Any]] = {}
@@ -3126,12 +3134,6 @@ def swarm_audit_recent_view():
 
 @app.route("/swarm/command", methods=["POST"])
 def swarm_command_submit():
-    if not _authorized_join_admin(request):
-        swarm_command_requests_total.labels(
-            command="unauthorized", result="rejected"
-        ).inc()
-        return jsonify({"error": "unauthorized"}), 401
-
     request_started = time.time()
     body = request.get_json(silent=True) or {}
     if not isinstance(body, dict):
@@ -3197,13 +3199,24 @@ def swarm_command_submit():
 
     duplicate_action = None
     with swarm_command_lock:
-        expired_nonces = [
-            existing_nonce
-            for existing_nonce, record in swarm_command_nonce_cache.items()
-            if (now_epoch - int(record.get("ts", 0))) > 600
-        ]
-        for existing_nonce in expired_nonces:
-            swarm_command_nonce_cache.pop(existing_nonce, None)
+        # Incremental TTL-based expiry: only scan when cache exceeds half the max
+        # to bound cleanup cost. Hard-cap at SWARM_COMMAND_NONCE_CACHE_MAX to
+        # prevent unbounded memory growth under nonce-flood conditions.
+        if len(swarm_command_nonce_cache) > SWARM_COMMAND_NONCE_CACHE_MAX // 2:
+            expired_nonces = [
+                existing_nonce
+                for existing_nonce, record in swarm_command_nonce_cache.items()
+                if (now_epoch - int(record.get("ts", 0))) > 600
+            ]
+            for existing_nonce in expired_nonces:
+                swarm_command_nonce_cache.pop(existing_nonce, None)
+            # If still over the hard cap, evict the oldest entries.
+            if len(swarm_command_nonce_cache) >= SWARM_COMMAND_NONCE_CACHE_MAX:
+                overflow = (
+                    len(swarm_command_nonce_cache) - SWARM_COMMAND_NONCE_CACHE_MAX + 1
+                )
+                for oldest_nonce in list(swarm_command_nonce_cache)[:overflow]:
+                    swarm_command_nonce_cache.pop(oldest_nonce, None)
 
         if nonce and nonce in swarm_command_nonce_cache:
             duplicate_action = swarm_command_nonce_cache[nonce]
@@ -3232,6 +3245,7 @@ def swarm_command_submit():
                     "action_id": action_id,
                     "ts": now_epoch,
                     "command": normalized["command"],
+                    "normalized": normalized,
                 }
 
     if duplicate_action is not None:
@@ -3245,6 +3259,9 @@ def swarm_command_submit():
                     "duplicate": True,
                     "action_id": duplicate_action.get("action_id"),
                     "command": duplicate_action.get("command"),
+                    "normalized": duplicate_action.get(
+                        "normalized", {"command": duplicate_action.get("command")}
+                    ),
                 }
             ),
             200,
@@ -3273,7 +3290,8 @@ def swarm_command_submit():
             {
                 "status": "accepted",
                 "action_id": action_id,
-                "command": normalized,
+                "command": normalized["command"],
+                "normalized": normalized,
                 "role": caller_role,
                 "audit_signature": audit_entry.get("signature"),
             }
