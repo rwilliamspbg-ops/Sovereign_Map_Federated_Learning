@@ -3212,6 +3212,8 @@ def swarm_command_submit():
                 swarm_command_nonce_cache.pop(existing_nonce, None)
             # If still over the hard cap, evict the oldest entries.
             if len(swarm_command_nonce_cache) >= SWARM_COMMAND_NONCE_CACHE_MAX:
+                # +1 so that after eviction there is room for the new nonce
+                # about to be inserted, keeping the cache below the hard cap.
                 overflow = (
                     len(swarm_command_nonce_cache) - SWARM_COMMAND_NONCE_CACHE_MAX + 1
                 )
@@ -3259,6 +3261,9 @@ def swarm_command_submit():
                     "duplicate": True,
                     "action_id": duplicate_action.get("action_id"),
                     "command": duplicate_action.get("command"),
+                    # Older nonce cache entries (pre-schema-update) may not carry the
+                    # full normalized payload; fall back to a minimal object so clients
+                    # always receive the same field type for `normalized`.
                     "normalized": duplicate_action.get(
                         "normalized", {"command": duplicate_action.get("command")}
                     ),

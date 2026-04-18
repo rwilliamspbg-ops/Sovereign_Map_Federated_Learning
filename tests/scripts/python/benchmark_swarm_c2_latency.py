@@ -15,6 +15,7 @@ import collections
 import json
 import math
 import statistics
+import threading
 import time
 import urllib.error
 import urllib.request
@@ -67,8 +68,6 @@ def run(args: argparse.Namespace) -> int:
     command_iterations = (
         args.command_iterations if args.command_iterations > 0 else args.iterations
     )
-
-    import threading
 
     _lock = threading.Lock()
 
