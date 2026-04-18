@@ -141,6 +141,20 @@ func TestGetCapabilities(t *testing.T) {
 }
 
 func TestCapabilitiesContractV1(t *testing.T) {
+	tmpDir := t.TempDir()
+	capPath := filepath.Join(tmpDir, "capabilities.json")
+	bridgePath := filepath.Join(tmpDir, "bridge-policies.json")
+
+	if err := os.WriteFile(capPath, []byte(`{"version":"1.0.0","runtime":"mohawk-proto-v1","thinker_clauses":{"enabled":true,"escalation_label":"thinker-review"}}`), 0o644); err != nil {
+		t.Fatalf("write capabilities: %v", err)
+	}
+	if err := os.WriteFile(bridgePath, []byte(`{"version":"v1","routes":[]}`), 0o644); err != nil {
+		t.Fatalf("write bridge policies: %v", err)
+	}
+
+	t.Setenv("MOHAWK_CAPABILITIES_PATH", capPath)
+	t.Setenv("MOHAWK_BRIDGE_POLICIES_PATH", bridgePath)
+
 	h := NewHandler(nil, nil, nil, nil)
 	mux := http.NewServeMux()
 	h.RegisterRoutes(mux)
@@ -218,6 +232,21 @@ func TestCapabilitiesContractV1(t *testing.T) {
 	}
 	if got := mustStringSlice(t, observability["ledger_metrics"], "observability.ledger_metrics"); len(got) == 0 {
 		t.Fatal("observability.ledger_metrics must not be empty")
+	}
+
+	capabilitiesSection, ok := payload["capabilities"].(map[string]interface{})
+	if !ok {
+		t.Fatalf("capabilities missing")
+	}
+	thinkerClauses, ok := capabilitiesSection["thinker_clauses"].(map[string]interface{})
+	if !ok {
+		t.Fatalf("capabilities.thinker_clauses missing")
+	}
+	if thinkerClauses["enabled"] != true {
+		t.Fatalf("capabilities.thinker_clauses.enabled = %v, want true", thinkerClauses["enabled"])
+	}
+	if thinkerClauses["escalation_label"] != "thinker-review" {
+		t.Fatalf("capabilities.thinker_clauses.escalation_label = %v, want thinker-review", thinkerClauses["escalation_label"])
 	}
 }
 

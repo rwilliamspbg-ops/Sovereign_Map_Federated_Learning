@@ -1,0 +1,242 @@
+.c2-shell {
+  min-height: 100vh;
+  background:
+    radial-gradient(circle at 16% 14%, rgba(53, 116, 169, 0.22), transparent 45%),
+    radial-gradient(circle at 84% 22%, rgba(67, 176, 149, 0.18), transparent 42%),
+    linear-gradient(140deg, #091420 0%, #10263b 46%, #122134 100%);
+  color: #eaf4ff;
+  padding: 1.25rem;
+  font-family: 'IBM Plex Sans', 'Source Sans 3', sans-serif;
+}
+
+.c2-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 1rem;
+  margin-bottom: 1rem;
+}
+
+.c2-header h1 {
+  margin: 0;
+  letter-spacing: 0.02em;
+}
+
+.c2-header p {
+  margin: 0.4rem 0 0;
+  max-width: 64ch;
+  color: rgba(223, 236, 249, 0.85);
+}
+
+.c2-pill {
+  padding: 0.45rem 0.7rem;
+  border-radius: 999px;
+  font-size: 0.82rem;
+  font-weight: 700;
+  white-space: nowrap;
+}
+
+.c2-pill-ok {
+  background: rgba(76, 193, 134, 0.2);
+  border: 1px solid rgba(76, 193, 134, 0.6);
+}
+
+.c2-pill-warn {
+  background: rgba(240, 171, 69, 0.2);
+  border: 1px solid rgba(240, 171, 69, 0.6);
+}
+
+.c2-error {
+  margin-bottom: 0.8rem;
+  background: rgba(183, 59, 59, 0.22);
+  border: 1px solid rgba(211, 109, 109, 0.58);
+  color: #ffe5e5;
+  border-radius: 10px;
+  padding: 0.55rem 0.7rem;
+}
+
+.c2-kpis {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(120px, 1fr));
+  gap: 0.65rem;
+  margin-bottom: 0.9rem;
+}
+
+.c2-kpis article {
+  background: rgba(9, 30, 46, 0.62);
+  border: 1px solid rgba(91, 153, 207, 0.35);
+  border-radius: 10px;
+  padding: 0.7rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+}
+
+.c2-kpis span {
+  font-size: 0.8rem;
+  opacity: 0.8;
+}
+
+.c2-kpis strong {
+  font-size: 1.25rem;
+}
+
+.c2-layout {
+  display: grid;
+  grid-template-columns: 1.45fr 1fr;
+  gap: 0.85rem;
+}
+
+.c2-map-panel,
+.c2-command-panel,
+.c2-log-panel {
+  background: rgba(7, 25, 39, 0.72);
+  border: 1px solid rgba(105, 180, 255, 0.24);
+  border-radius: 12px;
+  padding: 0.8rem;
+  backdrop-filter: blur(5px);
+}
+
+.c2-panel-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 0.6rem;
+  margin-bottom: 0.55rem;
+}
+
+.c2-panel-head h2 {
+  margin: 0;
+  font-size: 1rem;
+}
+
+.c2-panel-head span {
+  font-size: 0.78rem;
+  opacity: 0.72;
+}
+
+.c2-map-wrap {
+  border-radius: 10px;
+  overflow: hidden;
+  border: 1px solid rgba(112, 177, 239, 0.3);
+}
+
+.c2-map-svg {
+  width: 100%;
+  aspect-ratio: 16 / 10;
+  display: block;
+  background:
+    radial-gradient(circle at center, rgba(17, 48, 73, 0.55), rgba(6, 17, 28, 0.85));
+}
+
+.c2-form {
+  display: flex;
+  flex-direction: column;
+  gap: 0.55rem;
+}
+
+.c2-form label {
+  display: flex;
+  flex-direction: column;
+  gap: 0.26rem;
+  font-size: 0.8rem;
+  letter-spacing: 0.02em;
+}
+
+.c2-form input,
+.c2-form select,
+.c2-form button {
+  width: 100%;
+  border-radius: 8px;
+  border: 1px solid rgba(113, 167, 214, 0.4);
+  padding: 0.46rem 0.56rem;
+  background: rgba(8, 30, 49, 0.78);
+  color: #ecf5ff;
+}
+
+.c2-form input:focus,
+.c2-form select:focus {
+  outline: 2px solid rgba(114, 194, 255, 0.5);
+  outline-offset: 1px;
+}
+
+.c2-form button {
+  cursor: pointer;
+  font-weight: 700;
+  background: linear-gradient(120deg, #2570ab, #2a9d8f);
+  border-color: rgba(154, 222, 255, 0.6);
+}
+
+.c2-form button:disabled {
+  opacity: 0.72;
+  cursor: not-allowed;
+}
+
+.c2-form-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(130px, 1fr));
+  gap: 0.55rem;
+}
+
+.c2-submit-message {
+  margin-top: 0.55rem;
+  min-height: 1.1rem;
+  font-size: 0.83rem;
+  color: #b8d9f6;
+}
+
+.c2-log-panel {
+  margin-top: 0.9rem;
+}
+
+.c2-log-table {
+  display: flex;
+  flex-direction: column;
+  gap: 0.2rem;
+}
+
+.c2-log-row {
+  display: grid;
+  grid-template-columns: 1.4fr 1fr 0.9fr 0.8fr 0.8fr;
+  gap: 0.45rem;
+  padding: 0.38rem 0.45rem;
+  border-radius: 8px;
+  background: rgba(9, 31, 50, 0.58);
+  font-size: 0.78rem;
+}
+
+.c2-log-head {
+  background: rgba(20, 57, 84, 0.7);
+  font-weight: 700;
+}
+
+.c2-empty {
+  padding: 0.6rem;
+  opacity: 0.72;
+  font-size: 0.82rem;
+}
+
+@media (max-width: 1080px) {
+  .c2-kpis {
+    grid-template-columns: repeat(2, minmax(130px, 1fr));
+  }
+
+  .c2-layout {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 640px) {
+  .c2-shell {
+    padding: 0.75rem;
+  }
+
+  .c2-header {
+    flex-direction: column;
+  }
+
+  .c2-form-grid,
+  .c2-log-row {
+    grid-template-columns: 1fr;
+  }
+}

@@ -542,6 +542,24 @@ ops_control_actions_total.labels(action="join_invite_request_create").inc(0)
 ops_control_actions_total.labels(action="join_invite_request_approve").inc(0)
 ops_control_actions_total.labels(action="join_invite_request_reject").inc(0)
 ops_control_actions_total.labels(action="join_invite_revoke").inc(0)
+swarm_command_requests_total = Counter(
+    "sovereign_swarm_command_requests_total",
+    "Total swarm C2 command requests",
+    ["command", "result"],
+)
+swarm_command_requests_total.labels(command="hold_position", result="accepted").inc(0)
+swarm_command_requests_total.labels(command="hold_position", result="rejected").inc(0)
+swarm_command_latency_seconds = Histogram(
+    "sovereign_swarm_command_latency_seconds",
+    "End-to-end API handling latency for swarm command submissions",
+    buckets=(0.005, 0.01, 0.025, 0.05, 0.1, 0.25, 0.5, 1.0),
+)
+swarm_command_role_denials_total = Counter(
+    "sovereign_swarm_command_role_denials_total",
+    "Total swarm command denials due to role policy",
+    ["role", "command"],
+)
+swarm_command_role_denials_total.labels(role="viewer", command="hold_position").inc(0)
 marketplace_offers_total = Counter(
     "sovereign_marketplace_offers_total",
     "Total marketplace offers created",
@@ -845,6 +863,73 @@ ops_trends = {
     "api_error_rate_pct": deque(maxlen=OPS_TREND_WINDOW),
     "ingress_mbps": deque(maxlen=OPS_TREND_WINDOW),
 }
+SWARM_ALLOWED_COMMANDS: Set[str] = {
+    "hold_position",
+    "return_to_base",
+    "reroute",
+    "reassign_role",
+    "isolate_node",
+    "resume_autonomy",
+    "pause_autonomy",
+    "set_objective",
+}
+SWARM_COMMAND_ROLE_POLICY: Dict[str, Set[str]] = {
+    "admin": set(SWARM_ALLOWED_COMMANDS),
+    "commander": {
+        "hold_position",
+        "return_to_base",
+        "reroute",
+        "reassign_role",
+        "resume_autonomy",
+        "pause_autonomy",
+        "set_objective",
+    },
+    "operator": {
+        "hold_position",
+        "return_to_base",
+        "reroute",
+        "resume_autonomy",
+        "pause_autonomy",
+        "set_objective",
+    },
+    "auditor": set(),
+    "viewer": set(),
+}
+SWARM_ALLOWED_TARGET_SCOPES: Set[str] = {"global", "node", "group"}
+SWARM_ALLOWED_ROLES: Set[str] = {
+    "scout",
+    "relay",
+    "mapper",
+    "collector",
+    "sentinel",
+}
+SWARM_ALLOWED_LAYERS: Set[str] = {
+    "paths",
+    "risk",
+    "coverage",
+    "communications",
+}
+SWARM_MAX_MAP_NODES = max(50, int(os.getenv("SWARM_MAX_MAP_NODES", "1000")))
+SWARM_DEFAULT_MAP_NODES = max(
+    25,
+    min(SWARM_MAX_MAP_NODES, int(os.getenv("SWARM_DEFAULT_MAP_NODES", "250"))),
+)
+SWARM_COMMAND_LOG_MAX = max(100, int(os.getenv("SWARM_COMMAND_LOG_MAX", "500")))
+SWARM_COMMAND_RATE_LIMIT_PER_MIN = max(
+    10,
+    int(os.getenv("SWARM_COMMAND_RATE_LIMIT_PER_MIN", "120")),
+)
+SWARM_AUDIT_LOG_PATH = os.getenv(
+    "SWARM_AUDIT_LOG_PATH", "./data/swarm_command_audit.jsonl"
+)
+SWARM_AUDIT_SIGNING_KEY = str(os.getenv("SWARM_AUDIT_SIGNING_KEY", "")).strip()
+if not SWARM_AUDIT_SIGNING_KEY:
+    SWARM_AUDIT_SIGNING_KEY = secrets.token_hex(32)
+swarm_command_log: deque = deque(maxlen=SWARM_COMMAND_LOG_MAX)
+swarm_audit_log: deque = deque(maxlen=SWARM_COMMAND_LOG_MAX)
+swarm_command_nonce_cache: Dict[str, Dict[str, Any]] = {}
+swarm_command_timestamps: deque = deque(maxlen=SWARM_COMMAND_RATE_LIMIT_PER_MIN * 3)
+swarm_command_lock = threading.Lock()
 MODEL_REGISTRY_PATH = os.getenv("MODEL_REGISTRY_PATH", "./data/model_registry.jsonl")
 TPM_METRICS_ENDPOINT = os.getenv(
     "TPM_METRICS_ENDPOINT", "https://tpm-metrics:9091/event/attestation"
@@ -1955,6 +2040,295 @@ def _next_join_node_id(registrations: List[Dict[str, Any]]) -> int:
     return candidate
 
 
+def _sanitize_swarm_token(value: Any, max_len: int = 64) -> str:
+    token = re.sub(r"[^a-zA-Z0-9_\-.:]", "", str(value or "")).strip()
+    return token[:max_len]
+
+
+def _resolve_swarm_role(req: Request) -> str:
+    role = _sanitize_swarm_token(req.headers.get("X-API-Role", "admin"), max_len=24)
+    role = role.lower() or "admin"
+    if role in SWARM_COMMAND_ROLE_POLICY:
+        return role
+    return "unknown"
+
+
+def _role_allows_swarm_command(role: str, command: str) -> bool:
+    allowed = SWARM_COMMAND_ROLE_POLICY.get(role)
+    if allowed is None:
+        return False
+    return command in allowed
+
+
+def _audit_signature_payload(entry: Dict[str, Any], previous_signature: str) -> str:
+    serializable = {
+        "action_id": entry.get("action_id"),
+        "ts": entry.get("ts"),
+        "command": entry.get("command"),
+        "target_scope": entry.get("target_scope"),
+        "target_ids": entry.get("target_ids"),
+        "parameters": entry.get("parameters"),
+        "objective": entry.get("objective"),
+        "waypoint_lat": entry.get("waypoint_lat"),
+        "waypoint_lng": entry.get("waypoint_lng"),
+        "actor": entry.get("actor"),
+        "role": entry.get("role"),
+        "status": entry.get("status"),
+        "prev_signature": previous_signature,
+    }
+    return json.dumps(serializable, sort_keys=True, separators=(",", ":"))
+
+
+def _append_swarm_audit_entry(command_entry: Dict[str, Any]) -> Dict[str, Any]:
+    previous_signature = ""
+    if swarm_audit_log:
+        previous_signature = str(swarm_audit_log[-1].get("signature", ""))
+
+    payload = _audit_signature_payload(command_entry, previous_signature)
+    signature = hmac.new(
+        SWARM_AUDIT_SIGNING_KEY.encode("utf-8"),
+        payload.encode("utf-8"),
+        hashlib.sha256,
+    ).hexdigest()
+    audit_entry = {
+        "ts": command_entry.get("ts"),
+        "action_id": command_entry.get("action_id"),
+        "command": command_entry.get("command"),
+        "role": command_entry.get("role"),
+        "actor": command_entry.get("actor"),
+        "target_scope": command_entry.get("target_scope"),
+        "target_ids": command_entry.get("target_ids"),
+        "status": command_entry.get("status"),
+        "prev_signature": previous_signature,
+        "signature": signature,
+    }
+    swarm_audit_log.append(audit_entry)
+
+    try:
+        _ensure_parent_dir(SWARM_AUDIT_LOG_PATH)
+        with open(SWARM_AUDIT_LOG_PATH, "a", encoding="utf-8") as f:
+            f.write(json.dumps(audit_entry, sort_keys=True) + "\n")
+    except Exception as exc:
+        logger.warning("Unable to persist swarm audit entry: %s", exc)
+
+    return audit_entry
+
+
+def _swarm_rate_limited(now_ts: float) -> bool:
+    with swarm_command_lock:
+        while (
+            swarm_command_timestamps and (now_ts - swarm_command_timestamps[0]) > 60.0
+        ):
+            swarm_command_timestamps.popleft()
+        if len(swarm_command_timestamps) >= SWARM_COMMAND_RATE_LIMIT_PER_MIN:
+            return True
+        swarm_command_timestamps.append(now_ts)
+    return False
+
+
+def _validate_swarm_command(
+    payload: Dict[str, Any],
+) -> Tuple[Optional[Dict[str, Any]], Optional[str]]:
+    command = _sanitize_swarm_token(payload.get("command"), max_len=48).lower()
+    if command not in SWARM_ALLOWED_COMMANDS:
+        return None, "unsupported_command"
+
+    target_scope = _sanitize_swarm_token(
+        payload.get("target_scope", "global"), max_len=16
+    ).lower()
+    if target_scope not in SWARM_ALLOWED_TARGET_SCOPES:
+        return None, "invalid_target_scope"
+
+    target_ids_raw = payload.get("target_ids") or []
+    if target_scope in {"node", "group"} and not isinstance(target_ids_raw, list):
+        return None, "target_ids_required"
+    if isinstance(target_ids_raw, list) and len(target_ids_raw) > 64:
+        return None, "target_ids_too_many"
+
+    target_ids: List[str] = []
+    if isinstance(target_ids_raw, list):
+        for raw_id in target_ids_raw:
+            clean_id = _sanitize_swarm_token(raw_id)
+            if not clean_id:
+                return None, "invalid_target_id"
+            target_ids.append(clean_id)
+
+    parameters = payload.get("parameters") or {}
+    if not isinstance(parameters, dict):
+        return None, "parameters_must_be_object"
+    if len(parameters) > 12:
+        return None, "parameters_too_large"
+
+    sanitized_parameters: Dict[str, Any] = {}
+    for key, value in parameters.items():
+        clean_key = _sanitize_swarm_token(key, max_len=48)
+        if not clean_key:
+            return None, "invalid_parameter_key"
+        if isinstance(value, (bool, int, float)):
+            sanitized_parameters[clean_key] = value
+        elif isinstance(value, str):
+            sanitized_parameters[clean_key] = value[:120]
+        else:
+            return None, "invalid_parameter_value"
+
+    if command == "reassign_role":
+        role = _sanitize_swarm_token(
+            sanitized_parameters.get("role", ""), max_len=24
+        ).lower()
+        if role not in SWARM_ALLOWED_ROLES:
+            return None, "invalid_role"
+        sanitized_parameters["role"] = role
+
+    objective = str(payload.get("objective", "")).strip()[:180]
+    if command == "set_objective" and not objective:
+        return None, "objective_required"
+
+    if command in {"reroute", "set_objective"}:
+        waypoint_lat = payload.get("waypoint_lat")
+        waypoint_lng = payload.get("waypoint_lng")
+        if waypoint_lat is not None and (
+            not isinstance(waypoint_lat, (float, int))
+            or abs(float(waypoint_lat)) > 90.0
+        ):
+            return None, "invalid_waypoint_lat"
+        if waypoint_lng is not None and (
+            not isinstance(waypoint_lng, (float, int))
+            or abs(float(waypoint_lng)) > 180.0
+        ):
+            return None, "invalid_waypoint_lng"
+
+    nonce = _sanitize_swarm_token(payload.get("client_nonce", ""), max_len=72)
+
+    normalized = {
+        "command": command,
+        "target_scope": target_scope,
+        "target_ids": target_ids,
+        "parameters": sanitized_parameters,
+        "objective": objective,
+        "client_nonce": nonce,
+    }
+    if payload.get("waypoint_lat") is not None:
+        normalized["waypoint_lat"] = round(float(payload.get("waypoint_lat")), 6)
+    if payload.get("waypoint_lng") is not None:
+        normalized["waypoint_lng"] = round(float(payload.get("waypoint_lng")), 6)
+    return normalized, None
+
+
+def _derive_swarm_action_id(command_payload: Dict[str, Any]) -> str:
+    digest_source = json.dumps(
+        command_payload, sort_keys=True, separators=(",", ":")
+    ).encode("utf-8")
+    digest = hashlib.sha256(digest_source).hexdigest()[:16]
+    return f"swarm-{digest}"
+
+
+def _build_swarm_map_state(limit: int, layers: Set[str]) -> Dict[str, Any]:
+    requested_limit = max(1, min(int(limit), SWARM_MAX_MAP_NODES))
+    active_nodes = max(1, int(active_nodes_gauge._value.get() or 1))
+    node_count = min(requested_limit, max(12, active_nodes * 8))
+    tick = int(time.time() // 3)
+
+    nodes = []
+    for index in range(node_count):
+        radius = 25.0 + ((index % 11) * 3.25)
+        angle = ((index * 17 + tick * 4) % 360) * (math.pi / 180.0)
+        x = round(50.0 + (math.cos(angle) * radius), 3)
+        y = round(50.0 + (math.sin(angle) * radius * 0.72), 3)
+
+        battery = max(8, 100 - ((index * 3 + tick) % 88))
+        trust_score = round(max(0.45, 0.98 - ((index % 7) * 0.04)), 3)
+        latency_ms = int(8 + ((index * 5 + tick) % 44))
+        role = ["scout", "relay", "mapper", "collector", "sentinel"][index % 5]
+        health = "ok" if battery > 24 else "warning"
+        nodes.append(
+            {
+                "id": f"node-{index + 1:04d}",
+                "role": role,
+                "status": health,
+                "battery_pct": battery,
+                "trust_score": trust_score,
+                "latency_ms": latency_ms,
+                "position": {"x": x, "y": y},
+            }
+        )
+
+    payload: Dict[str, Any] = {
+        "generated_at": int(time.time()),
+        "node_count": len(nodes),
+        "nodes": nodes,
+        "viewport": {"min_x": 0, "max_x": 100, "min_y": 0, "max_y": 100},
+    }
+
+    if "paths" in layers:
+        payload["paths"] = [
+            {
+                "id": f"path-{idx}",
+                "from": nodes[idx]["id"],
+                "to": nodes[idx + 1]["id"],
+            }
+            for idx in range(min(len(nodes) - 1, 120))
+        ]
+    if "risk" in layers:
+        payload["risk_zones"] = [
+            {
+                "id": "risk-alpha",
+                "x": 34.0,
+                "y": 26.0,
+                "radius": 9.0,
+                "severity": "high",
+            },
+            {
+                "id": "risk-beta",
+                "x": 67.5,
+                "y": 58.0,
+                "radius": 12.5,
+                "severity": "medium",
+            },
+        ]
+    if "coverage" in layers:
+        payload["coverage"] = {
+            "percent": round(min(99.9, 58.0 + (len(nodes) * 0.15)), 2),
+            "holes": max(0, 12 - (len(nodes) // 20)),
+        }
+    if "communications" in layers:
+        payload["communications"] = {
+            "mesh_quality_pct": round(
+                max(
+                    72.0, 97.0 - (simulation_counters.get("networkPartitions", 0) * 1.8)
+                ),
+                2,
+            ),
+            "partition_events": int(simulation_counters.get("networkPartitions", 0)),
+        }
+
+    return payload
+
+
+def _build_swarm_status_snapshot() -> Dict[str, Any]:
+    ops_snapshot = build_ops_health_snapshot()
+    with swarm_command_lock:
+        command_count = len(swarm_command_log)
+        latest_command = swarm_command_log[-1] if command_count > 0 else None
+
+    return {
+        "status": "ok" if ops_snapshot.get("status") != "critical" else "degraded",
+        "autonomy_mode": "supervised",
+        "nodes_active": int(active_nodes_gauge._value.get() or 0),
+        "coverage_pct": float(
+            ops_snapshot.get("federated_network", {}).get("active_peer_ratio", 0.0)
+        )
+        * 100.0,
+        "avg_latency_ms": float(
+            ops_snapshot.get("telemetry", {}).get("api_latency_ms", 0.0)
+        ),
+        "error_rate_pct": float(
+            ops_snapshot.get("telemetry", {}).get("api_error_rate", 0.0)
+        ),
+        "command_log_size": command_count,
+        "latest_command": latest_command,
+    }
+
+
 def _mint_join_invite(
     participant_name: str,
     max_uses: int,
@@ -2693,6 +3067,219 @@ def ops_events_stream():
                 ops_event_subscribers.discard(subscriber)
 
     return Response(stream_with_context(_stream()), mimetype="text/event-stream")
+
+
+@app.route("/swarm/status", methods=["GET"])
+def swarm_status_view():
+    return jsonify(_build_swarm_status_snapshot()), 200
+
+
+@app.route("/swarm/map", methods=["GET"])
+def swarm_map_view():
+    try:
+        limit = int(request.args.get("limit", SWARM_DEFAULT_MAP_NODES))
+    except (TypeError, ValueError):
+        limit = SWARM_DEFAULT_MAP_NODES
+    limit = max(1, min(limit, SWARM_MAX_MAP_NODES))
+
+    raw_layers = str(request.args.get("layers", "paths,risk,coverage,communications"))
+    layers = {
+        _sanitize_swarm_token(item, max_len=24).lower()
+        for item in raw_layers.split(",")
+        if str(item).strip()
+    }
+    layers = {layer for layer in layers if layer in SWARM_ALLOWED_LAYERS}
+    if not layers:
+        layers = {"paths", "coverage"}
+
+    return jsonify(_build_swarm_map_state(limit=limit, layers=layers)), 200
+
+
+@app.route("/swarm/commands", methods=["GET"])
+def swarm_commands_view():
+    try:
+        limit = int(request.args.get("limit", 100))
+    except (TypeError, ValueError):
+        limit = 100
+    limit = max(1, min(limit, 200))
+
+    with swarm_command_lock:
+        commands = list(swarm_command_log)[-limit:]
+    return jsonify({"count": len(commands), "commands": commands}), 200
+
+
+@app.route("/swarm/audit/recent", methods=["GET"])
+def swarm_audit_recent_view():
+    if not _authorized_join_admin(request):
+        return jsonify({"error": "unauthorized"}), 401
+
+    try:
+        limit = int(request.args.get("limit", 100))
+    except (TypeError, ValueError):
+        limit = 100
+    limit = max(1, min(limit, 200))
+
+    with swarm_command_lock:
+        audits = list(swarm_audit_log)[-limit:]
+    return jsonify({"count": len(audits), "audits": audits}), 200
+
+
+@app.route("/swarm/command", methods=["POST"])
+def swarm_command_submit():
+    if not _authorized_join_admin(request):
+        swarm_command_requests_total.labels(
+            command="unauthorized", result="rejected"
+        ).inc()
+        return jsonify({"error": "unauthorized"}), 401
+
+    request_started = time.time()
+    body = request.get_json(silent=True) or {}
+    if not isinstance(body, dict):
+        swarm_command_requests_total.labels(command="invalid", result="rejected").inc()
+        return (
+            jsonify({"error": "invalid_payload", "message": "JSON object required"}),
+            400,
+        )
+
+    now_ts = time.time()
+    if _swarm_rate_limited(now_ts):
+        swarm_command_requests_total.labels(
+            command="rate_limited", result="rejected"
+        ).inc()
+        return (
+            jsonify(
+                {
+                    "error": "rate_limited",
+                    "message": "swarm command rate limit exceeded",
+                    "limit_per_minute": SWARM_COMMAND_RATE_LIMIT_PER_MIN,
+                }
+            ),
+            429,
+        )
+
+    normalized, validation_error = _validate_swarm_command(body)
+    if validation_error:
+        command_label = (
+            _sanitize_swarm_token(body.get("command", "invalid"), max_len=48).lower()
+            or "invalid"
+        )
+        swarm_command_requests_total.labels(
+            command=command_label, result="rejected"
+        ).inc()
+        return jsonify({"error": validation_error}), 400
+
+    assert normalized is not None
+    caller_role = _resolve_swarm_role(request)
+    if not _role_allows_swarm_command(caller_role, normalized["command"]):
+        swarm_command_role_denials_total.labels(
+            role=caller_role,
+            command=normalized["command"],
+        ).inc()
+        swarm_command_requests_total.labels(
+            command=normalized["command"],
+            result="rejected",
+        ).inc()
+        return (
+            jsonify(
+                {
+                    "error": "forbidden",
+                    "message": "role policy does not allow command",
+                    "role": caller_role,
+                    "command": normalized["command"],
+                }
+            ),
+            403,
+        )
+
+    action_id = _derive_swarm_action_id(normalized)
+    nonce = normalized.get("client_nonce", "")
+    now_epoch = int(now_ts)
+
+    duplicate_action = None
+    with swarm_command_lock:
+        expired_nonces = [
+            existing_nonce
+            for existing_nonce, record in swarm_command_nonce_cache.items()
+            if (now_epoch - int(record.get("ts", 0))) > 600
+        ]
+        for existing_nonce in expired_nonces:
+            swarm_command_nonce_cache.pop(existing_nonce, None)
+
+        if nonce and nonce in swarm_command_nonce_cache:
+            duplicate_action = swarm_command_nonce_cache[nonce]
+        else:
+            command_entry = {
+                "action_id": action_id,
+                "ts": now_epoch,
+                "command": normalized["command"],
+                "target_scope": normalized["target_scope"],
+                "target_ids": normalized["target_ids"],
+                "parameters": normalized["parameters"],
+                "objective": normalized["objective"],
+                "waypoint_lat": normalized.get("waypoint_lat"),
+                "waypoint_lng": normalized.get("waypoint_lng"),
+                "actor": _sanitize_swarm_token(
+                    request.headers.get("X-API-Role", "admin"), max_len=24
+                ).lower()
+                or "admin",
+                "role": caller_role,
+                "status": "accepted",
+            }
+            swarm_command_log.append(command_entry)
+            audit_entry = _append_swarm_audit_entry(command_entry)
+            if nonce:
+                swarm_command_nonce_cache[nonce] = {
+                    "action_id": action_id,
+                    "ts": now_epoch,
+                    "command": normalized["command"],
+                }
+
+    if duplicate_action is not None:
+        swarm_command_requests_total.labels(
+            command=normalized["command"], result="accepted"
+        ).inc()
+        return (
+            jsonify(
+                {
+                    "status": "accepted",
+                    "duplicate": True,
+                    "action_id": duplicate_action.get("action_id"),
+                    "command": duplicate_action.get("command"),
+                }
+            ),
+            200,
+        )
+
+    swarm_command_latency_seconds.observe(max(0.0, time.time() - request_started))
+    swarm_command_requests_total.labels(
+        command=normalized["command"], result="accepted"
+    ).inc()
+    ops_control_actions_total.labels(
+        action=f"swarm_command_{normalized['command']}"
+    ).inc()
+    emit_ops_event(
+        kind="swarm_command",
+        message=f"Swarm command accepted: {normalized['command']}",
+        severity="info",
+        data={
+            "action_id": action_id,
+            "role": caller_role,
+            "target_scope": normalized["target_scope"],
+            "target_count": len(normalized["target_ids"]),
+        },
+    )
+    return (
+        jsonify(
+            {
+                "status": "accepted",
+                "action_id": action_id,
+                "command": normalized,
+                "role": caller_role,
+                "audit_signature": audit_entry.get("signature"),
+            }
+        ),
+        202,
+    )
 
 
 @app.route("/runtime/profile", methods=["GET", "POST"])

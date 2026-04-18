@@ -833,6 +833,11 @@ curl -s http://localhost:9105/health | jq
 | /ops/health | GET | ops_health | Operational dependency/system snapshot (ports, memory/disk pressure, Prometheus reachability) |
 | /ops/events/recent | GET | ops_events_recent | Returns recent operations events for timeline replay |
 | /ops/events | GET (SSE) | ops_events_stream | Server-sent event stream for live operations telemetry |
+| /swarm/status | GET | swarm_status_view | Swarm C2 status snapshot for command deck summaries |
+| /swarm/map | GET | swarm_map_view | Bounded swarm map payload with configurable layers |
+| /swarm/commands | GET | swarm_commands_view | Recent accepted command history for UI replay |
+| /swarm/audit/recent | GET | swarm_audit_recent_view | Signed audit-chain entries for accepted commands (admin gated) |
+| /swarm/command | POST | swarm_command_submit | Authenticated + role-aware swarm command submission with validation/rate limits |
 
 ### Trust, Policy, and Join Lifecycle Functions
 
@@ -877,10 +882,18 @@ curl -s http://localhost:9105/health | jq
 
 - Auth boundaries: `/join/registrations` and `/join/revoke/<int:node_id>` are admin-gated and require valid admin authorization headers.
 - Auth boundaries: `/verification_policy` supports role-aware updates via `X-API-Role` and optional bearer token wiring.
+- Auth boundaries: `/swarm/command` requires admin authorization and enforces role policy via `X-API-Role`.
+- Auth boundaries: `/swarm/audit/recent` is admin-gated and intended for operator audit workflows.
 - Status code behavior: `/create_enclave` may return `202` while provisioning is in progress, then `200` once a stable state transition is reached.
 - Status code behavior: `/trigger_fl` may return `202` for accepted async execution and non-2xx when round execution cannot proceed.
+- Status code behavior: `/swarm/command` returns `403` when role policy denies command and `429` when command rate limits trigger.
 - Streaming semantics: `/ops/events` is an SSE endpoint and includes heartbeat events to keep long-lived clients connected.
 - Streaming semantics: `/ops/events/recent` should be used to backfill timeline state before attaching to SSE.
+
+### C2 HUD Notes
+
+- Open C2 HUD mode with `http://localhost:3000/?view=c2`.
+- For operator usage and benchmark examples, see [docs/C2_SWARM_HUD_QUICK_START.md](docs/C2_SWARM_HUD_QUICK_START.md).
 
 ### Key Internal Runtime Functions
 

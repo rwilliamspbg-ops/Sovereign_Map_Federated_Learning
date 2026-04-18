@@ -13,6 +13,7 @@ This directory contains the active operator and integration documentation.
 - [Phase 3D Production Deployment](PHASE_3D_PRODUCTION_DEPLOYMENT.md)
 - [Release Candidate Phase3D Secrets Runbook](RELEASE_CANDIDATE_PHASE3D_SECRETS_RUNBOOK.md)
 - [Compression Deployment](COMPRESSION_DEPLOYMENT.md)
+- [C2 Swarm HUD Quick Start](C2_SWARM_HUD_QUICK_START.md)
 
 ## Validation and CI
 

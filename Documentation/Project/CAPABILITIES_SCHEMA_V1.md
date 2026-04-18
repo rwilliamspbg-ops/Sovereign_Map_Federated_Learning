@@ -20,6 +20,24 @@ This document defines the versioned response contract for runtime capability dis
 - `api`: object
 - `observability`: object
 
+## `capabilities` object (selected fields)
+- `version`: string
+- `runtime`: string
+- `byzantine_threshold`: number
+- `nodes`: object[]
+- `cluster_config`: object
+- `performance_targets`: object
+- `thinker_clauses`: object
+
+### `capabilities.thinker_clauses`
+- `enabled`: boolean
+- `preserve_outliers`: boolean
+- `minority_retention_min`: number
+- `minority_retention_max`: number
+- `outlier_distance_zscore_cap`: number
+- `manual_review_required_above_zscore`: number
+- `escalation_label`: string
+
 ## `api` object
 - `base_paths`: string[]
 - `open_endpoints`: string[]
@@ -94,6 +112,20 @@ This document defines the versioned response contract for runtime capability dis
     "ledger_state": {
       "entries": 0,
       "capacity": 1000
+    }
+  },
+  "capabilities": {
+    "version": "1.0.0",
+    "runtime": "mohawk-proto-v1",
+    "byzantine_threshold": 0.55,
+    "thinker_clauses": {
+      "enabled": true,
+      "preserve_outliers": true,
+      "minority_retention_min": 0.05,
+      "minority_retention_max": 0.2,
+      "outlier_distance_zscore_cap": 4.0,
+      "manual_review_required_above_zscore": 3.5,
+      "escalation_label": "thinker-review"
     }
   }
 }

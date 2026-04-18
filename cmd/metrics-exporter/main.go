@@ -151,63 +151,63 @@ func validatorMetricsPrometheus(vs *blockchain.ValidatorSet, governance *governa
 	var b strings.Builder
 	b.WriteString("# HELP sovereign_validators_total Number of validators in set\n")
 	b.WriteString("# TYPE sovereign_validators_total gauge\n")
-	b.WriteString(fmt.Sprintf("sovereign_validators_total %d\n", metrics.ValidatorCount))
+	fmt.Fprintf(&b, "sovereign_validators_total %d\n", metrics.ValidatorCount)
 
 	b.WriteString("# HELP sovereign_validators_avg_reputation Average validator reputation (bps)\n")
 	b.WriteString("# TYPE sovereign_validators_avg_reputation gauge\n")
-	b.WriteString(fmt.Sprintf("sovereign_validators_avg_reputation %d\n", metrics.AverageReputation))
+	fmt.Fprintf(&b, "sovereign_validators_avg_reputation %d\n", metrics.AverageReputation)
 
 	b.WriteString("# HELP sovereign_validators_avg_attestation Average validator attestation trust score (bps)\n")
 	b.WriteString("# TYPE sovereign_validators_avg_attestation gauge\n")
-	b.WriteString(fmt.Sprintf("sovereign_validators_avg_attestation %d\n", metrics.AverageAttestation))
+	fmt.Fprintf(&b, "sovereign_validators_avg_attestation %d\n", metrics.AverageAttestation)
 
 	b.WriteString("# HELP sovereign_validators_avg_quality Average validator participation quality score (bps)\n")
 	b.WriteString("# TYPE sovereign_validators_avg_quality gauge\n")
-	b.WriteString(fmt.Sprintf("sovereign_validators_avg_quality %d\n", metrics.AverageQuality))
+	fmt.Fprintf(&b, "sovereign_validators_avg_quality %d\n", metrics.AverageQuality)
 
 	b.WriteString("# HELP sovereign_validators_low_reputation_total Validators with low reputation\n")
 	b.WriteString("# TYPE sovereign_validators_low_reputation_total gauge\n")
-	b.WriteString(fmt.Sprintf("sovereign_validators_low_reputation_total %d\n", metrics.LowReputationCount))
+	fmt.Fprintf(&b, "sovereign_validators_low_reputation_total %d\n", metrics.LowReputationCount)
 
 	b.WriteString("# HELP sovereign_validators_low_attestation_total Validators with low attestation score\n")
 	b.WriteString("# TYPE sovereign_validators_low_attestation_total gauge\n")
-	b.WriteString(fmt.Sprintf("sovereign_validators_low_attestation_total %d\n", metrics.LowAttestationCount))
+	fmt.Fprintf(&b, "sovereign_validators_low_attestation_total %d\n", metrics.LowAttestationCount)
 
 	b.WriteString("# HELP sovereign_validators_stale_attestation_total Validators with stale attestation state\n")
 	b.WriteString("# TYPE sovereign_validators_stale_attestation_total gauge\n")
-	b.WriteString(fmt.Sprintf("sovereign_validators_stale_attestation_total %d\n", metrics.StaleAttestationCount))
+	fmt.Fprintf(&b, "sovereign_validators_stale_attestation_total %d\n", metrics.StaleAttestationCount)
 
 	b.WriteString("# HELP sovereign_validators_missing_attestation_total Validators without a valid attestation yet\n")
 	b.WriteString("# TYPE sovereign_validators_missing_attestation_total gauge\n")
-	b.WriteString(fmt.Sprintf("sovereign_validators_missing_attestation_total %d\n", metrics.MissingAttestationCount))
+	fmt.Fprintf(&b, "sovereign_validators_missing_attestation_total %d\n", metrics.MissingAttestationCount)
 
 	b.WriteString("# HELP sovereign_validators_attestation_failures_total Total invalid attestation events\n")
 	b.WriteString("# TYPE sovereign_validators_attestation_failures_total gauge\n")
-	b.WriteString(fmt.Sprintf("sovereign_validators_attestation_failures_total %d\n", metrics.TotalAttestationFailures))
+	fmt.Fprintf(&b, "sovereign_validators_attestation_failures_total %d\n", metrics.TotalAttestationFailures)
 
 	b.WriteString("# HELP sovereign_validators_jailed_total Jailed validators\n")
 	b.WriteString("# TYPE sovereign_validators_jailed_total gauge\n")
-	b.WriteString(fmt.Sprintf("sovereign_validators_jailed_total %d\n", metrics.JailedCount))
+	fmt.Fprintf(&b, "sovereign_validators_jailed_total %d\n", metrics.JailedCount)
 
 	b.WriteString("# HELP sovereign_reputation_policy_weight_reputation Governance-set reputation weight\n")
 	b.WriteString("# TYPE sovereign_reputation_policy_weight_reputation gauge\n")
-	b.WriteString(fmt.Sprintf("sovereign_reputation_policy_weight_reputation %d\n", policy.ReputationWeight))
+	fmt.Fprintf(&b, "sovereign_reputation_policy_weight_reputation %d\n", policy.ReputationWeight)
 
 	b.WriteString("# HELP sovereign_reputation_policy_weight_attestation Governance-set attestation weight\n")
 	b.WriteString("# TYPE sovereign_reputation_policy_weight_attestation gauge\n")
-	b.WriteString(fmt.Sprintf("sovereign_reputation_policy_weight_attestation %d\n", policy.AttestationWeight))
+	fmt.Fprintf(&b, "sovereign_reputation_policy_weight_attestation %d\n", policy.AttestationWeight)
 
 	b.WriteString("# HELP sovereign_reputation_policy_weight_quality Governance-set quality weight\n")
 	b.WriteString("# TYPE sovereign_reputation_policy_weight_quality gauge\n")
-	b.WriteString(fmt.Sprintf("sovereign_reputation_policy_weight_quality %d\n", policy.QualityWeight))
+	fmt.Fprintf(&b, "sovereign_reputation_policy_weight_quality %d\n", policy.QualityWeight)
 
 	b.WriteString("# HELP sovereign_governance_executions_total Governance execution attempts observed by exporter\n")
 	b.WriteString("# TYPE sovereign_governance_executions_total counter\n")
-	b.WriteString(fmt.Sprintf("sovereign_governance_executions_total %d\n", executions))
+	fmt.Fprintf(&b, "sovereign_governance_executions_total %d\n", executions)
 
 	b.WriteString("# HELP sovereign_governance_failures_total Failed governance executions observed by exporter\n")
 	b.WriteString("# TYPE sovereign_governance_failures_total counter\n")
-	b.WriteString(fmt.Sprintf("sovereign_governance_failures_total %d\n", failures))
+	fmt.Fprintf(&b, "sovereign_governance_failures_total %d\n", failures)
 
 	return b.String()
 }
@@ -245,23 +245,23 @@ func blockchainMetricsPrometheus(bc *blockchain.BlockChain) string {
 
 	b.WriteString("# HELP sovereign_fl_rounds_total Total FL rounds committed on chain\n")
 	b.WriteString("# TYPE sovereign_fl_rounds_total gauge\n")
-	b.WriteString(fmt.Sprintf("sovereign_fl_rounds_total %d\n", m.TotalRounds))
+	fmt.Fprintf(&b, "sovereign_fl_rounds_total %d\n", m.TotalRounds)
 
 	b.WriteString("# HELP sovereign_fl_rounds_verified FL rounds that passed proof verification\n")
 	b.WriteString("# TYPE sovereign_fl_rounds_verified gauge\n")
-	b.WriteString(fmt.Sprintf("sovereign_fl_rounds_verified %d\n", m.VerifiedRounds))
+	fmt.Fprintf(&b, "sovereign_fl_rounds_verified %d\n", m.VerifiedRounds)
 
 	b.WriteString("# HELP sovereign_fl_rounds_failed FL rounds that failed proof verification\n")
 	b.WriteString("# TYPE sovereign_fl_rounds_failed gauge\n")
-	b.WriteString(fmt.Sprintf("sovereign_fl_rounds_failed %d\n", m.FailedRounds))
+	fmt.Fprintf(&b, "sovereign_fl_rounds_failed %d\n", m.FailedRounds)
 
 	b.WriteString("# HELP sovereign_fl_verification_ratio Ratio of verified to total FL rounds (0-1)\n")
 	b.WriteString("# TYPE sovereign_fl_verification_ratio gauge\n")
-	b.WriteString(fmt.Sprintf("sovereign_fl_verification_ratio %.4f\n", m.VerifiedRatio))
+	fmt.Fprintf(&b, "sovereign_fl_verification_ratio %.4f\n", m.VerifiedRatio)
 
 	b.WriteString("# HELP sovereign_fl_avg_confidence_bps Average FL proof confidence in basis points\n")
 	b.WriteString("# TYPE sovereign_fl_avg_confidence_bps gauge\n")
-	b.WriteString(fmt.Sprintf("sovereign_fl_avg_confidence_bps %d\n", m.AverageConfidenceBps))
+	fmt.Fprintf(&b, "sovereign_fl_avg_confidence_bps %d\n", m.AverageConfidenceBps)
 
 	return b.String()
 }
@@ -303,115 +303,115 @@ func consensusMetricsPrometheus(client *http.Client, apiBaseURL string) string {
 	var b strings.Builder
 	b.WriteString("# HELP sovereign_consensus_status_up Whether consensus status endpoints are reachable (1=yes, 0=no)\n")
 	b.WriteString("# TYPE sovereign_consensus_status_up gauge\n")
-	b.WriteString(fmt.Sprintf("sovereign_consensus_status_up %.0f\n", metrics.consensusUp))
+	fmt.Fprintf(&b, "sovereign_consensus_status_up %.0f\n", metrics.consensusUp)
 
 	b.WriteString("# HELP sovereign_consensus_async_mode Consensus async mode enabled flag (1/0)\n")
 	b.WriteString("# TYPE sovereign_consensus_async_mode gauge\n")
-	b.WriteString(fmt.Sprintf("sovereign_consensus_async_mode %.0f\n", metrics.asyncMode))
+	fmt.Fprintf(&b, "sovereign_consensus_async_mode %.0f\n", metrics.asyncMode)
 
 	b.WriteString("# HELP sovereign_consensus_active_nodes Active consensus node count\n")
 	b.WriteString("# TYPE sovereign_consensus_active_nodes gauge\n")
-	b.WriteString(fmt.Sprintf("sovereign_consensus_active_nodes %.0f\n", metrics.activeNodes))
+	fmt.Fprintf(&b, "sovereign_consensus_active_nodes %.0f\n", metrics.activeNodes)
 
 	b.WriteString("# HELP sovereign_consensus_quorum_size Current consensus quorum size\n")
 	b.WriteString("# TYPE sovereign_consensus_quorum_size gauge\n")
-	b.WriteString(fmt.Sprintf("sovereign_consensus_quorum_size %.0f\n", metrics.quorumSize))
+	fmt.Fprintf(&b, "sovereign_consensus_quorum_size %.0f\n", metrics.quorumSize)
 
 	b.WriteString("# HELP sovereign_consensus_open_rounds Open consensus rounds awaiting completion\n")
 	b.WriteString("# TYPE sovereign_consensus_open_rounds gauge\n")
-	b.WriteString(fmt.Sprintf("sovereign_consensus_open_rounds %.0f\n", metrics.openRounds))
+	fmt.Fprintf(&b, "sovereign_consensus_open_rounds %.0f\n", metrics.openRounds)
 
 	b.WriteString("# HELP sovereign_aggregation_round_number Latest aggregation round number\n")
 	b.WriteString("# TYPE sovereign_aggregation_round_number gauge\n")
-	b.WriteString(fmt.Sprintf("sovereign_aggregation_round_number %.0f\n", metrics.aggregationRound))
+	fmt.Fprintf(&b, "sovereign_aggregation_round_number %.0f\n", metrics.aggregationRound)
 
 	b.WriteString("# HELP sovereign_aggregation_buffered_models Buffered model submissions in current node\n")
 	b.WriteString("# TYPE sovereign_aggregation_buffered_models gauge\n")
-	b.WriteString(fmt.Sprintf("sovereign_aggregation_buffered_models %.0f\n", metrics.bufferedModels))
+	fmt.Fprintf(&b, "sovereign_aggregation_buffered_models %.0f\n", metrics.bufferedModels)
 
 	b.WriteString("# HELP sovereign_aggregation_async_rounds_total Aggregation rounds committed in async mode\n")
 	b.WriteString("# TYPE sovereign_aggregation_async_rounds_total gauge\n")
-	b.WriteString(fmt.Sprintf("sovereign_aggregation_async_rounds_total %.0f\n", metrics.aggregationAsyncRounds))
+	fmt.Fprintf(&b, "sovereign_aggregation_async_rounds_total %.0f\n", metrics.aggregationAsyncRounds)
 
 	b.WriteString("# HELP sovereign_aggregation_stale_drops_total Stale model updates dropped by aggregator\n")
 	b.WriteString("# TYPE sovereign_aggregation_stale_drops_total gauge\n")
-	b.WriteString(fmt.Sprintf("sovereign_aggregation_stale_drops_total %.0f\n", metrics.aggregationStaleDrops))
+	fmt.Fprintf(&b, "sovereign_aggregation_stale_drops_total %.0f\n", metrics.aggregationStaleDrops)
 
 	b.WriteString("# HELP sovereign_aggregation_average_latency_ms Average aggregation round latency in milliseconds\n")
 	b.WriteString("# TYPE sovereign_aggregation_average_latency_ms gauge\n")
-	b.WriteString(fmt.Sprintf("sovereign_aggregation_average_latency_ms %.0f\n", metrics.aggregationAvgLatencyMS))
+	fmt.Fprintf(&b, "sovereign_aggregation_average_latency_ms %.0f\n", metrics.aggregationAvgLatencyMS)
 
 	b.WriteString("# HELP sovereign_aggregation_churn_joins_total Total node join churn events\n")
 	b.WriteString("# TYPE sovereign_aggregation_churn_joins_total gauge\n")
-	b.WriteString(fmt.Sprintf("sovereign_aggregation_churn_joins_total %.0f\n", metrics.churnJoinsTotal))
+	fmt.Fprintf(&b, "sovereign_aggregation_churn_joins_total %.0f\n", metrics.churnJoinsTotal)
 
 	b.WriteString("# HELP sovereign_aggregation_churn_leaves_total Total node leave churn events\n")
 	b.WriteString("# TYPE sovereign_aggregation_churn_leaves_total gauge\n")
-	b.WriteString(fmt.Sprintf("sovereign_aggregation_churn_leaves_total %.0f\n", metrics.churnLeavesTotal))
+	fmt.Fprintf(&b, "sovereign_aggregation_churn_leaves_total %.0f\n", metrics.churnLeavesTotal)
 
 	b.WriteString("# HELP sovereign_aggregation_staleness_avg_seconds Average async staleness in seconds\n")
 	b.WriteString("# TYPE sovereign_aggregation_staleness_avg_seconds gauge\n")
-	b.WriteString(fmt.Sprintf("sovereign_aggregation_staleness_avg_seconds %.6f\n", metrics.stalenessAvgSeconds))
+	fmt.Fprintf(&b, "sovereign_aggregation_staleness_avg_seconds %.6f\n", metrics.stalenessAvgSeconds)
 
 	b.WriteString("# HELP sovereign_ops_privacy_cumulative_epsilon Cumulative differential privacy epsilon consumed\n")
 	b.WriteString("# TYPE sovereign_ops_privacy_cumulative_epsilon gauge\n")
-	b.WriteString(fmt.Sprintf("sovereign_ops_privacy_cumulative_epsilon %.6f\n", metrics.privacyCumulativeEpsilon))
+	fmt.Fprintf(&b, "sovereign_ops_privacy_cumulative_epsilon %.6f\n", metrics.privacyCumulativeEpsilon)
 
 	b.WriteString("# HELP sovereign_ops_privacy_epsilon_target Configured differential privacy epsilon target\n")
 	b.WriteString("# TYPE sovereign_ops_privacy_epsilon_target gauge\n")
-	b.WriteString(fmt.Sprintf("sovereign_ops_privacy_epsilon_target %.6f\n", metrics.privacyEpsilonTarget))
+	fmt.Fprintf(&b, "sovereign_ops_privacy_epsilon_target %.6f\n", metrics.privacyEpsilonTarget)
 
 	b.WriteString("# HELP sovereign_ops_fl_straggler_rate_pct Percentage of nodes missing gradient timeout windows\n")
 	b.WriteString("# TYPE sovereign_ops_fl_straggler_rate_pct gauge\n")
-	b.WriteString(fmt.Sprintf("sovereign_ops_fl_straggler_rate_pct %.4f\n", metrics.stragglerRatePct))
+	fmt.Fprintf(&b, "sovereign_ops_fl_straggler_rate_pct %.4f\n", metrics.stragglerRatePct)
 
 	b.WriteString("# HELP sovereign_ops_attack_success_rate_pct Byzantine attack success rate percentage\n")
 	b.WriteString("# TYPE sovereign_ops_attack_success_rate_pct gauge\n")
-	b.WriteString(fmt.Sprintf("sovereign_ops_attack_success_rate_pct %.4f\n", metrics.attackSuccessRatePct))
+	fmt.Fprintf(&b, "sovereign_ops_attack_success_rate_pct %.4f\n", metrics.attackSuccessRatePct)
 
 	b.WriteString("# HELP sovereign_ops_detection_precision_pct Detection precision for Byzantine anomaly policy checks\n")
 	b.WriteString("# TYPE sovereign_ops_detection_precision_pct gauge\n")
-	b.WriteString(fmt.Sprintf("sovereign_ops_detection_precision_pct %.4f\n", metrics.detectionPrecisionPct))
+	fmt.Fprintf(&b, "sovereign_ops_detection_precision_pct %.4f\n", metrics.detectionPrecisionPct)
 
 	b.WriteString("# HELP sovereign_ops_tee_epc_utilization_pct TEE enclave page cache utilization percentage\n")
 	b.WriteString("# TYPE sovereign_ops_tee_epc_utilization_pct gauge\n")
-	b.WriteString(fmt.Sprintf("sovereign_ops_tee_epc_utilization_pct %.4f\n", metrics.epcUtilizationPct))
+	fmt.Fprintf(&b, "sovereign_ops_tee_epc_utilization_pct %.4f\n", metrics.epcUtilizationPct)
 
 	b.WriteString("# HELP sovereign_ops_attestation_latency_ms Mean attestation verification latency in milliseconds\n")
 	b.WriteString("# TYPE sovereign_ops_attestation_latency_ms gauge\n")
-	b.WriteString(fmt.Sprintf("sovereign_ops_attestation_latency_ms %.4f\n", metrics.attestationLatencyMS))
+	fmt.Fprintf(&b, "sovereign_ops_attestation_latency_ms %.4f\n", metrics.attestationLatencyMS)
 
 	b.WriteString("# HELP sovereign_ops_cxl_utilization_pct CXL utilization percentage from ops health snapshot\n")
 	b.WriteString("# TYPE sovereign_ops_cxl_utilization_pct gauge\n")
-	b.WriteString(fmt.Sprintf("sovereign_ops_cxl_utilization_pct %.4f\n", metrics.cxlUtilizationPct))
+	fmt.Fprintf(&b, "sovereign_ops_cxl_utilization_pct %.4f\n", metrics.cxlUtilizationPct)
 
 	b.WriteString("# HELP sovereign_ops_cxl_throughput_gbps CXL throughput estimate in GB/s\n")
 	b.WriteString("# TYPE sovereign_ops_cxl_throughput_gbps gauge\n")
-	b.WriteString(fmt.Sprintf("sovereign_ops_cxl_throughput_gbps %.4f\n", metrics.cxlThroughputGBps))
+	fmt.Fprintf(&b, "sovereign_ops_cxl_throughput_gbps %.4f\n", metrics.cxlThroughputGBps)
 
 	b.WriteString("# HELP sovereign_ops_npu_temp_c NPU die temperature in Celsius\n")
 	b.WriteString("# TYPE sovereign_ops_npu_temp_c gauge\n")
-	b.WriteString(fmt.Sprintf("sovereign_ops_npu_temp_c %.4f\n", metrics.npuTempC))
+	fmt.Fprintf(&b, "sovereign_ops_npu_temp_c %.4f\n", metrics.npuTempC)
 
 	b.WriteString("# HELP sovereign_ops_tpm_temp_c TPM temperature in Celsius\n")
 	b.WriteString("# TYPE sovereign_ops_tpm_temp_c gauge\n")
-	b.WriteString(fmt.Sprintf("sovereign_ops_tpm_temp_c %.4f\n", metrics.tpmTempC))
+	fmt.Fprintf(&b, "sovereign_ops_tpm_temp_c %.4f\n", metrics.tpmTempC)
 
 	b.WriteString("# HELP sovereign_ops_governance_total_stake Total governance stake observed in the network\n")
 	b.WriteString("# TYPE sovereign_ops_governance_total_stake gauge\n")
-	b.WriteString(fmt.Sprintf("sovereign_ops_governance_total_stake %.4f\n", metrics.governanceTotalStake))
+	fmt.Fprintf(&b, "sovereign_ops_governance_total_stake %.4f\n", metrics.governanceTotalStake)
 
 	b.WriteString("# HELP sovereign_ops_governance_stake_concentration_pct Stake concentration percentage of largest founder stake\n")
 	b.WriteString("# TYPE sovereign_ops_governance_stake_concentration_pct gauge\n")
-	b.WriteString(fmt.Sprintf("sovereign_ops_governance_stake_concentration_pct %.4f\n", metrics.stakeConcentrationPct))
+	fmt.Fprintf(&b, "sovereign_ops_governance_stake_concentration_pct %.4f\n", metrics.stakeConcentrationPct)
 
 	b.WriteString("# HELP sovereign_ops_governance_slashing_events_total Total slashing events recorded in governance view\n")
 	b.WriteString("# TYPE sovereign_ops_governance_slashing_events_total gauge\n")
-	b.WriteString(fmt.Sprintf("sovereign_ops_governance_slashing_events_total %.0f\n", metrics.slashingEventsTotal))
+	fmt.Fprintf(&b, "sovereign_ops_governance_slashing_events_total %.0f\n", metrics.slashingEventsTotal)
 
 	b.WriteString("# HELP sovereign_ops_governance_reward_apy_pct Governance reward annual percentage yield\n")
 	b.WriteString("# TYPE sovereign_ops_governance_reward_apy_pct gauge\n")
-	b.WriteString(fmt.Sprintf("sovereign_ops_governance_reward_apy_pct %.4f\n", metrics.rewardAPYPct))
+	fmt.Fprintf(&b, "sovereign_ops_governance_reward_apy_pct %.4f\n", metrics.rewardAPYPct)
 
 	return b.String()
 }
