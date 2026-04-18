@@ -1,6 +1,155 @@
 import React, { useEffect, useState } from 'react';
 import LiveTerminal from './LiveTerminal';
 
+const clampUnit = (value) => {
+  const parsed = Number(value);
+  if (!Number.isFinite(parsed)) {
+    return 0;
+  }
+  if (parsed < 0) {
+    return 0;
+  }
+  if (parsed > 1) {
+    return 1;
+  }
+  return parsed;
+};
+
+const buildAutonomyKPIModel = ({ opsHealth, trustStatus, opsEvents, hudData, trainingStatus }) => {
+  const lagMs = Number(opsHealth?.digital_twin?.lag_ms ?? opsHealth?.digital_twin?.state_lag_ms ?? 0);
+  const meanConfidence = Number(
+    opsHealth?.digital_twin?.mean_confidence
+      ?? opsHealth?.mapping?.mean_confidence
+      ?? trustStatus?.fl_verification?.average_confidence_bps / 10000
+      ?? 0
+  );
+  const coveragePct = Number(
+    opsHealth?.mapping?.coverage_pct
+      ?? hudData?.coverage_pct
+      ?? opsHealth?.swarm?.coverage_pct
+      ?? 0
+  );
+  const events = Array.isArray(opsEvents) ? opsEvents : [];
+  const replanSignals = events.filter((evt) => {
+    const msg = String(evt?.message || '').toLowerCase();
+    return msg.includes('reroute') || msg.includes('replan') || msg.includes('course correction');
+  }).length;
+  const riskScore = clampUnit(Number(opsHealth?.digital_twin?.risk_score ?? opsHealth?.swarm?.risk_score ?? replanSignals / 10));
+
+  return {
+    twinLagMs: Math.max(0, lagMs),
+    meanConfidence: clampUnit(meanConfidence),
+    coveragePct: Math.max(0, Math.min(100, coveragePct)),
+    riskScore,
+    correctionSignals: replanSignals,
+    trainingActive: Boolean(trainingStatus?.active),
+  };
+};
+
+const derivePlannerSafetyState = (trustStatus, opsHealth, policyDraft) => {
+  const confidenceBps = Number(trustStatus?.fl_verification?.average_confidence_bps || 0);
+  const minBps = Number(policyDraft?.min_confidence_bps || 7000);
+  const policyStrict = Boolean(policyDraft?.reject_on_verification_failure);
+  const hasCriticalAlerts = Array.isArray(opsHealth?.alerts)
+    ? opsHealth.alerts.some((alert) => String(alert?.severity || '').toLowerCase() === 'critical')
+    : false;
+
+  if (hasCriticalAlerts) {
+    return { state: 'blocked', reason: 'critical runtime alert active' };
+  }
+  if (policyStrict && confidenceBps < minBps) {
+    return { state: 'degraded', reason: `confidence ${confidenceBps} bps below policy floor ${minBps} bps` };
+  }
+  return { state: 'safe', reason: 'policy and confidence checks passing' };
+};
+
+const deriveRecommendedCorrections = (opsEvents, opsHealth, autonomyKpis) => {
+  const events = Array.isArray(opsEvents) ? opsEvents : [];
+  const highLatency = Number(opsHealth?.telemetry?.api_latency_ms || 0) > 120;
+  const highErrorRate = Number(opsHealth?.telemetry?.api_error_rate || 0) > 0.8;
+  const highRisk = autonomyKpis.riskScore >= 0.65;
+  const recommendations = [];
+
+  if (highRisk) {
+    recommendations.push({ action: 'reroute_high_risk_corridor', confidence: 0.82, missionGain: 0.71, reason: 'risk score above threshold' });
+  }
+  if (highLatency || highErrorRate) {
+    recommendations.push({ action: 'decrease_planner_frequency', confidence: 0.74, missionGain: 0.62, reason: 'control-plane latency/error pressure' });
+  }
+
+  const droppedSensorEvents = events.filter((evt) => {
+    const msg = String(evt?.message || '').toLowerCase();
+    return msg.includes('sensor') && (msg.includes('stale') || msg.includes('drop'));
+  }).length;
+  if (droppedSensorEvents > 0) {
+    recommendations.push({ action: 'sensor_failover_reweight', confidence: 0.79, missionGain: 0.66, reason: `detected ${droppedSensorEvents} sensor degradation event(s)` });
+  }
+
+  if (recommendations.length === 0) {
+    recommendations.push({ action: 'hold_position_monitor', confidence: 0.91, missionGain: 0.48, reason: 'system stable and within guardrails' });
+  }
+
+  return recommendations.slice(0, 3);
+};
+
+const buildEventCorrelationTimeline = (opsEvents, policyHistory) => {
+  const events = Array.isArray(opsEvents) ? opsEvents.slice(-12) : [];
+  return events.reverse().map((evt) => {
+    const message = String(evt?.message || 'event');
+    const relatedPolicy = Array.isArray(policyHistory)
+      ? policyHistory.find((item) => Math.abs(Number(item?.ts || 0) - Number(evt?.ts || 0)) <= 300)
+      : null;
+    return {
+      id: `${evt?.id || 0}-${evt?.ts || 0}`,
+      ts: evt?.ts,
+      kind: evt?.kind || 'event',
+      severity: evt?.severity || 'info',
+      cause: relatedPolicy ? `policy change by ${relatedPolicy?.role || 'unknown role'}` : 'runtime telemetry event',
+      outcome: message,
+    };
+  });
+};
+
+const computeSLOStatusBadges = ({ apiLatencyMs, apiErrorRatePct, twinLagMs, coveragePct }) => {
+  const badge = (ok, label, value) => ({ label, value, state: ok ? 'ok' : 'warning' });
+  return [
+    badge(apiLatencyMs <= 120, 'API Latency SLO', `${Math.round(apiLatencyMs)} ms`),
+    badge(apiErrorRatePct <= 1, 'API Error SLO', `${apiErrorRatePct.toFixed(2)}%`),
+    badge(twinLagMs <= 2000, 'Twin Lag SLO', `${Math.round(twinLagMs)} ms`),
+    badge(coveragePct >= 95, 'Coverage SLO', `${coveragePct.toFixed(1)}%`),
+  ];
+};
+
+const computeSensorQualityMatrix = (opsHealth, trustStatus) => {
+  const sources = [
+    {
+      source: 'gps_pose',
+      confidence: clampUnit(Number(opsHealth?.sensors?.gps?.confidence ?? 0.88)),
+      freshness: Number(opsHealth?.sensors?.gps?.freshness_secs ?? 1.8),
+      anomaly: clampUnit(Number(opsHealth?.sensors?.gps?.anomaly_score ?? 0.06)),
+    },
+    {
+      source: 'lidar_spatial',
+      confidence: clampUnit(Number(opsHealth?.sensors?.lidar?.confidence ?? 0.84)),
+      freshness: Number(opsHealth?.sensors?.lidar?.freshness_secs ?? 2.4),
+      anomaly: clampUnit(Number(opsHealth?.sensors?.lidar?.anomaly_score ?? 0.11)),
+    },
+    {
+      source: 'vision_camera',
+      confidence: clampUnit(Number(opsHealth?.sensors?.camera?.confidence ?? 0.8)),
+      freshness: Number(opsHealth?.sensors?.camera?.freshness_secs ?? 2.1),
+      anomaly: clampUnit(Number(opsHealth?.sensors?.camera?.anomaly_score ?? 0.14)),
+    },
+    {
+      source: 'trust_attestation',
+      confidence: clampUnit(Number(trustStatus?.fl_verification?.average_confidence_bps || 0) / 10000),
+      freshness: Number(opsHealth?.tee_hardware?.attestation_latency_ms ?? 32) / 1000,
+      anomaly: clampUnit(Number(opsHealth?.privacy_security?.attestation_anomaly_score ?? 0.04)),
+    },
+  ];
+  return sources;
+};
+
 export default function HUD({
   hudData,
   health,
@@ -222,6 +371,17 @@ export default function HUD({
   const recentSlashes = Array.isArray(opsHealth?.governance_economics?.recent_slashing_events)
     ? opsHealth.governance_economics.recent_slashing_events
     : [];
+  const autonomyKpis = buildAutonomyKPIModel({ opsHealth, trustStatus, opsEvents, hudData, trainingStatus });
+  const plannerSafety = derivePlannerSafetyState(trustStatus, opsHealth, policyDraft);
+  const recommendedCorrections = deriveRecommendedCorrections(opsEvents, opsHealth, autonomyKpis);
+  const correlatedTimeline = buildEventCorrelationTimeline(opsEvents, policyHistory);
+  const sloBadges = computeSLOStatusBadges({
+    apiLatencyMs,
+    apiErrorRatePct,
+    twinLagMs: autonomyKpis.twinLagMs,
+    coveragePct: autonomyKpis.coveragePct,
+  });
+  const sensorQualityMatrix = computeSensorQualityMatrix(opsHealth, trustStatus);
 
   useEffect(() => {
     const append = (series, value) => {
@@ -419,6 +579,71 @@ export default function HUD({
             {slashingEvents} slashing events
           </span>
         </div>
+      </section>
+
+      <section className="ops-panel autonomy-control-strip">
+        <h3>Autonomy Control Strip</h3>
+        <p className="panel-subtitle">Digital twin freshness, planner safety, recommendation assist, and sensor quality diagnostics.</p>
+        <div className="kpi-grid">
+          <div className="kpi-card">
+            <span>Twin Lag</span>
+            <strong className={autonomyKpis.twinLagMs > 2000 ? 'kpi-warning' : ''}>{fixedOrFallback(autonomyKpis.twinLagMs, 0, ' ms')}</strong>
+          </div>
+          <div className="kpi-card">
+            <span>Map Confidence</span>
+            <strong>{fixedOrFallback(autonomyKpis.meanConfidence * 100, 1, '%')}</strong>
+          </div>
+          <div className="kpi-card">
+            <span>Coverage</span>
+            <strong className={autonomyKpis.coveragePct < 95 ? 'kpi-warning' : ''}>{fixedOrFallback(autonomyKpis.coveragePct, 1, '%')}</strong>
+          </div>
+          <div className="kpi-card">
+            <span>Planner Safety</span>
+            <strong className={plannerSafety.state === 'safe' ? '' : 'kpi-warning'}>{plannerSafety.state}</strong>
+          </div>
+          <div className="kpi-card">
+            <span>Correction Signals</span>
+            <strong>{autonomyKpis.correctionSignals}</strong>
+          </div>
+          <div className="kpi-card">
+            <span>Risk Score</span>
+            <strong className={autonomyKpis.riskScore >= 0.65 ? 'kpi-warning' : ''}>{fixedOrFallback(autonomyKpis.riskScore * 100, 1, '%')}</strong>
+          </div>
+        </div>
+
+        <div className="domain-cluster-grid">
+          <article className="domain-cluster">
+            <h4>SLO Badges</h4>
+            {sloBadges.map((badge) => (
+              <div className="audit-row" key={badge.label}>
+                <span>{badge.label}</span>
+                <span className={badge.state === 'ok' ? 'diag-ok' : 'diag-warning'}>{badge.value}</span>
+              </div>
+            ))}
+          </article>
+          <article className="domain-cluster">
+            <h4>Recommendation Assist</h4>
+            {recommendedCorrections.map((item) => (
+              <div className="notice-box" key={item.action}>
+                <strong>{item.action}</strong>
+                <div>{item.reason}</div>
+                <div>confidence {fixedOrFallback(item.confidence * 100, 1, '%')} | mission gain {fixedOrFallback(item.missionGain * 100, 1, '%')}</div>
+              </div>
+            ))}
+          </article>
+          <article className="domain-cluster">
+            <h4>Sensor Quality Matrix</h4>
+            {sensorQualityMatrix.map((source) => (
+              <div className="audit-row" key={source.source}>
+                <span>{source.source}</span>
+                <span>
+                  conf {fixedOrFallback(source.confidence * 100, 0, '%')} | stale {fixedOrFallback(source.freshness, 1, 's')} | anom {fixedOrFallback(source.anomaly * 100, 0, '%')}
+                </span>
+              </div>
+            ))}
+          </article>
+        </div>
+        <div className="notice-box">Planner state: {plannerSafety.reason}</div>
       </section>
 
       {(healthStatus === 'degraded' || healthStatus === 'critical') && (
@@ -767,16 +992,20 @@ export default function HUD({
           <div className="timeline-panel">
             <h4>Live Incident Timeline</h4>
             <div className="timeline-list">
-              {recentOpsEvents.length === 0 ? (
+              {correlatedTimeline.length === 0 ? (
                 <div className="timeline-empty">No recent events from backend stream.</div>
               ) : (
-                recentOpsEvents.map((evt) => (
-                  <div key={`${evt.id}-${evt.ts}-${evt.kind}`} className={`timeline-item severity-${evt.severity || 'info'}`}>
+                correlatedTimeline.map((evt) => (
+                  <div key={evt.id} className={`timeline-item severity-${evt.severity || 'info'}`}>
                     <div className="timeline-meta">
                       <span>{new Date((evt.ts || 0) * 1000).toLocaleTimeString()}</span>
                       <span>{(evt.kind || 'event').toUpperCase()}</span>
                     </div>
-                    <div className="timeline-message">{evt.message}</div>
+                    <div className="timeline-message">{evt.outcome}</div>
+                    <div className="timeline-meta">
+                      <span>cause</span>
+                      <span>{evt.cause}</span>
+                    </div>
                   </div>
                 ))
               )}

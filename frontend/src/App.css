@@ -287,6 +287,14 @@ body {
   gap: 12px;
 }
 
+.autonomy-control-strip {
+  border-color: rgba(108, 233, 221, 0.32);
+}
+
+.autonomy-control-strip .notice-box {
+  margin-top: 10px;
+}
+
 .ops-alert-banner {
   border-radius: 12px;
   border: 1px solid rgba(240, 109, 109, 0.55);

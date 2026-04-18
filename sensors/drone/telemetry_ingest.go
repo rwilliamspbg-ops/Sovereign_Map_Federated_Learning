@@ -74,6 +74,9 @@ type DroneTelemetry struct {
 	ContractVersion string    `json:"contract_version,omitempty"`
 	DroneID         string    `json:"drone_id"`
 	Timestamp       time.Time `json:"timestamp"`
+	Source          string    `json:"source,omitempty"`
+	SensorHealth    string    `json:"sensor_health,omitempty"`
+	Confidence      float64   `json:"confidence,omitempty"`
 	Latitude        float64   `json:"latitude"`
 	Longitude       float64   `json:"longitude"`
 	AltitudeMeters  float64   `json:"altitude_meters"`
@@ -308,6 +311,9 @@ func parseMAVLinkTelemetry(msgID int, sysID uint8, payload []byte) (DroneTelemet
 		ContractVersion: droneTelemetryContractVersionV1,
 		DroneID:         fmt.Sprintf("sys-%d", sysID),
 		Timestamp:       time.Now().UTC(),
+		Source:          string(ProtocolMAVLink),
+		SensorHealth:    "healthy",
+		Confidence:      0.6,
 	}
 
 	switch msgID {
@@ -458,6 +464,12 @@ func (ti *TelemetryIngest) normalizeAndValidateJSONTelemetry(telem *DroneTelemet
 	if telem.DroneID == "" {
 		return &telemetryValidationError{Code: droneErrMissingDroneID, Message: "drone_id is required"}
 	}
+	if telem.Source == "" {
+		telem.Source = string(ti.config.Protocol)
+	}
+	if telem.SensorHealth == "" {
+		telem.SensorHealth = "healthy"
+	}
 
 	now := time.Now().UTC()
 	if telem.Timestamp.IsZero() {
@@ -477,7 +489,35 @@ func (ti *TelemetryIngest) normalizeAndValidateJSONTelemetry(telem *DroneTelemet
 		return &telemetryValidationError{Code: droneErrInvalidLongitude, Message: "longitude out of range"}
 	}
 
+	telem.Confidence = normalizeTelemetryConfidence(*telem)
+
 	return nil
+}
+
+func normalizeTelemetryConfidence(telem DroneTelemetry) float64 {
+	confidence := 0.4
+	if telem.Latitude != 0 || telem.Longitude != 0 {
+		confidence += 0.2
+	}
+	if telem.AltitudeMeters != 0 {
+		confidence += 0.1
+	}
+	if telem.HeadingDegrees != 0 {
+		confidence += 0.1
+	}
+	if telem.GroundSpeedMS != 0 {
+		confidence += 0.1
+	}
+	if len(telem.LidarPoints) > 0 || len(telem.ImageData) > 0 {
+		confidence += 0.1
+	}
+	if confidence < 0 {
+		return 0
+	}
+	if confidence > 1 {
+		return 1
+	}
+	return confidence
 }
 
 func (ti *TelemetryIngest) recordRejectLocked(reason string) {

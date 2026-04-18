@@ -792,9 +792,16 @@ API docs index:
 curl -s http://localhost:8000/status | jq
 curl -s http://localhost:8000/health | jq
 curl -s http://localhost:8000/ops/health | jq
-curl -s -X POST http://localhost:8000/trigger_fl | jq
+curl -s -X POST http://localhost:8000/trigger_fl \
+    -H "X-Join-Admin-Token: ${JOIN_API_ADMIN_TOKEN}" \
+    -H "Content-Type: application/json" \
+    -d '{}' | jq
 curl -s http://localhost:8000/metrics_summary | jq
 curl -s http://localhost:8000/convergence | jq
+curl -s http://localhost:8000/autonomy/twin/summary | jq
+curl -s http://localhost:8000/autonomy/planner/insights | jq
+curl -s http://localhost:8000/autonomy/sensors/quality | jq
+curl -s http://localhost:8000/autonomy/slo/status | jq
 ```
 
 #### Training Service API commands
@@ -838,6 +845,10 @@ curl -s http://localhost:9105/health | jq
 | /swarm/commands | GET | swarm_commands_view | Recent accepted command history for UI replay |
 | /swarm/audit/recent | GET | swarm_audit_recent_view | Signed audit-chain entries for accepted commands (admin gated) |
 | /swarm/command | POST | swarm_command_submit | Authenticated + role-aware swarm command submission with validation/rate limits |
+| /autonomy/twin/summary | GET | autonomy_twin_summary_view | Digital twin summary including lag, confidence, and risk score |
+| /autonomy/planner/insights | GET | autonomy_planner_insights_view | Planner candidates, selected action, and rejected options |
+| /autonomy/sensors/quality | GET | autonomy_sensors_quality_view | Sensor source confidence/freshness/anomaly quality matrix |
+| /autonomy/slo/status | GET | autonomy_slo_status_view | Autonomy SLO snapshot for latency, confidence, and coverage targets |
 
 ### Trust, Policy, and Join Lifecycle Functions
 
@@ -884,6 +895,7 @@ curl -s http://localhost:9105/health | jq
 - Auth boundaries: `/verification_policy` supports role-aware updates via `X-API-Role` and optional bearer token wiring.
 - Auth boundaries: `/swarm/command` requires admin authorization and enforces role policy via `X-API-Role`.
 - Auth boundaries: `/swarm/audit/recent` is admin-gated and intended for operator audit workflows.
+- Auth boundaries: `/trigger_fl` is admin-gated when `JOIN_API_ADMIN_TOKEN` is configured.
 - Status code behavior: `/create_enclave` may return `202` while provisioning is in progress, then `200` once a stable state transition is reached.
 - Status code behavior: `/trigger_fl` may return `202` for accepted async execution and non-2xx when round execution cannot proceed.
 - Status code behavior: `/swarm/command` returns `403` when role policy denies command and `429` when command rate limits trigger.
@@ -894,6 +906,7 @@ curl -s http://localhost:9105/health | jq
 
 - Open C2 HUD mode with `http://localhost:3000/?view=c2`.
 - For operator usage and benchmark examples, see [docs/C2_SWARM_HUD_QUICK_START.md](docs/C2_SWARM_HUD_QUICK_START.md).
+- For full autonomy runbooks, see [docs/AUTONOMY_DIGITAL_TWIN_OPERATIONS.md](docs/AUTONOMY_DIGITAL_TWIN_OPERATIONS.md).
 
 ### Key Internal Runtime Functions
 
@@ -906,6 +919,9 @@ curl -s http://localhost:9105/health | jq
 | run_flower_server | [sovereignmap_production_backend_v2.py](sovereignmap_production_backend_v2.py) | Starts and configures Flower aggregation server |
 | run_flask_metrics | [sovereignmap_production_backend_v2.py](sovereignmap_production_backend_v2.py) | Starts Flask API plane for control and telemetry |
 | create_app | [tokenomics_metrics_exporter.py](tokenomics_metrics_exporter.py) | Constructs exporter app and endpoint bindings |
+| SelectBestCorrection | [internal/autonomy/planner.go](internal/autonomy/planner.go) | Scores and selects policy-safe autonomous correction actions |
+| PredictLinearMotion | [internal/autonomy/predictor_orchestrator.go](internal/autonomy/predictor_orchestrator.go) | Produces low-compute short-horizon digital twin predictions |
+| ValidateReadiness | [internal/autonomy/runtime_readiness.go](internal/autonomy/runtime_readiness.go) | Enforces autonomy production readiness gates |
 
 ## Quick Start
 
@@ -944,6 +960,10 @@ Expected outcome in under 2 minutes:
 - HUD is reachable at `http://localhost:3000`.
 - Grafana is reachable at `http://localhost:3001`.
 - Prometheus is reachable at `http://localhost:9090`.
+
+Node-agent dependency profile:
+
+- `Dockerfile.node-agent` uses CPU-only PyTorch wheels (`torch==2.1.0+cpu`, `torchvision==0.16.0+cpu`) to reduce build size and keep local/CI chaos tests reliable.
 
 ### Prerequisites
 
@@ -999,11 +1019,24 @@ CLI flow:
 
 ```bash
 # Trigger one global round
-curl -s -X POST http://localhost:8000/trigger_fl | jq
+curl -s -X POST http://localhost:8000/trigger_fl \
+    -H "X-Join-Admin-Token: ${JOIN_API_ADMIN_TOKEN}" \
+    -H "Content-Type: application/json" \
+    -d '{}' | jq
 
 # Verify round advanced and metrics updated
 curl -s http://localhost:8000/metrics_summary | jq '.federated_learning.current_round, .federated_learning.current_accuracy, .federated_learning.current_loss'
 curl -s http://localhost:8000/convergence | jq '.current_round, .current_accuracy, .current_loss'
+```
+
+Strict chaos churn validation:
+
+```bash
+JOIN_API_ADMIN_TOKEN="${JOIN_API_ADMIN_TOKEN}" \
+SOAK_CHAOS_ENABLED=1 \
+SOAK_CHAOS_STRICT=1 \
+CHAOS_MIN_CLIENT_QUORUM=1 \
+python3 tests/scripts/python/test_soak_chaos_guard.py
 ```
 
 UI flow:

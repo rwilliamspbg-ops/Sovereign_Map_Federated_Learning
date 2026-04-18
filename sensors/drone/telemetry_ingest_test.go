@@ -53,6 +53,15 @@ func TestProcessMAVLinkGlobalPositionInt(t *testing.T) {
 	if telem.GroundSpeedMS < 4.9 || telem.GroundSpeedMS > 5.1 {
 		t.Fatalf("expected groundspeed around 5.0 m/s, got %f", telem.GroundSpeedMS)
 	}
+	if telem.Source != string(ProtocolMAVLink) {
+		t.Fatalf("unexpected source: %s", telem.Source)
+	}
+	if telem.SensorHealth != "healthy" {
+		t.Fatalf("unexpected sensor health: %s", telem.SensorHealth)
+	}
+	if telem.Confidence < 0.5 || telem.Confidence > 1 {
+		t.Fatalf("expected normalized confidence in [0.5,1], got %f", telem.Confidence)
+	}
 }
 
 func TestProcessJSONAcceptsValidContractPayload(t *testing.T) {
@@ -73,6 +82,19 @@ func TestProcessJSONAcceptsValidContractPayload(t *testing.T) {
 
 	if err := ti.processJSON(raw); err != nil {
 		t.Fatalf("process json: %v", err)
+	}
+	telem, ok := <-ti.telemetry
+	if !ok {
+		t.Fatal("expected telemetry event")
+	}
+	if telem.Source != string(ProtocolJSON) {
+		t.Fatalf("unexpected source: %s", telem.Source)
+	}
+	if telem.SensorHealth != "healthy" {
+		t.Fatalf("unexpected sensor health: %s", telem.SensorHealth)
+	}
+	if telem.Confidence <= 0 {
+		t.Fatalf("expected positive confidence, got %f", telem.Confidence)
 	}
 }
 

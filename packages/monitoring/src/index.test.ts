@@ -533,8 +533,7 @@ describe("MonitoringOrchestrator Integration Tests", () => {
       const elapsed = Date.now() - startTime;
 
       // 1000 events across 3 modules should complete in < 500ms
-      expect(elapsed).toBeLessThan(500);
-      done();
+        return expect(elapsed).toBeLessThan(500);
     });
 
     it("should maintain metric accuracy under load", (done) => {

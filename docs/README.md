@@ -14,11 +14,13 @@ This directory contains the active operator and integration documentation.
 - [Release Candidate Phase3D Secrets Runbook](RELEASE_CANDIDATE_PHASE3D_SECRETS_RUNBOOK.md)
 - [Compression Deployment](COMPRESSION_DEPLOYMENT.md)
 - [C2 Swarm HUD Quick Start](C2_SWARM_HUD_QUICK_START.md)
+- [Autonomy and Digital Twin Operations Guide](AUTONOMY_DIGITAL_TWIN_OPERATIONS.md)
 
 ## Validation and CI
 
 - [Documentation Maintenance Runbook](DOCUMENTATION_MAINTENANCE.md)
 - [Test Environment Setup](../tests/docs/TEST_ENV_SETUP.md)
+- [Autonomy Execution Report](../AUTONOMOUS_MAPPING_EXECUTION_REPORT.md)
 - [Full Validation PR Gate Workflow](../.github/workflows/full-validation-pr-gate.yml)
 - [Full Validation Scheduled Deep Workflow](../.github/workflows/full-validation-scheduled-deep.yml)
 - [Observability CI Workflow](../.github/workflows/observability-ci.yml)
