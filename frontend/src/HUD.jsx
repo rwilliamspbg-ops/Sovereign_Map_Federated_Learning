@@ -695,6 +695,20 @@ export default function HUD({
   const interactionPreview = classifyAssistantPrompt(assistantPrompt, requestedRounds);
   const interactionContext = interactionSummary?.context || {};
   const interactionModelRoute = interactionSummary?.model_route || 'planner';
+  const twinEnvelope = interactionSummary?.response_envelope || {};
+  const twinFreshnessSecs = Number(interactionContext.freshness_seconds ?? twinEnvelope.freshness_secs ?? 0);
+  const twinMapVersion = interactionContext.map_version || 'unknown';
+  const twinNodeCount = Number(interactionContext.node_count || 0);
+  const twinRouteCandidates = Array.isArray(interactionSummary?.route_candidates)
+    ? interactionSummary.route_candidates.slice(0, 4)
+    : [];
+  const twinDecisionReplay = Array.isArray(interactionSummary?.recent_decisions) && interactionSummary.recent_decisions.length > 0
+    ? interactionSummary.recent_decisions.slice(0, 5)
+    : interactionHistoryEntries.slice(0, 5);
+  const twinAssumptions = Array.isArray(twinEnvelope.assumptions)
+    ? twinEnvelope.assumptions.slice(0, 3)
+    : [];
+  const twinNextAction = twinEnvelope.next_action || 'review recommendations';
 
   useEffect(() => {
     const append = (series, value) => {
@@ -1141,6 +1155,54 @@ export default function HUD({
               </div>
             ))}
             {!interactionHistoryEntries.length ? <div className="notice-box">No interaction decisions recorded yet.</div> : null}
+          </article>
+          <article className="domain-cluster">
+            <h4>Digital Twin Lens</h4>
+            <div className="audit-row">
+              <span>Map Version</span>
+              <span>{twinMapVersion}</span>
+            </div>
+            <div className="audit-row">
+              <span>Freshness</span>
+              <span>{fixedOrFallback(twinFreshnessSecs, 1, 's')}</span>
+            </div>
+            <div className="audit-row">
+              <span>Twin Entities</span>
+              <span>{twinNodeCount || 'unknown'}</span>
+            </div>
+            <div className="audit-row">
+              <span>Next Twin Action</span>
+              <span>{twinNextAction}</span>
+            </div>
+            {twinAssumptions.length > 0 ? (
+              <div className="notice-box">
+                {twinAssumptions.join(' | ')}
+              </div>
+            ) : (
+              <div className="notice-box">Twin assumptions unavailable in current summary payload.</div>
+            )}
+          </article>
+          <article className="domain-cluster">
+            <h4>Twin Route Candidates</h4>
+            {twinRouteCandidates.map((route) => (
+              <div className="notice-box" key={route.route}>
+                <strong>{route.route}</strong>
+                <div>{route.reason}</div>
+                <div>score {fixedOrFallback((Number(route.score) || 0) * 100, 1, '%')}</div>
+              </div>
+            ))}
+            {!twinRouteCandidates.length ? <div className="notice-box">No route candidates available yet.</div> : null}
+          </article>
+          <article className="domain-cluster">
+            <h4>Twin Replay Context</h4>
+            {twinDecisionReplay.map((entry) => (
+              <div className="audit-row" key={entry.review_id || `${entry.action_id}-${entry.ts}`}>
+                <span>{entry.decision || 'recorded'}</span>
+                <span>{entry.model_route || interactionModelRoute}</span>
+                <span>{entry.action_label || entry.action_id || 'interaction'}</span>
+              </div>
+            ))}
+            {!twinDecisionReplay.length ? <div className="notice-box">No replay context recorded yet.</div> : null}
           </article>
         </div>
         {assistantMode === 'expert' && (
