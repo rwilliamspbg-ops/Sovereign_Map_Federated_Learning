@@ -3104,10 +3104,14 @@ def swarm_map_view():
 @app.route("/autonomy/twin/summary", methods=["GET"])
 def autonomy_twin_summary_view():
     status = _build_swarm_status_snapshot()
-    map_state = _build_swarm_map_state(limit=min(120, SWARM_DEFAULT_MAP_NODES), layers={"coverage", "risk"})
+    map_state = _build_swarm_map_state(
+        limit=min(120, SWARM_DEFAULT_MAP_NODES), layers={"coverage", "risk"}
+    )
     now_ts = int(time.time())
     lag_seconds = max(0, now_ts - int(map_state.get("timestamp", now_ts)))
-    coverage_pct = float(status.get("coverage_pct", map_state.get("coverage", {}).get("percent", 0)))
+    coverage_pct = float(
+        status.get("coverage_pct", map_state.get("coverage", {}).get("percent", 0))
+    )
     node_count = int(map_state.get("node_count", 0))
     mean_confidence = max(0.0, min(1.0, coverage_pct / 100.0))
     risk_zone_count = len(map_state.get("risk_zones", []))
@@ -3158,9 +3162,19 @@ def autonomy_planner_insights_view():
 
     rejected = []
     if error_rate > 1.25:
-        rejected.append({"action": "accelerate_autonomy", "reason": "rejected: control-plane error rate above threshold"})
+        rejected.append(
+            {
+                "action": "accelerate_autonomy",
+                "reason": "rejected: control-plane error rate above threshold",
+            }
+        )
     if avg_latency > 180:
-        rejected.append({"action": "high_frequency_replanning", "reason": "rejected: latency budget exceeded"})
+        rejected.append(
+            {
+                "action": "high_frequency_replanning",
+                "reason": "rejected: latency budget exceeded",
+            }
+        )
 
     selected = "reroute_high_risk_corridor" if coverage_pct < 95 else "hold_position"
     score = 0.73 if selected == "reroute_high_risk_corridor" else 0.61
@@ -3187,9 +3201,19 @@ def autonomy_sensors_quality_view():
             {
                 "source": "gps_pose",
                 "confidence": round(base_conf, 3),
-                "freshness_secs": round(float(health.get("telemetry", {}).get("api_latency_ms", 0)) / 1000.0 + 1.0, 3),
-                "anomaly_score": round(max(0.0, min(1.0, float(status.get("error_rate_pct", 0)) / 10.0)), 3),
-                "health": "healthy" if float(status.get("error_rate_pct", 0)) < 2 else "degraded",
+                "freshness_secs": round(
+                    float(health.get("telemetry", {}).get("api_latency_ms", 0)) / 1000.0
+                    + 1.0,
+                    3,
+                ),
+                "anomaly_score": round(
+                    max(0.0, min(1.0, float(status.get("error_rate_pct", 0)) / 10.0)), 3
+                ),
+                "health": (
+                    "healthy"
+                    if float(status.get("error_rate_pct", 0)) < 2
+                    else "degraded"
+                ),
             },
             {
                 "source": "lidar_spatial",
@@ -3217,7 +3241,9 @@ def autonomy_slo_status_view():
     now_ts = int(time.time())
     lag_seconds = max(0, now_ts - int(map_state.get("timestamp", now_ts)))
 
-    coverage = float(status.get("coverage_pct", map_state.get("coverage", {}).get("percent", 0)))
+    coverage = float(
+        status.get("coverage_pct", map_state.get("coverage", {}).get("percent", 0))
+    )
     latency = float(status.get("avg_latency_ms", 0))
     error_rate = float(status.get("error_rate_pct", 0))
     lag_ms = lag_seconds * 1000
