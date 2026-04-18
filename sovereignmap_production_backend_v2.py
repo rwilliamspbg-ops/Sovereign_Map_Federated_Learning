@@ -3280,6 +3280,169 @@ def autonomy_slo_status_view():
     return jsonify(payload), 200
 
 
+@app.route("/ai/interaction/summary", methods=["GET"])
+def ai_interaction_summary_view():
+    status = _build_swarm_status_snapshot()
+    map_state = _build_swarm_map_state(
+        limit=min(96, SWARM_DEFAULT_MAP_NODES),
+        layers={"coverage", "risk", "communications"},
+    )
+    health = build_ops_health_snapshot()
+    now_ts = int(time.time())
+    map_ts = int(map_state.get("timestamp", now_ts))
+    twin_lag_ms = max(0, (now_ts - map_ts) * 1000)
+    coverage_pct = float(
+        status.get("coverage_pct", map_state.get("coverage", {}).get("percent", 0))
+    )
+    latency_ms = float(status.get("avg_latency_ms", 0))
+    error_rate_pct = float(status.get("error_rate_pct", 0))
+    risk_zone_count = len(map_state.get("risk_zones", []))
+    entity_count = max(1, int(map_state.get("node_count", 0)))
+    risk_score = max(0.0, min(1.0, risk_zone_count / entity_count))
+    confidence = max(0.4, min(0.98, coverage_pct / 100.0 if coverage_pct else 0.72))
+
+    planner_model = (
+        "planner" if coverage_pct < 95 or error_rate_pct > 1.0 else "summary"
+    )
+    planner_reason = (
+        "coverage or error pressure suggests planner reasoning"
+        if planner_model == "planner"
+        else "system stable enough for summary routing"
+    )
+
+    recommendations = []
+    if coverage_pct < 95:
+        recommendations.append(
+            {
+                "action": "reroute_high_risk_corridor",
+                "label": "Replan risky corridor",
+                "reason": "coverage remains below the target band",
+                "confidence": 0.82,
+                "risk": 0.34,
+                "expected_gain": 0.74,
+                "blocked_reason": None,
+                "requires_confirmation": True,
+            }
+        )
+    if latency_ms > 120 or error_rate_pct > 1.0:
+        recommendations.append(
+            {
+                "action": "decrease_planner_frequency",
+                "label": "Reduce replanning rate",
+                "reason": "control-plane latency or error rate is elevated",
+                "confidence": 0.76,
+                "risk": 0.21,
+                "expected_gain": 0.66,
+                "blocked_reason": None,
+                "requires_confirmation": True,
+            }
+        )
+    if twin_lag_ms > 2000:
+        recommendations.append(
+            {
+                "action": "refresh_twin_snapshot",
+                "label": "Refresh twin snapshot",
+                "reason": "digital twin lag exceeds the freshness target",
+                "confidence": 0.88,
+                "risk": 0.11,
+                "expected_gain": 0.61,
+                "blocked_reason": None,
+                "requires_confirmation": False,
+            }
+        )
+    if not recommendations:
+        recommendations.append(
+            {
+                "action": "hold_position_monitor",
+                "label": "Hold position and observe",
+                "reason": "system is stable and within guardrails",
+                "confidence": 0.91,
+                "risk": 0.08,
+                "expected_gain": 0.45,
+                "blocked_reason": None,
+                "requires_confirmation": False,
+            }
+        )
+
+    quick_actions = [
+        {
+            "id": "ask_twin",
+            "label": "Ask for twin summary",
+            "prompt": "summarize the digital twin status and top risks",
+            "kind": "assistant_query",
+            "model_route": "summary",
+            "requires_confirmation": False,
+        },
+        {
+            "id": "review_planner",
+            "label": "Review planner insights",
+            "prompt": "show the safest corrective action",
+            "kind": "assistant_query",
+            "model_route": "planner",
+            "requires_confirmation": False,
+        },
+        {
+            "id": "inspect_sensors",
+            "label": "Inspect sensor quality",
+            "prompt": "summarize sensor health, freshness, and anomalies",
+            "kind": "assistant_query",
+            "model_route": "summary",
+            "requires_confirmation": False,
+        },
+        {
+            "id": "run_epoch",
+            "label": "Run Global FL Epoch",
+            "command": "trigger_fl",
+            "kind": "control_action",
+            "requires_confirmation": True,
+        },
+        {
+            "id": "start_training_10",
+            "label": "Start 10-round training",
+            "command": "start_training",
+            "parameters": {"rounds": 10},
+            "kind": "control_action",
+            "requires_confirmation": True,
+        },
+    ]
+
+    payload = {
+        "generated_at": now_ts,
+        "model_route": planner_model,
+        "model_route_reason": planner_reason,
+        "interaction_mode": status.get("autonomy_mode", "supervised"),
+        "command_prompt": "Describe the task in one sentence, then review the preview before executing.",
+        "confidence": round(confidence, 4),
+        "risk_score": round(risk_score, 4),
+        "twin_lag_ms": twin_lag_ms,
+        "coverage_pct": round(coverage_pct, 2),
+        "latency_ms": round(latency_ms, 2),
+        "error_rate_pct": round(error_rate_pct, 3),
+        "recommendations": recommendations,
+        "quick_actions": quick_actions,
+        "context": {
+            "node_count": entity_count,
+            "map_version": map_state.get("map_version"),
+            "freshness_seconds": max(0, now_ts - map_ts),
+            "safety_state": (
+                "blocked"
+                if error_rate_pct > 2.0
+                else ("degraded" if coverage_pct < 95 else "safe")
+            ),
+            "planner_state": planner_model,
+            "sensor_sources": len((health.get("telemetry") or {})),
+        },
+        "intent_examples": [
+            "run a global FL epoch",
+            "show planner insights",
+            "inspect sensor quality",
+            "start training for 10 rounds",
+            "summarize the digital twin",
+        ],
+    }
+    return jsonify(payload), 200
+
+
 @app.route("/swarm/commands", methods=["GET"])
 def swarm_commands_view():
     try:

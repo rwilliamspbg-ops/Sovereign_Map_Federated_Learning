@@ -1,3 +1,4 @@
+import React from 'react';
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import { render, screen, fireEvent, waitFor } from '@testing-library/react';
 import C2SwarmHUD from './C2SwarmHUD';
@@ -84,6 +85,45 @@ describe('C2SwarmHUD', () => {
     expect(await screen.findByText('3 rendered nodes')).toBeInTheDocument();
     expect(await screen.findByLabelText('command-log')).toBeInTheDocument();
     expect(await screen.findByLabelText('audit-log')).toBeInTheDocument();
+  });
+
+  it('renders shared AI interaction actions and recommendations', async () => {
+    render(
+      <C2SwarmHUD
+        apiBase="/backend"
+        interactionSummary={{
+          quick_actions: [
+            {
+              id: 'ask-twin',
+              label: 'Ask for twin summary',
+              prompt: 'summarize the digital twin status and top risks',
+              kind: 'assistant_query',
+              model_route: 'summary',
+              requires_confirmation: false
+            }
+          ],
+          recommendations: [
+            {
+              action: 'hold_position_monitor',
+              label: 'Hold position and observe',
+              reason: 'system is stable and within guardrails',
+              confidence: 0.91,
+              risk: 0.08,
+              expected_gain: 0.45
+            }
+          ]
+        }}
+      />
+    );
+
+    expect(await screen.findByRole('button', { name: 'Ask for twin summary' })).toBeInTheDocument();
+    expect(screen.getByText(/Hold position and observe: system is stable and within guardrails/)).toBeInTheDocument();
+
+    fireEvent.click(screen.getByRole('button', { name: 'Ask for twin summary' }));
+
+    await waitFor(() => {
+      expect(screen.getByText(/Assistant prompt loaded: summarize the digital twin status and top risks/)).toBeInTheDocument();
+    });
   });
 
   it('submits command with auth header', async () => {
