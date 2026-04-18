@@ -1,6 +1,7 @@
 import { useState, useEffect, useRef } from 'react';
 import HUD from './HUD';
 import BrowserFLDemo from './BrowserFLDemo';
+import C2SwarmHUD from './C2SwarmHUD';
 import './App.css';
 
 const resolveApiBase = () => {
@@ -63,6 +64,7 @@ const ema = (previous, next, alpha = 0.35) => {
 function App() {
   const viewMode = resolveViewMode();
   const showBrowserDemo = viewMode === 'browser_demo' || viewMode === 'admin';
+  const showC2SwarmHUD = viewMode === 'c2';
 
   const [hudData, setHudData] = useState(null);
   const [health, setHealth] = useState(null);
@@ -128,13 +130,19 @@ function App() {
   );
 
   useEffect(() => {
+    if (showC2SwarmHUD) {
+      return undefined;
+    }
     fetchData();
     const interval = setInterval(fetchData, 5000);
     return () => clearInterval(interval);
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  }, [showC2SwarmHUD]);
 
   useEffect(() => {
+    if (showC2SwarmHUD) {
+      return undefined;
+    }
     let stream;
     let cancelled = false;
 
@@ -189,9 +197,12 @@ function App() {
         stream.close();
       }
     };
-  }, []);
+  }, [showC2SwarmHUD]);
 
   useEffect(() => {
+    if (showC2SwarmHUD) {
+      return undefined;
+    }
     const updateWebMetrics = () => {
       if (typeof window === 'undefined') {
         return;
@@ -231,7 +242,7 @@ function App() {
       clearInterval(interval);
       window.removeEventListener('resize', updateWebMetrics);
     };
-  }, []);
+  }, [showC2SwarmHUD]);
 
   const fetchTrustSnapshot = async () => {
     const trustRes = await fetch(`${TRUST_API_BASE}/trust_snapshot`);
@@ -559,6 +570,10 @@ function App() {
 
   if (showBrowserDemo) {
     return <BrowserFLDemo enableBackendMetrics />;
+  }
+
+  if (showC2SwarmHUD) {
+    return <C2SwarmHUD apiBase={API_BASE} />;
   }
 
   return (

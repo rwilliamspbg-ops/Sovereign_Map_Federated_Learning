@@ -37,12 +37,13 @@ To avoid recurring CI failures and match GitHub Actions behavior locally, run th
 - `make quickstart-verify`
 - `make lint-soft`
 - `make alerts-test`
-- `./.venv/bin/python -m black --check .`
+- `python3 -m black --check .`
 - `./.venv/bin/python tests/scripts/python/run_full_validation_suite.py --profile deep`
 
 Notes:
 
 - The `Lint Code Base` workflow enforces `PYTHON_BLACK`. Treat Black failures as merge-blocking.
+- If `make lint-soft` fails due local `TOOLROOT` mismatch, rerun with `make lint-soft TOOLROOT=$(go env GOROOT)`.
 - The full validation suite now uses the invoking interpreter (`sys.executable`) for Python checks. Prefer running it from `./.venv/bin/python` to avoid dependency drift.
 
 ## Documentation Sync Requirements
