@@ -15,6 +15,7 @@ import collections
 import json
 import math
 import statistics
+import threading
 import time
 import urllib.error
 import urllib.request
@@ -68,6 +69,8 @@ def run(args: argparse.Namespace) -> int:
         args.command_iterations if args.command_iterations > 0 else args.iterations
     )
 
+    _lock = threading.Lock()
+
     def benchmark_map(index: int) -> None:
         nonlocal map_errors
         start = time.perf_counter()
@@ -77,12 +80,15 @@ def run(args: argparse.Namespace) -> int:
                 headers=headers,
             )
             latency_ms = (time.perf_counter() - start) * 1000.0
-            map_latencies_ms.append(latency_ms)
+            with _lock:
+                map_latencies_ms.append(latency_ms)
         except urllib.error.HTTPError as exc:
-            map_errors += 1
-            map_http_errors[str(exc.code)] += 1
+            with _lock:
+                map_errors += 1
+                map_http_errors[str(exc.code)] += 1
         except (urllib.error.URLError, TimeoutError, ValueError):
-            map_errors += 1
+            with _lock:
+                map_errors += 1
 
     def benchmark_command(index: int) -> None:
         nonlocal cmd_errors
@@ -101,12 +107,15 @@ def run(args: argparse.Namespace) -> int:
                 },
             )
             latency_ms = (time.perf_counter() - start) * 1000.0
-            cmd_latencies_ms.append(latency_ms)
+            with _lock:
+                cmd_latencies_ms.append(latency_ms)
         except urllib.error.HTTPError as exc:
-            cmd_errors += 1
-            cmd_http_errors[str(exc.code)] += 1
+            with _lock:
+                cmd_errors += 1
+                cmd_http_errors[str(exc.code)] += 1
         except (urllib.error.URLError, TimeoutError, ValueError):
-            cmd_errors += 1
+            with _lock:
+                cmd_errors += 1
 
     with ThreadPoolExecutor(max_workers=max(1, args.concurrency)) as pool:
         list(pool.map(benchmark_map, range(args.iterations)))

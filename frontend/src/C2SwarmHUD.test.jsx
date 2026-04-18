@@ -11,8 +11,10 @@ const okResponse = (payload) => ({
 
 describe('C2SwarmHUD', () => {
   const fetchMock = vi.fn();
+  let _originalFetch;
 
   beforeEach(() => {
+    _originalFetch = global.fetch;
     fetchMock.mockImplementation((url) => {
       if (url.includes('/swarm/status')) {
         return Promise.resolve(okResponse({
@@ -60,7 +62,8 @@ describe('C2SwarmHUD', () => {
           status: 202,
           json: async () => ({
             action_id: 'swarm-abc123',
-            command: { command: 'hold_position' }
+            command: 'hold_position',
+            normalized: { command: 'hold_position' }
           })
         });
       }
@@ -70,6 +73,7 @@ describe('C2SwarmHUD', () => {
   });
 
   afterEach(() => {
+    global.fetch = _originalFetch;
     vi.restoreAllMocks();
   });
 
