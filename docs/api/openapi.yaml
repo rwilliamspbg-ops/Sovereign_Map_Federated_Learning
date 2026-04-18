@@ -1528,6 +1528,183 @@ paths:
               schema:
                 type: object
 
+  /swarm/status:
+    get:
+      tags: [SwarmC2]
+      summary: Get swarm C2 status snapshot
+      operationId: getSwarmStatus
+      responses:
+        '200':
+          description: Swarm status snapshot
+          content:
+            application/json:
+              schema:
+                type: object
+
+  /swarm/map:
+    get:
+      tags: [SwarmC2]
+      summary: Get swarm map state
+      operationId: getSwarmMap
+      parameters:
+        - in: query
+          name: limit
+          schema:
+            type: integer
+            default: 250
+          description: Maximum number of nodes to return
+        - in: query
+          name: layers
+          schema:
+            type: string
+            default: paths,risk,coverage,communications
+          description: Comma-separated list of map layers to include
+      responses:
+        '200':
+          description: Swarm map state
+          content:
+            application/json:
+              schema:
+                type: object
+
+  /swarm/commands:
+    get:
+      tags: [SwarmC2]
+      summary: List accepted swarm commands
+      operationId: getSwarmCommands
+      parameters:
+        - in: query
+          name: limit
+          schema:
+            type: integer
+            default: 100
+          description: Maximum number of commands to return
+      responses:
+        '200':
+          description: List of accepted commands
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  count:
+                    type: integer
+                  commands:
+                    type: array
+                    items:
+                      type: object
+
+  /swarm/audit/recent:
+    get:
+      tags: [SwarmC2]
+      summary: Get recent swarm audit entries (admin only)
+      operationId: getSwarmAuditRecent
+      security:
+        - JoinAdminHeader: []
+      parameters:
+        - in: query
+          name: limit
+          schema:
+            type: integer
+            default: 100
+          description: Maximum number of audit entries to return
+      responses:
+        '200':
+          description: Recent audit entries
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  count:
+                    type: integer
+                  audits:
+                    type: array
+                    items:
+                      type: object
+        '401':
+          description: Unauthorized
+
+  /swarm/command:
+    post:
+      tags: [SwarmC2]
+      summary: Submit a swarm C2 command
+      operationId: postSwarmCommand
+      security:
+        - JoinAdminHeader: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [command]
+              properties:
+                command:
+                  type: string
+                  example: hold_position
+                target_scope:
+                  type: string
+                  example: global
+                target_ids:
+                  type: array
+                  items:
+                    type: string
+                objective:
+                  type: string
+                parameters:
+                  type: object
+                client_nonce:
+                  type: string
+                  description: Optional idempotency nonce (TTL 600 s)
+      responses:
+        '202':
+          description: Command accepted
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+                    example: accepted
+                  action_id:
+                    type: string
+                  command:
+                    type: string
+                  normalized:
+                    type: object
+                  role:
+                    type: string
+                  audit_signature:
+                    type: string
+        '200':
+          description: Duplicate command (idempotent replay)
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+                    example: accepted
+                  duplicate:
+                    type: boolean
+                  action_id:
+                    type: string
+                  command:
+                    type: string
+                  normalized:
+                    type: object
+        '400':
+          description: Invalid payload
+        '401':
+          description: Unauthorized
+        '403':
+          description: Role policy forbids command
+        '429':
+          description: Rate limit exceeded
+
 components:
   securitySchemes:
     JoinAdminHeader:
