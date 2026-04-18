@@ -232,10 +232,12 @@ const classifyAssistantPrompt = (prompt, requestedRounds = 10) => {
 };
 
 export default function HUD({
+  apiBase,
   hudData,
   health,
   metricsSummary,
   interactionSummary,
+  interactionHistory,
   trustStatus,
   policyHistory,
   founders,
@@ -272,6 +274,9 @@ export default function HUD({
   const [assistantPrompt, setAssistantPrompt] = useState('');
   const [assistantMode, setAssistantMode] = useState('simple');
   const [assistantFeedback, setAssistantFeedback] = useState('');
+  const [interactionReview, setInteractionReview] = useState(null);
+  const [interactionReviewStatus, setInteractionReviewStatus] = useState('');
+  const [interactionDecisionLog, setInteractionDecisionLog] = useState([]);
   const [collapsedClusters, setCollapsedClusters] = useState({
     api: false,
     llm: false,
@@ -288,6 +293,209 @@ export default function HUD({
     hardwareFaults: 0
   });
   const [requestedRounds, setRequestedRounds] = useState(10);
+
+  const interactionHistoryEntries = (() => {
+    const remoteEntries = Array.isArray(interactionHistory?.decisions)
+      ? interactionHistory.decisions
+      : Array.isArray(interactionHistory)
+        ? interactionHistory
+        : [];
+    const merged = [...interactionDecisionLog, ...remoteEntries];
+    const seen = new Set();
+    return merged.filter((entry) => {
+      const key = entry?.review_id || `${entry?.action_id || ''}-${entry?.ts || ''}-${entry?.decision || ''}`;
+      if (seen.has(key)) {
+        return false;
+      }
+      seen.add(key);
+      return true;
+    });
+  })();
+
+  const normalizeInteractionAction = (action) => ({
+    id: action?.id || action?.action || action?.command || action?.label,
+    label: action?.label || action?.action || action?.command || 'interaction action',
+    kind: action?.kind || (action?.command ? 'control_action' : 'assistant_query'),
+    prompt: action?.prompt || '',
+    reason: action?.reason || '',
+    command: action?.command || null,
+    parameters: action?.parameters || {},
+    model_route: action?.model_route || 'summary',
+    undo_command: action?.undo_command || null,
+    requires_confirmation: Boolean(action?.requires_confirmation ?? action?.requiresConfirmation ?? action?.kind !== 'assistant_query'),
+  });
+
+  const persistInteractionDecision = async (decision, action, overrides = {}) => {
+    if (!apiBase) {
+      return null;
+    }
+
+    const payload = {
+      decision,
+      action_id: action.id,
+      action_label: action.label,
+      action_kind: action.kind,
+      model_route: action.model_route,
+      prompt: overrides.prompt || action.prompt || '',
+      reason: overrides.reason || action.reason || '',
+      command: action.command,
+      parameters: action.parameters || {},
+      reversible: Boolean(action.undo_command),
+      source_action_id: action.id,
+      override_prompt: overrides.prompt || '',
+      rollback_of: decision === 'undo' ? action.id : '',
+      review_id: action.review_id || `review-${action.id}`,
+    };
+
+    const response = await fetch(`${apiBase}/ai/interaction/decision`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(payload),
+    });
+
+    if (!response.ok) {
+      throw new Error(`interaction decision failed with ${response.status}`);
+    }
+
+    const responsePayload = await response.json();
+    if (responsePayload?.decision) {
+      setInteractionDecisionLog((current) => [responsePayload.decision, ...current].slice(0, 20));
+    }
+    return responsePayload;
+  };
+
+  const executeInteractionAction = async (action, overrides = {}) => {
+    if (!action) {
+      return;
+    }
+
+    const prompt = String(overrides.prompt || action.prompt || assistantPrompt || action.label || '').trim();
+    const reason = String(overrides.reason || action.reason || '').trim();
+    const reviewContext = {
+      decision: overrides.decision || 'approve',
+      reason,
+      source_action_id: action.id,
+      review_id: action.review_id || `review-${action.id}`,
+    };
+
+    if (action.kind === 'assistant_query') {
+      if (setVoiceQuery) {
+        setVoiceQuery(prompt);
+      }
+      if (onSubmitVoiceQuery) {
+        await onSubmitVoiceQuery(prompt, reviewContext);
+      }
+      setAssistantFeedback(`Queued assistant review: ${prompt}`);
+      setInteractionReviewStatus(`Approved ${action.label}`);
+      await persistInteractionDecision(overrides.decision || 'approve', action, { prompt, reason });
+      return;
+    }
+
+    if (action.command === 'start_training') {
+      const rounds = Number(action.parameters?.rounds || requestedRounds || 10);
+      if (onStartTraining) {
+        await onStartTraining(rounds, reviewContext);
+      }
+      setAssistantFeedback(`Started training for ${rounds} rounds`);
+      setInteractionReviewStatus(`Approved ${action.label}`);
+      await persistInteractionDecision(overrides.decision || 'approve', action, { prompt, reason });
+      return;
+    }
+
+    if (action.command === 'trigger_fl') {
+      if (onTriggerFLRound) {
+        await onTriggerFLRound(reviewContext);
+      }
+      setAssistantFeedback('Requested one global FL epoch');
+      setInteractionReviewStatus(`Approved ${action.label}`);
+      await persistInteractionDecision(overrides.decision || 'approve', action, { prompt, reason });
+      return;
+    }
+
+    if (action.command === 'stop_training') {
+      if (onStopTraining) {
+        await onStopTraining(reviewContext);
+      }
+      setAssistantFeedback('Requested training stop');
+      setInteractionReviewStatus(`Executed undo for ${action.label}`);
+      await persistInteractionDecision(overrides.decision || 'undo', action, { prompt, reason });
+      return;
+    }
+
+    if (action.command === 'create_enclave') {
+      if (onCreateEnclave) {
+        await onCreateEnclave(reviewContext);
+      }
+      setAssistantFeedback('Requested TEE enclave provisioning');
+      setInteractionReviewStatus(`Approved ${action.label}`);
+      await persistInteractionDecision(overrides.decision || 'approve', action, { prompt, reason });
+      return;
+    }
+
+    setAssistantFeedback(`Selected ${action.label || action.action || 'action'} for review`);
+    setInteractionReviewStatus(`Recorded ${action.label}`);
+    await persistInteractionDecision(overrides.decision || 'approve', action, { prompt, reason });
+  };
+
+  const openInteractionReview = (action, mode = 'approve') => {
+    const normalized = normalizeInteractionAction(action);
+    setInteractionReview({
+      ...normalized,
+      mode,
+      prompt: normalized.prompt || assistantPrompt || normalized.label,
+      reason: normalized.reason || '',
+      review_id: `review-${normalized.id}-${Date.now()}`,
+    });
+    setInteractionReviewStatus(`Loaded ${normalized.label} into review`);
+  };
+
+  const approveInteractionReview = async (mode = 'approve') => {
+    if (!interactionReview) {
+      return;
+    }
+
+    await executeInteractionAction(interactionReview, {
+      decision: mode,
+      prompt: interactionReview.prompt,
+      reason: interactionReview.reason,
+    });
+    setInteractionReview(null);
+  };
+
+  const rejectInteractionReview = async () => {
+    if (!interactionReview) {
+      return;
+    }
+
+    await persistInteractionDecision('reject', interactionReview, {
+      prompt: interactionReview.prompt,
+      reason: interactionReview.reason,
+    });
+    setInteractionReviewStatus(`Rejected ${interactionReview.label}`);
+    setInteractionReview(null);
+  };
+
+  const undoInteractionReview = async () => {
+    if (!interactionReview) {
+      return;
+    }
+
+    if (interactionReview.undo_command === 'stop_training') {
+      await executeInteractionAction({
+        ...interactionReview,
+        command: 'stop_training',
+        label: 'Stop training loop',
+        kind: 'control_action',
+      }, {
+        decision: 'undo',
+        reason: `Undo requested for ${interactionReview.label}`,
+      });
+      setInteractionReview(null);
+      return;
+    }
+
+    setInteractionReviewStatus('Undo is not available for this action');
+  };
 
   useEffect(() => {
     const updateViewport = () => {
@@ -559,55 +767,9 @@ export default function HUD({
 
   const endpointClass = (isUp) => (isUp ? 'endpoint-up' : 'endpoint-down');
 
-  const runQuickAction = async (action) => {
-    if (!action) {
-      return;
-    }
-
-    if (action.kind === 'assistant_query') {
-      const prompt = action.prompt || action.label;
-      setAssistantPrompt(prompt);
-      if (setVoiceQuery) {
-        setVoiceQuery(prompt);
-      }
-      if (onSubmitVoiceQuery) {
-        await onSubmitVoiceQuery(prompt);
-      }
-      setAssistantFeedback(`Queued assistant review: ${prompt}`);
-      return;
-    }
-
-    if (action.command === 'start_training') {
-      const rounds = Number(action.parameters?.rounds || requestedRounds || 10);
-      await onStartTraining(rounds);
-      setAssistantFeedback(`Started training for ${rounds} rounds`);
-      return;
-    }
-
-    if (action.command === 'trigger_fl') {
-      await onTriggerFLRound();
-      setAssistantFeedback('Requested one global FL epoch');
-      return;
-    }
-
-    if (action.command === 'stop_training') {
-      await onStopTraining();
-      setAssistantFeedback('Requested training stop');
-      return;
-    }
-
-    if (action.command === 'create_enclave') {
-      await onCreateEnclave();
-      setAssistantFeedback('Requested TEE enclave provisioning');
-      return;
-    }
-
-    setAssistantFeedback(`Selected ${action.label || action.action || 'action'} for review`);
-  };
-
   const submitAssistantPrompt = async () => {
     const intent = classifyAssistantPrompt(assistantPrompt, requestedRounds);
-    await runQuickAction({
+    openInteractionReview({
       ...intent,
       label: intent.label,
       prompt: assistantPrompt,
@@ -847,7 +1009,7 @@ export default function HUD({
         </div>
         <div className="button-stack" style={{ marginTop: '0.85rem' }}>
           <button className="btn cmd-epoch" type="button" onClick={submitAssistantPrompt} disabled={loading || !assistantPrompt.trim()}>
-            Review / Execute Request
+            Review Request
           </button>
           <button
             className="btn cmd-start"
@@ -885,13 +1047,17 @@ export default function HUD({
                 <div>
                   confidence {fixedOrFallback(item.confidence * 100, 1, '%')} | risk {fixedOrFallback((item.risk || 0) * 100, 1, '%')} | gain {fixedOrFallback((item.expected_gain || 0) * 100, 1, '%')}
                 </div>
-                <button
-                  className="btn cmd-epoch"
-                  type="button"
-                  onClick={() => runQuickAction({ action: item.action, label: item.label || item.action, kind: 'assistant_query', prompt: item.reason })}
-                >
-                  Review recommendation
-                </button>
+                <div className="button-stack">
+                  <button className="btn cmd-epoch" type="button" onClick={() => openInteractionReview({ action: item.action, label: item.label || item.action, kind: 'assistant_query', prompt: item.reason, reason: item.reason })}>
+                    Review
+                  </button>
+                  <button className="btn" type="button" onClick={() => openInteractionReview({ action: item.action, label: item.label || item.action, kind: 'assistant_query', prompt: item.reason, reason: item.reason }, 'approve')}>
+                    Approve
+                  </button>
+                  <button className="btn danger" type="button" onClick={() => openInteractionReview({ action: item.action, label: item.label || item.action, kind: 'assistant_query', prompt: item.reason, reason: item.reason }, 'reject')}>
+                    Reject
+                  </button>
+                </div>
               </div>
             ))}
           </article>
@@ -902,17 +1068,81 @@ export default function HUD({
                 <button
                   className="btn"
                   type="button"
-                  onClick={() => runQuickAction(item)}
+                  onClick={() => openInteractionReview(item, 'approve')}
                   disabled={loading}
                 >
-                  {item.label}
+                  Review
                 </button>
                 <span>{item.model_route || item.command || item.kind}</span>
               </div>
             ))}
           </article>
+          <article className="domain-cluster">
+            <h4>Review Drawer</h4>
+            {interactionReview ? (
+              <>
+                <div className="notice-box">
+                  <strong>{interactionReview.label}</strong>
+                  <div>{interactionReview.reason || 'No reason provided.'}</div>
+                  <div>
+                    route {interactionReview.model_route} | {interactionReview.requires_confirmation ? 'confirmation required' : 'confirmation optional'}
+                  </div>
+                </div>
+                <label className="input-row">
+                  Decision reason
+                  <textarea
+                    value={interactionReview.reason}
+                    onChange={(event) => setInteractionReview((current) => ({ ...current, reason: event.target.value }))}
+                    rows={3}
+                    placeholder="Explain why this action should be approved, edited, rejected, or undone."
+                  />
+                </label>
+                <label className="input-row">
+                  Edited prompt
+                  <textarea
+                    value={interactionReview.prompt}
+                    onChange={(event) => setInteractionReview((current) => ({ ...current, prompt: event.target.value }))}
+                    rows={3}
+                    placeholder="Optional prompt override for assistant requests."
+                  />
+                </label>
+                <div className="button-stack">
+                  <button className="btn cmd-epoch" type="button" onClick={() => approveInteractionReview('approve')}>
+                    Approve
+                  </button>
+                  <button className="btn cmd-start" type="button" onClick={() => approveInteractionReview('edit')}>
+                    Edit & Approve
+                  </button>
+                  <button className="btn danger" type="button" onClick={rejectInteractionReview}>
+                    Reject
+                  </button>
+                  <button className="btn" type="button" onClick={undoInteractionReview} disabled={!interactionReview.undo_command}>
+                    Undo
+                  </button>
+                  <button className="btn" type="button" onClick={() => setInteractionReview(null)}>
+                    Close
+                  </button>
+                </div>
+              </>
+            ) : (
+              <div className="notice-box">Select a recommendation or quick action to open the review drawer.</div>
+            )}
+          </article>
         </div>
-        <div className="notice-box">{assistantFeedback || 'Ready for a one-sentence mission request.'}</div>
+        <div className="notice-box">{interactionReviewStatus || assistantFeedback || 'Ready for a one-sentence mission request.'}</div>
+        <div className="domain-cluster-grid">
+          <article className="domain-cluster">
+            <h4>Decision History</h4>
+            {interactionHistoryEntries.slice(0, 6).map((entry) => (
+              <div className="audit-row" key={entry.review_id || `${entry.action_id}-${entry.ts}`}>
+                <span>{entry.decision || 'recorded'}</span>
+                <span>{entry.action_label || entry.action_id || 'interaction'}</span>
+                <span>{entry.reason || entry.override_prompt || 'no reason provided'}</span>
+              </div>
+            ))}
+            {!interactionHistoryEntries.length ? <div className="notice-box">No interaction decisions recorded yet.</div> : null}
+          </article>
+        </div>
         {assistantMode === 'expert' && (
           <pre className="notice-box" style={{ whiteSpace: 'pre-wrap' }}>{JSON.stringify(interactionSummary || {}, null, 2)}</pre>
         )}

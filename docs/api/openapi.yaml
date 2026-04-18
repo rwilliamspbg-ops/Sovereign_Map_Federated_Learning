@@ -593,6 +593,48 @@ paths:
                 type: object
                 additionalProperties: true
 
+  /ai/interaction/history:
+    get:
+      tags: [Operations]
+      summary: Get recent AI interaction review history
+      operationId: getAiInteractionHistory
+      parameters:
+        - in: query
+          name: limit
+          schema:
+            type: integer
+            default: 50
+          description: Maximum number of review records to return
+      responses:
+        '200':
+          description: Recent AI interaction decisions
+          content:
+            application/json:
+              schema:
+                type: object
+                additionalProperties: true
+
+  /ai/interaction/decision:
+    post:
+      tags: [Operations]
+      summary: Record an AI interaction review decision
+      operationId: recordAiInteractionDecision
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              additionalProperties: true
+      responses:
+        '200':
+          description: Review decision recorded
+          content:
+            application/json:
+              schema:
+                type: object
+                additionalProperties: true
+
   /model_registry:
     get:
       tags: [Operations]

@@ -146,6 +146,7 @@ const normalizeInteractionActions = (interactionSummary) => {
       kind: 'assistant_query',
       model_route: 'summary',
       requires_confirmation: false,
+      undo_command: null,
     },
     {
       id: 'c2-run-epoch',
@@ -153,6 +154,7 @@ const normalizeInteractionActions = (interactionSummary) => {
       command: 'trigger_fl',
       kind: 'control_action',
       requires_confirmation: true,
+      undo_command: null,
     },
     {
       id: 'c2-start-training',
@@ -161,6 +163,7 @@ const normalizeInteractionActions = (interactionSummary) => {
       parameters: { rounds: 10 },
       kind: 'control_action',
       requires_confirmation: true,
+      undo_command: 'stop_training',
     },
   ];
 };
@@ -175,7 +178,17 @@ const normalizeInteractionRecommendations = (interactionSummary, fallbackCount =
     : [];
 };
 
-function C2SwarmHUD({ apiBase, interactionSummary }) {
+const normalizeInteractionHistory = (interactionHistory) => {
+  if (Array.isArray(interactionHistory?.decisions)) {
+    return interactionHistory.decisions;
+  }
+  if (Array.isArray(interactionHistory)) {
+    return interactionHistory;
+  }
+  return [];
+};
+
+function C2SwarmHUD({ apiBase, interactionSummary, interactionHistory }) {
   const [status, setStatus] = useState(null);
   const [mapState, setMapState] = useState(null);
   const [commandLog, setCommandLog] = useState([]);
@@ -205,6 +218,11 @@ function C2SwarmHUD({ apiBase, interactionSummary }) {
   const interactionRecommendations = useMemo(
     () => normalizeInteractionRecommendations(interactionSummary, commandLog.length),
     [interactionSummary, commandLog.length]
+  );
+
+  const interactionHistoryEntries = useMemo(
+    () => normalizeInteractionHistory(interactionHistory),
+    [interactionHistory]
   );
 
   const fetchSnapshot = useCallback(async () => {
@@ -678,6 +696,12 @@ function C2SwarmHUD({ apiBase, interactionSummary }) {
         <div className="c2-submit-message">
           {(interactionSummary?.recommendations || interactionRecommendations).map((item) => `${item.label || item.action}: ${item.reason}`).join(' | ')}
         </div>
+        <div className="c2-submit-message">
+          {interactionHistoryEntries.slice(0, 5).map((entry) => `${entry.decision || 'recorded'} ${entry.action_label || entry.action_id || 'interaction'}${entry.reason ? `: ${entry.reason}` : ''}`).join(' | ')}
+        </div>
+        {!interactionHistoryEntries.length ? (
+          <div className="c2-empty">No AI interaction decisions recorded yet.</div>
+        ) : null}
         <div className="c2-submit-message">
           {operatorAssistCards.map((card) => `${card.title}: ${card.detail}`).join(' | ')}
         </div>
