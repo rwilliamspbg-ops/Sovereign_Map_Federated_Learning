@@ -20,6 +20,16 @@ PROM_URL = "http://localhost:9090"
 BACKEND_URL = os.getenv("CHAOS_BACKEND_URL", "http://localhost:8000")
 
 
+def _admin_headers() -> dict[str, str]:
+    token = str(
+        os.getenv("CHAOS_ADMIN_TOKEN") or os.getenv("JOIN_API_ADMIN_TOKEN") or ""
+    ).strip()
+    headers = {"Content-Type": "application/json"}
+    if token:
+        headers["X-Join-Admin-Token"] = token
+    return headers
+
+
 def emit_progress(
     *,
     workflow: str,
@@ -147,7 +157,7 @@ def trigger_manual_round(timeout_s: float = 4.0) -> bool:
         f"{BACKEND_URL}/trigger_fl",
         method="POST",
         data=b"{}",
-        headers={"Content-Type": "application/json"},
+        headers=_admin_headers(),
     )
     try:
         with urllib.request.urlopen(request, timeout=timeout_s) as response:

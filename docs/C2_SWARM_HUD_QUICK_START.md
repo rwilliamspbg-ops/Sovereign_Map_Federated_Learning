@@ -51,6 +51,15 @@ Quick endpoint checks:
 curl -s http://localhost:8000/swarm/status | jq
 curl -s "http://localhost:8000/swarm/map?limit=200&layers=paths,coverage" | jq '.node_count'
 curl -s http://localhost:8000/swarm/commands?limit=20 | jq
+curl -s http://localhost:8000/autonomy/twin/summary | jq
+curl -s http://localhost:8000/autonomy/planner/insights | jq
+```
+
+Autonomy sensor and SLO checks:
+
+```bash
+curl -s http://localhost:8000/autonomy/sensors/quality | jq
+curl -s http://localhost:8000/autonomy/slo/status | jq
 ```
 
 Submit a command (example):
@@ -75,6 +84,34 @@ Fetch signed audit entries:
 curl -s http://localhost:8000/swarm/audit/recent?limit=20 \
   -H "Authorization: Bearer ${JOIN_API_ADMIN_TOKEN}" | jq
 ```
+
+Trigger one FL round (admin-auth required):
+
+```bash
+curl -s -X POST http://localhost:8000/trigger_fl \
+  -H "X-Join-Admin-Token: ${JOIN_API_ADMIN_TOKEN}" \
+  -H "Content-Type: application/json" \
+  -d '{}' | jq
+```
+
+## Strict Chaos Soak (CPU-Friendly)
+
+The node-agent image uses CPU-only PyTorch wheels by default to keep local and CI chaos builds smaller.
+
+Run strict churn validation:
+
+```bash
+JOIN_API_ADMIN_TOKEN="${JOIN_API_ADMIN_TOKEN}" \
+SOAK_CHAOS_ENABLED=1 \
+SOAK_CHAOS_STRICT=1 \
+CHAOS_MIN_CLIENT_QUORUM=1 \
+python3 tests/scripts/python/test_soak_chaos_guard.py
+```
+
+Expected success criteria:
+
+- The suite exits `0`.
+- Log includes `PASSED: FL rounds progressed under controlled churn`.
 
 ## Latency Benchmark
 

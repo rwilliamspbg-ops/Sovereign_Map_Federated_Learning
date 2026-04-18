@@ -26,6 +26,113 @@ const parseTargetIds = (value) => {
     .slice(0, 64);
 };
 
+const clampPercent = (value) => {
+  const parsed = Number(value);
+  if (!Number.isFinite(parsed)) {
+    return 0;
+  }
+  return Math.max(0, Math.min(100, parsed));
+};
+
+const buildCoverageHeatmap = (nodes, coverageCells) => {
+  if (Array.isArray(coverageCells) && coverageCells.length > 0) {
+    return coverageCells.slice(0, 80).map((cell, index) => ({
+      id: cell.id || `cell-${index}`,
+      x: Number(cell.x || 0),
+      y: Number(cell.y || 0),
+      size: Math.max(1, Number(cell.size || 2)),
+      confidence: Math.max(0, Math.min(1, Number(cell.confidence || 0))),
+    }));
+  }
+
+  const visible = Array.isArray(nodes) ? nodes.slice(0, 120) : [];
+  return visible.map((node) => ({
+    id: `node-cell-${node.id}`,
+    x: Number(node?.position?.x || 0),
+    y: Number(node?.position?.y || 0),
+    size: 1.9,
+    confidence: node.status === 'ok' ? 0.86 : 0.62,
+  }));
+};
+
+const buildConfidenceDecayOverlay = (mapState, now) => {
+  const lastUpdate = Number(mapState?.timestamp || mapState?.ts || 0);
+  const ageSeconds = lastUpdate > 0 ? Math.max(0, now - lastUpdate) : 0;
+  const decayFactor = Math.max(0.25, 1 - (ageSeconds / 180));
+  const nodes = Array.isArray(mapState?.nodes) ? mapState.nodes.slice(0, 200) : [];
+  return nodes.map((node) => ({
+    id: `decay-${node.id}`,
+    x: Number(node?.position?.x || 0),
+    y: Number(node?.position?.y || 0),
+    alpha: node.status === 'ok' ? decayFactor * 0.55 : decayFactor * 0.85,
+  }));
+};
+
+const detectReplanTriggers = (nodes, riskZones, status) => {
+  const activeNodes = Array.isArray(nodes) ? nodes : [];
+  const zones = Array.isArray(riskZones) ? riskZones : [];
+  const triggers = [];
+
+  zones.forEach((zone) => {
+    const zx = Number(zone?.x || 0);
+    const zy = Number(zone?.y || 0);
+    const radius = Math.max(1, Number(zone?.radius || 2));
+    const inZone = activeNodes.filter((node) => {
+      const nx = Number(node?.position?.x || 0);
+      const ny = Number(node?.position?.y || 0);
+      const dx = nx - zx;
+      const dy = ny - zy;
+      return Math.sqrt((dx * dx) + (dy * dy)) <= radius;
+    });
+    if (inZone.length > 0) {
+      triggers.push({
+        id: `trigger-${zone.id || zx}-${zy}`,
+        x: zx,
+        y: zy,
+        reason: `${inZone.length} node(s) in risk zone`,
+      });
+    }
+  });
+
+  if (Number(status?.error_rate_pct || 0) > 1.25) {
+    triggers.push({ id: 'trigger-network-error', x: 8, y: 8, reason: 'elevated API error rate' });
+  }
+
+  return triggers.slice(0, 20);
+};
+
+const summarizeCommandImpact = (commandLog, mapState) => {
+  const commands = Array.isArray(commandLog) ? commandLog : [];
+  const recent = commands.slice(-12);
+  const accepted = recent.filter((cmd) => String(cmd?.status || '').toLowerCase() === 'accepted').length;
+  const rejected = recent.filter((cmd) => String(cmd?.status || '').toLowerCase() === 'rejected').length;
+  const coveragePct = clampPercent(Number(mapState?.coverage?.percent || 0));
+  return {
+    recentCount: recent.length,
+    accepted,
+    rejected,
+    coveragePct,
+  };
+};
+
+const deriveOperatorAssistCards = (status, mapState, auditLog) => {
+  const cards = [];
+  const coverage = clampPercent(Number(status?.coverage_pct || mapState?.coverage?.percent || 0));
+  if (coverage < 90) {
+    cards.push({ id: 'assist-coverage', title: 'Coverage Expansion', detail: `Coverage at ${coverage.toFixed(1)}%; prioritize scout/reroute commands.` });
+  }
+  if (Number(status?.avg_latency_ms || 0) > 120) {
+    cards.push({ id: 'assist-latency', title: 'Latency Guard', detail: 'Control latency elevated; use hold_position before batch reroute.' });
+  }
+  if ((Array.isArray(auditLog) ? auditLog.length : 0) === 0) {
+    cards.push({ id: 'assist-audit', title: 'Audit Visibility', detail: 'No audit signatures loaded; verify token/role for signed traceability.' });
+  }
+  if (cards.length === 0) {
+    cards.push({ id: 'assist-stable', title: 'Stable Operations', detail: 'Swarm appears stable; continue objective-driven autonomy mode.' });
+  }
+  return cards;
+};
+
 function C2SwarmHUD({ apiBase }) {
   const [status, setStatus] = useState(null);
   const [mapState, setMapState] = useState(null);
@@ -123,6 +230,31 @@ function C2SwarmHUD({ apiBase }) {
     const zones = Array.isArray(mapState?.risk_zones) ? mapState.risk_zones : [];
     return zones.slice(0, 12);
   }, [mapState]);
+
+  const coverageHeatmap = useMemo(
+    () => buildCoverageHeatmap(visibleNodes, mapState?.coverage_cells),
+    [visibleNodes, mapState]
+  );
+
+  const confidenceDecayOverlay = useMemo(
+    () => buildConfidenceDecayOverlay(mapState, Math.floor(Date.now() / 1000)),
+    [mapState]
+  );
+
+  const replanTriggers = useMemo(
+    () => detectReplanTriggers(visibleNodes, riskZones, status),
+    [visibleNodes, riskZones, status]
+  );
+
+  const commandImpact = useMemo(
+    () => summarizeCommandImpact(commandLog, mapState),
+    [commandLog, mapState]
+  );
+
+  const operatorAssistCards = useMemo(
+    () => deriveOperatorAssistCards(status, mapState, auditLog),
+    [status, mapState, auditLog]
+  );
 
   const updateForm = (field, value) => {
     setForm((current) => ({ ...current, [field]: value }));
@@ -250,6 +382,31 @@ function C2SwarmHUD({ apiBase }) {
                 />
               ))}
 
+              {coverageHeatmap.map((cell) => (
+                <rect
+                  key={cell.id}
+                  x={cell.x - (cell.size / 2)}
+                  y={cell.y - (cell.size / 2)}
+                  width={cell.size}
+                  height={cell.size}
+                  fill="#6de2f0"
+                  fillOpacity={0.08 + (cell.confidence * 0.2)}
+                  stroke="none"
+                />
+              ))}
+
+              {confidenceDecayOverlay.map((entry) => (
+                <circle
+                  key={entry.id}
+                  cx={entry.x}
+                  cy={entry.y}
+                  r={1.15}
+                  fill="#ffd166"
+                  fillOpacity={entry.alpha}
+                  stroke="none"
+                />
+              ))}
+
               {pathLinks.map((link) => (
                 <line
                   key={link.id}
@@ -273,6 +430,13 @@ function C2SwarmHUD({ apiBase }) {
                   stroke="#0e2233"
                   strokeWidth="0.2"
                 />
+              ))}
+
+              {replanTriggers.map((trigger) => (
+                <g key={trigger.id}>
+                  <circle cx={trigger.x} cy={trigger.y} r={1.6} fill="#ff6b6b" fillOpacity="0.55" stroke="#ffebe6" strokeWidth="0.2" />
+                  <text x={trigger.x + 1.8} y={trigger.y - 1.2} fontSize="1.9" fill="#ffe6e6">!</text>
+                </g>
               ))}
             </svg>
           </div>
@@ -400,6 +564,32 @@ function C2SwarmHUD({ apiBase }) {
           <div className="c2-submit-message">{submitMessage}</div>
         </section>
       </div>
+
+      <section className="c2-log-panel">
+        <div className="c2-panel-head">
+          <h2>Autonomy Assist</h2>
+          <span>{operatorAssistCards.length} recommendation(s)</span>
+        </div>
+        <div className="c2-log-table" role="table" aria-label="operator-assist">
+          <div className="c2-log-row c2-log-head" role="row">
+            <span>Signal</span>
+            <span>Value</span>
+            <span>Accepted</span>
+            <span>Rejected</span>
+            <span>Coverage</span>
+          </div>
+          <div className="c2-log-row" role="row">
+            <span>Recent Commands</span>
+            <span>{commandImpact.recentCount}</span>
+            <span>{commandImpact.accepted}</span>
+            <span>{commandImpact.rejected}</span>
+            <span>{commandImpact.coveragePct.toFixed(1)}%</span>
+          </div>
+        </div>
+        <div className="c2-submit-message">
+          {operatorAssistCards.map((card) => `${card.title}: ${card.detail}`).join(' | ')}
+        </div>
+      </section>
 
       <section className="c2-log-panel">
         <div className="c2-panel-head">

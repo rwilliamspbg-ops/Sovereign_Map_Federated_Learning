@@ -8,10 +8,12 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     curl \
     && rm -rf /var/lib/apt/lists/*
 
-RUN pip install --no-cache-dir \
+# Use CPU-only PyTorch wheels to avoid pulling CUDA runtime packages in CI/dev containers.
+RUN pip install --no-cache-dir --index-url https://download.pytorch.org/whl/cpu \
+    torch==2.1.0+cpu \
+    torchvision==0.16.0+cpu \
+    && pip install --no-cache-dir \
     flwr==1.7.0 \
-    torch==2.1.0 \
-    torchvision==0.16.0 \
     opacus==1.4.0 \
     numpy==1.24.3 \
     cryptography==41.0.7

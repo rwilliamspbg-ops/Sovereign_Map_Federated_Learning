@@ -3101,6 +3101,185 @@ def swarm_map_view():
     return jsonify(_build_swarm_map_state(limit=limit, layers=layers)), 200
 
 
+@app.route("/autonomy/twin/summary", methods=["GET"])
+def autonomy_twin_summary_view():
+    status = _build_swarm_status_snapshot()
+    map_state = _build_swarm_map_state(
+        limit=min(120, SWARM_DEFAULT_MAP_NODES), layers={"coverage", "risk"}
+    )
+    now_ts = int(time.time())
+    lag_seconds = max(0, now_ts - int(map_state.get("timestamp", now_ts)))
+    coverage_pct = float(
+        status.get("coverage_pct", map_state.get("coverage", {}).get("percent", 0))
+    )
+    node_count = int(map_state.get("node_count", 0))
+    mean_confidence = max(0.0, min(1.0, coverage_pct / 100.0))
+    risk_zone_count = len(map_state.get("risk_zones", []))
+    risk_score = max(0.0, min(1.0, risk_zone_count / max(1, node_count)))
+
+    payload = {
+        "generated_at": now_ts,
+        "entity_count": node_count,
+        "lag_ms": lag_seconds * 1000,
+        "mean_confidence": round(mean_confidence, 4),
+        "risk_score": round(risk_score, 4),
+        "coverage_pct": round(coverage_pct, 2),
+        "prediction_horizons_seconds": [30, 60, 120],
+    }
+    return jsonify(payload), 200
+
+
+@app.route("/autonomy/planner/insights", methods=["GET"])
+def autonomy_planner_insights_view():
+    status = _build_swarm_status_snapshot()
+    avg_latency = float(status.get("avg_latency_ms", 0))
+    error_rate = float(status.get("error_rate_pct", 0))
+    coverage_pct = float(status.get("coverage_pct", 0))
+
+    candidates = [
+        {
+            "action": "hold_position",
+            "estimated_risk": 0.22,
+            "estimated_mission_gain": 0.45,
+            "estimated_cost": 0.2,
+            "reason": "stabilize command plane",
+        },
+        {
+            "action": "reroute_high_risk_corridor",
+            "estimated_risk": 0.34,
+            "estimated_mission_gain": 0.78,
+            "estimated_cost": 0.38,
+            "reason": "reduce projected zone collision risk",
+        },
+        {
+            "action": "reassign_role_mapper_to_scout",
+            "estimated_risk": 0.29,
+            "estimated_mission_gain": 0.66,
+            "estimated_cost": 0.41,
+            "reason": "increase exploration efficiency on sparse sectors",
+        },
+    ]
+
+    rejected = []
+    if error_rate > 1.25:
+        rejected.append(
+            {
+                "action": "accelerate_autonomy",
+                "reason": "rejected: control-plane error rate above threshold",
+            }
+        )
+    if avg_latency > 180:
+        rejected.append(
+            {
+                "action": "high_frequency_replanning",
+                "reason": "rejected: latency budget exceeded",
+            }
+        )
+
+    selected = "reroute_high_risk_corridor" if coverage_pct < 95 else "hold_position"
+    score = 0.73 if selected == "reroute_high_risk_corridor" else 0.61
+
+    payload = {
+        "generated_at": int(time.time()),
+        "selected_action": selected,
+        "selected_score": score,
+        "candidates": candidates,
+        "rejected_candidates": rejected,
+    }
+    return jsonify(payload), 200
+
+
+@app.route("/autonomy/sensors/quality", methods=["GET"])
+def autonomy_sensors_quality_view():
+    status = _build_swarm_status_snapshot()
+    health = build_ops_health_snapshot()
+    base_conf = max(0.55, min(0.98, float(status.get("coverage_pct", 0)) / 100.0))
+
+    payload = {
+        "generated_at": int(time.time()),
+        "sources": [
+            {
+                "source": "gps_pose",
+                "confidence": round(base_conf, 3),
+                "freshness_secs": round(
+                    float(health.get("telemetry", {}).get("api_latency_ms", 0)) / 1000.0
+                    + 1.0,
+                    3,
+                ),
+                "anomaly_score": round(
+                    max(0.0, min(1.0, float(status.get("error_rate_pct", 0)) / 10.0)), 3
+                ),
+                "health": (
+                    "healthy"
+                    if float(status.get("error_rate_pct", 0)) < 2
+                    else "degraded"
+                ),
+            },
+            {
+                "source": "lidar_spatial",
+                "confidence": round(max(0.4, base_conf - 0.06), 3),
+                "freshness_secs": 2.2,
+                "anomaly_score": 0.12,
+                "health": "healthy",
+            },
+            {
+                "source": "camera_vision",
+                "confidence": round(max(0.35, base_conf - 0.09), 3),
+                "freshness_secs": 2.5,
+                "anomaly_score": 0.16,
+                "health": "healthy",
+            },
+        ],
+    }
+    return jsonify(payload), 200
+
+
+@app.route("/autonomy/slo/status", methods=["GET"])
+def autonomy_slo_status_view():
+    status = _build_swarm_status_snapshot()
+    map_state = _build_swarm_map_state(limit=64, layers={"coverage"})
+    now_ts = int(time.time())
+    lag_seconds = max(0, now_ts - int(map_state.get("timestamp", now_ts)))
+
+    coverage = float(
+        status.get("coverage_pct", map_state.get("coverage", {}).get("percent", 0))
+    )
+    latency = float(status.get("avg_latency_ms", 0))
+    error_rate = float(status.get("error_rate_pct", 0))
+    lag_ms = lag_seconds * 1000
+
+    payload = {
+        "generated_at": now_ts,
+        "slos": [
+            {
+                "name": "api_latency_p95_ms",
+                "target": 120,
+                "current": round(latency, 2),
+                "breach": latency > 120,
+            },
+            {
+                "name": "api_error_rate_pct",
+                "target": 1.0,
+                "current": round(error_rate, 3),
+                "breach": error_rate > 1.0,
+            },
+            {
+                "name": "digital_twin_lag_ms",
+                "target": 2000,
+                "current": int(lag_ms),
+                "breach": lag_ms > 2000,
+            },
+            {
+                "name": "coverage_pct",
+                "target": 95,
+                "current": round(coverage, 2),
+                "breach": coverage < 95,
+            },
+        ],
+    }
+    return jsonify(payload), 200
+
+
 @app.route("/swarm/commands", methods=["GET"])
 def swarm_commands_view():
     try:

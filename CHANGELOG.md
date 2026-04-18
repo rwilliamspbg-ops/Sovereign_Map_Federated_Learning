@@ -70,6 +70,25 @@ None - 0.2.0 is the first stable release with public APIs.
 - Privacy-Utility analysis mode now uses backend convergence metrics as canonical source.
 - Observability CI dashboard-query validator allowlist updated to include consensus and aggregation metrics referenced by operations dashboards.
 
+### Autonomous Mapping and Chaos Validation Hardening - 2026-04-18
+
+- Added canonical autonomy core package under `internal/autonomy`:
+   - capability contracts and validation
+   - confidence-scored map/twin state store
+   - correction planner scoring and safety rejection
+   - prediction and compute-target orchestration
+   - runtime readiness gate enforcement
+- Extended drone telemetry ingest contract with source-health-confidence normalization and tests.
+- Added autonomy API routes to backend and OpenAPI coverage:
+   - `GET /autonomy/twin/summary`
+   - `GET /autonomy/planner/insights`
+   - `GET /autonomy/sensors/quality`
+   - `GET /autonomy/slo/status`
+- Expanded HUD and C2 workflows with autonomy KPI/safety/recommendation overlays.
+- Updated node-agent runtime profile to CPU-only PyTorch wheels (`torch==2.1.0+cpu`, `torchvision==0.16.0+cpu`) to reduce CI/dev container footprint.
+- Hardened chaos suite fallback auth path by passing admin token headers to `/trigger_fl` during manual round trigger fallback.
+- Overhauled repo documentation to include autonomy operations runbooks, updated control-plane endpoint references, and strict chaos execution guidance.
+
 ---
 
 ## [0.1.0-alpha.1] - 2026-03-17

@@ -386,6 +386,199 @@ paths:
                 type: string
                 example: "data: {\"id\":1,\"kind\":\"heartbeat\"}\n\n"
 
+  /swarm/status:
+    get:
+      tags: [Operations]
+      summary: Get autonomous swarm command-plane status
+      operationId: getSwarmStatus
+      responses:
+        '200':
+          description: Swarm status snapshot
+          content:
+            application/json:
+              schema:
+                type: object
+                additionalProperties: true
+
+  /swarm/map:
+    get:
+      tags: [Operations]
+      summary: Get bounded swarm map state for C2 HUD rendering
+      operationId: getSwarmMap
+      parameters:
+        - name: limit
+          in: query
+          required: false
+          schema:
+            type: integer
+            minimum: 1
+            default: 280
+        - name: layers
+          in: query
+          required: false
+          schema:
+            type: string
+            example: paths,risk,coverage,communications
+      responses:
+        '200':
+          description: Swarm map payload
+          content:
+            application/json:
+              schema:
+                type: object
+                additionalProperties: true
+
+  /swarm/commands:
+    get:
+      tags: [Operations]
+      summary: List recent swarm command records
+      operationId: getSwarmCommands
+      parameters:
+        - name: limit
+          in: query
+          required: false
+          schema:
+            type: integer
+            minimum: 1
+            default: 100
+      responses:
+        '200':
+          description: Swarm command log
+          content:
+            application/json:
+              schema:
+                type: object
+                additionalProperties: true
+
+  /swarm/audit/recent:
+    get:
+      tags: [Operations]
+      summary: List recent signed swarm audit records (admin)
+      operationId: getSwarmAuditRecent
+      security:
+        - JoinAdminHeader: []
+        - BearerAuth: []
+      parameters:
+        - name: limit
+          in: query
+          required: false
+          schema:
+            type: integer
+            minimum: 1
+            default: 100
+      responses:
+        '200':
+          description: Swarm audit log
+          content:
+            application/json:
+              schema:
+                type: object
+                additionalProperties: true
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /swarm/command:
+    post:
+      tags: [Operations]
+      summary: Submit a signed swarm command (admin)
+      operationId: postSwarmCommand
+      security:
+        - JoinAdminHeader: []
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              additionalProperties: true
+      responses:
+        '200':
+          description: Command accepted
+          content:
+            application/json:
+              schema:
+                type: object
+                additionalProperties: true
+        '400':
+          description: Invalid command request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '429':
+          description: Rate limited
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /autonomy/twin/summary:
+    get:
+      tags: [Operations]
+      summary: Get digital twin summary for autonomy HUD
+      operationId: getAutonomyTwinSummary
+      responses:
+        '200':
+          description: Twin summary payload
+          content:
+            application/json:
+              schema:
+                type: object
+                additionalProperties: true
+
+  /autonomy/planner/insights:
+    get:
+      tags: [Operations]
+      summary: Get planner candidate and selection insights
+      operationId: getAutonomyPlannerInsights
+      responses:
+        '200':
+          description: Planner insight payload
+          content:
+            application/json:
+              schema:
+                type: object
+                additionalProperties: true
+
+  /autonomy/sensors/quality:
+    get:
+      tags: [Operations]
+      summary: Get autonomy sensor quality matrix
+      operationId: getAutonomySensorsQuality
+      responses:
+        '200':
+          description: Sensor quality payload
+          content:
+            application/json:
+              schema:
+                type: object
+                additionalProperties: true
+
+  /autonomy/slo/status:
+    get:
+      tags: [Operations]
+      summary: Get autonomy SLO status
+      operationId: getAutonomySloStatus
+      responses:
+        '200':
+          description: SLO status payload
+          content:
+            application/json:
+              schema:
+                type: object
+                additionalProperties: true
+
   /model_registry:
     get:
       tags: [Operations]

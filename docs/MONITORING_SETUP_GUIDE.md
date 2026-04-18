@@ -556,6 +556,52 @@ scrape_configs:
 
 ## Troubleshooting
 
+### Strict chaos soak fails with 401 on `/trigger_fl`
+
+Symptoms:
+
+- `tests/scripts/python/test_soak_chaos_guard.py` fails during validation with no FL round progression.
+- Backend logs show unauthorized requests for `/trigger_fl`.
+
+Cause:
+
+- Backend admin auth is enabled and manual fallback trigger calls require `JOIN_API_ADMIN_TOKEN`.
+
+Resolution:
+
+```bash
+export JOIN_API_ADMIN_TOKEN='replace-with-strong-token'
+export ALLOW_INSECURE_DEV_ADMIN_TOKEN='false'
+
+docker compose -f docker-compose.full.yml up -d backend prometheus node-agent
+
+JOIN_API_ADMIN_TOKEN="$JOIN_API_ADMIN_TOKEN" \
+SOAK_CHAOS_ENABLED=1 \
+SOAK_CHAOS_STRICT=1 \
+CHAOS_MIN_CLIENT_QUORUM=1 \
+python3 tests/scripts/python/test_soak_chaos_guard.py
+```
+
+Expected outcome:
+
+- Suite completes with exit code `0`.
+- Output includes `PASSED: FL rounds progressed under controlled churn`.
+
+### Node-agent image build exceeds disk in local/CI runs
+
+Current default:
+
+- `Dockerfile.node-agent` uses CPU-only wheels (`torch==2.1.0+cpu`, `torchvision==0.16.0+cpu`) to avoid CUDA package bloat during standard validation.
+
+If disk pressure persists:
+
+```bash
+docker compose -f docker-compose.full.yml down --remove-orphans
+docker system prune -af --volumes
+docker builder prune -af
+df -h /
+```
+
 ### Dashboards Not Appearing
 
 **Problem**: Dashboards imported but not showing in Grafana
