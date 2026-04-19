@@ -72,10 +72,32 @@ jobs:
       - name: Start services
         run: docker compose -f docker-compose.full.yml up -d --scale node-agent=5
 
-      - name: Wait for backend health
+      - name: Wait for backend and proxy health
         run: |
-          echo "Waiting for federated learning nodes to initialize..."
-          sleep 45
+          set -euo pipefail
+          echo "Waiting for backend container health and frontend proxy readiness..."
+
+          # Wait for backend container to report healthy.
+          for i in $(seq 1 30); do
+            status=$(docker inspect -f '{{.State.Health.Status}}' sovereign-backend 2>/dev/null || true)
+            if [ "$status" = "healthy" ]; then
+              echo "backend health check passed"
+              break
+            fi
+            if [ "$i" -eq 30 ]; then
+              echo "backend did not become healthy"
+              docker compose -f docker-compose.full.yml logs backend || true
+              exit 1
+            fi
+            echo "backend health: ${status:-unknown} (attempt $i/30)"
+            sleep 5
+          done
+
+          # Validate direct backend endpoint and frontend reverse-proxy endpoint.
+          curl -fsS --retry 10 --retry-all-errors --retry-delay 3 \
+            http://127.0.0.1:8000/ops/health >/dev/null
+          curl -fsS --retry 10 --retry-all-errors --retry-delay 3 \
+            http://127.0.0.1:3000/backend/ops/health >/dev/null
 
       - name: Debug on failure
         if: failure()
