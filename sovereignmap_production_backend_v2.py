@@ -3863,53 +3863,6 @@ def runtime_profile_view():
             }
         return jsonify(payload), 200
 
-
-        @app.route("/ai/interaction/history", methods=["GET"])
-        def ai_interaction_history_view():
-            try:
-                limit = int(request.args.get("limit", 50))
-            except (TypeError, ValueError):
-                limit = 50
-            limit = max(1, min(limit, 200))
-            history = _interaction_review_history(limit=limit)
-            return jsonify({"count": len(history), "decisions": history}), 200
-
-
-        @app.route("/ai/interaction/decision", methods=["POST"])
-        def ai_interaction_decision_view():
-            body = request.get_json(silent=True) or {}
-            if not isinstance(body, dict):
-                return jsonify({"error": "invalid_payload", "message": "JSON object required"}), 400
-
-            decision = str(body.get("decision", "")).strip().lower()
-            if decision not in {"approve", "edit", "reject", "undo"}:
-                return jsonify({"error": "invalid_decision"}), 400
-
-            review_entry = _append_interaction_review_entry(
-                {
-                    "review_id": body.get("review_id"),
-                    "ts": time.time(),
-                    "action_id": body.get("action_id"),
-                    "action_label": body.get("action_label"),
-                    "action_kind": body.get("action_kind"),
-                    "model_route": body.get("model_route"),
-                    "decision": decision,
-                    "reason": body.get("reason"),
-                    "prompt": body.get("prompt"),
-                    "command": body.get("command"),
-                    "parameters": body.get("parameters") or {},
-                    "reversible": bool(body.get("reversible", False)),
-                    "source_action_id": body.get("source_action_id"),
-                    "override_prompt": body.get("override_prompt"),
-                    "rollback_of": body.get("rollback_of"),
-                    "reviewed_by": _sanitize_swarm_token(
-                        request.headers.get("X-API-Role", "operator"), max_len=24
-                    ).lower()
-                    or "operator",
-                }
-            )
-            return jsonify({"status": "recorded", "decision": review_entry}), 200
-
     body = request.get_json(silent=True) or {}
     if not isinstance(body, dict):
         return jsonify({"status": "error", "message": "JSON object required"}), 400
@@ -3935,6 +3888,53 @@ def runtime_profile_view():
         severity="success",
     )
     return jsonify({"status": "ok", "active_profile": applied}), 200
+
+
+@app.route("/ai/interaction/history", methods=["GET"])
+def ai_interaction_history_view():
+    try:
+        limit = int(request.args.get("limit", 50))
+    except (TypeError, ValueError):
+        limit = 50
+    limit = max(1, min(limit, 200))
+    history = _interaction_review_history(limit=limit)
+    return jsonify({"count": len(history), "decisions": history}), 200
+
+
+@app.route("/ai/interaction/decision", methods=["POST"])
+def ai_interaction_decision_view():
+    body = request.get_json(silent=True) or {}
+    if not isinstance(body, dict):
+        return jsonify({"error": "invalid_payload", "message": "JSON object required"}), 400
+
+    decision = str(body.get("decision", "")).strip().lower()
+    if decision not in {"approve", "edit", "reject", "undo"}:
+        return jsonify({"error": "invalid_decision"}), 400
+
+    review_entry = _append_interaction_review_entry(
+        {
+            "review_id": body.get("review_id"),
+            "ts": time.time(),
+            "action_id": body.get("action_id"),
+            "action_label": body.get("action_label"),
+            "action_kind": body.get("action_kind"),
+            "model_route": body.get("model_route"),
+            "decision": decision,
+            "reason": body.get("reason"),
+            "prompt": body.get("prompt"),
+            "command": body.get("command"),
+            "parameters": body.get("parameters") or {},
+            "reversible": bool(body.get("reversible", False)),
+            "source_action_id": body.get("source_action_id"),
+            "override_prompt": body.get("override_prompt"),
+            "rollback_of": body.get("rollback_of"),
+            "reviewed_by": _sanitize_swarm_token(
+                request.headers.get("X-API-Role", "operator"), max_len=24
+            ).lower()
+            or "operator",
+        }
+    )
+    return jsonify({"status": "recorded", "decision": review_entry}), 200
 
 
 @app.route("/verification_policy", methods=["POST"])
