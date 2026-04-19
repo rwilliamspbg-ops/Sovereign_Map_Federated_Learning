@@ -619,12 +619,46 @@ paths:
       tags: [Operations]
       summary: Record an AI interaction review decision
       operationId: recordAiInteractionDecision
+      description: |
+        Records operator review decisions for AI interaction actions.
+        Authentication defaults to admin-required and can be relaxed for local-only testing with `AI_INTERACTION_DECISION_AUTH_MODE=public_local`.
+      parameters:
+        - in: header
+          name: X-Join-Admin-Token
+          required: false
+          schema:
+            type: string
+          description: Admin token required when interaction decision auth mode is `admin_required`.
       requestBody:
         required: true
         content:
           application/json:
             schema:
               type: object
+              properties:
+                review_id:
+                  type: string
+                decision:
+                  type: string
+                  enum: [approve, edit, reject, undo]
+                action_id:
+                  type: string
+                action_label:
+                  type: string
+                action_kind:
+                  type: string
+                model_route:
+                  type: string
+                reason:
+                  type: string
+                prompt:
+                  type: string
+                command:
+                  type: string
+                parameters:
+                  type: object
+                  additionalProperties: true
+              required: [decision]
               additionalProperties: true
       responses:
         '200':
@@ -634,6 +668,21 @@ paths:
               schema:
                 type: object
                 additionalProperties: true
+        '401':
+          description: Missing or invalid authorization for interaction decision policy
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: string
+                    example: unauthorized
+                  auth_mode:
+                    type: string
+                    example: admin_required
+                  hint:
+                    type: string
 
   /model_registry:
     get:

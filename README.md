@@ -897,6 +897,7 @@ curl -s http://localhost:9105/health | jq
 - Auth boundaries: `/verification_policy` supports role-aware updates via `X-API-Role` and optional bearer token wiring.
 - Auth boundaries: `/swarm/command` requires admin authorization and enforces role policy via `X-API-Role`.
 - Auth boundaries: `/swarm/audit/recent` is admin-gated and intended for operator audit workflows.
+- Auth boundaries: `/ai/interaction/decision` defaults to `AI_INTERACTION_DECISION_AUTH_MODE=admin_required`; set `AI_INTERACTION_DECISION_AUTH_MODE=public_local` only for local operator testing flows.
 - Auth boundaries: `/trigger_fl` is admin-gated when `JOIN_API_ADMIN_TOKEN` is configured.
 - Status code behavior: `/create_enclave` may return `202` while provisioning is in progress, then `200` once a stable state transition is reached.
 - Status code behavior: `/trigger_fl` may return `202` for accepted async execution and non-2xx when round execution cannot proceed.

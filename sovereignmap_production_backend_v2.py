@@ -480,11 +480,12 @@ def _security_guardrails():
             "/join/register",
             "/mobile/verify_gradient",
             "/attestations/share",
-            "/ai/interaction/decision",
         }
-        if request.path not in public_write_paths and not _authorized_join_admin(
-            request
-        ):
+        if request.path == "/ai/interaction/decision":
+            authorized, error_payload = _authorize_interaction_decision(request)
+            if not authorized:
+                return jsonify(error_payload), 401
+        elif request.path not in public_write_paths and not _authorized_join_admin(request):
             return jsonify({"error": "unauthorized"}), 401
 
     return None
@@ -987,6 +988,15 @@ VERIFICATION_POLICY_HISTORY_PATH = os.getenv(
 )
 JOIN_API_ADMIN_TOKEN = str(os.getenv("JOIN_API_ADMIN_TOKEN", "")).strip()
 ALLOW_INSECURE_DEV_ADMIN_TOKEN = _bool_env("ALLOW_INSECURE_DEV_ADMIN_TOKEN", False)
+AI_INTERACTION_DECISION_AUTH_MODE = str(
+    os.getenv("AI_INTERACTION_DECISION_AUTH_MODE", "admin_required")
+).strip().lower()
+if AI_INTERACTION_DECISION_AUTH_MODE not in {"admin_required", "public_local"}:
+    logger.warning(
+        "Invalid AI_INTERACTION_DECISION_AUTH_MODE=%s; defaulting to admin_required",
+        AI_INTERACTION_DECISION_AUTH_MODE,
+    )
+    AI_INTERACTION_DECISION_AUTH_MODE = "admin_required"
 CERT_DIR = os.getenv("CERT_DIR", "/app/data/certs")
 PUBLIC_AGGREGATOR_HOST = os.getenv("PUBLIC_AGGREGATOR_HOST", "localhost")
 PUBLIC_AGGREGATOR_PORT = int(os.getenv("PUBLIC_AGGREGATOR_PORT", "8080"))
@@ -2035,6 +2045,35 @@ def _authorized_join_admin(req: Request) -> bool:
     allowlist_raw = str(os.getenv("ADMIN_WALLET_ALLOWLIST", "")).strip().lower()
     allowlist = {item.strip() for item in allowlist_raw.split(",") if item.strip()}
     return bool(wallet_address and wallet_address in allowlist)
+
+
+def _resolve_interaction_decision_auth_mode() -> str:
+    mode = str(AI_INTERACTION_DECISION_AUTH_MODE or "admin_required").strip().lower()
+    if mode in {"admin_required", "public_local"}:
+        return mode
+    return "admin_required"
+
+
+def _authorize_interaction_decision(
+    req: Request,
+) -> Tuple[bool, Optional[Dict[str, Any]]]:
+    mode = _resolve_interaction_decision_auth_mode()
+    if mode == "public_local" and _is_local_request(req):
+        return True, None
+    if _authorized_join_admin(req):
+        return True, None
+    return (
+        False,
+        {
+            "error": "unauthorized",
+            "message": "interaction decision requires admin authorization",
+            "auth_mode": mode,
+            "hint": (
+                "Provide X-Join-Admin-Token/Authorization bearer token, "
+                "or set AI_INTERACTION_DECISION_AUTH_MODE=public_local for local testing"
+            ),
+        },
+    )
 
 
 def _next_join_node_id(registrations: List[Dict[str, Any]]) -> int:
@@ -3627,6 +3666,10 @@ def ai_interaction_history_view():
 
 @app.route("/ai/interaction/decision", methods=["POST"])
 def ai_interaction_decision_view():
+    authorized, error_payload = _authorize_interaction_decision(request)
+    if not authorized:
+        return jsonify(error_payload), 401
+
     body = request.get_json(silent=True) or {}
     if not isinstance(body, dict):
         return jsonify({"error": "invalid_payload", "message": "JSON object required"}), 400

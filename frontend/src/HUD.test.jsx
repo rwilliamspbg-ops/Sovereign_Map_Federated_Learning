@@ -119,7 +119,7 @@ describe('HUD AI interaction console', () => {
 
     expect(await screen.findByText('AI Interaction Console')).toBeInTheDocument();
     const historyArticle = screen.getByRole('heading', { name: 'Decision History' }).closest('article');
-    expect(within(historyArticle).getByText('approve')).toBeInTheDocument();
+    expect(within(historyArticle).getAllByText('approve').length).toBeGreaterThan(0);
     expect(within(historyArticle).getByText('Start 10-round training')).toBeInTheDocument();
 
     const quickActionsSection = screen.getByRole('heading', { name: 'Quick Actions' }).closest('article');
@@ -219,5 +219,55 @@ describe('HUD AI interaction console', () => {
     const [, decisionOptions] = decisionRequest;
     const decisionBody = JSON.parse(decisionOptions.body);
     expect(decisionBody.decision).toBe('undo');
+  });
+
+  it('filters decision history and renders replay detail context', async () => {
+    render(
+      <HUD
+        {...baseProps}
+        interactionSummary={{
+          quick_actions: [],
+          recommendations: [],
+          intent_examples: ['show planner insights'],
+          model_route: 'planner',
+          context: { safety_state: 'safe' },
+        }}
+        interactionHistory={[
+          {
+            review_id: 'review-a',
+            ts: 1710000001,
+            decision: 'approve',
+            model_route: 'planner',
+            action_label: 'Replan risky corridor',
+            reason: 'maintenance window fit',
+            prompt: 'replan corridor alpha',
+          },
+          {
+            review_id: 'review-b',
+            ts: 1710000002,
+            decision: 'reject',
+            model_route: 'summary',
+            action_label: 'Reduce replanning rate',
+            reason: 'latency stabilized',
+            prompt: 'hold replanning cadence',
+          },
+        ]}
+      />
+    );
+
+    const historyArticle = screen.getByRole('heading', { name: 'Decision History' }).closest('article');
+    fireEvent.change(within(historyArticle).getByLabelText('Search decisions'), { target: { value: 'maintenance' } });
+    expect(within(historyArticle).getByText('Replan risky corridor')).toBeInTheDocument();
+    expect(within(historyArticle).queryByText('Reduce replanning rate')).not.toBeInTheDocument();
+
+    fireEvent.change(within(historyArticle).getByLabelText('Decision filter'), { target: { value: 'reject' } });
+    expect(within(historyArticle).getByText('No interaction decisions match the current filters.')).toBeInTheDocument();
+
+    fireEvent.change(within(historyArticle).getByLabelText('Decision filter'), { target: { value: 'all' } });
+
+    const replayArticle = screen.getByRole('heading', { name: 'Twin Replay Context' }).closest('article');
+    fireEvent.click(within(replayArticle).getAllByRole('button')[0]);
+    expect(within(replayArticle).getByText(/reason maintenance window fit/i)).toBeInTheDocument();
+    expect(within(replayArticle).getByText(/prompt replan corridor alpha/i)).toBeInTheDocument();
   });
 });
