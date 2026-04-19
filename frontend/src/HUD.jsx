@@ -277,6 +277,10 @@ export default function HUD({
   const [interactionReview, setInteractionReview] = useState(null);
   const [interactionReviewStatus, setInteractionReviewStatus] = useState('');
   const [interactionDecisionLog, setInteractionDecisionLog] = useState([]);
+  const [decisionSearchQuery, setDecisionSearchQuery] = useState('');
+  const [decisionFilter, setDecisionFilter] = useState('all');
+  const [decisionSort, setDecisionSort] = useState('newest');
+  const [selectedReplayReviewId, setSelectedReplayReviewId] = useState('');
   const [collapsedClusters, setCollapsedClusters] = useState({
     api: false,
     llm: false,
@@ -702,9 +706,43 @@ export default function HUD({
   const twinRouteCandidates = Array.isArray(interactionSummary?.route_candidates)
     ? interactionSummary.route_candidates.slice(0, 4)
     : [];
-  const twinDecisionReplay = Array.isArray(interactionSummary?.recent_decisions) && interactionSummary.recent_decisions.length > 0
-    ? interactionSummary.recent_decisions.slice(0, 5)
-    : interactionHistoryEntries.slice(0, 5);
+  const normalizedDecisionSearchQuery = String(decisionSearchQuery || '').trim().toLowerCase();
+  const decisionSortSign = decisionSort === 'oldest' ? 1 : -1;
+  const matchesDecisionFilters = (entry) => {
+    const decisionValue = String(entry?.decision || '').toLowerCase();
+    if (decisionFilter !== 'all' && decisionValue !== decisionFilter) {
+      return false;
+    }
+    if (!normalizedDecisionSearchQuery) {
+      return true;
+    }
+    const haystack = [
+      entry?.action_label,
+      entry?.action_id,
+      entry?.decision,
+      entry?.reason,
+      entry?.model_route,
+      entry?.prompt,
+    ]
+      .map((item) => String(item || '').toLowerCase())
+      .join(' ');
+    return haystack.includes(normalizedDecisionSearchQuery);
+  };
+  const sortDecisionEntries = (entries) => [...entries].sort((left, right) => {
+    const leftTs = Number(left?.ts || 0);
+    const rightTs = Number(right?.ts || 0);
+    return (leftTs - rightTs) * decisionSortSign;
+  });
+  const filteredInteractionHistoryEntries = interactionHistoryEntries.filter(matchesDecisionFilters);
+  const sortedInteractionHistoryEntries = sortDecisionEntries(filteredInteractionHistoryEntries);
+  const twinReplaySeed = Array.isArray(interactionSummary?.recent_decisions) && interactionSummary.recent_decisions.length > 0
+    ? interactionSummary.recent_decisions
+    : interactionHistoryEntries;
+  const filteredTwinDecisionReplay = sortDecisionEntries(twinReplaySeed.filter(matchesDecisionFilters)).slice(0, 8);
+  const selectedReplayEntry = filteredTwinDecisionReplay.find((entry) => {
+    const reviewKey = entry?.review_id || `${entry?.action_id || ''}-${entry?.ts || ''}`;
+    return reviewKey === selectedReplayReviewId;
+  }) || filteredTwinDecisionReplay[0] || null;
   const twinAssumptions = Array.isArray(twinEnvelope.assumptions)
     ? twinEnvelope.assumptions.slice(0, 3)
     : [];
@@ -1147,14 +1185,48 @@ export default function HUD({
         <div className="domain-cluster-grid">
           <article className="domain-cluster">
             <h4>Decision History</h4>
-            {interactionHistoryEntries.slice(0, 6).map((entry) => (
+            <label className="input-row">
+              Search decisions
+              <input
+                type="text"
+                value={decisionSearchQuery}
+                onChange={(event) => setDecisionSearchQuery(event.target.value)}
+                placeholder="filter by action, route, reason, or prompt"
+              />
+            </label>
+            <div className="audit-row" style={{ alignItems: 'center', gap: '0.5rem' }}>
+              <span>Decision Filter</span>
+              <select
+                value={decisionFilter}
+                onChange={(event) => setDecisionFilter(event.target.value)}
+                aria-label="Decision filter"
+              >
+                <option value="all">all</option>
+                <option value="approve">approve</option>
+                <option value="edit">edit</option>
+                <option value="reject">reject</option>
+                <option value="undo">undo</option>
+              </select>
+            </div>
+            <div className="audit-row" style={{ alignItems: 'center', gap: '0.5rem' }}>
+              <span>Sort</span>
+              <select
+                value={decisionSort}
+                onChange={(event) => setDecisionSort(event.target.value)}
+                aria-label="Decision sort"
+              >
+                <option value="newest">newest first</option>
+                <option value="oldest">oldest first</option>
+              </select>
+            </div>
+            {sortedInteractionHistoryEntries.slice(0, 8).map((entry) => (
               <div className="audit-row" key={entry.review_id || `${entry.action_id}-${entry.ts}`}>
                 <span>{entry.decision || 'recorded'}</span>
                 <span>{entry.action_label || entry.action_id || 'interaction'}</span>
                 <span>{entry.reason || entry.override_prompt || 'no reason provided'}</span>
               </div>
             ))}
-            {!interactionHistoryEntries.length ? <div className="notice-box">No interaction decisions recorded yet.</div> : null}
+            {!sortedInteractionHistoryEntries.length ? <div className="notice-box">No interaction decisions match the current filters.</div> : null}
           </article>
           <article className="domain-cluster">
             <h4>Digital Twin Lens</h4>
@@ -1195,14 +1267,32 @@ export default function HUD({
           </article>
           <article className="domain-cluster">
             <h4>Twin Replay Context</h4>
-            {twinDecisionReplay.map((entry) => (
-              <div className="audit-row" key={entry.review_id || `${entry.action_id}-${entry.ts}`}>
+            {filteredTwinDecisionReplay.map((entry) => {
+              const replayKey = entry.review_id || `${entry.action_id}-${entry.ts}`;
+              return (
+              <button
+                className="audit-row"
+                style={{ width: '100%', textAlign: 'left' }}
+                key={replayKey}
+                type="button"
+                onClick={() => setSelectedReplayReviewId(replayKey)}
+              >
                 <span>{entry.decision || 'recorded'}</span>
                 <span>{entry.model_route || interactionModelRoute}</span>
                 <span>{entry.action_label || entry.action_id || 'interaction'}</span>
+              </button>
+              );
+            })}
+            {!filteredTwinDecisionReplay.length ? <div className="notice-box">No replay context matches the current filters.</div> : null}
+            {selectedReplayEntry ? (
+              <div className="notice-box">
+                <strong>{selectedReplayEntry.action_label || selectedReplayEntry.action_id || 'interaction'}</strong>
+                <div>decision {selectedReplayEntry.decision || 'recorded'} | route {selectedReplayEntry.model_route || interactionModelRoute}</div>
+                <div>reason {selectedReplayEntry.reason || selectedReplayEntry.override_prompt || 'not provided'}</div>
+                <div>prompt {selectedReplayEntry.prompt || 'not captured'}</div>
+                <div>review {selectedReplayEntry.review_id || 'n/a'} | ts {numberOrFallback(selectedReplayEntry.ts)}</div>
               </div>
-            ))}
-            {!twinDecisionReplay.length ? <div className="notice-box">No replay context recorded yet.</div> : null}
+            ) : null}
           </article>
         </div>
         {assistantMode === 'expert' && (
