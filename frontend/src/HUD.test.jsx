@@ -270,4 +270,5 @@ describe('HUD AI interaction console', () => {
     expect(within(replayArticle).getByText(/reason maintenance window fit/i)).toBeInTheDocument();
     expect(within(replayArticle).getByText(/prompt replan corridor alpha/i)).toBeInTheDocument();
   });
+
 });
