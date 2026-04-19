@@ -70,6 +70,7 @@ function App() {
   const [health, setHealth] = useState(null);
   const [metricsSummary, setMetricsSummary] = useState(null);
   const [interactionSummary, setInteractionSummary] = useState(null);
+  const [interactionHistory, setInteractionHistory] = useState([]);
   const [trustStatus, setTrustStatus] = useState(null);
   const [policyHistory, setPolicyHistory] = useState([]);
   const [founders, setFounders] = useState([]);
@@ -264,11 +265,12 @@ function App() {
   const fetchData = async () => {
     setLoading(true);
     try {
-      const [hudFetch, healthFetch, metricsFetch, interactionFetch, foundersFetch, trainingFetch, opsHealthFetch, opsTrendsFetch] = await Promise.allSettled([
+      const [hudFetch, healthFetch, metricsFetch, interactionFetch, interactionHistoryFetch, foundersFetch, trainingFetch, opsHealthFetch, opsTrendsFetch] = await Promise.allSettled([
         fetch(`${API_BASE}/hud_data`),
         fetch(`${API_BASE}/health`),
         fetch(`${API_BASE}/metrics_summary`),
         fetch(`${API_BASE}/ai/interaction/summary`),
+        fetch(`${API_BASE}/ai/interaction/history?limit=20`),
         fetch(`${API_BASE}/founders`),
         fetch(`${API_BASE}/training/status`),
         fetch(`${API_BASE}/ops/health`),
@@ -287,11 +289,12 @@ function App() {
         }
       };
 
-      const [hud, healthData, metrics, interactionData, foundersData, trainingData, opsHealthData, opsTrendsData] = await Promise.all([
+      const [hud, healthData, metrics, interactionData, interactionHistoryData, foundersData, trainingData, opsHealthData, opsTrendsData] = await Promise.all([
         safeJson(toResponse(hudFetch), hudData || {}),
         safeJson(toResponse(healthFetch), health || {}),
         safeJson(toResponse(metricsFetch), metricsSummary || {}),
         safeJson(toResponse(interactionFetch), interactionSummary || {}),
+        safeJson(toResponse(interactionHistoryFetch), { decisions: interactionHistory || [] }),
         safeJson(toResponse(foundersFetch), founders || []),
         safeJson(toResponse(trainingFetch), { status: 'idle', active: false, round: 0 }),
         safeJson(toResponse(opsHealthFetch), opsHealth || null),
@@ -363,6 +366,7 @@ function App() {
       setHealth(healthData);
       setMetricsSummary(metrics);
       setInteractionSummary(interactionData);
+      setInteractionHistory(Array.isArray(interactionHistoryData?.decisions) ? interactionHistoryData.decisions : []);
       setFounders(foundersData);
       setTrainingStatus(nextTraining);
       setOpsHealth(nextOpsHealth);
@@ -383,9 +387,18 @@ function App() {
     }
   };
 
-  const triggerFLRound = async () => {
+  const triggerFLRound = async (reviewContext = {}) => {
     try {
-      const response = await fetch(`${API_BASE}/trigger_fl`, { method: 'POST' });
+      const response = await fetch(`${API_BASE}/trigger_fl`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          review_decision: reviewContext.decision || '',
+          review_reason: reviewContext.reason || '',
+          source_action_id: reviewContext.source_action_id || '',
+          review_id: reviewContext.review_id || '',
+        })
+      });
       if (response.ok) {
         fetchData();
       }
@@ -395,7 +408,7 @@ function App() {
     }
   };
 
-  const startTraining = async (rounds = 0) => {
+  const startTraining = async (rounds = 0, reviewContext = {}) => {
     try {
       const targetRounds = Number(rounds);
       const payload = Number.isFinite(targetRounds) && targetRounds > 0
@@ -404,7 +417,13 @@ function App() {
       const response = await fetch(`${API_BASE}/training/start`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(payload)
+        body: JSON.stringify({
+          ...payload,
+          review_decision: reviewContext.decision || '',
+          review_reason: reviewContext.reason || '',
+          source_action_id: reviewContext.source_action_id || '',
+          review_id: reviewContext.review_id || '',
+        })
       });
       if (!response.ok) {
         throw new Error(`Training start failed with ${response.status}`);
@@ -416,9 +435,18 @@ function App() {
     }
   };
 
-  const stopTraining = async () => {
+  const stopTraining = async (reviewContext = {}) => {
     try {
-      const response = await fetch(`${API_BASE}/training/stop`, { method: 'POST' });
+      const response = await fetch(`${API_BASE}/training/stop`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          review_decision: reviewContext.decision || '',
+          review_reason: reviewContext.reason || '',
+          source_action_id: reviewContext.source_action_id || '',
+          review_id: reviewContext.review_id || '',
+        })
+      });
       if (!response.ok) {
         throw new Error(`Training stop failed with ${response.status}`);
       }
@@ -429,9 +457,18 @@ function App() {
     }
   };
 
-  const createEnclave = async () => {
+  const createEnclave = async (reviewContext = {}) => {
     try {
-      const response = await fetch(`${API_BASE}/create_enclave`, { method: 'POST' });
+      const response = await fetch(`${API_BASE}/create_enclave`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          review_decision: reviewContext.decision || '',
+          review_reason: reviewContext.reason || '',
+          source_action_id: reviewContext.source_action_id || '',
+          review_id: reviewContext.review_id || '',
+        })
+      });
       const payload = await response.json().catch(() => ({}));
       setEnclaveActionMessage(payload?.message || `Enclave status: ${payload?.enclave_status || 'unknown'}`);
       fetchData();
@@ -461,7 +498,7 @@ function App() {
     }
   };
 
-  const submitVoiceQuery = async (overrideQuery) => {
+  const submitVoiceQuery = async (overrideQuery, reviewContext = {}) => {
     const query = String(overrideQuery ?? voiceQuery ?? '').trim();
     if (!query) {
       return;
@@ -471,7 +508,13 @@ function App() {
       const response = await fetch(`${API_BASE}/chat`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ query })
+        body: JSON.stringify({
+          query,
+          review_decision: reviewContext.decision || '',
+          review_reason: reviewContext.reason || '',
+          source_action_id: reviewContext.source_action_id || '',
+          review_id: reviewContext.review_id || '',
+        })
       });
       if (response.ok) {
         const result = await response.json();
@@ -599,10 +642,12 @@ function App() {
       </header>
 
       <HUD
+        apiBase={API_BASE}
         hudData={hudData}
         health={health}
         metricsSummary={metricsSummary}
         interactionSummary={interactionSummary}
+        interactionHistory={interactionHistory}
         trustStatus={trustStatus}
         policyHistory={policyHistory}
         founders={founders}

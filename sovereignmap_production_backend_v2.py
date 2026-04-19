@@ -450,7 +450,6 @@ def _enforce_rate_limit(req: Request) -> Optional[Response]:
         bucket.append(now)
     return None
 
-
 @app.before_request
 def _security_guardrails():
     if request.method == "OPTIONS":
@@ -481,6 +480,7 @@ def _security_guardrails():
             "/join/register",
             "/mobile/verify_gradient",
             "/attestations/share",
+            "/ai/interaction/decision",
         }
         if request.path not in public_write_paths and not _authorized_join_admin(
             request
@@ -922,6 +922,9 @@ SWARM_COMMAND_RATE_LIMIT_PER_MIN = max(
 SWARM_AUDIT_LOG_PATH = os.getenv(
     "SWARM_AUDIT_LOG_PATH", "./data/swarm_command_audit.jsonl"
 )
+INTERACTION_REVIEW_LOG_PATH = os.getenv(
+    "INTERACTION_REVIEW_LOG_PATH", "./data/ai_interaction_reviews.jsonl"
+)
 SWARM_AUDIT_SIGNING_KEY = str(os.getenv("SWARM_AUDIT_SIGNING_KEY", "")).strip()
 if not SWARM_AUDIT_SIGNING_KEY:
     logging.warning(
@@ -933,9 +936,11 @@ if not SWARM_AUDIT_SIGNING_KEY:
 SWARM_COMMAND_NONCE_CACHE_MAX = max(200, SWARM_COMMAND_RATE_LIMIT_PER_MIN * 10)
 swarm_command_log: deque = deque(maxlen=SWARM_COMMAND_LOG_MAX)
 swarm_audit_log: deque = deque(maxlen=SWARM_COMMAND_LOG_MAX)
+interaction_review_log: deque = deque(maxlen=200)
 swarm_command_nonce_cache: Dict[str, Dict[str, Any]] = {}
 swarm_command_timestamps: deque = deque(maxlen=SWARM_COMMAND_RATE_LIMIT_PER_MIN * 3)
 swarm_command_lock = threading.Lock()
+interaction_review_lock = threading.Lock()
 MODEL_REGISTRY_PATH = os.getenv("MODEL_REGISTRY_PATH", "./data/model_registry.jsonl")
 TPM_METRICS_ENDPOINT = os.getenv(
     "TPM_METRICS_ENDPOINT", "https://tpm-metrics:9091/event/attestation"
@@ -2105,6 +2110,10 @@ def _append_swarm_audit_entry(command_entry: Dict[str, Any]) -> Dict[str, Any]:
         "target_scope": command_entry.get("target_scope"),
         "target_ids": command_entry.get("target_ids"),
         "status": command_entry.get("status"),
+        "review_decision": command_entry.get("review_decision"),
+        "review_reason": command_entry.get("review_reason"),
+        "source_action_id": command_entry.get("source_action_id"),
+        "rollback_of": command_entry.get("rollback_of"),
         "prev_signature": previous_signature,
         "signature": signature,
     }
@@ -2118,6 +2127,139 @@ def _append_swarm_audit_entry(command_entry: Dict[str, Any]) -> Dict[str, Any]:
         logger.warning("Unable to persist swarm audit entry: %s", exc)
 
     return audit_entry
+
+
+def _append_interaction_review_entry(review_entry: Dict[str, Any]) -> Dict[str, Any]:
+    previous_review_id = ""
+    if interaction_review_log:
+        previous_review_id = str(interaction_review_log[-1].get("review_id", ""))
+
+    review_id = _sanitize_swarm_token(review_entry.get("review_id", ""), max_len=72)
+    if not review_id:
+        review_id = f"review-{secrets.token_hex(8)}"
+
+    log_entry = {
+        "ts": int(review_entry.get("ts", time.time())),
+        "review_id": review_id,
+        "action_id": review_entry.get("action_id"),
+        "action_label": review_entry.get("action_label"),
+        "action_kind": review_entry.get("action_kind"),
+        "model_route": review_entry.get("model_route"),
+        "decision": review_entry.get("decision"),
+        "reason": review_entry.get("reason"),
+        "prompt": review_entry.get("prompt"),
+        "command": review_entry.get("command"),
+        "parameters": review_entry.get("parameters") or {},
+        "reversible": bool(review_entry.get("reversible", False)),
+        "source_action_id": review_entry.get("source_action_id"),
+        "override_prompt": review_entry.get("override_prompt"),
+        "rollback_of": review_entry.get("rollback_of"),
+        "reviewed_by": review_entry.get("reviewed_by", "operator"),
+        "prev_review_id": previous_review_id,
+    }
+
+    with interaction_review_lock:
+        interaction_review_log.append(log_entry)
+
+    try:
+        _ensure_parent_dir(INTERACTION_REVIEW_LOG_PATH)
+        with open(INTERACTION_REVIEW_LOG_PATH, "a", encoding="utf-8") as f:
+            f.write(json.dumps(log_entry, sort_keys=True) + "\n")
+    except Exception as exc:
+        logger.warning("Unable to persist interaction review entry: %s", exc)
+
+    emit_ops_event(
+        kind="interaction_review",
+        message=f"AI interaction {log_entry['decision']}: {log_entry.get('action_label') or log_entry.get('action_id')}",
+        severity="info" if log_entry["decision"] in {"approve", "edit", "undo"} else "warning",
+        data={
+            "review_id": review_id,
+            "action_id": log_entry.get("action_id"),
+            "decision": log_entry.get("decision"),
+            "model_route": log_entry.get("model_route"),
+            "reversible": log_entry.get("reversible"),
+        },
+    )
+
+    return log_entry
+
+
+def _interaction_route_candidates(
+    coverage_pct: float,
+    error_rate_pct: float,
+    twin_lag_ms: float,
+    risk_score: float,
+    recent_rejections: int,
+) -> List[Dict[str, Any]]:
+    candidates = [
+        {
+            "route": "summary",
+            "score": round(max(0.0, 1.0 - abs(coverage_pct - 97.5) / 100.0), 4),
+            "reason": "healthy baseline summary for stable systems",
+        },
+        {
+            "route": "planner",
+            "score": round(min(1.0, max(0.2, (100.0 - coverage_pct) / 100.0 + risk_score * 0.45)), 4),
+            "reason": "planner is better when coverage or risk pressure rises",
+        },
+        {
+            "route": "recovery",
+            "score": round(min(1.0, (error_rate_pct / 5.0) + (1.0 if twin_lag_ms > 3500 else 0.0)), 4),
+            "reason": "recovery route is favored when errors or lag are high",
+        },
+        {
+            "route": "search",
+            "score": round(min(1.0, 0.15 + (recent_rejections * 0.12)), 4),
+            "reason": "search is useful when operators have recently rejected suggestions",
+        },
+    ]
+    candidates.sort(key=lambda item: item["score"], reverse=True)
+    return candidates
+
+
+def _select_interaction_route(
+    coverage_pct: float,
+    error_rate_pct: float,
+    twin_lag_ms: float,
+    risk_score: float,
+    recent_rejections: int,
+) -> Tuple[str, str, List[Dict[str, Any]]]:
+    candidates = _interaction_route_candidates(
+        coverage_pct=coverage_pct,
+        error_rate_pct=error_rate_pct,
+        twin_lag_ms=twin_lag_ms,
+        risk_score=risk_score,
+        recent_rejections=recent_rejections,
+    )
+    best = candidates[0]
+    if error_rate_pct > 2.0 or twin_lag_ms > 5000:
+        return (
+            "recovery",
+            "runtime pressure suggests recovery routing",
+            candidates,
+        )
+    if coverage_pct < 94.5 or risk_score >= 0.6:
+        return (
+            "planner",
+            "coverage or risk pressure suggests planner routing",
+            candidates,
+        )
+    if recent_rejections >= 2:
+        return (
+            "search",
+            "recent operator rejections suggest retrieving prior decisions",
+            candidates,
+        )
+    return (
+        best["route"],
+        best["reason"],
+        candidates,
+    )
+
+
+def _interaction_review_history(limit: int = 50) -> List[Dict[str, Any]]:
+    with interaction_review_lock:
+        return list(interaction_review_log)[-limit:]
 
 
 def _swarm_rate_limited(now_ts: float) -> bool:
@@ -3472,8 +3614,61 @@ def swarm_audit_recent_view():
     return jsonify({"count": len(audits), "audits": audits}), 200
 
 
+@app.route("/ai/interaction/history", methods=["GET"])
+def ai_interaction_history_view():
+    try:
+        limit = int(request.args.get("limit", 50))
+    except (TypeError, ValueError):
+        limit = 50
+    limit = max(1, min(limit, 200))
+    history = _interaction_review_history(limit=limit)
+    return jsonify({"count": len(history), "decisions": history}), 200
+
+
+@app.route("/ai/interaction/decision", methods=["POST"])
+def ai_interaction_decision_view():
+    body = request.get_json(silent=True) or {}
+    if not isinstance(body, dict):
+        return jsonify({"error": "invalid_payload", "message": "JSON object required"}), 400
+
+    decision = str(body.get("decision", "")).strip().lower()
+    if decision not in {"approve", "edit", "reject", "undo"}:
+        return jsonify({"error": "invalid_decision"}), 400
+
+    review_entry = _append_interaction_review_entry(
+        {
+            "review_id": body.get("review_id"),
+            "ts": time.time(),
+            "action_id": body.get("action_id"),
+            "action_label": body.get("action_label"),
+            "action_kind": body.get("action_kind"),
+            "model_route": body.get("model_route"),
+            "decision": decision,
+            "reason": body.get("reason"),
+            "prompt": body.get("prompt"),
+            "command": body.get("command"),
+            "parameters": body.get("parameters") or {},
+            "reversible": bool(body.get("reversible", False)),
+            "source_action_id": body.get("source_action_id"),
+            "override_prompt": body.get("override_prompt"),
+            "rollback_of": body.get("rollback_of"),
+            "reviewed_by": _sanitize_swarm_token(
+                request.headers.get("X-API-Role", "operator"), max_len=24
+            ).lower()
+            or "operator",
+        }
+    )
+    return jsonify({"status": "recorded", "decision": review_entry}), 200
+
+
 @app.route("/swarm/command", methods=["POST"])
 def swarm_command_submit():
+    if not _authorized_join_admin(request):
+        swarm_command_requests_total.labels(
+            command="unauthorized", result="rejected"
+        ).inc()
+        return jsonify({"error": "unauthorized"}), 401
+
     request_started = time.time()
     body = request.get_json(silent=True) or {}
     if not isinstance(body, dict):
@@ -3579,6 +3774,15 @@ def swarm_command_submit():
                 or "admin",
                 "role": caller_role,
                 "status": "accepted",
+                "review_decision": str(body.get("review_decision", "")).strip()[:24].lower(),
+                "review_reason": str(body.get("review_reason", "")).strip()[:220],
+                "source_action_id": _sanitize_swarm_token(
+                    body.get("source_action_id", ""), max_len=72
+                ),
+                "rollback_of": _sanitize_swarm_token(
+                    body.get("rollback_of", ""), max_len=72
+                ),
+                "review_id": _sanitize_swarm_token(body.get("review_id", ""), max_len=72),
             }
             swarm_command_log.append(command_entry)
             audit_entry = _append_swarm_audit_entry(command_entry)
@@ -3628,6 +3832,8 @@ def swarm_command_submit():
             "role": caller_role,
             "target_scope": normalized["target_scope"],
             "target_count": len(normalized["target_ids"]),
+            "review_decision": body.get("review_decision"),
+            "review_reason": body.get("review_reason"),
         },
     )
     return (
@@ -3682,6 +3888,53 @@ def runtime_profile_view():
         severity="success",
     )
     return jsonify({"status": "ok", "active_profile": applied}), 200
+
+
+@app.route("/ai/interaction/history", methods=["GET"])
+def ai_interaction_history_view():
+    try:
+        limit = int(request.args.get("limit", 50))
+    except (TypeError, ValueError):
+        limit = 50
+    limit = max(1, min(limit, 200))
+    history = _interaction_review_history(limit=limit)
+    return jsonify({"count": len(history), "decisions": history}), 200
+
+
+@app.route("/ai/interaction/decision", methods=["POST"])
+def ai_interaction_decision_view():
+    body = request.get_json(silent=True) or {}
+    if not isinstance(body, dict):
+        return jsonify({"error": "invalid_payload", "message": "JSON object required"}), 400
+
+    decision = str(body.get("decision", "")).strip().lower()
+    if decision not in {"approve", "edit", "reject", "undo"}:
+        return jsonify({"error": "invalid_decision"}), 400
+
+    review_entry = _append_interaction_review_entry(
+        {
+            "review_id": body.get("review_id"),
+            "ts": time.time(),
+            "action_id": body.get("action_id"),
+            "action_label": body.get("action_label"),
+            "action_kind": body.get("action_kind"),
+            "model_route": body.get("model_route"),
+            "decision": decision,
+            "reason": body.get("reason"),
+            "prompt": body.get("prompt"),
+            "command": body.get("command"),
+            "parameters": body.get("parameters") or {},
+            "reversible": bool(body.get("reversible", False)),
+            "source_action_id": body.get("source_action_id"),
+            "override_prompt": body.get("override_prompt"),
+            "rollback_of": body.get("rollback_of"),
+            "reviewed_by": _sanitize_swarm_token(
+                request.headers.get("X-API-Role", "operator"), max_len=24
+            ).lower()
+            or "operator",
+        }
+    )
+    return jsonify({"status": "recorded", "decision": review_entry}), 200
 
 
 @app.route("/verification_policy", methods=["POST"])

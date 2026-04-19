@@ -10,13 +10,15 @@ Implemented so far:
 
 1. Shared AI interaction summary endpoint for HUD and C2.
 2. Natural-language command bar and structured recommendation cards in the main HUD.
-3. Quick-action routing and summary previews in C2.
+3. Review drawer with approve/edit/reject/undo loops and interaction history.
+4. Quick-action routing and summary previews in C2.
+5. Structured interaction history and decision logging in the backend.
 
 Remaining follow-up work:
 
-1. Add explicit approve/edit/reject/undo loops for AI-suggested actions.
-2. Expand model-routing heuristics beyond the current summary/planner split.
-3. Persist user interaction history so operators can review prior AI decisions.
+1. Expand model-routing heuristics further for search and replay-heavy operator workflows.
+2. Add richer decision search and replay views on top of the persisted history log.
+3. Persist operator preferences for review drawer defaults and mode switches.
 
 ## Product Principles
 
