@@ -12,7 +12,6 @@ if str(REPO_ROOT) not in sys.path:
 
 import sovereignmap_production_backend_v2 as backend
 
-
 VALID_DECISIONS = {"approve", "edit", "reject", "undo"}
 
 
