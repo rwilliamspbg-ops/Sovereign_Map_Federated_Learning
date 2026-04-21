@@ -41,8 +41,8 @@ prometheus-flask-exporter==0.23.2
 # Utilities
 python-dotenv==1.2.2
 requests==2.33.1
-pydantic==2.13.0
-pydantic-settings==2.13.1
+pydantic==2.13.3
+pydantic-settings==2.14.0
 
 # Development & Testing
 pytest==9.0.3
