@@ -37,7 +37,7 @@ jobs:
       uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd
 
     - name: Initialize CodeQL
-      uses: github/codeql-action/init@c10b8064de6f491fea524254123dbe5e09572f13
+      uses: github/codeql-action/init@95e58e9a2cdfd71adc6e0353d5c52f41a045d225
       with:
         languages: ${{ matrix.language }}
         config-file: ./.github/codeql/codeql-config.yml
@@ -51,7 +51,7 @@ jobs:
         
     - name: Setup Node.js
       if: matrix.language == 'javascript-typescript'
-      uses: actions/setup-node@53b83947a5a98c8d113130e565377fae1a50d02f
+      uses: actions/setup-node@48b55a011bda9f5d6aeb4c2d9c7362e8dae4041e
       with:
         node-version: '22'
         
@@ -70,10 +70,10 @@ jobs:
 
     # Autobuild for Go, JavaScript, Python
     - name: Autobuild
-      uses: github/codeql-action/autobuild@c10b8064de6f491fea524254123dbe5e09572f13
+      uses: github/codeql-action/autobuild@95e58e9a2cdfd71adc6e0353d5c52f41a045d225
 
     - name: Perform CodeQL Analysis
-      uses: github/codeql-action/analyze@c10b8064de6f491fea524254123dbe5e09572f13
+      uses: github/codeql-action/analyze@95e58e9a2cdfd71adc6e0353d5c52f41a045d225
       with:
         category: "/language:${{matrix.language}}"
 

@@ -46,7 +46,7 @@ jobs:
         with:
           fetch-depth: 1
 
-      - uses: actions/setup-node@53b83947a5a98c8d113130e565377fae1a50d02f
+      - uses: actions/setup-node@48b55a011bda9f5d6aeb4c2d9c7362e8dae4041e
         with:
           node-version: ${{ env.NODE_VERSION }}
           cache: npm
@@ -105,7 +105,7 @@ jobs:
         with:
           fetch-depth: 1
 
-      - uses: actions/setup-node@53b83947a5a98c8d113130e565377fae1a50d02f
+      - uses: actions/setup-node@48b55a011bda9f5d6aeb4c2d9c7362e8dae4041e
         with:
           node-version: ${{ env.NODE_VERSION }}
           cache: npm
@@ -158,7 +158,7 @@ jobs:
         with:
           fetch-depth: 1
 
-      - uses: actions/setup-node@53b83947a5a98c8d113130e565377fae1a50d02f
+      - uses: actions/setup-node@48b55a011bda9f5d6aeb4c2d9c7362e8dae4041e
         with:
           node-version: ${{ env.NODE_VERSION }}
           cache: npm
@@ -183,17 +183,17 @@ jobs:
           bash scripts/npm-ci-safe.sh packages/island
           bash scripts/npm-ci-safe.sh packages/core
 
-      - uses: github/codeql-action/init@c10b8064de6f491fea524254123dbe5e09572f13
+      - uses: github/codeql-action/init@95e58e9a2cdfd71adc6e0353d5c52f41a045d225
         with:
           languages: 'typescript'
           queries: security-and-quality
           dependency-caching: false
 
       - name: Auto-build TypeScript
-        uses: github/codeql-action/autobuild@c10b8064de6f491fea524254123dbe5e09572f13
+        uses: github/codeql-action/autobuild@95e58e9a2cdfd71adc6e0353d5c52f41a045d225
 
       - name: Perform CodeQL Analysis
-        uses: github/codeql-action/analyze@c10b8064de6f491fea524254123dbe5e09572f13
+        uses: github/codeql-action/analyze@95e58e9a2cdfd71adc6e0353d5c52f41a045d225
         with:
           category: '/language:typescript'
 
