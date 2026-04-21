@@ -95,7 +95,7 @@
   ],
   "devDependencies": {
     "@changesets/changelog-git": "^0.2.1",
-    "@changesets/cli": "^2.30.0",
+    "@changesets/cli": "^2.31.0",
     "@changesets/types": "^6.1.0",
     "cyclonedx-npm": "^1.0.0"
   }
