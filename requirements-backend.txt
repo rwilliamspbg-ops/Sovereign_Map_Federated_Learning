@@ -28,7 +28,7 @@ prometheus-flask-exporter==0.23.2
 
 # Cryptography
 ecdsa==0.19.2
-cryptography==46.0.7
+cryptography==47.0.0
 
 # Utilities
 python-dotenv==1.2.2
