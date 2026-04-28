@@ -1,6 +1,6 @@
 {
   "name": "@sovereignmap/core",
-  "version": "0.1.1",
+  "version": "0.1.2",
   "description": "Core Sovereign Map node client with privacy-preserving protocol, BFT consensus, and Island Mode",
   "keywords": [
     "sovereignmap",
@@ -71,9 +71,9 @@
     "vitest": "^4.1.4"
   },
   "peerDependencies": {
-    "@sovereignmap/consensus": "^0.1.1",
-    "@sovereignmap/island": "^0.1.1",
-    "@sovereignmap/privacy": "^0.1.1"
+    "@sovereignmap/consensus": "^0.1.2",
+    "@sovereignmap/island": "^0.1.2",
+    "@sovereignmap/privacy": "^0.1.2"
   },
   "peerDependenciesMeta": {
     "@sovereignmap/privacy": {

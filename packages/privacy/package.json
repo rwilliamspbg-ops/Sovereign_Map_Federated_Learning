@@ -1,6 +1,6 @@
 {
   "name": "@sovereignmap/privacy",
-  "version": "0.1.1",
+  "version": "0.1.2",
   "description": "SGP-001 differential privacy implementation with zk-SNARK proofs",
   "type": "module",
   "main": "./dist/index.js",
@@ -31,7 +31,7 @@
     "typecheck": "tsc --noEmit"
   },
   "dependencies": {
-    "@sovereignmap/compression": "^1.0.1",
+    "@sovereignmap/compression": "^1.0.2",
     "eventemitter3": "^5.0.1",
     "libsodium-wrappers": "^0.8.4",
     "ml-matrix": "^6.12.2"
