@@ -47,7 +47,7 @@ func SelectComputeTarget(workload WorkloadProfile, inventory CapabilityMatrix) S
 		if target.MaxWorkers <= 0 {
 			continue
 		}
-		if workload.RequiresAccelerator && !(target.GPUEnabled || target.NPUEnabled) {
+		if workload.RequiresAccelerator && !target.GPUEnabled && !target.NPUEnabled {
 			continue
 		}
 		if workload.LatencyBudgetMs > 0 && target.LatencyMsP95 > workload.LatencyBudgetMs {
