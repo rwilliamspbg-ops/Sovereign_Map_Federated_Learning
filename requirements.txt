@@ -9,7 +9,7 @@ torchvision==0.26.0
 # Privacy & Security
 opacus==1.5.4
 ecdsa==0.19.2
-cryptography==46.0.7
+cryptography==47.0.0
 
 # Flask & Web Framework
 Flask==3.1.3
