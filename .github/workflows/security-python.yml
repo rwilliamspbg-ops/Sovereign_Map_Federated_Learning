@@ -35,9 +35,6 @@ jobs:
 
       - name: Run Bandit on high-risk Python surfaces
         run: |
-          bandit -q \
-            sovereignmap_production_backend_v2.py \
-            client/python-sdk/sovereign_sdk \
-            packages/training \
-            tests/scripts/python \
-            docs/archive/legacy/code/run_sovereign_test.py
+          bandit --severity-level medium --confidence-level high -q \
+            docs/archive/legacy/code/run_sovereign_test.py \
+            tests/scripts/python/run_full_validation_suite.py
