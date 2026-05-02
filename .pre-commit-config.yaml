@@ -1,0 +1,10 @@
+repos:
+  - repo: https://github.com/PyCQA/bandit
+    rev: 1.8.6
+    hooks:
+      - id: bandit
+        name: bandit targeted security scan
+        files: ^(sovereignmap_production_backend_v2\.py|client/python-sdk/sovereign_sdk/|packages/training/|tests/scripts/python/|docs/archive/legacy/code/run_sovereign_test\.py$)
+        types: [python]
+        args:
+          - -q
