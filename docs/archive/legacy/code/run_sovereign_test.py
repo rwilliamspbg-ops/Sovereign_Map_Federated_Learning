@@ -19,7 +19,9 @@ def run_test(malicious, latency, privacy_check):
     try:
         with open(target_path, "r", encoding="utf-8") as fh:
             txt = fh.read()
-        new_txt = re.sub(r"malicious_fraction\s*=\s*.*", f"malicious_fraction = {malicious}", txt)
+        new_txt = re.sub(
+            r"malicious_fraction\s*=\s*.*", f"malicious_fraction = {malicious}", txt
+        )
         if new_txt != txt:
             with open(target_path, "w", encoding="utf-8") as fh:
                 fh.write(new_txt)
