@@ -8,6 +8,7 @@ import os
 import argparse
 import subprocess
 import sys
+import shlex
 from dataclasses import asdict, dataclass
 from datetime import datetime, timezone
 from pathlib import Path
@@ -152,10 +153,15 @@ def run_check(name: str, category: str, command: str, timeout: int) -> CheckResu
     output_file.parent.mkdir(parents=True, exist_ok=True)
 
     try:
+        # Prefer list-args execution to avoid shell=True risks. Use shlex.split for string commands.
+        if isinstance(command, str):
+            args = shlex.split(command)
+        else:
+            args = command
         proc = subprocess.run(
-            command,
+            args,
             cwd=REPO_ROOT,
-            shell=True,
+            shell=False,
             text=True,
             capture_output=True,
             timeout=timeout,
