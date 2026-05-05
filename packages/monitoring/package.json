@@ -1,6 +1,6 @@
 {
   "name": "@sovereign-map/monitoring",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "description": "Real-time monitoring and observability for Sovereign Map Federated Learning",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
