@@ -28,10 +28,10 @@
 // Core exports
 export { SovereignNode, NodeState } from "./node.js";
 export type { NodeConfig, NodeStatus } from "./node.js";
-export { NetworkClient } from "./network.js";
+export { NetworkClient, MOHAWK_GRADIENT_PROTOCOL_ID } from "./network.js";
 export type { NetworkTopology, NetworkStatus } from "./network.js";
 export { MessageType } from "./protocol.js";
-export type { ProtocolMessage } from "./protocol.js";
+export type { ProtocolMessage, GradientMessage, GradientAck } from "./protocol.js";
 
 // Type exports
 export type {

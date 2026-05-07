@@ -1,8 +1,10 @@
 import { describe, expect, it } from "vitest";
+import type { GradientAck, GradientMessage } from "./index.js";
 import {
   SDK_VERSION,
   PROTOCOL_VERSION,
   SGP001_VERSION,
+  MOHAWK_GRADIENT_PROTOCOL_ID,
   MessageType,
   createLogger,
   SovereignMapError,
@@ -20,6 +22,32 @@ describe("core exports", () => {
   it("exposes protocol message enum", () => {
     expect(MessageType.MapUpdate).toBe("map_update");
     expect(MessageType.Heartbeat).toBe("heartbeat");
+  });
+
+  it("exposes the upstream gradient stream protocol id", () => {
+    expect(MOHAWK_GRADIENT_PROTOCOL_ID).toBe("/mohawk/gradient/1.0.0");
+  });
+
+  it("exposes gradient message and ack vocabulary", () => {
+    const message: GradientMessage = {
+      nodeId: "node-a",
+      taskId: "task-a",
+      round: 1,
+      gradients: [0.1, 0.2, 0.3],
+      timestampMs: 123,
+    };
+    const ack: GradientAck = {
+      accepted: true,
+      negotiatedKEX: "x25519",
+      kexPublicKeyLen: 32,
+      batchAccepted: 1,
+      batchRejected: 0,
+    };
+
+    expect(message.taskId).toBe("task-a");
+    expect(message.gradients).toHaveLength(3);
+    expect(ack.accepted).toBe(true);
+    expect(ack.kexPublicKeyLen).toBe(32);
   });
 
   it("creates logger and serializes custom errors", () => {
