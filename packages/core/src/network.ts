@@ -10,6 +10,8 @@ import { yamux } from "@chainsafe/libp2p-yamux";
 import { noise } from "@chainsafe/libp2p-noise";
 import { multiaddr } from "@multiformats/multiaddr";
 
+export const MOHAWK_GRADIENT_PROTOCOL_ID = "/mohawk/gradient/1.0.0";
+
 export interface NetworkTopology {
   type: "mesh" | "star" | "hybrid";
   peers: string[];
@@ -133,7 +135,7 @@ export class NetworkClient extends EventEmitter {
 
     for (const connection of peers) {
       try {
-        const stream = await connection.newStream("/sovereignmap/1.0.0");
+        const stream = await connection.newStream(MOHAWK_GRADIENT_PROTOCOL_ID);
         const data = JSON.stringify(message);
         await stream.sink([Buffer.from(data)]);
         results.push({ peer: connection.remotePeer.toString(), success: true });
