@@ -449,6 +449,28 @@ body {
   line-height: 1.45;
 }
 
+.mission-notes {
+  display: grid;
+  gap: 8px;
+  margin-top: 10px;
+}
+
+.mission-notes span {
+  display: block;
+  border-radius: 10px;
+  border: 1px solid rgba(168, 192, 214, 0.16);
+  background: rgba(7, 16, 24, 0.54);
+  padding: 8px 10px;
+  color: var(--mist-300);
+  font-size: 0.78rem;
+  line-height: 1.45;
+}
+
+.mission-notes strong {
+  color: var(--mist-100);
+  font-family: var(--font-mono);
+}
+
 .mission-card,
 .trace-panel,
 .domain-cluster,
@@ -472,7 +494,7 @@ body {
 
 .trace-stats {
   display: grid;
-  grid-template-columns: repeat(3, minmax(0, 1fr));
+  grid-template-columns: repeat(4, minmax(0, 1fr));
   gap: 8px;
   margin-bottom: 12px;
 }
@@ -503,6 +525,45 @@ body {
 .trace-rail {
   display: grid;
   gap: 10px;
+}
+
+.trace-stream {
+  display: grid;
+  gap: 8px;
+  margin-top: 8px;
+  padding-top: 10px;
+  border-top: 1px solid rgba(168, 192, 214, 0.14);
+}
+
+.trace-stream-head {
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--mist-300);
+  font-size: 0.65rem;
+}
+
+.trace-event {
+  display: flex;
+  justify-content: space-between;
+  gap: 10px;
+  align-items: center;
+  border-radius: 10px;
+  border: 1px solid rgba(168, 192, 214, 0.14);
+  background: rgba(7, 16, 24, 0.52);
+  padding: 8px 10px;
+}
+
+.trace-event strong {
+  color: #dffcff;
+  font-family: var(--font-mono);
+  font-size: 0.72rem;
+  text-transform: uppercase;
+}
+
+.trace-event span {
+  color: var(--mist-300);
+  font-size: 0.76rem;
+  text-align: right;
 }
 
 .trace-step {
@@ -541,6 +602,20 @@ body {
 .trace-approved,
 .trace-approve,
 .trace-auto-run {
+  background: var(--ok-400);
+}
+
+.trace-plan,
+.trace-review {
+  background: var(--teal-400);
+}
+
+.trace-tool {
+  background: var(--amber-400);
+}
+
+.trace-result,
+.trace-render {
   background: var(--ok-400);
 }
 
@@ -1272,6 +1347,11 @@ body {
 
   .trace-stats {
     grid-template-columns: 1fr;
+  }
+
+  .trace-event {
+    flex-direction: column;
+    align-items: flex-start;
   }
 
   .sparkline-row {
