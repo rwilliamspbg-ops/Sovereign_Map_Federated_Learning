@@ -356,6 +356,223 @@ body {
   color: #b7ecff;
 }
 
+.mission-brief {
+  border-color: rgba(60, 208, 199, 0.34);
+  background:
+    linear-gradient(145deg, rgba(8, 21, 31, 0.96), rgba(12, 28, 41, 0.94)),
+    radial-gradient(circle at top right, rgba(60, 208, 199, 0.12), transparent 55%);
+}
+
+.mission-brief-header {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  align-items: flex-start;
+  margin-bottom: 12px;
+}
+
+.mission-kicker {
+  margin: 0 0 5px;
+  text-transform: uppercase;
+  letter-spacing: 0.16em;
+  font-size: 0.68rem;
+  color: var(--teal-400);
+}
+
+.mission-brief h3 {
+  margin: 0;
+  font-size: 1.08rem;
+  color: var(--mist-100);
+  letter-spacing: 0.01em;
+  text-transform: none;
+}
+
+.mission-status {
+  border-radius: 999px;
+  padding: 7px 10px;
+  font-family: var(--font-mono);
+  font-size: 0.7rem;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  border: 1px solid rgba(168, 192, 214, 0.22);
+  background: rgba(7, 16, 24, 0.68);
+}
+
+.mission-ready {
+  color: var(--ok-400);
+  border-color: rgba(50, 208, 143, 0.3);
+}
+
+.mission-review {
+  color: var(--amber-400);
+  border-color: rgba(247, 185, 85, 0.35);
+}
+
+.mission-hold {
+  color: var(--rose-400);
+  border-color: rgba(240, 109, 109, 0.38);
+}
+
+.mission-grid {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 10px;
+}
+
+.mission-card {
+  border-radius: 12px;
+  border: 1px solid rgba(168, 192, 214, 0.16);
+  background: rgba(7, 16, 24, 0.58);
+  padding: 11px 12px;
+}
+
+.mission-label {
+  display: block;
+  margin-bottom: 8px;
+  font-size: 0.68rem;
+  text-transform: uppercase;
+  letter-spacing: 0.09em;
+  color: var(--mist-300);
+}
+
+.mission-card strong {
+  display: block;
+  margin-bottom: 6px;
+  font-size: 0.96rem;
+  color: #dffcff;
+}
+
+.mission-card p {
+  margin: 0;
+  color: var(--mist-300);
+  font-size: 0.8rem;
+  line-height: 1.45;
+}
+
+.mission-card,
+.trace-panel,
+.domain-cluster,
+.ops-panel {
+  backdrop-filter: blur(10px);
+}
+
+.trace-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  border-radius: 999px;
+  padding: 6px 10px;
+  border: 1px solid rgba(168, 192, 214, 0.2);
+  background: rgba(7, 16, 24, 0.68);
+  color: var(--mist-300);
+  font-family: var(--font-mono);
+  font-size: 0.68rem;
+  max-width: 100%;
+}
+
+.trace-stats {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 8px;
+  margin-bottom: 12px;
+}
+
+.trace-stat {
+  border-radius: 10px;
+  border: 1px solid rgba(168, 192, 214, 0.18);
+  background: rgba(7, 16, 24, 0.58);
+  padding: 8px 10px;
+}
+
+.trace-stat span {
+  display: block;
+  margin-bottom: 5px;
+  font-size: 0.65rem;
+  text-transform: uppercase;
+  letter-spacing: 0.09em;
+  color: var(--mist-300);
+}
+
+.trace-stat strong {
+  display: block;
+  color: #dffcff;
+  font-family: var(--font-mono);
+  font-size: 0.78rem;
+}
+
+.trace-rail {
+  display: grid;
+  gap: 10px;
+}
+
+.trace-step {
+  display: grid;
+  grid-template-columns: 12px 1fr;
+  gap: 10px;
+  align-items: start;
+  padding: 8px 0;
+}
+
+.trace-step strong {
+  display: block;
+  margin-bottom: 3px;
+  color: var(--mist-100);
+  font-size: 0.84rem;
+}
+
+.trace-step div {
+  color: var(--mist-300);
+  font-size: 0.76rem;
+  line-height: 1.45;
+}
+
+.trace-step p {
+  margin: 4px 0 0;
+}
+
+.trace-dot {
+  width: 10px;
+  height: 10px;
+  margin-top: 5px;
+  border-radius: 50%;
+  box-shadow: 0 0 0 3px rgba(7, 16, 24, 0.6);
+}
+
+.trace-approved,
+.trace-approve,
+.trace-auto-run {
+  background: var(--ok-400);
+}
+
+.trace-reject {
+  background: var(--rose-400);
+}
+
+.trace-undo {
+  background: var(--amber-400);
+}
+
+.trace-recorded {
+  background: var(--teal-400);
+}
+
+.mission-footer {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+  margin-top: 10px;
+}
+
+.mission-pill {
+  border-radius: 999px;
+  padding: 7px 10px;
+  border: 1px solid rgba(168, 192, 214, 0.2);
+  background: rgba(7, 16, 24, 0.62);
+  color: var(--mist-100);
+  font-size: 0.72rem;
+  font-family: var(--font-mono);
+}
+
 .panel-subtitle {
   margin: 8px 0 12px;
   color: var(--mist-300);
@@ -1043,6 +1260,18 @@ body {
   .density-toggle {
     width: 100%;
     text-align: center;
+  }
+
+  .mission-brief-header {
+    flex-direction: column;
+  }
+
+  .mission-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .trace-stats {
+    grid-template-columns: 1fr;
   }
 
   .sparkline-row {

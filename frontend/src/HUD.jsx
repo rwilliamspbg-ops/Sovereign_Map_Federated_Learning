@@ -699,6 +699,16 @@ export default function HUD({
   const interactionPreview = classifyAssistantPrompt(assistantPrompt, requestedRounds);
   const interactionContext = interactionSummary?.context || {};
   const interactionModelRoute = interactionSummary?.model_route || 'planner';
+  const primaryRecommendation = recommendedCorrections[0] || interactionRecommendations[0] || null;
+  const agentMissionStatus = plannerSafety.state === 'safe'
+    ? 'ready'
+    : plannerSafety.state === 'degraded'
+      ? 'review'
+      : 'hold';
+  const agentMissionRoute = interactionModelRoute ? interactionModelRoute.toUpperCase() : 'PLANNER';
+  const agentMissionTarget = trainingStatus?.active
+    ? `Training round ${trainingRound}`
+    : interactionPreview.label;
   const twinEnvelope = interactionSummary?.response_envelope || {};
   const twinFreshnessSecs = Number(interactionContext.freshness_seconds ?? twinEnvelope.freshness_secs ?? 0);
   const twinMapVersion = interactionContext.map_version || 'unknown';
@@ -821,7 +831,7 @@ export default function HUD({
 
   const submitAssistantPrompt = async () => {
     const intent = classifyAssistantPrompt(assistantPrompt, requestedRounds);
-    openInteractionReview({
+      const normalizedAction = normalizeInteractionAction({
       ...intent,
       label: intent.label,
       prompt: assistantPrompt,
@@ -838,6 +848,19 @@ export default function HUD({
                 : null,
       parameters: intent.kind === 'start_training' ? { rounds: intent.rounds } : {},
     });
+
+      if (!normalizedAction.requires_confirmation) {
+        setAssistantFeedback(`Executing ${normalizedAction.label}`);
+        setInteractionReviewStatus(`Auto-routed ${normalizedAction.label} through ${normalizedAction.model_route}`);
+        await executeInteractionAction(normalizedAction, {
+          decision: 'approve',
+          prompt: assistantPrompt,
+          reason: `Auto-routed through ${normalizedAction.model_route}`,
+        });
+        return;
+      }
+
+      openInteractionReview(normalizedAction, 'approve');
   };
 
   return (
@@ -966,6 +989,51 @@ export default function HUD({
           </span>
         </div>
       </section>
+
+        <section className="ops-panel mission-brief">
+          <div className="mission-brief-header">
+            <div>
+              <p className="mission-kicker">Agentic Mission Brief</p>
+              <h3>One route, one proof trail, one visible next action.</h3>
+            </div>
+            <span className={`mission-status mission-${agentMissionStatus}`}>
+              {agentMissionStatus.toUpperCase()}
+            </span>
+          </div>
+
+          <div className="mission-grid">
+            <article className="mission-card">
+              <span className="mission-label">Current route</span>
+              <strong>{agentMissionRoute}</strong>
+              <p>AI requests are reviewed through the active decision route before any control action is taken.</p>
+            </article>
+            <article className="mission-card">
+              <span className="mission-label">Next action</span>
+              <strong>{agentMissionTarget}</strong>
+              <p>{interactionPreview.detail}</p>
+            </article>
+            <article className="mission-card">
+              <span className="mission-label">Proof posture</span>
+              <strong>{trustMode}</strong>
+              <p>{plannerSafety.reason}</p>
+            </article>
+            <article className="mission-card">
+              <span className="mission-label">Suggested move</span>
+              <strong>{primaryRecommendation ? (primaryRecommendation.label || primaryRecommendation.action) : 'Hold position'}</strong>
+              <p>
+                {primaryRecommendation
+                  ? `${primaryRecommendation.reason} • confidence ${fixedOrFallback(primaryRecommendation.confidence * 100, 1, '%')}`
+                  : 'System stable and ready for the next operator request.'}
+              </p>
+            </article>
+          </div>
+
+          <div className="mission-footer">
+            <span className="mission-pill">Route confidence {fixedOrFallback(interactionPreview.confidence * 100, 1, '%')}</span>
+            <span className="mission-pill">Training {trainingStatus?.active ? 'active' : 'idle'} / round {trainingRound}</span>
+            <span className="mission-pill">Coverage {fixedOrFallback(autonomyKpis.coveragePct, 1, '%')}</span>
+          </div>
+        </section>
 
       <section className="ops-panel autonomy-control-strip">
         <h3>Autonomy Control Strip</h3>
@@ -1183,8 +1251,43 @@ export default function HUD({
         </div>
         <div className="notice-box">{interactionReviewStatus || assistantFeedback || 'Ready for a one-sentence mission request.'}</div>
         <div className="domain-cluster-grid">
-          <article className="domain-cluster">
-            <h4>Decision History</h4>
+            <article className="domain-cluster trace-panel">
+              <div className="cluster-head">
+                <h4>Live Agent Trace</h4>
+                <span className="trace-badge">{interactionReviewStatus || assistantFeedback || 'awaiting request'}</span>
+              </div>
+              <div className="cluster-body">
+                <div className="trace-stats">
+                  <div className="trace-stat">
+                    <span>Route</span>
+                    <strong>{interactionModelRoute}</strong>
+                  </div>
+                  <div className="trace-stat">
+                    <span>Mode</span>
+                    <strong>{interactionPreview.requiresConfirmation ? 'review' : 'auto-run'}</strong>
+                  </div>
+                  <div className="trace-stat">
+                    <span>Current intent</span>
+                    <strong>{interactionPreview.label}</strong>
+                  </div>
+                </div>
+                <div className="trace-rail">
+                  {sortedInteractionHistoryEntries.slice(0, 5).map((entry) => (
+                    <div className="trace-step" key={entry.review_id || `${entry.action_id}-${entry.ts}`}>
+                      <span className={`trace-dot trace-${String(entry.decision || 'recorded').toLowerCase()}`}></span>
+                      <div>
+                        <strong>{entry.action_label || entry.action_id || 'interaction'}</strong>
+                        <div>{entry.decision || 'recorded'} · {entry.model_route || interactionModelRoute}</div>
+                        <p>{entry.reason || entry.override_prompt || 'No reason captured.'}</p>
+                      </div>
+                    </div>
+                  ))}
+                  {!sortedInteractionHistoryEntries.length ? <div className="notice-box">No live trace data yet. Trigger a prompt to see the agent path.</div> : null}
+                </div>
+              </div>
+            </article>
+            <article className="domain-cluster">
+              <h4>Decision History</h4>
             <label className="input-row">
               Search decisions
               <input
@@ -1219,14 +1322,14 @@ export default function HUD({
                 <option value="oldest">oldest first</option>
               </select>
             </div>
-            {sortedInteractionHistoryEntries.slice(0, 8).map((entry) => (
-              <div className="audit-row" key={entry.review_id || `${entry.action_id}-${entry.ts}`}>
-                <span>{entry.decision || 'recorded'}</span>
-                <span>{entry.action_label || entry.action_id || 'interaction'}</span>
-                <span>{entry.reason || entry.override_prompt || 'no reason provided'}</span>
-              </div>
-            ))}
-            {!sortedInteractionHistoryEntries.length ? <div className="notice-box">No interaction decisions match the current filters.</div> : null}
+              {sortedInteractionHistoryEntries.slice(0, 8).map((entry) => (
+                <div className="audit-row" key={entry.review_id || `${entry.action_id}-${entry.ts}`}>
+                  <span>{entry.decision || 'recorded'}</span>
+                  <span>{entry.action_label || entry.action_id || 'interaction'}</span>
+                  <span>{entry.reason || entry.override_prompt || 'no reason provided'}</span>
+                </div>
+              ))}
+              {!sortedInteractionHistoryEntries.length ? <div className="notice-box">No interaction decisions match the current filters.</div> : null}
           </article>
           <article className="domain-cluster">
             <h4>Digital Twin Lens</h4>
