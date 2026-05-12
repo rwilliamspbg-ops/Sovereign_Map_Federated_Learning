@@ -37,11 +37,11 @@
     "ml-matrix": "^6.12.2"
   },
   "devDependencies": {
-    "@types/node": "^25.6.0",
-    "@vitest/coverage-v8": "^4.1.5",
-    "@webgpu/types": "^0.1.69",
+    "@types/node": "^25.7.0",
+    "@vitest/coverage-v8": "^4.1.6",
+    "@webgpu/types": "^0.1.70",
     "typescript": "^6.0.3",
-    "vitest": "^4.1.4"
+    "vitest": "^4.1.6"
   },
   "overrides": {
     "libsodium": "^0.8.3"
