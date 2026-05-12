@@ -17,7 +17,7 @@ aiohttp==3.13.5
 
 # Google Gemini AI
 google-generativeai==0.8.6
-google-auth==2.50.0
+google-auth==2.52.0
 
 # Database & Caching
 redis==7.4.0
@@ -28,13 +28,13 @@ prometheus-flask-exporter==0.23.2
 
 # Cryptography
 ecdsa==0.19.2
-cryptography==46.0.7
+cryptography==48.0.0
 
 # Utilities
 python-dotenv==1.2.2
-requests==2.33.1
-pydantic==2.13.3
-pydantic-settings==2.14.0
+requests==2.34.0
+pydantic==2.13.4
+pydantic-settings==2.14.1
 
 # Development
 pytest==9.0.3
