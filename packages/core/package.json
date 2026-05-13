@@ -68,7 +68,7 @@
     "@vitest/coverage-v8": "^4.1.6",
     "eslint": "^10.3.0",
     "typescript": "^6.0.3",
-    "vitest": "^4.1.4"
+    "vitest": "^4.1.6"
   },
   "peerDependencies": {
     "@sovereignmap/consensus": "^0.1.1",

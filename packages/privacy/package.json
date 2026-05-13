@@ -41,7 +41,7 @@
     "@vitest/coverage-v8": "^4.1.6",
     "@webgpu/types": "^0.1.70",
     "typescript": "^6.0.3",
-    "vitest": "^4.1.4"
+    "vitest": "^4.1.6"
   },
   "overrides": {
     "libsodium": "^0.8.3"
