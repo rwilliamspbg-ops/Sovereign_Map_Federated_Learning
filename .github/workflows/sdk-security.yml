@@ -183,17 +183,17 @@ jobs:
           bash scripts/npm-ci-safe.sh packages/island
           bash scripts/npm-ci-safe.sh packages/core
 
-      - uses: github/codeql-action/init@68bde559dea0fdcac2102bfdf6230c5f70eb485e
+      - uses: github/codeql-action/init@9e0d7b8d25671d64c341c19c0152d693099fb5ba
         with:
           languages: 'typescript'
           queries: security-and-quality
           dependency-caching: false
 
       - name: Auto-build TypeScript
-        uses: github/codeql-action/autobuild@68bde559dea0fdcac2102bfdf6230c5f70eb485e
+        uses: github/codeql-action/autobuild@9e0d7b8d25671d64c341c19c0152d693099fb5ba
 
       - name: Perform CodeQL Analysis
-        uses: github/codeql-action/analyze@68bde559dea0fdcac2102bfdf6230c5f70eb485e
+        uses: github/codeql-action/analyze@9e0d7b8d25671d64c341c19c0152d693099fb5ba
         with:
           category: '/language:typescript'
 
