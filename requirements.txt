@@ -3,11 +3,11 @@ flwr==1.29.0
 flwr-datasets==0.6.0
 
 # Deep Learning
-torch==2.11.0
-torchvision==0.26.0
+torch==2.12.0
+torchvision==0.27.0
 
 # Privacy & Security
-opacus==1.5.4
+opacus==1.6.0
 ecdsa==0.19.2
 cryptography==46.0.7
 
@@ -19,17 +19,17 @@ python-socketio==5.16.1
 python-engineio==4.13.1
 
 # Science & Data Processing
-numpy==2.4.4
+numpy==2.4.6
 scipy==1.17.1
 scikit-learn==1.8.0
-pandas==3.0.2
+pandas==3.0.3
 
 # Async & Threading
 aiohttp==3.13.5
 
 # Google Gemini AI
 google-generativeai==0.8.6
-google-auth==2.50.0
+google-auth==2.53.0
 
 # Database & Caching
 redis==7.4.0
@@ -40,9 +40,9 @@ prometheus-flask-exporter==0.23.2
 
 # Utilities
 python-dotenv==1.2.2
-requests==2.33.1
-pydantic==2.13.3
-pydantic-settings==2.14.0
+requests==2.34.2
+pydantic==2.13.4
+pydantic-settings==2.14.1
 
 # Development & Testing
 pytest==9.0.3
