@@ -37,8 +37,8 @@
     "ml-matrix": "^6.12.2"
   },
   "devDependencies": {
-    "@types/node": "^25.9.2",
-    "@vitest/coverage-v8": "^4.1.8",
+    "@types/node": "^25.9.3",
+    "@vitest/coverage-v8": "^4.1.9",
     "@webgpu/types": "^0.1.70",
     "typescript": "^6.0.3",
     "vitest": "^4.1.6"
