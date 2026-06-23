@@ -34,10 +34,10 @@
     "@sovereignmap/compression": "^1.0.1",
     "eventemitter3": "^5.0.1",
     "libsodium-wrappers": "^0.8.4",
-    "ml-matrix": "^6.12.2"
+    "ml-matrix": "^6.13.0"
   },
   "devDependencies": {
-    "@types/node": "^25.9.3",
+    "@types/node": "^26.0.0",
     "@vitest/coverage-v8": "^4.1.9",
     "@webgpu/types": "^0.1.70",
     "typescript": "^6.0.3",
