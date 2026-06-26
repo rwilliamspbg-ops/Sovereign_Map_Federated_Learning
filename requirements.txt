@@ -19,8 +19,8 @@ python-socketio==5.16.3
 python-engineio==4.13.3
 
 # Science & Data Processing
-numpy==2.5.0
-scipy==1.18.0
+numpy==2.4.6
+scipy==1.17.1
 scikit-learn==1.9.0
 pandas==3.0.3
 
