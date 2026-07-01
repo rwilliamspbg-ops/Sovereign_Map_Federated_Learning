@@ -29,10 +29,10 @@ aiohttp==3.14.1
 
 # Google Gemini AI
 google-generativeai==0.8.6
-google-auth==2.55.0
+google-auth==2.55.1
 
 # Database & Caching
-redis==8.0.0
+redis==8.0.1
 
 # Monitoring & Metrics
 prometheus-client==0.25.0
