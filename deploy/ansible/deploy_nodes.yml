@@ -1,7 +1,224 @@
 ---
 - name: Deploy sovereign node
   hosts: all
+  become: true
+  vars:
+    repo_root: "{{ playbook_dir }}/../.."
+    local_build_binary: true
+    local_binary_path: ""
+    local_built_binary_path: "/tmp/sovereign-node-ansible"
+    service_user: sovereign
+    service_group: sovereign
+    remote_install_root: /opt/sovereign-map
+    remote_config_root: /opt/sovereign-map/network/bootstrap
+    remote_bridge_policies_path: /opt/sovereign-map/bridge-policies.json
+    remote_binary_path: /usr/local/bin/sovereign-node
+    service_name: sovereign-node
+    node_mode: start
+    node_id: "{{ inventory_hostname }}"
+    listen_addr: /ip4/0.0.0.0/tcp/4001
+    enable_chain_runtime: true
+    bridge_policies_src: "{{ repo_root }}/bridge-policies.json"
+    network_config_src: "{{ repo_root }}/network/bootstrap/network_config.json"
+    bootstrap_nodes_src: "{{ repo_root }}/network/bootstrap/bootstrap_nodes.json"
+    seed_peers_src: "{{ repo_root }}/network/bootstrap/seed_peers.json"
+  pre_tasks:
+    - name: Derive binary source path
+      ansible.builtin.set_fact:
+        effective_binary_path: >-
+          {{
+            local_built_binary_path
+            if (local_build_binary | bool)
+            else local_binary_path
+          }}
+
+    - name: Verify bridge policy file exists on control node
+      ansible.builtin.stat:
+        path: "{{ bridge_policies_src }}"
+      register: bridge_policies_src_stat
+      delegate_to: localhost
+      become: false
+
+    - name: Fail when bridge policy file is missing
+      ansible.builtin.assert:
+        that:
+          - bridge_policies_src_stat.stat.exists
+        fail_msg: >-
+          bridge_policies_src must point to a local bridge-policies.json file.
+
+    - name: Verify network config exists on control node
+      ansible.builtin.stat:
+        path: "{{ network_config_src }}"
+      register: network_config_src_stat
+      delegate_to: localhost
+      become: false
+
+    - name: Fail when network config is missing
+      ansible.builtin.assert:
+        that:
+          - network_config_src | length > 0
+          - network_config_src_stat.stat.exists
+        fail_msg: >-
+          network_config_src must point to a local network_config.json file.
+
+    - name: Verify bootstrap node config exists when join mode is used
+      ansible.builtin.stat:
+        path: "{{ bootstrap_nodes_src }}"
+      register: bootstrap_nodes_src_stat
+      delegate_to: localhost
+      become: false
+      when: node_mode == 'join'
+
+    - name: Verify seed peers config exists when join mode is used
+      ansible.builtin.stat:
+        path: "{{ seed_peers_src }}"
+      register: seed_peers_src_stat
+      delegate_to: localhost
+      become: false
+      when: node_mode == 'join'
+
+    - name: Fail when join mode configs are missing
+      ansible.builtin.assert:
+        that:
+          - bootstrap_nodes_src | length > 0
+          - seed_peers_src | length > 0
+          - bootstrap_nodes_src_stat.stat.exists
+          - seed_peers_src_stat.stat.exists
+        fail_msg: >-
+          join mode requires bootstrap_nodes_src and seed_peers_src to point to local JSON files.
+      when: node_mode == 'join'
+
+    - name: Build sovereign-node binary on control node
+      ansible.builtin.command:
+        cmd: go build -o "{{ local_built_binary_path }}" ./cmd/sovereign-node
+        chdir: "{{ repo_root }}"
+      delegate_to: localhost
+      become: false
+      run_once: true
+      when: local_build_binary | bool
+
+    - name: Verify binary exists on control node
+      ansible.builtin.stat:
+        path: "{{ effective_binary_path }}"
+      register: effective_binary_stat
+      delegate_to: localhost
+      become: false
+
+    - name: Fail when binary is missing
+      ansible.builtin.assert:
+        that:
+          - effective_binary_stat.stat.exists
+        fail_msg: >-
+          effective binary path does not exist; set local_binary_path or keep local_build_binary=true.
+
   tasks:
-    - name: Placeholder deployment task
-      debug:
-        msg: "Deploy sovereign-node binary and config"
+    - name: Ensure sovereign group exists
+      ansible.builtin.group:
+        name: "{{ service_group }}"
+        system: true
+
+    - name: Ensure sovereign user exists
+      ansible.builtin.user:
+        name: "{{ service_user }}"
+        group: "{{ service_group }}"
+        system: true
+        create_home: false
+        shell: /usr/sbin/nologin
+
+    - name: Create runtime directories
+      ansible.builtin.file:
+        path: "{{ item.path }}"
+        state: directory
+        owner: "{{ item.owner | default(service_user) }}"
+        group: "{{ item.group | default(service_group) }}"
+        mode: "{{ item.mode }}"
+      loop:
+        - { path: "{{ remote_install_root }}", mode: "0755" }
+        - { path: "{{ remote_config_root }}", mode: "0755" }
+
+    - name: Install sovereign-node binary
+      ansible.builtin.copy:
+        src: "{{ effective_binary_path }}"
+        dest: "{{ remote_binary_path }}"
+        owner: root
+        group: root
+        mode: "0755"
+      register: install_binary_result
+
+    - name: Install bridge policies
+      ansible.builtin.copy:
+        src: "{{ bridge_policies_src }}"
+        dest: "{{ remote_bridge_policies_path }}"
+        owner: "{{ service_user }}"
+        group: "{{ service_group }}"
+        mode: "0644"
+      register: install_bridge_policies_result
+
+    - name: Install network config
+      ansible.builtin.copy:
+        src: "{{ network_config_src }}"
+        dest: "{{ remote_config_root }}/network_config.json"
+        owner: "{{ service_user }}"
+        group: "{{ service_group }}"
+        mode: "0644"
+      register: install_network_config_result
+
+    - name: Install bootstrap node config
+      ansible.builtin.copy:
+        src: "{{ bootstrap_nodes_src }}"
+        dest: "{{ remote_config_root }}/bootstrap_nodes.json"
+        owner: "{{ service_user }}"
+        group: "{{ service_group }}"
+        mode: "0644"
+      register: install_bootstrap_nodes_result
+      when: node_mode == 'join'
+
+    - name: Install seed peers config
+      ansible.builtin.copy:
+        src: "{{ seed_peers_src }}"
+        dest: "{{ remote_config_root }}/seed_peers.json"
+        owner: "{{ service_user }}"
+        group: "{{ service_group }}"
+        mode: "0644"
+      register: install_seed_peers_result
+      when: node_mode == 'join'
+
+    - name: Install sovereign-node systemd unit
+      ansible.builtin.copy:
+        dest: "/etc/systemd/system/{{ service_name }}.service"
+        owner: root
+        group: root
+        mode: "0644"
+        content: |
+          [Unit]
+          Description=Sovereign node runtime
+          After=network-online.target
+          Wants=network-online.target
+
+          [Service]
+          Type=simple
+          User={{ service_user }}
+          Group={{ service_group }}
+          WorkingDirectory={{ remote_install_root }}
+          ExecStart={{ remote_binary_path }} {{ node_mode }} --node-id={{ node_id }} --listen={{ listen_addr }} --config={{ remote_config_root }}/network_config.json --bridge-policies={{ remote_bridge_policies_path }}{% if node_mode == 'join' %} --bootstrap={{ remote_config_root }}/bootstrap_nodes.json --seeds={{ remote_config_root }}/seed_peers.json{% endif %} --enable-chain-runtime={{ 'true' if enable_chain_runtime else 'false' }}
+          Restart=on-failure
+          RestartSec=5
+
+          [Install]
+          WantedBy=multi-user.target
+      register: install_systemd_unit_result
+
+    - name: Explain service start skip in check mode
+      ansible.builtin.debug:
+        msg: >-
+          Check mode skips the final systemd enable/start step because the unit file is not persisted,
+          so the local service manager cannot discover {{ service_name }} yet.
+      when: ansible_check_mode
+
+    - name: Ensure sovereign-node service is enabled and started
+      ansible.builtin.systemd:
+        name: "{{ service_name }}"
+        daemon_reload: true
+        enabled: true
+        state: "{{ 'restarted' if (install_binary_result.changed or install_bridge_policies_result.changed or install_network_config_result.changed or (install_bootstrap_nodes_result.changed | default(false)) or (install_seed_peers_result.changed | default(false)) or install_systemd_unit_result.changed) else 'started' }}"
+      when: not ansible_check_mode
