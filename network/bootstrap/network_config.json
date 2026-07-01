@@ -1,0 +1,9 @@
+{
+  "network": "sovereign-testnet",
+  "transport": "quic",
+  "pubsub": "gossip",
+  "default_topic": "fl.rounds",
+  "round_timeout_seconds": 120,
+  "min_peers": 1,
+  "max_peers": 128
+}
