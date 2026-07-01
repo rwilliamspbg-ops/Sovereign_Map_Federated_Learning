@@ -51,6 +51,13 @@ updates:
       - "docs/**"
       - "examples/**"
       - "packages/training/**"
+    ignore:
+      - dependency-name: "numpy"
+        versions:
+          - ">=2.5.0"
+      - dependency-name: "scipy"
+        versions:
+          - ">=1.18.0"
     groups:
       pip-root-updates:
         patterns:
