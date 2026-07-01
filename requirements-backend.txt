@@ -9,7 +9,7 @@ python-engineio==4.13.3
 numpy==2.4.6
 scipy==1.17.1
 scikit-learn==1.9.0
-flwr==1.32.0
+flwr==1.31.0
 
 # Async & Threading
 asyncio==4.0.0
