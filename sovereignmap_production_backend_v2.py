@@ -215,6 +215,7 @@ class ByzantineRobustFedAvg(FedAvg):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.round_num = 0
+        self.round_start_time = time.time()
         self.convergence_history = {
             "rounds": [],
             "accuracies": [],
@@ -229,6 +230,13 @@ class ByzantineRobustFedAvg(FedAvg):
         failures: List[Tuple[fl.server.client_proxy.ClientProxy, BaseException]],
     ) -> Tuple[Optional[Parameters], Dict[str, Scalar]]:
         """Aggregate model updates with Byzantine robustness."""
+
+        if self.round_start_time > 0:
+            fl_round_duration_seconds.observe(time.time() - self.round_start_time)
+        self.round_start_time = time.time()
+        for client_proxy, exc in failures:
+            err_type = "timeout" if "timeout" in str(exc).lower() else "unknown"
+            fl_client_error_total.labels(error_type=err_type).inc()
 
         if not results:
             return None, {}
@@ -501,6 +509,21 @@ fl_accuracy_gauge = Gauge("sovereignmap_fl_accuracy", "Current FL model accuracy
 fl_loss_gauge = Gauge("sovereignmap_fl_loss", "Current FL model loss")
 fl_round_gauge = Gauge("sovereignmap_fl_round", "Current FL round number")
 active_nodes_gauge = Gauge("sovereignmap_active_nodes", "Currently connected nodes")
+fl_round_duration_seconds = Histogram(
+    "sovereignmap_fl_round_duration_seconds",
+    "Time taken for a single FL round",
+    buckets=(10, 30, 60, 120, 300, 600, 1200),
+)
+fl_client_error_total = Counter(
+    "sovereignmap_fl_client_error_total",
+    "Total client errors reported during fit/evaluate",
+    ["error_type"],
+)
+model_persistence_latency_seconds = Histogram(
+    "sovereignmap_model_persistence_latency_seconds",
+    "Time taken to persist model checkpoints",
+)
+
 model_registry_writes_total = Counter(
     "sovereignmap_model_registry_writes_total",
     "Total model registry write operations",
@@ -528,6 +551,8 @@ ops_control_actions_total = Counter(
     ["action"],
 )
 ops_control_actions_total.labels(action="verification_policy_update").inc(0)
+fl_client_error_total.labels(error_type="timeout").inc(0)
+fl_client_error_total.labels(error_type="auth_failure").inc(0)
 ops_control_actions_total.labels(action="training_start").inc(0)
 ops_control_actions_total.labels(action="training_stop").inc(0)
 ops_control_actions_total.labels(action="marketplace_offer_create").inc(0)
@@ -2957,7 +2982,9 @@ def execute_manual_fl_round(reason: str = "manual") -> Dict[str, Any]:
     fl_round_gauge.set(current_round)
     active_nodes_gauge.set(active_nodes)
 
+    start_p = time.time()
     persist_round_snapshot(current_round, next_acc, next_loss, active_nodes)
+    model_persistence_latency_seconds.observe(time.time() - start_p)
     threading.Thread(
         target=publish_tpm_attestation_events,
         args=(active_nodes,),

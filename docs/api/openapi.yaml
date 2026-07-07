@@ -24,6 +24,19 @@ tags:
   - name: Network
 
 paths:
+
+  /fl_round:
+    post:
+      tags: [Training]
+      summary: Execute a federated learning round (internal/debug)
+      operationId: postFlRound
+      responses:
+        '200':
+          description: FL round executed
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TriggerFlResponse'
   /status:
     get:
       tags: [Runtime]

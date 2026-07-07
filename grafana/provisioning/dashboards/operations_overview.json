@@ -69,10 +69,22 @@
   },
   "editable": true,
   "fiscalYearStartMonth": 0,
-  "description": "Plain-language operations view for people who need to know if the system is healthy, fast, and behaving normally.",
+  "description": "Starred, easy-read operations NOC dashboard with live refresh, SLO strip, and clear drilldowns.",
   "graphTooltip": 1,
   "id": null,
-  "tags": ["operations", "health", "training", "ops-friendly"],
+  "tags": [
+    "easy-read",
+    "fl",
+    "live",
+    "network-health",
+    "operations",
+    "professional",
+    "slo",
+    "sovereignmap",
+    "starred",
+    "trust",
+    "vivid"
+  ],
   "links": [
     {
       "title": "Operations",
@@ -1571,12 +1583,12 @@
       "targets": [
         {
           "refId": "A",
-          "expr": "(max(tokenomics_fl_verification_ratio) or vector(0)) * 100",
+          "expr": "(max(tokenomics_fl_verification_ratio) or vector(0)) * 100 or vector(0)",
           "legendFormat": "Cumulative epsilon"
         },
         {
           "refId": "B",
-          "expr": "(max(tokenomics_fl_average_confidence_bps) or vector(0)) / 100",
+          "expr": "(max(tokenomics_fl_average_confidence_bps) or vector(0)) / 100 or vector(0)",
           "legendFormat": "Target epsilon"
         }
       ],
@@ -1626,12 +1638,12 @@
       "targets": [
         {
           "refId": "A",
-          "expr": "(1 - (max(tokenomics_fl_verification_ratio) or vector(0))) * 100",
+          "expr": "(1 - (max(tokenomics_fl_verification_ratio) or vector(0))) * 100 or vector(0)",
           "legendFormat": "Straggler rate"
         },
         {
           "refId": "B",
-          "expr": "(max(tokenomics_stake_concentration_gini) or vector(0)) * 100",
+          "expr": "(max(tokenomics_stake_concentration_gini) or vector(0)) * 100 or vector(0)",
           "legendFormat": "Attack success rate"
         },
         {
@@ -1686,7 +1698,7 @@
       "targets": [
         {
           "refId": "A",
-          "expr": "(max(tpm_ca_certificate_valid) or vector(0)) * 100",
+          "expr": "(max(tpm_ca_certificate_valid) or vector(0)) * 100 or vector(0)",
           "legendFormat": "EPC utilization %"
         },
         {
@@ -1811,7 +1823,7 @@
         },
         {
           "refId": "B",
-          "expr": "(max(tokenomics_stake_concentration_gini) or vector(0)) * 100",
+          "expr": "(max(tokenomics_stake_concentration_gini) or vector(0)) * 100 or vector(0)",
           "legendFormat": "Stake concentration %"
         },
         {
@@ -1821,7 +1833,7 @@
         },
         {
           "refId": "D",
-          "expr": "(max(tokenomics_stake_participation_ratio) or vector(0)) * 100",
+          "expr": "(max(tokenomics_stake_participation_ratio) or vector(0)) * 100 or vector(0)",
           "legendFormat": "Reward APY %"
         }
       ],
@@ -2114,22 +2126,22 @@
       "targets": [
         {
           "refId": "A",
-          "expr": "(sum(increase(sovereignmap_fl_rounds_total[$window])) or vector(0)) - (sum(increase(sovereignmap_fl_rounds_total[$window] offset $window)) or vector(0))",
+          "expr": "(sum(increase(sovereignmap_fl_rounds_total[$window])) or vector(0)) - (sum(increase(sovereignmap_fl_rounds_total[$window] offset $window)) or vector(0)) or vector(0)",
           "legendFormat": "FL rounds delta"
         },
         {
           "refId": "B",
-          "expr": "(sum(increase(tokenomics_bridge_transfers_total[$window])) or vector(0)) - (sum(increase(tokenomics_bridge_transfers_total[$window] offset $window)) or vector(0))",
+          "expr": "(sum(increase(tokenomics_bridge_transfers_total[$window])) or vector(0)) - (sum(increase(tokenomics_bridge_transfers_total[$window] offset $window)) or vector(0)) or vector(0)",
           "legendFormat": "Vectorized path delta"
         },
         {
           "refId": "C",
-          "expr": "(delta(tokenomics_validator_count[$window]) or vector(0)) - (delta(tokenomics_validator_count[$window] offset $window) or vector(0))",
+          "expr": "(delta(tokenomics_validator_count[$window]) or vector(0)) - (delta(tokenomics_validator_count[$window] offset $window) or vector(0)) or vector(0)",
           "legendFormat": "Nonce replay delta"
         },
         {
           "refId": "D",
-          "expr": "(sum(increase(sovereign_ops_control_actions_total[$window])) or vector(0)) - (sum(increase(sovereign_ops_control_actions_total[$window] offset $window)) or vector(0))",
+          "expr": "(sum(increase(sovereign_ops_control_actions_total[$window])) or vector(0)) - (sum(increase(sovereign_ops_control_actions_total[$window] offset $window)) or vector(0)) or vector(0)",
           "legendFormat": "Nonce cleanup delta"
         }
       ],
@@ -2173,24 +2185,47 @@
         "minVizHeight": 16,
         "minVizWidth": 8
       }
+    },
+    {
+      "title": "FL Round Duration (Seconds)",
+      "type": "timeseries",
+      "gridPos": {
+        "h": 8,
+        "w": 12,
+        "x": 0,
+        "y": 122
+      },
+      "targets": [
+        {
+          "expr": "histogram_quantile(0.95, sum(rate(sovereignmap_fl_round_duration_seconds_bucket[$window])) by (le)) or vector(0)",
+          "legendFormat": "p95 Duration"
+        },
+        {
+          "expr": "histogram_quantile(0.5, sum(rate(sovereignmap_fl_round_duration_seconds_bucket[$window])) by (le)) or vector(0)",
+          "legendFormat": "p50 Duration"
+        }
+      ]
+    },
+    {
+      "title": "FL Client Errors by Type",
+      "type": "timeseries",
+      "gridPos": {
+        "h": 8,
+        "w": 12,
+        "x": 12,
+        "y": 122
+      },
+      "targets": [
+        {
+          "expr": "sum(increase(sovereignmap_fl_client_error_total[$window])) by (error_type) or vector(0)",
+          "legendFormat": "{{error_type}}"
+        }
+      ]
     }
   ],
   "refresh": "10s",
   "schemaVersion": 38,
   "style": "dark",
-  "tags": [
-    "easy-read",
-    "fl",
-    "live",
-    "network-health",
-    "operations",
-    "professional",
-    "slo",
-    "sovereignmap",
-    "starred",
-    "trust",
-    "vivid"
-  ],
   "templating": {
     "list": [
       {
@@ -2259,6 +2294,5 @@
   "title": "SovereignMap | STARRED | Operations Live Overview",
   "uid": "sovereign-operations-overview",
   "version": 1,
-  "weekStart": "",
-  "description": "Starred, easy-read operations NOC dashboard with live refresh, SLO strip, and clear drilldowns."
+  "weekStart": ""
 }

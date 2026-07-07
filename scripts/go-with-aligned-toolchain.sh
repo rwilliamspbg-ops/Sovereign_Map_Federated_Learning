@@ -21,4 +21,4 @@ if command -v readlink >/dev/null 2>&1; then
 fi
 
 TOOLROOT="$(dirname "$(dirname "$GO_BIN")")"
-exec env GOROOT="$TOOLROOT" GOTOOLCHAIN=local "$GO_BIN" "$@"
+exec env GOROOT="$TOOLROOT" GOTOOLCHAIN=auto "$GO_BIN" "$@"
