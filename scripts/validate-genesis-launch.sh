@@ -110,8 +110,8 @@ validate_repository_files() {
     FILES=(
         "genesis-launch.sh"
         "docker-compose.full.yml"
-        "prometheus.yml"
-        "alertmanager.yml"
+        "monitoring/prometheus/prometheus.yml"
+        "monitoring/alertmanager/config.yml"
     )
     
     for file in "${FILES[@]}"; do
@@ -166,7 +166,7 @@ validate_monitoring_stack() {
     
     # Check Prometheus config
     if [[ -f "monitoring/prometheus/prometheus.yml" ]]; then
-        if grep -q "job_name.*sovereign" prometheus.yml; then
+        if grep -q "job_name.*sovereign" monitoring/prometheus/prometheus.yml; then
             check_pass "Prometheus configuration includes Sovereign jobs"
         else
             check_warn "Prometheus configuration may be incomplete"
