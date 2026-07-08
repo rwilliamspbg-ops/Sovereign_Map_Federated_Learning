@@ -88,14 +88,14 @@ if [[ -z "$WORKER_HOSTS" ]]; then
     exit 1
 fi
 
-WORKER_COUNT=$(echo $WORKER_HOSTS | wc -w)
+WORKER_COUNT=$(echo "$WORKER_HOSTS" | wc -w)
 echo "✓ Found $WORKER_COUNT worker nodes"
 
 #================================================================================
 # PHASE 5.2: DOWNLOAD LOGS (DOCKER & DENSITY OPTIMIZED) - FIXED SCP BUG
 #================================================================================
 echo "Step 5.2: Downloading Docker logs from cluster..."
-mkdir -p ${RESULTS_DIR}/logs
+mkdir -p "${RESULTS_DIR}"/logs
 
 LOG_COUNT=0
 for HOST_IP in $WORKER_HOSTS; do

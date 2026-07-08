@@ -83,10 +83,10 @@ echo "Creating bucket: ${BUCKET_NAME}"
 aws s3 mb "s3://${BUCKET_NAME}" --region ${REGION}
 
 # Enable versioning
-aws s3api put-bucket-versioning     --bucket ${BUCKET_NAME}     --versioning-configuration Status=Enabled
+aws s3api put-bucket-versioning     --bucket "${BUCKET_NAME}"     --versioning-configuration Status=Enabled
 
 # Enable encryption
-aws s3api put-bucket-encryption     --bucket ${BUCKET_NAME}     --server-side-encryption-configuration '{
+aws s3api put-bucket-encryption     --bucket "${BUCKET_NAME}"     --server-side-encryption-configuration '{
         "Rules": [{
             "ApplyServerSideEncryptionByDefault": {
                 "SSEAlgorithm": "AES256"
@@ -96,11 +96,11 @@ aws s3api put-bucket-encryption     --bucket ${BUCKET_NAME}     --server-side-en
 
 # Create folder structure
 echo "Creating folder structure..."
-aws s3api put-object --bucket ${BUCKET_NAME} --key "tests/"
-aws s3api put-object --bucket ${BUCKET_NAME} --key "models/"
-aws s3api put-object --bucket ${BUCKET_NAME} --key "logs/"
-aws s3api put-object --bucket ${BUCKET_NAME} --key "metrics/"
-aws s3api put-object --bucket ${BUCKET_NAME} --key "reports/"
+aws s3api put-object --bucket "${BUCKET_NAME}" --key "tests/"
+aws s3api put-object --bucket "${BUCKET_NAME}" --key "models/"
+aws s3api put-object --bucket "${BUCKET_NAME}" --key "logs/"
+aws s3api put-object --bucket "${BUCKET_NAME}" --key "metrics/"
+aws s3api put-object --bucket "${BUCKET_NAME}" --key "reports/"
 
 echo ""
 echo "✓ S3 bucket created: ${BUCKET_NAME}"
