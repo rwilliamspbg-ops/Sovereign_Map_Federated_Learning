@@ -212,7 +212,7 @@ echo "=========================================="
 echo "Saving Optimized Configuration"
 echo "=========================================="
 
-cat > aws-config.env << EOF
+cat > config/aws-config.env << EOF
 # Sovereign FL 200-Node Test Configuration (Optimized for 2026)
 # Generated: $(date)
 AWS_REGION=${REGION}
@@ -240,7 +240,7 @@ DOCKER_CPU_RESERVATION=0.5
 USE_SPOT_INSTANCES=true
 EOF
 
-echo "✓ Configuration saved to: aws-config.env"
+echo "✓ Configuration saved to: config/aws-config.env"
 echo ""
 
 #================================================================================
@@ -265,5 +265,5 @@ echo "  1. Wait for service quota approval (check email/AWS console)"
 echo "  2. Run Phase 2: Infrastructure Deployment"
 echo "  3. Run: ./phase-2-deploy-infrastructure.sh"
 echo ""
-echo "Configuration file: aws-config.env"
+echo "Configuration file: config/aws-config.env"
 echo ""

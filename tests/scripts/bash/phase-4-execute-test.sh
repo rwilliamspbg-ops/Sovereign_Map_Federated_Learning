@@ -12,7 +12,7 @@ echo "=========================================="
 
 # Load configuration
 source aws-config.env 2>/dev/null || { echo "Error: aws-config.env not found"; exit 1; }
-source deployment-outputs.env 2>/dev/null || { echo "Error: deployment-outputs.env not found"; exit 1; }
+source config/deployment-outputs.env 2>/dev/null || { echo "Error: deployment-outputs.env not found"; exit 1; }
 
 # Create results directory
 RESULTS_DIR="results-$(date +%Y%m%d-%H%M%S)"

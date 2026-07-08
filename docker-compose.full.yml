@@ -76,7 +76,7 @@ services:
       - "${BACKEND_GRPC_HOST_PORT:-8080}:8080"  # Flower aggregator
     volumes:
       - ./sovereignmap_production_backend_v2.py:/app/sovereignmap_production_backend_v2.py:ro
-      - ./tpm_cert_manager.py:/app/tpm_cert_manager.py:ro
+      - ./scripts/tpm_cert_manager.py:/ap./scripts/tpm_cert_manager.py:ro
       - ./src:/app/src:ro
       - ./config:/app/config:ro
       - backend_data:/app/data
@@ -325,10 +325,10 @@ services:
       - "${PROMETHEUS_HOST_PORT:-9090}:9090"
     volumes:
       - prometheus-data:/prometheus
-      - ./prometheus.yml:/etc/prometheus/prometheus.yml:ro
-      - ./tpm_alerts.yml:/etc/prometheus/tpm_alerts.yml:ro
-      - ./dashboard_compat_rules.yml:/etc/prometheus/dashboard_compat_rules.yml:ro
-      - ./fl_slo_alerts.yml:/etc/prometheus/fl_slo_alerts.yml:ro
+      - ./monitoring/prometheus/prometheus.yml:/etc/prometheu./monitoring/prometheus/prometheus.yml:ro
+      - ./monitoring/prometheus/alerts/tpm_alerts.yml:/etc/prometheu./monitoring/prometheus/alerts/tpm_alerts.yml:ro
+      - ./monitoring/prometheus/alerts/dashboard_compat_rules.yml:/etc/prometheu./monitoring/prometheus/alerts/dashboard_compat_rules.yml:ro
+      - ./monitoring/prometheus/alerts/fl_slo_alerts.yml:/etc/prometheu./monitoring/prometheus/alerts/fl_slo_alerts.yml:ro
     command:
       - '--config.file=/etc/prometheus/prometheus.yml'
       - '--storage.tsdb.path=/prometheus'
@@ -351,8 +351,8 @@ services:
     image: python:3.11-slim
     container_name: sovereign-tpm-metrics
     volumes:
-      - ./tpm_metrics_exporter.py:/app/tpm_metrics_exporter.py:ro
-      - ./tpm_cert_manager.py:/app/tpm_cert_manager.py:ro
+      - ./scripts/tpm_metrics_exporter.py:/ap./scripts/tpm_metrics_exporter.py:ro
+      - ./scripts/tpm_cert_manager.py:/ap./scripts/tpm_cert_manager.py:ro
       - tpm-certs:/etc/sovereign/certs
     working_dir: /app
     command: ["sh", "-c", "python -m pip install --no-cache-dir prometheus-client flask cryptography && python tpm_metrics_exporter.py"]
@@ -371,7 +371,7 @@ services:
     image: python:3.11-slim
     container_name: sovereign-fl-performance
     volumes:
-      - ./fl_performance_exporter.py:/app/fl_performance_exporter.py:ro
+      - ./scripts/fl_performance_exporter.py:/ap./scripts/fl_performance_exporter.py:ro
     working_dir: /app
     command: ["sh", "-c", "python -m pip install --no-cache-dir prometheus_client && python fl_performance_exporter.py"]
     ports:
@@ -382,7 +382,7 @@ services:
   auto-tuner:
     image: python:3.11-slim
     volumes:
-      - ./hardware_auto_tuner.py:/app/hardware_auto_tuner.py:ro
+      - ./scripts/hardware_auto_tuner.py:/ap./scripts/hardware_auto_tuner.py:ro
     working_dir: /app
     command: ["python", "hardware_auto_tuner.py"]
     networks:
@@ -404,7 +404,7 @@ services:
     image: python:3.11-slim
     container_name: sovereign-tokenomics-metrics
     volumes:
-      - ./tokenomics_metrics_exporter.py:/app/tokenomics_metrics_exporter.py:ro
+      - ./scripts/tokenomics_metrics_exporter.py:/ap./scripts/tokenomics_metrics_exporter.py:ro
       - ./test-data/tokenomics-telemetry.seed.json:/app/data/tokenomics-telemetry.seed.json:ro
     working_dir: /app
     command: ["sh", "-c", "python -m pip install --no-cache-dir prometheus-client flask && python tokenomics_metrics_exporter.py"]
@@ -475,7 +475,7 @@ services:
       - "${ALERTMANAGER_HOST_PORT:-9093}:9093"
     volumes:
       - alertmanager-data:/alertmanager
-      - ./alertmanager.yml:/etc/alertmanager/config.yml:ro
+      - ./monitoring/alertmanager/config.yml:/etc/alertmanager/config.yml:ro
     command:
       - '--config.file=/etc/alertmanager/config.yml'
       - '--storage.path=/alertmanager'

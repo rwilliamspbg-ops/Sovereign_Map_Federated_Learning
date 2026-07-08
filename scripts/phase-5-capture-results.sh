@@ -17,16 +17,16 @@ echo "PHASE 5: Results Capture and Documentation"
 echo "=========================================="
 
 # 1. Load Configuration
-if [[ -f "aws-config.env" ]]; then
-    source aws-config.env
+if [[ -f "config/aws-config.env" ]]; then
+    source config/aws-config.env
 else
-    echo "⚠ Warning: aws-config.env not found, using defaults"
+    echo "⚠ Warning: config/aws-config.env not found, using defaults"
 fi
 
-if [[ -f "deployment-outputs.env" ]]; then
-    source deployment-outputs.env
+if [[ -f "config/deployment-outputs.env" ]]; then
+    source config/deployment-outputs.env
 else
-    echo "⚠ Warning: deployment-outputs.env not found"
+    echo "⚠ Warning: config/deployment-outputs.env not found"
 fi
 
 KEY_PATH="./terraform/sovereign-fl-key.pem"

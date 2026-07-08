@@ -149,7 +149,7 @@ Repository landing page source: [docs/index.md](docs/index.md)
 [![Metrics Upgrade](https://img.shields.io/badge/Metrics-Blockchain%20Bridge%20Integrated-0ea5e9?style=flat-square)](tokenomics_metrics_exporter.py)
 [![Dashboards Upgrade](https://img.shields.io/badge/Grafana-STARRED%20Live%20Dashboards-f59e0b?style=flat-square&logo=grafana&logoColor=white)](grafana/provisioning/dashboards)
 [![PySyft Demo](https://img.shields.io/badge/PySyft-Mohawk%20PoC%20Ready-10b981?style=flat-square)](examples/pysyft-integration)
-[![Prometheus Ready](https://img.shields.io/badge/Prometheus-Scrape%20Ready-ef4444?style=flat-square&logo=prometheus&logoColor=white)](prometheus.yml)
+[![Prometheus Ready](https://img.shields.io/badge/Prometheus-Scrape%20Ready-ef4444?style=flat-square&logo=prometheus&logoColor=white)](monitoring/prometheus/prometheus.yml)
 [![Open Ecosystem](https://img.shields.io/badge/Open%20Ecosystem-Sprint%203%20Local--First-0ea5e9?style=flat-square)](docs/OPEN_ECOSYSTEM_FIRST_10_MINUTES.md)
 [![Marketplace Alerts](https://img.shields.io/badge/Alerts-Marketplace%20Guardrails-f97316?style=flat-square)](marketplace_alerts.yml)
 
@@ -329,7 +329,7 @@ Primary files updated for this upgrade:
 - Backend telemetry payload: [sovereignmap_production_backend_v2.py](sovereignmap_production_backend_v2.py)
 - Operations dashboard: [grafana/provisioning/dashboards/operations_overview.json](grafana/provisioning/dashboards/operations_overview.json)
 - Tokenomics dashboard: [grafana/provisioning/dashboards/tokenomics_overview.json](grafana/provisioning/dashboards/tokenomics_overview.json)
-- Prometheus scrape config: [prometheus.yml](prometheus.yml)
+- Prometheus scrape config: [prometheus.yml](monitoring/prometheus/prometheus.yml)
 
 Dashboard provisioning note:
 
@@ -577,10 +577,10 @@ Advisory (informational): Mohawk Proto and related aggregation design elements a
 ## Platform at a Glance
 
 [![Capability: Federated Learning](https://img.shields.io/badge/Capability-Federated%20Learning-2f9e44?style=flat-square)](sovereignmap_production_backend_v2.py)
-[![Capability: Governance Policy](https://img.shields.io/badge/Capability-Governance%20Policy-5f3dc4?style=flat-square)](bridge-policies.json)
+[![Capability: Governance Policy](https://img.shields.io/badge/Capability-Governance%20Policy-5f3dc4?style=flat-square)](config/bridge-policies.json)
 [![Capability: Trust and Attestation](https://img.shields.io/badge/Capability-Trust%20and%20Attestation-0b7285?style=flat-square)](tpm_cert_manager.py)
 [![Capability: Tokenomics Telemetry](https://img.shields.io/badge/Capability-Tokenomics%20Telemetry-1971c2?style=flat-square)](tokenomics_metrics_exporter.py)
-[![Capability: Observability](https://img.shields.io/badge/Capability-Observability-e67700?style=flat-square)](prometheus.yml)
+[![Capability: Observability](https://img.shields.io/badge/Capability-Observability-e67700?style=flat-square)](monitoring/prometheus/prometheus.yml)
 [![Runtime: Docker Compose](https://img.shields.io/badge/Runtime-Docker%20Compose%20Supported-0284c7?style=flat-square&logo=docker&logoColor=white)](docker-compose.full.yml)
 
 ### Complete Badge Portfolio
@@ -761,9 +761,9 @@ sequenceDiagram
 | --- | --- | --- |
 | Federated learning | [sovereignmap_production_backend_v2.py](sovereignmap_production_backend_v2.py), [src/client.py](src/client.py) | Round orchestration, aggregation, convergence |
 | Trust and attestation | [tpm_cert_manager.py](tpm_cert_manager.py), [tpm_metrics_exporter.py](tpm_metrics_exporter.py), [secure_communication.py](secure_communication.py) | Identity, verification, trust signals |
-| Governance and policy | [bridge-policies.json](bridge-policies.json), [capabilities.json](capabilities.json) | Runtime controls and policy surfaces |
+| Governance and policy | [bridge-policies.json](config/bridge-policies.json), [capabilities.json](config/capabilities.json) | Runtime controls and policy surfaces |
 | Tokenomics and economics | [tokenomics_metrics_exporter.py](tokenomics_metrics_exporter.py), [tokenomics_metrics_exporter.py](tokenomics_metrics_exporter.py) | Economic telemetry and dashboard inputs |
-| Observability | [prometheus.yml](prometheus.yml), [alertmanager.yml](alertmanager.yml), [fl_slo_alerts.yml](fl_slo_alerts.yml) | Metrics collection, alerting, SLO validation |
+| Observability | [prometheus.yml](monitoring/prometheus/prometheus.yml), [alertmanager.yml](monitoring/alertmanager/config.yml), [fl_slo_alerts.yml](monitoring/prometheus/alerts/fl_slo_alerts.yml) | Metrics collection, alerting, SLO validation |
 | Operations | [deploy.sh](deploy.sh), [deploy_demo.sh](deploy_demo.sh), [Makefile](Makefile) | Deployment and repeatable operator workflows |
 
 ## Detailed Functions Reference
@@ -981,7 +981,7 @@ Node-agent dependency profile:
 ```bash
 git clone https://github.com/rwilliamspbg-ops/Sovereign_Map_Federated_Learning.git
 cd Sovereign_Map_Federated_Learning
-./genesis-launch.sh
+./scripts/genesis-launch.sh
 ```
 
 ### Option B: Local full stack
@@ -1196,4 +1196,4 @@ Verified green on main after latest changes:
 
 For release candidates, run one additional live smoke test using [docker-compose.full.yml](docker-compose.full.yml) and verify /health, /hud_data, and /event/tokenomics before tagging.
 
-Standalone report: [SANITY_REPORT.md](SANITY_REPORT.md)
+Standalone report: [SANITY_REPORT.md](docs/archive/SANITY_REPORT.md)

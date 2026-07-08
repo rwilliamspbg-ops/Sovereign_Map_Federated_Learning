@@ -10,10 +10,10 @@ echo "PHASE 2: Infrastructure Deployment"
 echo "=========================================="
 
 # 1. Load configuration from Phase 1
-if [[ -f "aws-config.env" ]]; then
-    source aws-config.env
+if [[ -f "config/aws-config.env" ]]; then
+    source config/aws-config.env
 else
-    echo "❌ Error: aws-config.env not found. Run Phase 1 first."
+    echo "❌ Error: config/aws-config.env not found. Run Phase 1 first."
     exit 1
 fi
 
@@ -123,7 +123,7 @@ terraform apply tfplan
 
 # 11. Save outputs for later phases
 echo "Step 2.4: Capturing deployment outputs..."
-cat > ../deployment-outputs.env << EOF
+cat > ../config/deployment-outputs.env << EOF
 AGGREGATOR_IP=$(terraform output -raw aggregator_ip 2>/dev/null || echo "")
 WORKER_IPS=$(terraform output -json worker_ips 2>/dev/null || echo "[]")
 DEPLOYMENT_TIMESTAMP=$(date -u +"%Y-%m-%dT%H:%M:%SZ")
@@ -132,6 +132,6 @@ EOF
 cd ..
 echo "==========================================="
 echo "✅ PHASE 2 COMPLETE"
-echo "   Aggregator IP: $(grep AGGREGATOR_IP deployment-outputs.env | cut -d= -f2)"
+echo "   Aggregator IP: $(grep AGGREGATOR_IP config/deployment-outputs.env | cut -d= -f2)"
 echo "   Worker Count: $NODE_COUNT"
 echo "==========================================="

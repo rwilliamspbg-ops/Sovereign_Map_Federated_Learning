@@ -80,7 +80,7 @@ func run(mode string, args []string) error {
 	configPath := fs.String("config", "network/bootstrap/network_config.json", "path to network config json")
 	listenAddr := fs.String("listen", "/ip4/0.0.0.0/tcp/0", "libp2p listen multiaddr")
 	enableChainRuntime := fs.Bool("enable-chain-runtime", true, "enable blockchain runtime over gossip mesh")
-	bridgePoliciesPath := fs.String("bridge-policies", "bridge-policies.json", "path to bridge route policy JSON")
+	bridgePoliciesPath := fs.String("bridge-policies", "config/bridge-policies.json", "path to bridge route policy JSON")
 
 	if err := fs.Parse(args); err != nil {
 		return err

@@ -46,7 +46,7 @@ func TestRuntimeMeshPropagationTxAndBlock(t *testing.T) {
 		t.Fatalf("meshes did not connect: %v", err)
 	}
 
-	policies, err := LoadBridgePolicySet(filepath.Join("..", "..", "bridge-policies.json"))
+	policies, err := LoadBridgePolicySet(filepath.Join("..", "..", "config", "bridge-policies.json"))
 	if err != nil {
 		t.Fatalf("load bridge policies: %v", err)
 	}
