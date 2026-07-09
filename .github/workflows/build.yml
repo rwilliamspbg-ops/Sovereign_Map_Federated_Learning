@@ -111,4 +111,4 @@ jobs:
           pip install -r requirements-ci.txt
 
       - name: Run Consensus Verification
-        run: python3 verify_consensus.py
+        run: python3 scripts/verify_consensus.py

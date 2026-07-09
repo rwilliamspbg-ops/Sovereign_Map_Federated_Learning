@@ -83,10 +83,10 @@ echo "Creating bucket: ${BUCKET_NAME}"
 aws s3 mb "s3://${BUCKET_NAME}" --region ${REGION}
 
 # Enable versioning
-aws s3api put-bucket-versioning     --bucket ${BUCKET_NAME}     --versioning-configuration Status=Enabled
+aws s3api put-bucket-versioning     --bucket "${BUCKET_NAME}"     --versioning-configuration Status=Enabled
 
 # Enable encryption
-aws s3api put-bucket-encryption     --bucket ${BUCKET_NAME}     --server-side-encryption-configuration '{
+aws s3api put-bucket-encryption     --bucket "${BUCKET_NAME}"     --server-side-encryption-configuration '{
         "Rules": [{
             "ApplyServerSideEncryptionByDefault": {
                 "SSEAlgorithm": "AES256"
@@ -96,11 +96,11 @@ aws s3api put-bucket-encryption     --bucket ${BUCKET_NAME}     --server-side-en
 
 # Create folder structure
 echo "Creating folder structure..."
-aws s3api put-object --bucket ${BUCKET_NAME} --key "tests/"
-aws s3api put-object --bucket ${BUCKET_NAME} --key "models/"
-aws s3api put-object --bucket ${BUCKET_NAME} --key "logs/"
-aws s3api put-object --bucket ${BUCKET_NAME} --key "metrics/"
-aws s3api put-object --bucket ${BUCKET_NAME} --key "reports/"
+aws s3api put-object --bucket "${BUCKET_NAME}" --key "tests/"
+aws s3api put-object --bucket "${BUCKET_NAME}" --key "models/"
+aws s3api put-object --bucket "${BUCKET_NAME}" --key "logs/"
+aws s3api put-object --bucket "${BUCKET_NAME}" --key "metrics/"
+aws s3api put-object --bucket "${BUCKET_NAME}" --key "reports/"
 
 echo ""
 echo "✓ S3 bucket created: ${BUCKET_NAME}"
@@ -212,7 +212,7 @@ echo "=========================================="
 echo "Saving Optimized Configuration"
 echo "=========================================="
 
-cat > aws-config.env << EOF
+cat > config/aws-config.env << EOF
 # Sovereign FL 200-Node Test Configuration (Optimized for 2026)
 # Generated: $(date)
 AWS_REGION=${REGION}
@@ -240,7 +240,7 @@ DOCKER_CPU_RESERVATION=0.5
 USE_SPOT_INSTANCES=true
 EOF
 
-echo "✓ Configuration saved to: aws-config.env"
+echo "✓ Configuration saved to: config/aws-config.env"
 echo ""
 
 #================================================================================
@@ -265,5 +265,5 @@ echo "  1. Wait for service quota approval (check email/AWS console)"
 echo "  2. Run Phase 2: Infrastructure Deployment"
 echo "  3. Run: ./phase-2-deploy-infrastructure.sh"
 echo ""
-echo "Configuration file: aws-config.env"
+echo "Configuration file: config/aws-config.env"
 echo ""

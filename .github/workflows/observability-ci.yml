@@ -67,13 +67,14 @@ jobs:
 
       - name: Validate rule syntax with promtool
         run: |
+          mapfile -t RULE_FILES < <(find monitoring/prometheus/alerts -name '*.yml' ! -name '*.test.yml' | sort)
           docker run --rm --entrypoint /bin/promtool -v "$PWD:/workspace" -w /workspace prom/prometheus:v2.48.0 \
-            check rules fl_slo_alerts.yml fl_detailed_alerts.yml tpm_alerts.yml
+            check rules "${RULE_FILES[@]}"
 
       - name: Run alert unit tests
         run: |
           docker run --rm --entrypoint /bin/promtool -v "$PWD:/workspace" -w /workspace prom/prometheus:v2.48.0 \
-            test rules fl_slo_alerts.test.yml fl_detailed_alerts.test.yml tpm_alerts.test.yml
+            test rules monitoring/prometheus/alerts/*.test.yml
 
       - name: Validate Alertmanager routing and inhibition semantics
         run: go test ./internal/monitoring -run "TestAlertmanagerRoutingPolicy|TestAlertmanagerInhibitionPolicy"

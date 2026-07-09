@@ -110,8 +110,8 @@ validate_repository_files() {
     FILES=(
         "genesis-launch.sh"
         "docker-compose.full.yml"
-        "prometheus.yml"
-        "alertmanager.yml"
+        "monitoring/prometheus/prometheus.yml"
+        "monitoring/alertmanager/config.yml"
     )
     
     for file in "${FILES[@]}"; do
@@ -123,7 +123,7 @@ validate_repository_files() {
     done
     
     # Check script is executable
-    if [[ -x "genesis-launch.sh" ]]; then
+    if [[ -x "scripts/genesis-launch.sh" ]]; then
         check_pass "genesis-launch.sh is executable"
     else
         check_warn "genesis-launch.sh not executable (run: chmod +x genesis-launch.sh)"
@@ -165,8 +165,8 @@ validate_monitoring_stack() {
     print_header "Monitoring Stack"
     
     # Check Prometheus config
-    if [[ -f "prometheus.yml" ]]; then
-        if grep -q "job_name.*sovereign" prometheus.yml; then
+    if [[ -f "monitoring/prometheus/prometheus.yml" ]]; then
+        if grep -q "job_name.*sovereign" monitoring/prometheus/prometheus.yml; then
             check_pass "Prometheus configuration includes Sovereign jobs"
         else
             check_warn "Prometheus configuration may be incomplete"
@@ -205,7 +205,7 @@ validate_monitoring_stack() {
     fi
     
     # Check alert rules
-    if [[ -f "tpm_alerts.yml" ]]; then
+    if [[ -f "monitoring/prometheus/alerts/tpm_alerts.yml" ]]; then
         if grep -q "groups:" tpm_alerts.yml; then
             check_pass "Alert rules configuration exists"
         else

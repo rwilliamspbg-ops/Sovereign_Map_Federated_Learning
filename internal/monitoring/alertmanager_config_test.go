@@ -95,7 +95,7 @@ func TestAlertmanagerInhibitionPolicy(t *testing.T) {
 func readAlertmanagerConfig(t *testing.T) alertmanagerConfig {
 	t.Helper()
 
-	path := filepath.Join("..", "..", "alertmanager.yml")
+	path := filepath.Join("..", "..", "monitoring", "alertmanager", "config.yml")
 	raw, err := os.ReadFile(path)
 	if err != nil {
 		t.Fatalf("read alertmanager.yml: %v", err)

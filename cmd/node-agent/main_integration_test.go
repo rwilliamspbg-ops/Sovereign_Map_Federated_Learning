@@ -109,8 +109,8 @@ func TestNodeAgentEndpointsEndToEnd(t *testing.T) {
 		"MOHAWK_API_ENFORCE_ROLES=true",
 		"MOHAWK_API_HYBRID_ALLOWED_ROLES=verifier,admin",
 		"MOHAWK_API_PROOF_ALLOWED_ROLES=verifier,admin",
-		"MOHAWK_CAPABILITIES_PATH="+filepath.Join(repoRoot, "capabilities.json"),
-		"MOHAWK_BRIDGE_POLICIES_PATH="+filepath.Join(repoRoot, "bridge-policies.json"),
+		"MOHAWK_CAPABILITIES_PATH="+filepath.Join(repoRoot, "config", "capabilities.json"),
+		"MOHAWK_BRIDGE_POLICIES_PATH="+filepath.Join(repoRoot, "config", "bridge-policies.json"),
 	)
 
 	var combined bytes.Buffer

@@ -14,7 +14,7 @@ from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
 DASH_DIR = ROOT / "grafana" / "provisioning" / "dashboards"
-RULES_FILE = ROOT / "dashboard_compat_rules.yml"
+RULES_FILE = ROOT / "monitoring/prometheus/alerts/dashboard_compat_rules.yml"
 ALLOWLIST_FILE = ROOT / "scripts" / "known_metrics_allowlist.txt"
 
 METRIC_RE = re.compile(r"\b([a-zA-Z_][a-zA-Z0-9_:]*)\b")

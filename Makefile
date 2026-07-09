@@ -177,9 +177,9 @@ check: fmt vet lint-soft test
 alerts-test:
 	@echo "🚨 Running Prometheus alert rule tests..."
 	@docker run --rm --entrypoint /bin/promtool -v "$$(pwd):/workspace" -w /workspace prom/prometheus:v2.48.0 \
-		check rules fl_slo_alerts.yml fl_detailed_alerts.yml tpm_alerts.yml marketplace_alerts.yml
+		check rules monitoring/prometheus/alerts/*.yml
 	@docker run --rm --entrypoint /bin/promtool -v "$$(pwd):/workspace" -w /workspace prom/prometheus:v2.48.0 \
-		test rules fl_slo_alerts.test.yml fl_detailed_alerts.test.yml tpm_alerts.test.yml marketplace_alerts.test.yml
+		test rules monitoring/prometheus/alerts/*.test.yml
 	@$(GO) test ./internal/monitoring -run "TestAlertmanagerRoutingPolicy|TestAlertmanagerInhibitionPolicy"
 	@echo "✅ Alert rule tests passed"
 

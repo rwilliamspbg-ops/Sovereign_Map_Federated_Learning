@@ -20,7 +20,7 @@ This directory contains the active operator and integration documentation.
 
 - [Documentation Maintenance Runbook](DOCUMENTATION_MAINTENANCE.md)
 - [Test Environment Setup](../tests/docs/TEST_ENV_SETUP.md)
-- [Autonomy Execution Report](../AUTONOMOUS_MAPPING_EXECUTION_REPORT.md)
+- [Autonomy Execution Report](archive/AUTONOMOUS_MAPPING_EXECUTION_REPORT.md)
 - [Full Validation PR Gate Workflow](../.github/workflows/full-validation-pr-gate.yml)
 - [Full Validation Scheduled Deep Workflow](../.github/workflows/full-validation-scheduled-deep.yml)
 - [Observability CI Workflow](../.github/workflows/observability-ci.yml)
