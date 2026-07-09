@@ -84,3 +84,8 @@ scrape_configs:
       - targets: ['metrics-exporter:9108']
     metrics_path: '/metrics'
     scrape_interval: 15s
+
+  # Alertmanager self-metrics
+  - job_name: 'alertmanager'
+    static_configs:
+      - targets: ['alertmanager:9093']

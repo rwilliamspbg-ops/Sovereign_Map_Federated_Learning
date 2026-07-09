@@ -198,7 +198,7 @@ jobs:
           export MONGO_PASSWORD="${STAGING_MONGO_PASSWORD:-$MONGO_PASSWORD_FALLBACK}"
           export REDIS_PASSWORD="${STAGING_REDIS_PASSWORD:-$REDIS_PASSWORD_FALLBACK}"
           export GRAFANA_ADMIN_PASSWORD="${STAGING_GRAFANA_ADMIN_PASSWORD:-$GRAFANA_ADMIN_PASSWORD_FALLBACK}"
-          bash ./validate-secrets.sh prod
+          bash ./scripts/validate-secrets.sh prod
       
       - name: Deploy to staging via SSH
         if: steps.staging_inputs.outputs.ready == 'true'
@@ -348,7 +348,7 @@ jobs:
           REDIS_PASSWORD: ${{ secrets.REDIS_PASSWORD }}
           GRAFANA_ADMIN_PASSWORD: ${{ secrets.GRAFANA_ADMIN_PASSWORD }}
         run: |
-          bash ./validate-secrets.sh prod
+          bash ./scripts/validate-secrets.sh prod
       
       - name: Deploy to production via SSH
         if: steps.prod_inputs.outputs.ready == 'true'

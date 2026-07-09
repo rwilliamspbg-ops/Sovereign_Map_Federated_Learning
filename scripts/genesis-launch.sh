@@ -203,8 +203,8 @@ pre_launch_checks() {
     # Check required files
     local required_files=(
         "docker-compose.full.yml"
-        "prometheus.yml"
-        "alertmanager.yml"
+        "monitoring/prometheus/prometheus.yml"
+        "monitoring/alertmanager/config.yml"
         "grafana/dashboards/genesis-launch-overview.json"
     )
     

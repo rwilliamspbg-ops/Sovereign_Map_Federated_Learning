@@ -134,10 +134,10 @@ convert_duration_to_seconds() {
       echo $((${duration%h} * 3600))
       ;;
     *s)
-      echo ${duration%s}
+      echo "${duration%s}"
       ;;
     *)
-      echo $duration
+      echo "$duration"
       ;;
   esac
 }
@@ -276,7 +276,7 @@ else
     fi
   fi
 
-  for i in $(seq 1 $NODES); do
+  for i in $(seq 1 "$NODES"); do
     if [ $((i % 25)) -eq 0 ]; then
       log "Started $i/$NODES node agents..."
     fi
@@ -465,20 +465,20 @@ cat > "$OUT_DIR/DEMO_REPORT.md" <<REPORT_EOF
 ## Troubleshooting
 
 ### Low Performance
-1. Check node agent logs: `docker logs node-agent-1`
-2. Verify backend connectivity: `curl http://localhost:${BACKEND_API_PORT}/health`
-3. Check Docker resource limits: `docker stats`
+1. Check node agent logs: $(docker logs node-agent-1)
+2. Verify backend connectivity: $(curl http://localhost:"${BACKEND_API_PORT}"/health)
+3. Check Docker resource limits: $(docker stats)
 4. Review NPU/GPU device mapping in container
 
 ### High Memory Usage
 1. Reduce node count: '--nodes 500'
-2. Check for memory leaks: `docker stats --no-stream`
-3. Cleanup old containers: `docker system prune`
+2. Check for memory leaks: $(docker stats --no-stream)
+3. Cleanup old containers: $(docker system prune)
 
 ### Grafana Dashboards Not Loading
-1. Verify Prometheus is up: `curl http://localhost:${PROMETHEUS_PORT}/-/healthy`
-2. Check provisioning mount: `docker exec sovereignmap-grafana ls /etc/grafana/provisioning/dashboards/`
-3. Restart Grafana: `docker restart sovereignmap-grafana`
+1. Verify Prometheus is up: $(curl http://localhost:"${PROMETHEUS_PORT}"/-/healthy)
+2. Check provisioning mount: $(docker exec sovereignmap-grafana ls /etc/grafana/provisioning/dashboards/)
+3. Restart Grafana: $(docker restart sovereignmap-grafana)
 
 ## Monitoring URLs
 - **Grafana:** http://localhost:${GRAFANA_PORT}

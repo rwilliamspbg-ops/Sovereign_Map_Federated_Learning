@@ -97,7 +97,7 @@ run_all() {
 check_status() {
     echo "Checking test status..."
     [[ -f "aws-config.env" ]] && echo "✓ Phase 1 (AWS Setup) complete" || echo "✗ Phase 1 not run"
-    [[ -f "deployment-outputs.env" ]] && echo "✓ Phase 2 (Deploy) complete" || echo "✗ Phase 2 not run"
+    [[ -f "config/deployment-outputs.env" ]] && echo "✓ Phase 2 (Deploy) complete" || echo "✗ Phase 2 not run"
     ls -d results-* 1>/dev/null 2>&1 && echo "✓ Results available" || echo "✗ No results yet"
 }
 

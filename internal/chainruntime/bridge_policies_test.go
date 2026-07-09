@@ -6,7 +6,7 @@ import (
 )
 
 func TestLoadBridgePolicySetAndValidate(t *testing.T) {
-	path := filepath.Join("..", "..", "bridge-policies.json")
+	path := filepath.Join("..", "..", "config", "bridge-policies.json")
 	set, err := LoadBridgePolicySet(path)
 	if err != nil {
 		t.Fatalf("expected policy load success: %v", err)

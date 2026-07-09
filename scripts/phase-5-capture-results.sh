@@ -17,16 +17,16 @@ echo "PHASE 5: Results Capture and Documentation"
 echo "=========================================="
 
 # 1. Load Configuration
-if [[ -f "aws-config.env" ]]; then
-    source aws-config.env
+if [[ -f "config/aws-config.env" ]]; then
+    source config/aws-config.env
 else
-    echo "⚠ Warning: aws-config.env not found, using defaults"
+    echo "⚠ Warning: config/aws-config.env not found, using defaults"
 fi
 
-if [[ -f "deployment-outputs.env" ]]; then
-    source deployment-outputs.env
+if [[ -f "config/deployment-outputs.env" ]]; then
+    source config/deployment-outputs.env
 else
-    echo "⚠ Warning: deployment-outputs.env not found"
+    echo "⚠ Warning: config/deployment-outputs.env not found"
 fi
 
 KEY_PATH="./terraform/sovereign-fl-key.pem"
@@ -88,14 +88,14 @@ if [[ -z "$WORKER_HOSTS" ]]; then
     exit 1
 fi
 
-WORKER_COUNT=$(echo $WORKER_HOSTS | wc -w)
+WORKER_COUNT=$(echo "$WORKER_HOSTS" | wc -w)
 echo "✓ Found $WORKER_COUNT worker nodes"
 
 #================================================================================
 # PHASE 5.2: DOWNLOAD LOGS (DOCKER & DENSITY OPTIMIZED) - FIXED SCP BUG
 #================================================================================
 echo "Step 5.2: Downloading Docker logs from cluster..."
-mkdir -p ${RESULTS_DIR}/logs
+mkdir -p "${RESULTS_DIR}"/logs
 
 LOG_COUNT=0
 for HOST_IP in $WORKER_HOSTS; do

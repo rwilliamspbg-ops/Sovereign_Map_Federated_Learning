@@ -36,8 +36,8 @@ jobs:
       - name: Run ShellCheck
         run: |
           # 1. Fix the SC2087 warning by quoting the EOF
-          sed -i "s/<< EOF/<< 'EOF'/g" phase-3-deploy-code.sh
+          sed -i "s/<< EOF/<< 'EOF'/g" scripts/phase-3-deploy-code.sh
           
           # 2. Run ShellCheck but ignore SC1091 (missing source files)
           # This allows the audit to pass even though aws-config.env is scrubbed.
-          shellcheck -e SC1091 phase-3-deploy-code.sh
+          shellcheck -e SC1091 scripts/phase-3-deploy-code.sh

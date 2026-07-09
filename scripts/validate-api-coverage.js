@@ -18,12 +18,12 @@ const targets = [
   },
   {
     name: "tokenomics-exporter",
-    codeFile: "tokenomics_metrics_exporter.py",
+    codeFile: "scripts/tokenomics_metrics_exporter.py",
     openapiFile: "docs/api/openapi.tokenomics.yaml",
   },
   {
     name: "tpm-exporter",
-    codeFile: "tpm_metrics_exporter.py",
+    codeFile: "scripts/tpm_metrics_exporter.py",
     openapiFile: "docs/api/openapi.tpm.yaml",
   },
   {

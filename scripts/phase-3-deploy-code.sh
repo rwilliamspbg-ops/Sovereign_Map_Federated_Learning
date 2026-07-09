@@ -8,8 +8,8 @@ echo "PHASE 3: High-Density Parallel Deployment (200-Node Scale)"
 echo "=========================================================="
 
 # 1. Load Configuration (Optional, keeps other env vars)
-if [ -f "aws-config.env" ]; then
-    source aws-config.env
+if [ -f "config/aws-config.env" ]; then
+    source config/aws-config.env
 fi
 
 # Fix permissions on the key

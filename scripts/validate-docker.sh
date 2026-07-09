@@ -40,7 +40,7 @@ echo ""
 
 # 3. Validate Docker Compose file
 echo -e "${YELLOW}[3/5] Validating Docker Compose file...${NC}"
-for compose_file in docker-compose.full.yml; do
+compose_file="docker-compose.full.yml"
     if [ -f "$compose_file" ]; then
         echo -e "${GREEN}✓ $compose_file found${NC}"
         services=$(grep -c "^  [a-z].*:" "$compose_file" || true)
@@ -57,8 +57,6 @@ for compose_file in docker-compose.full.yml; do
     else
         echo -e "${RED}✗ $compose_file not found${NC}"
     fi
-done
-echo ""
 
 # 4. Check file structure
 echo -e "${YELLOW}[4/5] Checking project structure...${NC}"
