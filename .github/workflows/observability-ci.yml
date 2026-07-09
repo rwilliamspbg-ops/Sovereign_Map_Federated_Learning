@@ -73,7 +73,7 @@ jobs:
       - name: Run alert unit tests
         run: |
           docker run --rm --entrypoint /bin/promtool -v "$PWD:/workspace" -w /workspace prom/prometheus:v2.48.0 \
-            test rules monitoring/prometheus/alerts/tests/*.yml
+            test rules monitoring/prometheus/alerts/*.test.yml
 
       - name: Validate Alertmanager routing and inhibition semantics
         run: go test ./internal/monitoring -run "TestAlertmanagerRoutingPolicy|TestAlertmanagerInhibitionPolicy"

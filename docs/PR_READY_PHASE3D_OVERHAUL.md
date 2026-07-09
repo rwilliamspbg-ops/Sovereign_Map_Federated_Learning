@@ -67,7 +67,7 @@ It upgrades the training runtime from MNIST-only CPU assumptions to a production
 ### Documentation and PR hygiene
 
 - [docs/PHASE_3D_PRODUCTION_DEPLOYMENT.md](./PHASE_3D_PRODUCTION_DEPLOYMENT.md)
-- [PHASE_3D_QUICK_START.md](archiarchive/PHASE_3D_QUICK_START.md)
+- [PHASE_3D_QUICK_START.md](archive/PHASE_3D_QUICK_START.md)
 - [README.md](../README.md)
 - [CONTRIBUTING.md](../CONTRIBUTING.md)
 

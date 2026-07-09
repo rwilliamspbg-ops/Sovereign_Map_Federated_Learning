@@ -179,7 +179,7 @@ alerts-test:
 	@docker run --rm --entrypoint /bin/promtool -v "$$(pwd):/workspace" -w /workspace prom/prometheus:v2.48.0 \
 		check rules monitoring/prometheus/alerts/*.yml
 	@docker run --rm --entrypoint /bin/promtool -v "$$(pwd):/workspace" -w /workspace prom/prometheus:v2.48.0 \
-		test rules monitoring/prometheus/alerts/tests/*.yml
+		test rules monitoring/prometheus/alerts/*.test.yml
 	@$(GO) test ./internal/monitoring -run "TestAlertmanagerRoutingPolicy|TestAlertmanagerInhibitionPolicy"
 	@echo "✅ Alert rule tests passed"
 
