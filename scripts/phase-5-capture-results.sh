@@ -18,12 +18,14 @@ echo "=========================================="
 
 # 1. Load Configuration
 if [[ -f "config/aws-config.env" ]]; then
+    # shellcheck source=/dev/null
     source config/aws-config.env
 else
     echo "⚠ Warning: config/aws-config.env not found, using defaults"
 fi
 
 if [[ -f "config/deployment-outputs.env" ]]; then
+    # shellcheck source=/dev/null
     source config/deployment-outputs.env
 else
     echo "⚠ Warning: config/deployment-outputs.env not found"
@@ -130,7 +132,7 @@ EOF
         # FIXED: Use the same static name that was created on the remote host
         if scp -i "$KEY_PATH" -o StrictHostKeyChecking=no -o ConnectTimeout=10 \
             -o ProxyCommand="ssh -i $KEY_PATH -W %h:%p ubuntu@$AGGREGATOR_IP" \
-            ubuntu@$HOST_IP:~/node_logs.tar.gz ${RESULTS_DIR}/logs/node_logs_${HOST_IP}.tar.gz 2>/dev/null; then
+            ubuntu@"$HOST_IP":~/node_logs.tar.gz "${RESULTS_DIR}/logs/node_logs_${HOST_IP}.tar.gz" 2>/dev/null; then
             echo "  ✓ Downloaded logs from $HOST_IP"
             ((LOG_COUNT++))
         else
@@ -155,17 +157,17 @@ fi
 # PHASE 5.7: GIT COMMIT RESULTS
 #================================================================================
 echo "Step 5.7: Committing results to repository..."
-TEST_ID=$(basename ${RESULTS_DIR})
+TEST_ID=$(basename "${RESULTS_DIR}")
 
 if git rev-parse --git-dir > /dev/null 2>&1; then
     # Check if there are any files to commit
-    if [[ -f "${RESULTS_DIR}/REPORT.md" ]] || [[ $(ls ${RESULTS_DIR}/logs/*.tar.gz 2>/dev/null | wc -l) -gt 0 ]]; then
+    if [[ -f "${RESULTS_DIR}/REPORT.md" ]] || [[ $(find "${RESULTS_DIR}/logs" -name '*.tar.gz' 2>/dev/null | wc -l) -gt 0 ]]; then
         git checkout -b "test-results-${TEST_ID}" 2>/dev/null || git checkout "test-results-${TEST_ID}"
         
-        [[ -f "${RESULTS_DIR}/REPORT.md" ]] && git add ${RESULTS_DIR}/REPORT.md
+        [[ -f "${RESULTS_DIR}/REPORT.md" ]] && git add "${RESULTS_DIR}/REPORT.md"
         
-        if [[ $(ls ${RESULTS_DIR}/logs/*.tar.gz 2>/dev/null | wc -l) -gt 0 ]]; then
-            git add ${RESULTS_DIR}/logs/*.tar.gz
+        if [[ $(find "${RESULTS_DIR}/logs" -name '*.tar.gz' 2>/dev/null | wc -l) -gt 0 ]]; then
+            git add "${RESULTS_DIR}"/logs/*.tar.gz
         fi
         
         git commit -m "docs: capture 200-node test results ${TEST_ID}" || echo "⚠ Nothing new to commit"
