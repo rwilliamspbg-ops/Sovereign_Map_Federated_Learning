@@ -67,9 +67,9 @@ jobs:
 
       - name: Validate rule syntax with promtool
         run: |
-          RULE_FILES=$(find monitoring/prometheus/alerts -name '*.yml' ! -name '*.test.yml' | sort | tr '\n' ' ')
+          mapfile -t RULE_FILES < <(find monitoring/prometheus/alerts -name '*.yml' ! -name '*.test.yml' | sort)
           docker run --rm --entrypoint /bin/promtool -v "$PWD:/workspace" -w /workspace prom/prometheus:v2.48.0 \
-            check rules $RULE_FILES
+            check rules "${RULE_FILES[@]}"
 
       - name: Run alert unit tests
         run: |
