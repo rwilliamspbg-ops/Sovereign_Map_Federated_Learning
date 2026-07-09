@@ -11,6 +11,7 @@ echo "=========================================="
 
 # 1. Load configuration from Phase 1
 if [[ -f "config/aws-config.env" ]]; then
+    # shellcheck source=/dev/null
     source config/aws-config.env
 else
     echo "❌ Error: config/aws-config.env not found. Run Phase 1 first."

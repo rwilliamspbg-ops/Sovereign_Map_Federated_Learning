@@ -11,7 +11,9 @@ echo "PHASE 4: Test Execution"
 echo "=========================================="
 
 # Load configuration
+# shellcheck source=/dev/null
 source config/aws-config.env 2>/dev/null || { echo "Error: aws-config.env not found"; exit 1; }
+# shellcheck source=/dev/null
 source config/deployment-outputs.env 2>/dev/null || { echo "Error: deployment-outputs.env not found"; exit 1; }
 
 # Create results directory
@@ -78,10 +80,10 @@ echo "Step 4.2: Starting monitoring..."
         TIMESTAMP=$(date +%s)
 
         # Query Prometheus metrics
-        curl -s "http://${AGGREGATOR_PUBLIC_IP}:9090/api/v1/query?query=fl_connected_clients" > "${RESULTS_DIR}"/metrics-${TIMESTAMP}-clients.json 2>/dev/null || true
-        curl -s "http://${AGGREGATOR_PUBLIC_IP}:9090/api/v1/query?query=fl_accuracy" > "${RESULTS_DIR}"/metrics-${TIMESTAMP}-accuracy.json 2>/dev/null || true
-        curl -s "http://${AGGREGATOR_PUBLIC_IP}:9090/api/v1/query?query=fl_rounds_total" > "${RESULTS_DIR}"/metrics-${TIMESTAMP}-rounds.json 2>/dev/null || true
-        curl -s "http://${AGGREGATOR_PUBLIC_IP}:9090/api/v1/query?query=fl_byzantine_detected" > "${RESULTS_DIR}"/metrics-${TIMESTAMP}-byzantine.json 2>/dev/null || true
+        curl -s "http://${AGGREGATOR_PUBLIC_IP}:9090/api/v1/query?query=fl_connected_clients" > "${RESULTS_DIR}/metrics-${TIMESTAMP}-clients.json" 2>/dev/null || true
+        curl -s "http://${AGGREGATOR_PUBLIC_IP}:9090/api/v1/query?query=fl_accuracy" > "${RESULTS_DIR}/metrics-${TIMESTAMP}-accuracy.json" 2>/dev/null || true
+        curl -s "http://${AGGREGATOR_PUBLIC_IP}:9090/api/v1/query?query=fl_rounds_total" > "${RESULTS_DIR}/metrics-${TIMESTAMP}-rounds.json" 2>/dev/null || true
+        curl -s "http://${AGGREGATOR_PUBLIC_IP}:9090/api/v1/query?query=fl_byzantine_detected" > "${RESULTS_DIR}/metrics-${TIMESTAMP}-byzantine.json" 2>/dev/null || true
 
         sleep 60
     done

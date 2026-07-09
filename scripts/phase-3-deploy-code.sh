@@ -9,6 +9,7 @@ echo "=========================================================="
 
 # 1. Load Configuration (Optional, keeps other env vars)
 if [ -f "config/aws-config.env" ]; then
+    # shellcheck source=/dev/null
     source config/aws-config.env
 fi
 
