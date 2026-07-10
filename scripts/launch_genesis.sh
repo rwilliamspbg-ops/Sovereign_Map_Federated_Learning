@@ -8,3 +8,4 @@ if [[ -x "${SCRIPT_DIR}/genesis-launch.sh" ]]; then
 fi
 
 echo "genesis-launch.sh not found or not executable in ${SCRIPT_DIR}"
+exit 1
