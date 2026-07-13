@@ -37,8 +37,27 @@ class KubernetesByzantineTestSuite:
         """Create Kubernetes namespace for tests"""
         print(f"\n[SETUP] Creating namespace: {self.namespace}")
 
-        cmd = f"kubectl create namespace {self.namespace} --dry-run=client -o yaml | kubectl apply -f -"
-        subprocess.run(cmd, shell=True, capture_output=True)
+        p1 = subprocess.Popen(
+            [
+                "kubectl",
+                "create",
+                "namespace",
+                self.namespace,
+                "--dry-run=client",
+                "-o",
+                "yaml",
+            ],
+            stdout=subprocess.PIPE,
+        )
+        p2 = subprocess.Popen(
+            ["kubectl", "apply", "-f", "-"],
+            stdin=p1.stdout,
+            stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE,
+        )
+        if p1.stdout is not None:
+            p1.stdout.close()
+        p2.communicate()
 
         time.sleep(2)
         print(f"[OK] Namespace created: {self.namespace}")
@@ -49,17 +68,32 @@ class KubernetesByzantineTestSuite:
         """Create ConfigMap with test configuration"""
         print(f"\n[SETUP] Creating ConfigMap with test configuration")
 
-        # Create ConfigMap using kubectl
-        cmd = f"""
-kubectl create configmap byzantine-config \
-  --from-literal=byzantine_ratio=0.5 \
-  --from-literal=attack_type=gradient_inversion \
-  --from-literal=test_rounds=10 \
-  --from-literal=trim_factor=0.1 \
-  --namespace={self.namespace} \
-  --dry-run=client -o yaml | kubectl apply -f -
-"""
-        subprocess.run(cmd, shell=True, capture_output=True)
+        p1 = subprocess.Popen(
+            [
+                "kubectl",
+                "create",
+                "configmap",
+                "byzantine-config",
+                "--from-literal=byzantine_ratio=0.5",
+                "--from-literal=attack_type=gradient_inversion",
+                "--from-literal=test_rounds=10",
+                "--from-literal=trim_factor=0.1",
+                f"--namespace={self.namespace}",
+                "--dry-run=client",
+                "-o",
+                "yaml",
+            ],
+            stdout=subprocess.PIPE,
+        )
+        p2 = subprocess.Popen(
+            ["kubectl", "apply", "-f", "-"],
+            stdin=p1.stdout,
+            stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE,
+        )
+        if p1.stdout is not None:
+            p1.stdout.close()
+        p2.communicate()
         print(f"[OK] ConfigMap created")
 
         return True
@@ -182,9 +216,8 @@ if __name__ == '__main__':
 
         # Apply aggregator deployment
         subprocess.run(
-            f"kubectl apply -f - --namespace={self.namespace}",
+            ["kubectl", "apply", "-f", "-", f"--namespace={self.namespace}"],
             input=aggregator_yaml,
-            shell=True,
             text=True,
             capture_output=True,
         )
@@ -195,8 +228,16 @@ if __name__ == '__main__':
 
         for i in range(30):
             status_result = subprocess.run(
-                f"kubectl get deployment byzantine-aggregator -n {self.namespace} -o jsonpath='{{.status.readyReplicas}}'",
-                shell=True,
+                [
+                    "kubectl",
+                    "get",
+                    "deployment",
+                    "byzantine-aggregator",
+                    "-n",
+                    self.namespace,
+                    "-o",
+                    "jsonpath={.status.readyReplicas}",
+                ],
                 capture_output=True,
                 text=True,
             )
@@ -300,9 +341,8 @@ print(f'[NODE] {{node_id}} completed all rounds')
 
         # Apply StatefulSet
         result = subprocess.run(
-            f"kubectl apply -f - --namespace={self.namespace}",
+            ["kubectl", "apply", "-f", "-", f"--namespace={self.namespace}"],
             input=deployment_yaml,
-            shell=True,
             text=True,
             capture_output=True,
         )
@@ -319,8 +359,16 @@ print(f'[NODE] {{node_id}} completed all rounds')
         start_time = time.time()
         for i in range(300):  # 5 minute timeout
             result = subprocess.run(
-                f"kubectl get statefulset byzantine-nodes -n {self.namespace} -o jsonpath='{{.status.readyReplicas}}'",
-                shell=True,
+                [
+                    "kubectl",
+                    "get",
+                    "statefulset",
+                    "byzantine-nodes",
+                    "-n",
+                    self.namespace,
+                    "-o",
+                    "jsonpath={.status.readyReplicas}",
+                ],
                 capture_output=True,
                 text=True,
             )
@@ -352,8 +400,17 @@ print(f'[NODE] {{node_id}} completed all rounds')
 
         # Get pod information
         result = subprocess.run(
-            f"kubectl get pods -n {self.namespace} -l app=byzantine-node -o json",
-            shell=True,
+            [
+                "kubectl",
+                "get",
+                "pods",
+                "-n",
+                self.namespace,
+                "-l",
+                "app=byzantine-node",
+                "-o",
+                "json",
+            ],
             capture_output=True,
             text=True,
         )
@@ -442,7 +499,9 @@ print(f'[NODE] {{node_id}} completed all rounds')
 
         # Get node metrics
         node_result = subprocess.run(
-            f"kubectl get nodes -o json", shell=True, capture_output=True, text=True
+            ["kubectl", "get", "nodes", "-o", "json"],
+            capture_output=True,
+            text=True,
         )
         nodes = json.loads(node_result.stdout).get("items", [])
 
@@ -453,8 +512,7 @@ print(f'[NODE] {{node_id}} completed all rounds')
 
         # Get pod metrics
         pod_result = subprocess.run(
-            f"kubectl get pods -n {self.namespace} -o json",
-            shell=True,
+            ["kubectl", "get", "pods", "-n", self.namespace, "-o", "json"],
             capture_output=True,
             text=True,
         )
@@ -483,8 +541,7 @@ print(f'[NODE] {{node_id}} completed all rounds')
         print(f"\n[CLEANUP] Removing namespace {self.namespace}")
 
         subprocess.run(
-            f"kubectl delete namespace {self.namespace}",
-            shell=True,
+            ["kubectl", "delete", "namespace", self.namespace],
             capture_output=True,
         )
 
