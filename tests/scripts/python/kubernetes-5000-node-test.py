@@ -38,7 +38,15 @@ class KubernetesByzantineTestSuite:
         print(f"\n[SETUP] Creating namespace: {self.namespace}")
 
         p1 = subprocess.Popen(
-            ["kubectl", "create", "namespace", self.namespace, "--dry-run=client", "-o", "yaml"],
+            [
+                "kubectl",
+                "create",
+                "namespace",
+                self.namespace,
+                "--dry-run=client",
+                "-o",
+                "yaml",
+            ],
             stdout=subprocess.PIPE,
         )
         p2 = subprocess.Popen(
