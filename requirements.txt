@@ -1,15 +1,15 @@
 # Federated Learning
-flwr==1.31.0
+flwr==1.32.1
 flwr-datasets==0.6.0
 
 # Deep Learning
-torch==2.12.1
-torchvision==0.27.1
+torch==2.13.0
+torchvision==0.28.0
 
 # Privacy & Security
 opacus==1.6.0
 ecdsa==0.19.2
-cryptography==46.0.7
+cryptography==49.0.0
 
 # Flask & Web Framework
 Flask==3.1.3
@@ -29,7 +29,7 @@ aiohttp==3.14.1
 
 # Google Gemini AI
 google-generativeai==0.8.6
-google-auth==2.55.2
+google-auth==2.56.0
 
 # Database & Caching
 redis==8.0.1
