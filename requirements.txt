@@ -3,8 +3,8 @@ flwr==1.31.0
 flwr-datasets==0.6.0
 
 # Deep Learning
-torch==2.12.1
-torchvision==0.27.1
+torch==2.13.0
+torchvision==0.28.0
 
 # Privacy & Security
 opacus==1.6.0
@@ -29,7 +29,7 @@ aiohttp==3.14.1
 
 # Google Gemini AI
 google-generativeai==0.8.6
-google-auth==2.55.2
+google-auth==2.56.0
 
 # Database & Caching
 redis==8.0.1
