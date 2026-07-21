@@ -13,7 +13,7 @@ flwr==1.32.1
 
 # Async & Threading
 asyncio
-aiohttp==3.14.1
+aiohttp==3.14.2
 
 # Google Gemini AI
 google-generativeai==0.8.6
@@ -28,7 +28,7 @@ prometheus-flask-exporter==0.23.2
 
 # Cryptography
 ecdsa==0.19.2
-cryptography==46.0.7
+cryptography==49.0.0
 
 # Utilities
 python-dotenv==1.2.2
