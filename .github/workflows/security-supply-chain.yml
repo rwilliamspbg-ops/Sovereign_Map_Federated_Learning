@@ -16,7 +16,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
-        uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
 
       - name: Build backend image
         run: docker build -f Dockerfile.backend.optimized -t sovereign-backend:ci .
@@ -41,7 +41,7 @@ jobs:
           exit-code: 0
 
       - name: Upload Trivy SARIF
-        uses: github/codeql-action/upload-sarif@f133996fb588ff4e83f1e1d4911404720ac9cb17
+        uses: github/codeql-action/upload-sarif@cf463419fdde78c727231e445622a9ac37966f84
         with:
           sarif_file: trivy-results.sarif
 
