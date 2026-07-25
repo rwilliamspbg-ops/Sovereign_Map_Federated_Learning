@@ -181,24 +181,29 @@ type BlockChain struct {
 	Tip                *Block
 }
 
+// DefaultVerificationPolicy returns the default governance-tunable gates for FL proof acceptance.
+func DefaultVerificationPolicy() VerificationPolicy {
+	return VerificationPolicy{
+		RequireProof:                false,
+		MinConfidenceBps:            6000,
+		RejectOnVerificationFailure: false,
+		AllowConsensusProof:         true,
+		AllowZKProof:                true,
+		AllowTEEProof:               true,
+	}
+}
+
 // NewBlockChain creates a new blockchain instance
 func NewBlockChain() *BlockChain {
 	bc := &BlockChain{
-		Blocks:       make([]*Block, 0),
-		PendingTxns:  make([]Transaction, 0),
-		blockIndex:   make(map[string]*Block),
-		StateDB:      NewStateDatabase(),
-		ValidatorSet: NewValidatorSet(),
-		Mempool:      NewMempool(),
-		VerificationPolicy: VerificationPolicy{
-			RequireProof:                false,
-			MinConfidenceBps:            6000,
-			RejectOnVerificationFailure: false,
-			AllowConsensusProof:         true,
-			AllowZKProof:                true,
-			AllowTEEProof:               true,
-		},
-		proofVerifier: &PermissiveProofVerifier{},
+		Blocks:             make([]*Block, 0),
+		PendingTxns:        make([]Transaction, 0),
+		blockIndex:         make(map[string]*Block),
+		StateDB:            NewStateDatabase(),
+		ValidatorSet:       NewValidatorSet(),
+		Mempool:            NewMempool(),
+		VerificationPolicy: DefaultVerificationPolicy(),
+		proofVerifier:      &PermissiveProofVerifier{},
 	}
 	bc.createGenesisBlock()
 	return bc
