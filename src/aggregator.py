@@ -124,10 +124,10 @@ class MultiKrumStrategy(fl.server.strategy.Strategy):
         n = len(weights_list)
         m = self.num_byzantine
 
-        flattened = np.array([
-            np.concatenate([w.flatten() for w in weights]) for weights in weights_list
-        ])
-        distances = cdist(flattened, flattened, metric='euclidean')
+        flattened = np.array(
+            [np.concatenate([w.flatten() for w in weights]) for weights in weights_list]
+        )
+        distances = cdist(flattened, flattened, metric="euclidean")
 
         scores = []
         num_neighbors = n - m - 2
