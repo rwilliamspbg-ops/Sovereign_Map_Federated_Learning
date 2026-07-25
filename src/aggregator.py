@@ -8,6 +8,7 @@ import torch
 import torch.nn as nn
 import torch.nn.functional as F
 import numpy as np
+from scipy.spatial.distance import cdist  # Added for vectorized distance calculation
 from prometheus_client import start_http_server, Counter, Gauge
 import logging
 
@@ -123,16 +124,10 @@ class MultiKrumStrategy(fl.server.strategy.Strategy):
         n = len(weights_list)
         m = self.num_byzantine
 
-        flattened = [
+        flattened = np.array([
             np.concatenate([w.flatten() for w in weights]) for weights in weights_list
-        ]
-        distances = np.zeros((n, n))
-
-        for i in range(n):
-            for j in range(i + 1, n):
-                dist = np.linalg.norm(flattened[i] - flattened[j])
-                distances[i, j] = dist
-                distances[j, i] = dist
+        ])
+        distances = cdist(flattened, flattened, metric='euclidean')
 
         scores = []
         num_neighbors = n - m - 2
