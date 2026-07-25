@@ -12,6 +12,7 @@ import (
 	"os"
 	"strconv"
 	"strings"
+	"sync"
 	"time"
 
 	_ "github.com/lib/pq" // register "postgres" driver for database/sql
@@ -24,6 +25,10 @@ type SQLProofLedger struct {
 	db              *sql.DB
 	cap             int
 	checkpointEvery uint64
+
+	mu          sync.RWMutex
+	countCached bool
+	cachedCount int
 }
 
 // NewSQLProofLedgerFromEnv initializes a SQL ledger from environment variables.
@@ -77,6 +82,14 @@ func NewSQLProofLedger(driver string, dsn string, capacity int, checkpointEvery 
 		_ = db.Close()
 		return nil, err
 	}
+
+	// Warm up the count cache. If it fails, we leave countCached = false to lazy-load on Len().
+	var total int
+	if err := ledger.db.QueryRow(`SELECT count(*) FROM mohawk_ledger_entries`).Scan(&total); err == nil {
+		ledger.cachedCount = total
+		ledger.countCached = true
+	}
+
 	return ledger, nil
 }
 
@@ -198,6 +211,14 @@ func (l *SQLProofLedger) RecordWithOptions(eventType string, proofBytes []byte, 
 		return LedgerEntry{}, false
 	}
 	tx = nil
+
+	// Thread-safely update cached count on successful insertion
+	l.mu.Lock()
+	if l.countCached {
+		l.cachedCount++
+	}
+	l.mu.Unlock()
+
 	return entry, false
 }
 
@@ -240,18 +261,23 @@ func (l *SQLProofLedger) Entries() []LedgerEntry {
 }
 
 func (l *SQLProofLedger) Len() int {
-	var total int
-	if l.cap > 0 {
-		if err := l.db.QueryRow(
-			`SELECT count(*) FROM (SELECT 1 FROM mohawk_ledger_entries LIMIT $1) AS limited_entries`,
-			l.cap,
-		).Scan(&total); err != nil {
+	l.mu.RLock()
+	cached := l.countCached
+	total := l.cachedCount
+	l.mu.RUnlock()
+
+	if !cached {
+		if err := l.db.QueryRow(`SELECT count(*) FROM mohawk_ledger_entries`).Scan(&total); err != nil {
 			return 0
 		}
-		return total
+		l.mu.Lock()
+		l.cachedCount = total
+		l.countCached = true
+		l.mu.Unlock()
 	}
-	if err := l.db.QueryRow(`SELECT count(*) FROM mohawk_ledger_entries`).Scan(&total); err != nil {
-		return 0
+
+	if l.cap > 0 && total > l.cap {
+		return l.cap
 	}
 	return total
 }
