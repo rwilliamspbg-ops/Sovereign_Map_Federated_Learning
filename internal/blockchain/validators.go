@@ -89,6 +89,26 @@ type ValidatorSet struct {
 	Policy          ReputationPolicy
 }
 
+// DefaultReputationPolicy returns the default governance-tunable reputation behavior.
+func DefaultReputationPolicy() ReputationPolicy {
+	return ReputationPolicy{
+		SlashPenalty:                      500,
+		RewardGain:                        50,
+		EpochRecovery:                     25,
+		ReputationWeight:                  60,
+		AttestationWeight:                 25,
+		QualityWeight:                     15,
+		MaxAttestationAgeBlocks:           500,
+		InvalidAttestationPenalty:         350,
+		InvalidAttestationSlashBps:        100,
+		StaleAttestationSlashBps:          50,
+		MaxConsecutiveAttestationFailures: 3,
+		MinQualityScore:                   5000,
+		QualityPenalty:                    200,
+		MaxConsecutiveLowQuality:          5,
+	}
+}
+
 // NewValidatorSet creates a new validator set
 func NewValidatorSet() *ValidatorSet {
 	return &ValidatorSet{
@@ -100,22 +120,7 @@ func NewValidatorSet() *ValidatorSet {
 		MinValidators:   4,
 		MaxValidators:   100,
 		MinStakeAmount:  1000000, // minimum stake to become validator
-		Policy: ReputationPolicy{
-			SlashPenalty:                      500,
-			RewardGain:                        50,
-			EpochRecovery:                     25,
-			ReputationWeight:                  60,
-			AttestationWeight:                 25,
-			QualityWeight:                     15,
-			MaxAttestationAgeBlocks:           500,
-			InvalidAttestationPenalty:         350,
-			InvalidAttestationSlashBps:        100,
-			StaleAttestationSlashBps:          50,
-			MaxConsecutiveAttestationFailures: 3,
-			MinQualityScore:                   5000,
-			QualityPenalty:                    200,
-			MaxConsecutiveLowQuality:          5,
-		},
+		Policy:          DefaultReputationPolicy(),
 	}
 }
 
