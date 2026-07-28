@@ -40,7 +40,7 @@ jobs:
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
 
       - name: Configure AWS Credentials
-        uses: aws-actions/configure-aws-credentials@42e118a65655a9bcd2929e1ab7c4588fdd3255d3
+        uses: aws-actions/configure-aws-credentials@91d3095422abed2108cfda1e48f4d113d737598b
         with:
           role-to-assume: ${{ secrets.AWS_DEPLOY_ROLE_ARN }}
           aws-region: ${{ secrets.AWS_REGION }}
