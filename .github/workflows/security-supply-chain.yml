@@ -41,7 +41,7 @@ jobs:
           exit-code: 0
 
       - name: Upload Trivy SARIF
-        uses: github/codeql-action/upload-sarif@cf463419fdde78c727231e445622a9ac37966f84
+        uses: github/codeql-action/upload-sarif@3434fbbc53af0fe47685ef3897703b39ef77b5cb
         with:
           sarif_file: trivy-results.sarif
 
