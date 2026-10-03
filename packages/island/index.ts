@@ -7,7 +7,7 @@
 
 import { Level } from "level";
 import { ulid } from "ulid";
-import { createHash, createSign } from "crypto";
+import { createHash } from "crypto";
 
 export interface IslandModeConfig {
   enabled: boolean;
@@ -89,9 +89,10 @@ export class IslandModeManager {
     const entryHash = this.hashEntry(entry);
     const chainedHash = this.computeChainedHash(entryHash, this.lastHash);
 
-    // Store with hash chain
+    // Store with sequence-padded key for natural LevelDB index order
+    const key = `update:${this.sequenceNumber.toString().padStart(12, "0")}:${entry.id}`;
     await this.db.put(
-      `update:${entry.id}`,
+      key,
       JSON.stringify({
         ...entry,
         chainedHash,
@@ -109,30 +110,71 @@ export class IslandModeManager {
   }
 
   /**
-   * Sync queued updates when connectivity restored
+   * Stream queued updates as an async generator while verifying chain integrity on-the-fly.
+   * Eliminates full DB accumulation into memory arrays.
    */
-  async sync(): Promise<SyncResult> {
-    const updates: QueuedUpdate[] = [];
+  async *streamUpdates(): AsyncGenerator<QueuedUpdate, void, unknown> {
     const stream = this.db.iterator({ gt: "update:", lt: "update:~" });
+    let expectedPrevious = "genesis";
+    let position = 0;
 
-    for await (const [key, value] of stream) {
-      const parsed = JSON.parse(value);
-      updates.push(parsed);
-    }
+    for await (const [, value] of stream) {
+      const update = JSON.parse(value);
 
-    // Verify chain integrity before sync
-    const integrity = this.verifyChainIntegrity(updates);
-    if (!integrity.valid) {
-      throw new Error(
-        `Chain integrity violated at position ${integrity.violationAt}`
+      if (update.previousHash !== expectedPrevious) {
+        throw new Error(
+          `Chain integrity violated at position ${position}`
+        );
+      }
+
+      const canonical: QueuedUpdate = {
+        id: update.id,
+        timestamp: update.timestamp,
+        update: update.update,
+        proof: update.proof,
+        sequenceNumber: update.sequenceNumber,
+      };
+
+      const recomputed = this.computeChainedHash(
+        this.hashEntry(canonical),
+        update.previousHash
       );
-    }
 
-    // Sort by sequence number
-    updates.sort((a, b) => a.sequenceNumber - b.sequenceNumber);
+      if (recomputed !== update.chainedHash) {
+        throw new Error(
+          `Chain integrity violated at position ${position}`
+        );
+      }
+
+      expectedPrevious = update.chainedHash;
+      position++;
+
+      yield canonical;
+    }
+  }
+
+  /**
+   * Sync queued updates when connectivity restored.
+   * If an onUpdate callback is provided, updates are processed sequentially via stream
+   * without memory accumulation. Otherwise, updates are returned in an array.
+   */
+  async sync(
+    onUpdate?: (update: QueuedUpdate) => Promise<void> | void
+  ): Promise<SyncResult> {
+    const updates: QueuedUpdate[] = [];
+    let count = 0;
+
+    for await (const update of this.streamUpdates()) {
+      count++;
+      if (onUpdate) {
+        await onUpdate(update);
+      } else {
+        updates.push(update);
+      }
+    }
 
     return {
-      updatesQueued: updates.length,
+      updatesQueued: count,
       updates: updates,
       chainIntegrity: true,
       syncDuration: 0, // To be filled by caller
@@ -173,8 +215,14 @@ export class IslandModeManager {
    * Verify local chain hasn't been tampered with
    */
   async verifyIntegrity(): Promise<boolean> {
-    const updates = await this.getAllUpdates();
-    return this.verifyChainIntegrity(updates).valid;
+    try {
+      for await (const _ of this.streamUpdates()) {
+        // Stream through to verify integrity on-the-fly
+      }
+      return true;
+    } catch {
+      return false;
+    }
   }
 
   getStatus(): IslandStatus {
@@ -222,57 +270,6 @@ export class IslandModeManager {
         chain: this.updateChain,
       })
     );
-  }
-
-  private async getAllUpdates(): Promise<any[]> {
-    const updates = [];
-    for await (const [, value] of this.db.iterator({
-      gt: "update:",
-      lt: "update:~",
-    })) {
-      updates.push(JSON.parse(value));
-    }
-    return updates;
-  }
-
-  private verifyChainIntegrity(updates: any[]): {
-    valid: boolean;
-    violationAt?: number;
-  } {
-    const ordered = [...updates].sort(
-      (a, b) => a.sequenceNumber - b.sequenceNumber
-    );
-    let expectedPrevious = "genesis";
-
-    for (let i = 0; i < ordered.length; i++) {
-      const update = ordered[i];
-
-      if (update.previousHash !== expectedPrevious) {
-        return { valid: false, violationAt: i };
-      }
-
-      const canonical: QueuedUpdate = {
-        id: update.id,
-        timestamp: update.timestamp,
-        update: update.update,
-        proof: update.proof,
-        sequenceNumber: update.sequenceNumber,
-      };
-
-      // Verify hash computation
-      const recomputed = this.computeChainedHash(
-        this.hashEntry(canonical),
-        update.previousHash
-      );
-
-      if (recomputed !== update.chainedHash) {
-        return { valid: false, violationAt: i };
-      }
-
-      expectedPrevious = update.chainedHash;
-    }
-
-    return { valid: true };
   }
 }
 
