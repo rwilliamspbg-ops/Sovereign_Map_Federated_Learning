@@ -55,7 +55,7 @@ jobs:
 
       - name: Upload FedAvg benchmark report
         if: always()
-        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v4
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v4
         with:
           name: fedavg-benchmark-report
           path: results/metrics/fedavg_benchmark_compare.md
