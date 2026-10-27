@@ -34,14 +34,14 @@
     "@sovereignmap/compression": "^1.0.2",
     "eventemitter3": "^5.0.1",
     "libsodium-wrappers": "^0.8.4",
-    "ml-matrix": "^6.15.0"
+    "ml-matrix": "^6.15.1"
   },
   "devDependencies": {
-    "@types/node": "^26.4.0",
-    "@vitest/coverage-v8": "^4.1.11",
-    "@webgpu/types": "^0.1.72",
+    "@types/node": "^26.6.5",
+    "@vitest/coverage-v8": "^5.0.5",
+    "@webgpu/types": "^0.1.74",
     "typescript": "^7.0.2",
-    "vitest": "^4.1.6"
+    "vitest": "^5.0.5"
   },
   "overrides": {
     "libsodium": "^0.8.3"
