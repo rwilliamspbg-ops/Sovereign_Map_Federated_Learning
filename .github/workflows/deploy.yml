@@ -116,7 +116,7 @@ jobs:
         uses: docker/setup-buildx-action@f87e5991a6d7451dcb8d9637bfbc97413f497069
       
       - name: Log in to Container Registry
-        uses: docker/login-action@81c6f93d4bc991e510b342a00b419b3bb4efc5c6
+        uses: docker/login-action@8aa5831fb8d48d8f76594c7ddde61ae58019f550
         with:
           registry: ${{ env.REGISTRY }}
           username: ${{ github.actor }}
@@ -451,7 +451,7 @@ jobs:
 
       - name: Configure AWS Credentials
         if: steps.phase3d_inputs.outputs.ready == 'true'
-        uses: aws-actions/configure-aws-credentials@75e767d0518f9e9b5657df48836f6003d3b15fdb
+        uses: aws-actions/configure-aws-credentials@416c15366b69fd69e1df1513e25ba57af8e11d5f
         with:
           role-to-assume: ${{ secrets.AWS_DEPLOY_ROLE_ARN }}
           aws-region: ${{ secrets.AWS_REGION }}
@@ -503,7 +503,7 @@ jobs:
 
       - name: Configure AWS Credentials
         if: steps.cdn_inputs.outputs.ready == 'true'
-        uses: aws-actions/configure-aws-credentials@75e767d0518f9e9b5657df48836f6003d3b15fdb
+        uses: aws-actions/configure-aws-credentials@416c15366b69fd69e1df1513e25ba57af8e11d5f
         with:
           role-to-assume: ${{ secrets.AWS_DEPLOY_ROLE_ARN }}
           aws-region: ${{ secrets.AWS_REGION }}
